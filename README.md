@@ -19,7 +19,7 @@ Java 7 and above is required to use WarmRoast.
 Screenshots
 -----------
 
-![Sample output](http://i.imgur.com/KCDYkIv.png)
+![Sample output](http://i.imgur.com/Iy7kJ7f.png)
 
 Usage
 -----
