@@ -18,18 +18,26 @@
 
 package com.sk89q.warmroast;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class StackNode implements Comparable<StackNode> {
     
+    private static final NumberFormat cssDec = NumberFormat.getPercentInstance(Locale.US);
     private final String name;
     private final Map<String, StackNode> children = new HashMap<>();
     private long totalTime;
+    
+    static {
+        cssDec.setGroupingUsed(false);
+        cssDec.setMaximumFractionDigits(2);
+    }
 
     public StackNode(String name) {
         this.name = name;
@@ -111,8 +119,8 @@ public class StackNode implements Comparable<StackNode> {
         builder.append("</span>");
         builder.append("<span class=\"bar\">");
         builder.append("<span class=\"bar-inner\" style=\"width:")
-                .append(String.format("%.2f", getTotalTime() / (double) totalTime * 100))
-                .append("%\">");
+                .append(formatCssPct(getTotalTime() / (double) totalTime))
+                .append("\">");
         builder.append("</span>");
         builder.append("</span>");
         builder.append("</div>");
@@ -153,6 +161,10 @@ public class StackNode implements Comparable<StackNode> {
         StringBuilder builder = new StringBuilder();
         writeString(builder, 0);
         return builder.toString();
+    }
+    
+    protected static String formatCssPct(double pct) {
+        return cssDec.format(pct);
     }
     
     protected static String escapeHtml(String str) {
