@@ -70,7 +70,7 @@ public class StackTraceNode extends StackNode {
                             builder.toString() + "\">" + escapeHtml(getMethodName()) + "</span>()";
             }
         } else {
-            String actualMethod = mapping.fromMethodId(getMethodName());
+            String actualMethod = mapping.mapMethodId(getMethodName());
             if (actualMethod == null) {
                 return escapeHtml(getClassName()) + "." + escapeHtml(getMethodName()) + "()";
             } else {

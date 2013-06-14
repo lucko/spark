@@ -59,6 +59,10 @@ public class McpMapping {
         processMethods(lines);
     }
     
+    public String mapMethodId(String id) {
+        return methods.get(id);
+    }
+    
     public String fromMethodId(String id) {
         String method = methods.get(id);
         if (method == null) {
