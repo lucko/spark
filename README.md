@@ -45,29 +45,37 @@ Usage
 Parameters
 ----------
 
-    warmroast.WarmRoast --help
     Usage: warmroast [options]
       Options:
-            --bind
+        --bind
            The address to bind the HTTP server to
            Default: 0.0.0.0
-        -h, --help
            
+        -h, --help
            Default: false
-            --interval
+           
+        --interval
            The sample rate, in milliseconds
            Default: 100
+           
         -m, --mappings
            A directory with joined.srg and methods.csv
-            --name
+           
+        --name
            The name of the VM to attach to
-            --pid
+           
+        --pid
            The PID of the VM to attach to
+           
         -p, --port
            The port to bind the HTTP server to
            Default: 23000
+           
         -t, --thread
            Optionally specify a thread to log only
+           
+        --timeout
+           The number of seconds before ceasing sampling (optional)
 
 Hint: `--thread "Server thread"` is useful for Minecraft servers.
 
