@@ -45,5 +45,8 @@ public class RoastOptions {
 
     @Parameter(names = { "--interval" }, description = "The sample rate, in milliseconds")
     public Integer interval = 100;
+    
+    @Parameter(names = { "--timeout" }, description = "The number of seconds before ceasing sampling (optional)")
+    public Integer timeout;
 
 }

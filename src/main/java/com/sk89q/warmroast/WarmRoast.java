@@ -70,6 +70,7 @@ public class WarmRoast extends TimerTask {
     private MBeanServerConnection mbsc;
     private ThreadMXBean threadBean;
     private String filterThread;
+    private long endTime = -1;
     
     public WarmRoast(VirtualMachine vm, int interval) {
         this.vm = vm;
@@ -99,6 +100,14 @@ public class WarmRoast extends TimerTask {
 
     public void setFilterThread(String filterThread) {
         this.filterThread = filterThread;
+    }
+
+    public long getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(long l) {
+        this.endTime = l;
     }
 
     public void connect() 
@@ -139,6 +148,14 @@ public class WarmRoast extends TimerTask {
 
     @Override
     public synchronized void run() {
+        if (endTime >= 0) {
+            if (endTime <= System.currentTimeMillis()) {
+                cancel();
+                System.err.println("Sampling has stopped.");
+                return;
+            }
+        }
+        
         ThreadInfo[] threadDumps = threadBean.dumpAllThreads(false, false);
         for (ThreadInfo threadInfo : threadDumps) {
             String threadName = threadInfo.getThreadName();
@@ -289,13 +306,20 @@ public class WarmRoast extends TimerTask {
                 System.exit(2);
             }
         }
-        
-        roast.setFilterThread(opt.threadName);
 
         System.err.println(SEPARATOR);
+        
+        roast.setFilterThread(opt.threadName);
+        
+        if (opt.timeout != null && opt.timeout > 0) {
+            roast.setEndTime(System.currentTimeMillis() + opt.timeout * 1000);
+            System.err.println("Sampling set to stop in " + opt.timeout + " seconds.");
+        }
 
         System.err.println("Starting a server on " + address.toString() + "...");
         System.err.println("Once the server starts (shortly), visit the URL in your browser.");
+        System.err.println("Note: The longer you wait before using the output of that " +
+        		"webpage, the more accurate the results will be.");
         
         try {
             roast.connect();
