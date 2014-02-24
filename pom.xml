@@ -13,6 +13,20 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
+  <distributionManagement>
+    <site>
+      <id>sk89q-docs-upload</id>
+      <url>ftp://sk89q-maven-deploy/worldedit/</url>
+    </site>
+    <repository>
+        <id>maven.sk89q.com</id>
+        <url>http://maven.sk89q.com/artifactory/libs-release-local</url>
+    </repository>
+    <snapshotRepository>
+        <id>maven.sk89q.com-snapshot</id>
+        <url>http://maven.sk89q.com/artifactory/libs-snapshot-local</url>
+    </snapshotRepository>
+  </distributionManagement>
   <dependencies>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
