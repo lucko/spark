@@ -26,9 +26,9 @@ Usage
 
 1. Note the path of your JDK.
 
-2. Download WarmRoast as `warmroast.jar`.
+2. Download WarmRoast.
 
-3. Replace `/path/to/jdk` in the following command line with the path to your JDK and execute the program.
+3. Replace `PATH_TO_JDK` in the following commands with the path to your JDK and execute the program.
 
 **Note:** The example command line below includes `--thread "Server thread"`, which filters all threads but the main server thread. You can remove it to show all threads.
 
@@ -36,11 +36,13 @@ Usage
 
 ### Linux ###
 
-    java -Djava.library.path=/path/to/jdk/jre/bin -cp /path/to/jdk/lib/tools.jar:warmroast.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
+    java -Djava.library.path=PATH_TO_JDK/jre/bin -cp /path/to/jdk/lib/tools.jar:warmroast-1.0.0-SNAPSHOT.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
 
 ### Windows ###
 
-    java -Djava.library.path=/path/to/jdk/jre/bin -cp /path/to/jdk/lib/tools.jar;warmroast.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
+An example `PATH_TO_JDK` would be `C:\Program Files\Java\jdk1.7.0_45`
+
+    java -Djava.library.path=PATH_TO_JDK/jre/bin -cp PATH_TO_JDK/lib/tools.jar;warmroast-1.0.0-SNAPSHOT.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
 
 Parameters
 ----------
@@ -82,8 +84,4 @@ Hint: `--thread "Server thread"` is useful for Minecraft servers.
 License
 -------
 
-The launcher is licensed under the GNU General Public License, version 3.
-
-Contributions by third parties must be dual licensed under the two licenses
-described within LICENSE.txt (GNU General Public License, version 3, and the
-3-clause BSD license).
+The project is licensed under the GNU General Public License, version 3.
