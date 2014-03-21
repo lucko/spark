@@ -36,13 +36,16 @@ Usage
 
 ### Linux ###
 
-    java -Djava.library.path=PATH_TO_JDK/jre/bin -cp /path/to/jdk/lib/tools.jar:warmroast-1.0.0-SNAPSHOT.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
+    java -Djava.library.path=PATH_TO_JDK/jre/bin -cp PATH_TO_JDK/lib/tools.jar:warmroast-1.0.0-SNAPSHOT.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
 
 ### Windows ###
 
 An example `PATH_TO_JDK` would be `C:\Program Files\Java\jdk1.7.0_45`
 
     java -Djava.library.path=PATH_TO_JDK/jre/bin -cp PATH_TO_JDK/lib/tools.jar;warmroast-1.0.0-SNAPSHOT.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
+
+* The folder `PATH_TO_JDK/jre/bin` should contain "attach.dll"
+* The folder `PATH_TO_JDK/lib` should contain "tools.jar"
 
 Parameters
 ----------
