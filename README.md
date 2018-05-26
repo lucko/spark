@@ -1,90 +1,88 @@
-WarmRoast
-=========
+# spark
+Spark is a CPU profiling plugin based on sk89q's [WarmRoast profiler](https://github.com/sk89q/WarmRoast).
 
-WarmRoast is an easy-to-use CPU sampling tool for JVM applications, but particularly suited for Minecraft servers/clients.
+### What does it do?
+
+Effectively, it monitors the activity of the server, and records statistical data about which actions take up the most processing time. These statistics can then be used to diagnose potential performance issues with certain parts of the server or specific plugins.
+
+Once the data has been recorded, a "call graph" can be formed and displayed in a web browser for analysis.
+
+spark will not fix "lag" - it is a tool to help diagnose the cause of poor performance.
+
+### About
+
+#### WarmRoast features
+
+These features are carried over from the upstream "WarmRoast" project.
 
 * Adjustable sampling frequency.
-* Supports loading MCP mappings for deobfuscating class and method names.
-* Web-based — perform the profiling on a remote server and view the results in your browser.
- * Collapse and expand nodes to see details.
- * Easily view CPU usage per method at a glance.
- * Hover to highlight all child methods as a group.
- * See the percentage of CPU time for each method relative to its parent methods.
- * Maintains style and function with use of "File -> Save As" (in tested browsers).
+* Web-based — profiling is performed on the server, but results are viewed in your browser.
+* Collapse and expand nodes to see details.
+* Easily view CPU usage per method at a glance.
+* Hover to highlight all child methods as a group.
+* See the percentage of CPU time for each method relative to its parent methods.
 
-**Download Latest Version:** http://builds.enginehub.org/job/warmroast/last-successful/
+#### spark features
 
-Java 7 and above is required to use WarmRoast.
+WarmRoast is an amazing tool for server admins, but it has a few flaws.
 
-Screenshots
------------
+* It is not accessible to some people, because in order to use it, you need to have direct SSH (or equivalent) access to the server. (not possible on shared hosts)
+* It can be somewhat clunky to setup and start - firstly, you need to connect to the machine of the server you want to profile. Then, you need to remember the PID of the server, or identify it in a list of running VM display names (not easy when multiple servers are running!) - then allow the profiler to run for a bit, before navigating to a temporary web server hosted by the process.
+* It's not easy to share profiling data with other developers or admins.
 
-![Sample output](http://i.imgur.com/Iy7kJ7f.png)
+I've attempted to address these flaws. With spark, you can:
 
-Usage
------
+* Easily setup profiling operations using commands in the console or in-game, without having to have direct access to the server machine
+* Profiling data is uploaded to a "pastebin"-esque site to be viewed - a temporary web server is not needed, and you can easily share your analysis with others!
 
-1. Note the path of your JDK.
+#### How does it work?
 
-2. Download WarmRoast.
+The spark (WarmRoast) profiler operates using a technique known as [sampling](https://en.wikipedia.org/wiki/Profiling_(computer_programming)#Statistical_profilers). A sampling profiler works by probing the target programs call stack at regular intervals in order to determine how frequently certain actions are being performed. In practice, sampling profilers can often provide a more accurate picture of the target program's execution than other approaches, as they are not as intrusive to the target program, and thus don't have as many side effects.
 
-3. Replace `PATH_TO_JDK` in the following commands with the path to your JDK and execute the program.
+Sampling profiles are typically less numerically accurate and specific than other profiling methods (e.g. instrumentation), but allow the target program to run at near full speed.
 
-**Note:** The example command line below includes `--thread "Server thread"`, which filters all threads but the main server thread. You can remove it to show all threads.
+The resultant data is not exact, but a statistical approximation. The accuracy of the output improves as the sampler runs for longer durations, or as the sampling interval is reduced.
 
-**Modded/vanilla servers:** If you are using a modded server, get a copy of [MCP](http://mcp.ocean-labs.de/index.php/MCP_Releases) for your server's Minecraft version, copy the files from conf/ somewhere, and point WarmRoast to it with `--mappings path/to/folder`. This helps readability a lot. Bukkit uses its own mapping, so a pure non-modded Bukkit server can't use MCP mappings.
+#### spark vs "Minecraft Timings"
 
-### Linux ###
+Aikar's [timings](https://github.com/aikar/timings) system is similar to spark/WarmRoast, in the sense that it also analyses the CPU activity of the server.
 
-    java -Djava.library.path=PATH_TO_JDK/jre/bin -cp PATH_TO_JDK/lib/tools.jar:warmroast-1.0.0-SNAPSHOT.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
+The biggest drawback of timings is that each area of analysis has to be manually defined.
 
-### Windows ###
+For example, timings might identify that a certain listener in pluginx is taking up a lot of CPU time processing the PlayerMoveEvent, but it won't tell you which part of the processing is intensive. spark/WarmRoast on the other hand *will* show this information.
 
-An example `PATH_TO_JDK` would be `C:\Program Files\Java\jdk1.7.0_45`
+### Installation
 
-    java -Djava.library.path=PATH_TO_JDK/jre/bin -cp PATH_TO_JDK/lib/tools.jar;warmroast-1.0.0-SNAPSHOT.jar com.sk89q.warmroast.WarmRoast --thread "Server thread"
+To install, add the **spark.jar** file to your servers plugins/mods directory, and then restart your server.
 
-* The folder `PATH_TO_JDK/jre/bin` should contain "attach.dll"
-* The folder `PATH_TO_JDK/lib` should contain "tools.jar"
+### Commands
 
-Parameters
-----------
+All commands require the `spark.profiler` permission.
 
-    Usage: warmroast [options]
-      Options:
-        --bind
-           The address to bind the HTTP server to
-           Default: 0.0.0.0
-           
-        -h, --help
-           Default: false
-           
-        --interval
-           The sample rate, in milliseconds
-           Default: 100
-           
-        -m, --mappings
-           A directory with joined.srg and methods.csv
-           
-        --name
-           The name of the VM to attach to
-           
-        --pid
-           The PID of the VM to attach to
-           
-        -p, --port
-           The port to bind the HTTP server to
-           Default: 23000
-           
-        -t, --thread
-           Optionally specify a thread to log only
-           
-        --timeout
-           The number of seconds before ceasing sampling (optional)
+___
+#### `/profiler start`
+Starts a new profiling operation.
 
-Hint: `--thread "Server thread"` is useful for Minecraft servers.
+**Arguments**
+* `--timeout <timeout>`
+	* Specifies how long the profiler should run before automatically stopping. Measured in seconds.
+	* If left unspecified, the profiler will run indefinitely, until it is stopped
+* `--thread <thread name>`
+	* Specifies the name of the thread to be profiled.
+	* If left unspecified, the profiler will only sample the main "server thread".
+	* The `*` character can be used in place of a name to mark that all threads should be profiled
+* `--interval <interval>`
+	* Specifies the interval between samples. Measured in milliseconds.
+	* Lower values will improve the accuracy of the results, but may result in server lag.
+	* If left unspecified, a default interval of 10 milliseconds is used.
+___
+#### `/profiler info`
+Prints information about the active profiler, if present.
 
-License
--------
+___
+#### `/profiler stop`
+Ends the current profiling operation, uploads the resultant data, and returns a link to view the call graph.
 
-The project is licensed under the GNU General Public License, version 3.
+___
+#### `/profiler cancel`
+Cancels the current profiling operation, and discards any recorded data without uploading it.
