@@ -32,34 +32,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>${shade.version}</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <minimizeJar>false</minimizeJar>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <relocations>
-                                <!-- shaded dependencies -->
-                                <relocation>
-                                    <pattern>okio</pattern>
-                                    <shadedPattern>me.lucko.spark.lib.okio</shadedPattern>
-                                </relocation>
-                                <relocation>
-                                    <pattern>okhttp3</pattern>
-                                    <shadedPattern>me.lucko.spark.lib.okhttp3</shadedPattern>
-                                </relocation>
-                            </relocations>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>templating-maven-plugin</artifactId>
                 <version>1.0.0</version>
@@ -81,7 +53,7 @@
             <groupId>me.lucko</groupId>
             <artifactId>spark-common</artifactId>
             <version>${project.version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Sponge -->

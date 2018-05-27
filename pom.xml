@@ -13,6 +13,7 @@
         <module>bukkit</module>
         <module>bungeecord</module>
         <module>sponge</module>
+        <module>universal</module>
     </modules>
 
     <name>spark</name>
