@@ -27,7 +27,7 @@ import java.util.zip.GZIPOutputStream;
 public final class Bytebin {
 
     /** Shared GSON instance */
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     /** Media type for JSON data */
     private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
     /** The URL used to upload sampling data */
