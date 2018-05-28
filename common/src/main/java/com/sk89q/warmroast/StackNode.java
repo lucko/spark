@@ -54,7 +54,7 @@ public class StackNode implements Comparable<StackNode> {
     public StackNode(String name) {
         this.name = name;
     }
-    
+
     public String getName() {
         return this.name;
     }
@@ -109,7 +109,6 @@ public class StackNode implements Comparable<StackNode> {
         JsonObject ret = new JsonObject();
 
         // append metadata about this node
-        ret.addProperty("name", getName());
         appendMetadata(ret);
 
         // include the total time recorded for this node
@@ -129,7 +128,7 @@ public class StackNode implements Comparable<StackNode> {
     }
 
     protected void appendMetadata(JsonObject obj) {
-
+        obj.addProperty("name", getName());
     }
 
 }
