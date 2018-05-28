@@ -1,10 +1,11 @@
 package me.lucko.spark.common;
 
 import com.google.common.base.Preconditions;
-import com.sk89q.warmroast.ThreadDumper;
 import com.sk89q.warmroast.Sampler;
+import com.sk89q.warmroast.ThreadDumper;
 
 import java.util.Timer;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,9 +36,9 @@ public class SamplerBuilder {
         return this;
     }
 
-    public Sampler start(Timer timer) {
-        Sampler sampler = new Sampler(samplingInterval, threadDumper, timeout);
-        sampler.start(timer);
+    public Sampler start(Timer samplingThread, ExecutorService workerPool) {
+        Sampler sampler = new Sampler(this.samplingInterval, this.threadDumper, this.timeout);
+        sampler.start(samplingThread, workerPool);
         return sampler;
     }
 

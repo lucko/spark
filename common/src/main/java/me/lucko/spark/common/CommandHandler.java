@@ -1,8 +1,9 @@
 package me.lucko.spark.common;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
-import com.sk89q.warmroast.ThreadDumper;
 import com.sk89q.warmroast.Sampler;
+import com.sk89q.warmroast.ThreadDumper;
 
 import me.lucko.spark.common.http.Bytebin;
 
@@ -14,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,7 +35,12 @@ public abstract class CommandHandler<T> {
     /**
      * The {@link Timer} being used by the {@link #activeSampler}.
      */
-    private final Timer timer = new Timer("spark-sampling-thread", true);
+    private final Timer samplingThread = new Timer("spark-sampling-thread", true);
+
+    /**
+     * The worker {@link ExecutorService} being used by the {@link #activeSampler}.
+     */
+    private final ExecutorService workerPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("spark-worker-%d").build());
 
     /** Guards {@link #activeSampler} */
     private final Object[] activeSamplerMutex = new Object[0];
@@ -97,16 +105,16 @@ public abstract class CommandHandler<T> {
 
         int timeoutSeconds = parseInt(arguments, "timeout", "d");
         if (timeoutSeconds != -1 && timeoutSeconds <= 10) {
-            sendPrefixedMessage(sender, "&cThe specified timeout is not long enough for accurate results to be formed.");
+            sendPrefixedMessage(sender, "&cThe specified timeout is not long enough for accurate results to be formed. Please choose a value greater than 10.");
             return;
         }
 
-        if (timeoutSeconds != -1 && timeoutSeconds < 100) {
-            sendPrefixedMessage(sender, "&7The accuracy of the output will significantly improve when sampling is able to run for longer periods. Consider setting a value of timeout over 1-2 minutes.");
+        if (timeoutSeconds != -1 && timeoutSeconds < 30) {
+            sendPrefixedMessage(sender, "&7The accuracy of the output will significantly improve when sampling is able to run for longer periods. Consider setting a timeout value over 30 seconds.");
         }
 
         int intervalMillis = parseInt(arguments, "interval", "i");
-        if (intervalMillis == -1) {
+        if (intervalMillis <= 0) {
             intervalMillis = 10;
         }
 
@@ -128,7 +136,7 @@ public abstract class CommandHandler<T> {
                 return;
             }
 
-            sendPrefixedMessage(sender, "&7Starting a new sampler task...");
+            sendPrefixedMessage(sender, "&7Initializing a new profiler, please wait...");
 
             SamplerBuilder builder = new SamplerBuilder();
             builder.threadDumper(threadDumper);
@@ -136,15 +144,20 @@ public abstract class CommandHandler<T> {
                 builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
             }
             builder.samplingInterval(intervalMillis);
-            sampler = this.activeSampler = builder.start(timer);
+            sampler = this.activeSampler = builder.start(this.samplingThread, this.workerPool);
 
-            sendPrefixedMessage(sender, "&bSampling has begun!");
+            sendPrefixedMessage(sender, "&bProfiler now active!");
+            if (timeoutSeconds == -1) {
+                sendPrefixedMessage(sender, "&7Use '/profiler stop' to stop profiling and upload the results.");
+            } else {
+                sendPrefixedMessage(sender, "&7The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds.");
+            }
         }
 
         CompletableFuture<Sampler> future = sampler.getFuture();
 
         // send message if profiling fails
-        future.whenComplete((s, throwable) -> {
+        future.whenCompleteAsync((s, throwable) -> {
             if (throwable != null) {
                 sendPrefixedMessage(sender, "&cSampling operation failed unexpectedly. Error: " + throwable.toString());
                 throwable.printStackTrace();
@@ -152,7 +165,7 @@ public abstract class CommandHandler<T> {
         });
 
         // set activeSampler to null when complete.
-        future.whenComplete((s, throwable) -> {
+        future.whenCompleteAsync((s, throwable) -> {
             synchronized (this.activeSamplerMutex) {
                 if (sampler == this.activeSampler) {
                     this.activeSampler = null;
@@ -218,7 +231,7 @@ public abstract class CommandHandler<T> {
             JsonObject output = sampler.formOutput();
             try {
                 String pasteId = Bytebin.postContent(output);
-                sendPrefixedMessage(sender, "&bSampling results can be viewed here: &7" + VIEWER_URL + pasteId);
+                sendPrefixedMessage(sender, "&bSampling results: &7" + VIEWER_URL + pasteId);
             } catch (IOException e) {
                 sendPrefixedMessage(sender, "&cAn error occurred whilst uploading the results.");
                 e.printStackTrace();
