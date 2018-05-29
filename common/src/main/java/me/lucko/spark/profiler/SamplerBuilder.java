@@ -1,8 +1,6 @@
-package me.lucko.spark.common;
+package me.lucko.spark.profiler;
 
 import com.google.common.base.Preconditions;
-import com.sk89q.warmroast.Sampler;
-import com.sk89q.warmroast.ThreadDumper;
 
 import java.util.Timer;
 import java.util.concurrent.ExecutorService;

@@ -2,10 +2,11 @@ package me.lucko.spark.common;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
-import com.sk89q.warmroast.Sampler;
-import com.sk89q.warmroast.ThreadDumper;
 
 import me.lucko.spark.common.http.Bytebin;
+import me.lucko.spark.profiler.Sampler;
+import me.lucko.spark.profiler.SamplerBuilder;
+import me.lucko.spark.profiler.ThreadDumper;
 
 import java.io.IOException;
 import java.util.ArrayList;

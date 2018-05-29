@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package com.sk89q.warmroast;
+package me.lucko.spark.profiler;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
