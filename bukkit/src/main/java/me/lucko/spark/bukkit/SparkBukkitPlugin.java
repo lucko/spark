@@ -16,6 +16,11 @@ public class SparkBukkitPlugin extends JavaPlugin {
         }
 
         @Override
+        protected void sendLink(CommandSender sender, String url) {
+            sendMessage(sender, "&7" + url);
+        }
+
+        @Override
         protected void runAsync(Runnable r) {
             getServer().getScheduler().runTaskAsynchronously(SparkBukkitPlugin.this, r);
         }

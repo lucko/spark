@@ -1,5 +1,5 @@
 name: spark
-version: ${project.version}
+version: 1.0.2
 description: ${project.description}
 author: Luck, sk89q
 main: me.lucko.spark.bungeecord.SparkBungeeCordPlugin

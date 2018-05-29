@@ -14,12 +14,16 @@ import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.AsynchronousExecutor;
 import org.spongepowered.api.scheduler.SpongeExecutorService;
+import org.spongepowered.api.text.LiteralText;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColors;
 import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +33,7 @@ import javax.annotation.Nullable;
 @Plugin(
         id = "spark",
         name = "spark",
-        version = PomData.VERSION,
+        version = "1.0.2",
         description = PomData.DESCRIPTION,
         authors = {"Luck", "sk89q"}
 )
@@ -39,6 +43,20 @@ public class SparkSpongePlugin implements CommandCallable {
         @Override
         protected void sendMessage(CommandSource sender, String message) {
             sender.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(message));
+        }
+
+        @Override
+        protected void sendLink(CommandSource sender, String url) {
+            try {
+                LiteralText text = Text.builder(url)
+                        .color(TextColors.GRAY)
+                        .onClick(TextActions.openUrl(new URL(url)))
+                        .build();
+
+                sender.sendMessage(text);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -56,7 +74,7 @@ public class SparkSpongePlugin implements CommandCallable {
 
     @Listener
     public void onServerStart(GameStartedServerEvent event) {
-        game.getCommandManager().register(this, this, "profiler");
+        game.getCommandManager().register(this, this, "spark", "profiler");
     }
 
     @Override

@@ -4,6 +4,7 @@ import me.lucko.spark.common.CommandHandler;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -17,6 +18,14 @@ public class SparkBungeeCordPlugin extends Plugin {
         }
 
         @Override
+        protected void sendLink(CommandSender sender, String url) {
+            TextComponent component = new TextComponent(url);
+            component.setColor(ChatColor.GRAY);
+            component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
+            sender.sendMessage(component);
+        }
+
+        @Override
         protected void runAsync(Runnable r) {
             getProxy().getScheduler().runAsync(SparkBungeeCordPlugin.this, r);
         }
@@ -24,7 +33,7 @@ public class SparkBungeeCordPlugin extends Plugin {
 
     @Override
     public void onEnable() {
-        getProxy().getPluginManager().registerCommand(this, new Command("profiler", null) {
+        getProxy().getPluginManager().registerCommand(this, new Command("spark", null, "profiler") {
             @Override
             public void execute(CommandSender sender, String[] args) {
                 if (!sender.hasPermission("spark.profiler")) {

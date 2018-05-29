@@ -36,6 +36,8 @@ import java.util.Map;
  */
 public class StackNode implements Comparable<StackNode> {
 
+    private static final int MAX_STACK_DEPTH = 300;
+
     /**
      * The name of this node
      */
@@ -87,6 +89,10 @@ public class StackNode implements Comparable<StackNode> {
     
     private void log(StackTraceElement[] elements, int skip, long time) {
         accumulateTime(time);
+
+        if (skip >= MAX_STACK_DEPTH) {
+            return;
+        }
         
         if (elements.length - skip == 0) {
             return;

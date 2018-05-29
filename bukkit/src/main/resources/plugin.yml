@@ -1,9 +1,10 @@
 name: spark
-version: ${project.version}
+version: 1.0.2
 description: ${project.description}
 authors: [Luck, sk89q]
 main: me.lucko.spark.bukkit.SparkBukkitPlugin
 
 commands:
-  profiler:
+  spark:
     description: Main plugin command
+    aliases: [profiler]

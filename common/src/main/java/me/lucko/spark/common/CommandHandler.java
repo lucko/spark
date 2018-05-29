@@ -51,6 +51,7 @@ public abstract class CommandHandler<T> {
     // abstract methods implemented by each platform
 
     protected abstract void sendMessage(T sender, String message);
+    protected abstract void sendLink(T sender, String url);
     protected abstract void runAsync(Runnable r);
 
     private void sendPrefixedMessage(T sender, String message) {
@@ -231,7 +232,8 @@ public abstract class CommandHandler<T> {
             JsonObject output = sampler.formOutput();
             try {
                 String pasteId = Bytebin.postContent(output);
-                sendPrefixedMessage(sender, "&bSampling results: &7" + VIEWER_URL + pasteId);
+                sendPrefixedMessage(sender, "&bSampling results:");
+                sendLink(sender, VIEWER_URL + pasteId);
             } catch (IOException e) {
                 sendPrefixedMessage(sender, "&cAn error occurred whilst uploading the results.");
                 e.printStackTrace();
