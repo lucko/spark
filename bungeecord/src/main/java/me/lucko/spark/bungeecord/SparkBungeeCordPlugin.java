@@ -1,6 +1,7 @@
 package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.CommandHandler;
+import me.lucko.spark.profiler.ThreadDumper;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
@@ -29,11 +30,16 @@ public class SparkBungeeCordPlugin extends Plugin {
         protected void runAsync(Runnable r) {
             getProxy().getScheduler().runAsync(SparkBungeeCordPlugin.this, r);
         }
+
+        @Override
+        protected ThreadDumper getDefaultThreadDumper() {
+            return new ThreadDumper.All();
+        }
     };
 
     @Override
     public void onEnable() {
-        getProxy().getPluginManager().registerCommand(this, new Command("spark", null, "profiler") {
+        getProxy().getPluginManager().registerCommand(this, new Command("sparkbungee", null, "gprofiler") {
             @Override
             public void execute(CommandSender sender, String[] args) {
                 if (!sender.hasPermission("spark.profiler")) {

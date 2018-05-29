@@ -54,6 +54,7 @@ public abstract class CommandHandler<T> {
     protected abstract void sendMessage(T sender, String message);
     protected abstract void sendLink(T sender, String url);
     protected abstract void runAsync(Runnable r);
+    protected abstract ThreadDumper getDefaultThreadDumper();
 
     private void sendPrefixedMessage(T sender, String message) {
         sendMessage(sender, "&8[&fspark&8] &7" + message);
@@ -124,7 +125,7 @@ public abstract class CommandHandler<T> {
         ThreadDumper threadDumper;
         if (threadName == null) {
             // use the server thread
-            threadDumper = new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+            threadDumper = getDefaultThreadDumper();
         } else if (threadName.equals("*")) {
             threadDumper = new ThreadDumper.All();
         } else {

@@ -3,6 +3,7 @@ package me.lucko.spark.sponge;
 import com.google.inject.Inject;
 
 import me.lucko.spark.common.CommandHandler;
+import me.lucko.spark.profiler.ThreadDumper;
 import me.lucko.spark.sponge.utils.PomData;
 
 import org.spongepowered.api.Game;
@@ -62,6 +63,11 @@ public class SparkSpongePlugin implements CommandCallable {
         @Override
         protected void runAsync(Runnable r) {
             asyncExecutor.execute(r);
+        }
+
+        @Override
+        protected ThreadDumper getDefaultThreadDumper() {
+            return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
         }
     };
 

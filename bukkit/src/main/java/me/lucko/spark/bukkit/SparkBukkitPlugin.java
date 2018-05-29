@@ -1,6 +1,7 @@
 package me.lucko.spark.bukkit;
 
 import me.lucko.spark.common.CommandHandler;
+import me.lucko.spark.profiler.ThreadDumper;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -23,6 +24,11 @@ public class SparkBukkitPlugin extends JavaPlugin {
         @Override
         protected void runAsync(Runnable r) {
             getServer().getScheduler().runTaskAsynchronously(SparkBukkitPlugin.this, r);
+        }
+
+        @Override
+        protected ThreadDumper getDefaultThreadDumper() {
+            return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
         }
     };
 
