@@ -20,7 +20,8 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +45,12 @@ public abstract class CommandHandler<T> {
     /**
      * The worker {@link ExecutorService} being used by the {@link #activeSampler}.
      */
-    private final ExecutorService workerPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("spark-worker-%d").build());
+    private final ExecutorService workerPool = new ThreadPoolExecutor(
+            1, 6,
+            30L, TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            new ThreadFactoryBuilder().setNameFormat("spark-worker-%d").build()
+    );
 
     /** Guards {@link #activeSampler} */
     private final Object[] activeSamplerMutex = new Object[0];

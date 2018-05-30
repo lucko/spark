@@ -24,9 +24,10 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Represents a node in the overall sampling stack.
@@ -46,12 +47,12 @@ public class StackNode implements Comparable<StackNode> {
     /**
      * A map of this nodes children
      */
-    private final Map<String, StackNode> children = new HashMap<>();
+    private final Map<String, StackNode> children = new ConcurrentHashMap<>();
 
     /**
      * The accumulated sample time for this node
      */
-    private long totalTime = 0;
+    private final LongAdder totalTime = new LongAdder();
 
     public StackNode(String name) {
         this.name = name;
@@ -80,11 +81,11 @@ public class StackNode implements Comparable<StackNode> {
     }
     
     public long getTotalTime() {
-        return this.totalTime;
+        return this.totalTime.longValue();
     }
 
     public void accumulateTime(long time) {
-        this.totalTime += time;
+        this.totalTime.add(time);
     }
     
     private void log(StackTraceElement[] elements, int skip, long time) {
