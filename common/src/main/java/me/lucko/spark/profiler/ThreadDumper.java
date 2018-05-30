@@ -41,6 +41,8 @@ public interface ThreadDumper {
     /**
      * Implementation of {@link ThreadDumper} that generates data for all threads.
      */
+    ThreadDumper ALL = new All();
+
     final class All implements ThreadDumper {
         @Override
         public ThreadInfo[] dumpThreads(ThreadMXBean threadBean) {

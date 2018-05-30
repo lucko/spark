@@ -61,14 +61,17 @@ public class Sampler extends TimerTask {
     private final int interval;
     /** The instance used to generate thread information for use in sampling */
     private final ThreadDumper threadDumper;
+    /** The instance used to group threads together */
+    private final ThreadGrouper threadGrouper;
     /** The time when sampling first began */
     private long startTime = -1;
     /** The unix timestamp (in millis) when this sampler should automatically complete.*/
     private final long endTime; // -1 for nothing
     
-    public Sampler(int interval, ThreadDumper threadDumper, long endTime) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
         this.interval = interval;
         this.threadDumper = threadDumper;
+        this.threadGrouper = threadGrouper;
         this.endTime = endTime;
     }
 
@@ -84,7 +87,8 @@ public class Sampler extends TimerTask {
 
     private void insertData(QueuedThreadInfo data) {
         try {
-            StackNode node = this.threadData.computeIfAbsent(data.threadName, StackNode::new);
+            String group = this.threadGrouper.getGroup(data.threadName);
+            StackNode node = this.threadData.computeIfAbsent(group, StackNode::new);
             node.log(data.stack, Sampler.this.interval);
         } catch (Exception e) {
             e.printStackTrace();

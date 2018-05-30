@@ -9,6 +9,7 @@ import me.lucko.spark.common.http.Bytebin;
 import me.lucko.spark.profiler.Sampler;
 import me.lucko.spark.profiler.SamplerBuilder;
 import me.lucko.spark.profiler.ThreadDumper;
+import me.lucko.spark.profiler.ThreadGrouper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -92,6 +93,7 @@ public abstract class CommandHandler<T> {
         sendMessage(sender, "&b&l> &7/profiler start");
         sendMessage(sender, "       &8[&7--timeout&8 <timeout seconds>]");
         sendMessage(sender, "       &8[&7--thread&8 <thread name>]");
+        sendMessage(sender, "       &8[&7--not-combined]");
         sendMessage(sender, "       &8[&7--interval&8 <interval millis>]");
         sendMessage(sender, "&b&l> &7/profiler info");
         sendMessage(sender, "&b&l> &7/profiler stop");
@@ -122,9 +124,16 @@ public abstract class CommandHandler<T> {
             // use the server thread
             threadDumper = getDefaultThreadDumper();
         } else if (threads.contains("*")) {
-            threadDumper = new ThreadDumper.All();
+            threadDumper = ThreadDumper.ALL;
         } else {
             threadDumper = new ThreadDumper.Specific(threads);
+        }
+
+        ThreadGrouper threadGrouper;
+        if (arguments.containsKey("not-combined")) {
+            threadGrouper = ThreadGrouper.BY_NAME;
+        } else {
+            threadGrouper = ThreadGrouper.BY_POOL;
         }
 
         Sampler sampler;
@@ -138,6 +147,7 @@ public abstract class CommandHandler<T> {
 
             SamplerBuilder builder = new SamplerBuilder();
             builder.threadDumper(threadDumper);
+            builder.threadGrouper(threadGrouper);
             if (timeoutSeconds != -1) {
                 builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
             }
