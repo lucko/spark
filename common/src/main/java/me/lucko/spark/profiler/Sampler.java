@@ -18,6 +18,7 @@
 
 package me.lucko.spark.profiler;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -32,14 +33,15 @@ import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Phaser;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Main sampler class.
  */
 public class Sampler extends TimerTask {
+    private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
 
     /** The thread management interface for the current JVM */
     private final ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
@@ -48,9 +50,9 @@ public class Sampler extends TimerTask {
     private final Map<String, StackNode> threadData = new ConcurrentHashMap<>();
 
     /** The worker pool for inserting stack nodes */
-    private ExecutorService workerPool;
-    /** The phaser used to track pending stack node data */
-    private final Phaser phaser = new Phaser();
+    private final ExecutorService workerPool = Executors.newFixedThreadPool(
+            6, new ThreadFactoryBuilder().setNameFormat("spark-worker-" + THREAD_ID.getAndIncrement()).build()
+    );
 
     /** A future to encapsulation the completion of this sampler instance */
     private final CompletableFuture<Sampler> future = new CompletableFuture<>();
@@ -74,10 +76,8 @@ public class Sampler extends TimerTask {
      * Starts the sampler.
      *
      * @param samplingThread the timer to schedule the sampling on
-     * @param workerPool the worker pool
      */
-    public void start(Timer samplingThread, ExecutorService workerPool) {
-        this.workerPool = workerPool;
+    public void start(Timer samplingThread) {
         samplingThread.scheduleAtFixedRate(this, 0, this.interval);
         this.startTime = System.currentTimeMillis();
     }
@@ -88,9 +88,6 @@ public class Sampler extends TimerTask {
             node.log(data.stack, Sampler.this.interval);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            // countdown the phaser
-            this.phaser.arriveAndDeregister();
         }
     }
 
@@ -101,9 +98,10 @@ public class Sampler extends TimerTask {
      */
     public Map<String, StackNode> getData() {
         // wait for all pending data to be inserted
+        this.workerPool.shutdown();
         try {
-            this.phaser.awaitAdvanceInterruptibly(this.phaser.getPhase(), 15, TimeUnit.SECONDS);
-        } catch (InterruptedException | TimeoutException e) {
+            this.workerPool.awaitTermination(15, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
@@ -145,8 +143,6 @@ public class Sampler extends TimerTask {
 
                 // form the queued data
                 QueuedThreadInfo queuedData = new QueuedThreadInfo(threadName, stack);
-                // mark that this data is pending
-                this.phaser.register();
                 // schedule insertion of the data
                 this.workerPool.execute(queuedData);
             }

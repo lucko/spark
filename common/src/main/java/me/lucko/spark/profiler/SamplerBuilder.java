@@ -3,7 +3,6 @@ package me.lucko.spark.profiler;
 import com.google.common.base.Preconditions;
 
 import java.util.Timer;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,9 +33,9 @@ public class SamplerBuilder {
         return this;
     }
 
-    public Sampler start(Timer samplingThread, ExecutorService workerPool) {
+    public Sampler start(Timer samplingThread) {
         Sampler sampler = new Sampler(this.samplingInterval, this.threadDumper, this.timeout);
-        sampler.start(samplingThread, workerPool);
+        sampler.start(samplingThread);
         return sampler;
     }
 

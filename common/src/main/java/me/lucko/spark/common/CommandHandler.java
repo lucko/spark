@@ -3,7 +3,6 @@ package me.lucko.spark.common;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
 
 import me.lucko.spark.common.http.Bytebin;
@@ -19,9 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,16 +37,6 @@ public abstract class CommandHandler<T> {
      * The {@link Timer} being used by the {@link #activeSampler}.
      */
     private final Timer samplingThread = new Timer("spark-sampling-thread", true);
-
-    /**
-     * The worker {@link ExecutorService} being used by the {@link #activeSampler}.
-     */
-    private final ExecutorService workerPool = new ThreadPoolExecutor(
-            1, 6,
-            30L, TimeUnit.SECONDS,
-            new SynchronousQueue<>(),
-            new ThreadFactoryBuilder().setNameFormat("spark-worker-%d").build()
-    );
 
     /** Guards {@link #activeSampler} */
     private final Object[] activeSamplerMutex = new Object[0];
@@ -156,7 +142,7 @@ public abstract class CommandHandler<T> {
                 builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
             }
             builder.samplingInterval(intervalMillis);
-            sampler = this.activeSampler = builder.start(this.samplingThread, this.workerPool);
+            sampler = this.activeSampler = builder.start(this.samplingThread);
 
             sendPrefixedMessage(sender, "&bProfiler now active!");
             if (timeoutSeconds == -1) {
