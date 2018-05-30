@@ -1,5 +1,8 @@
 package me.lucko.spark.common;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.JsonObject;
 
@@ -11,9 +14,9 @@ import me.lucko.spark.profiler.ThreadDumper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -104,7 +107,7 @@ public abstract class CommandHandler<T> {
     }
 
     private void handleStart(T sender, List<String> args) {
-        Map<String, String> arguments = parseArguments(args);
+        SetMultimap<String, String> arguments = parseArguments(args);
 
         int timeoutSeconds = parseInt(arguments, "timeout", "d");
         if (timeoutSeconds != -1 && timeoutSeconds <= 10) {
@@ -121,15 +124,15 @@ public abstract class CommandHandler<T> {
             intervalMillis = 10;
         }
 
-        String threadName = arguments.getOrDefault("thread", arguments.getOrDefault("t", null));
+        Set<String> threads = Sets.union(arguments.get("thread"), arguments.get("t"));
         ThreadDumper threadDumper;
-        if (threadName == null) {
+        if (threads.isEmpty()) {
             // use the server thread
             threadDumper = getDefaultThreadDumper();
-        } else if (threadName.equals("*")) {
+        } else if (threads.contains("*")) {
             threadDumper = new ThreadDumper.All();
         } else {
-            threadDumper = new ThreadDumper.Specific(threadName);
+            threadDumper = new ThreadDumper.Specific(threads);
         }
 
         Sampler sampler;
@@ -243,23 +246,22 @@ public abstract class CommandHandler<T> {
         });
     }
 
-    private int parseInt(Map<String, String> arguments, String longArg, String shortArg) {
-        String value = arguments.getOrDefault(longArg, arguments.getOrDefault(shortArg, null));
-        if (value != null) {
+    private int parseInt(SetMultimap<String, String> arguments, String longArg, String shortArg) {
+        Iterator<String> it = Sets.union(arguments.get(longArg), arguments.get(shortArg)).iterator();
+        if (it.hasNext()) {
             try {
-                return Math.abs(Integer.parseInt(value));
+                return Math.abs(Integer.parseInt(it.next()));
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Invalid input for '" + longArg + "' argument. Please specify a number!");
             }
-        } else {
-            return -1; // undefined
         }
+        return -1; // undefined
     }
 
     private static final Pattern FLAG_REGEX = Pattern.compile("--(.+)$|-([a-zA-z])$");
 
-    private static Map<String, String> parseArguments(List<String> args) {
-        Map<String, String> arguments = new HashMap<>();
+    private static SetMultimap<String, String> parseArguments(List<String> args) {
+        SetMultimap<String, String> arguments = HashMultimap.create();
 
         String flag = null;
         List<String> value = null;

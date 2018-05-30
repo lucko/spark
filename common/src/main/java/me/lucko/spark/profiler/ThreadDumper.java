@@ -20,6 +20,8 @@ package me.lucko.spark.profiler;
 
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Uses the {@link ThreadMXBean} to generate {@link ThreadInfo} instances for the threads being
@@ -56,9 +58,10 @@ public interface ThreadDumper {
             this.ids = ids;
         }
 
-        public Specific(String name) {
+        public Specific(Set<String> names) {
+            Set<String> threadNamesLower = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
             this.ids = Thread.getAllStackTraces().keySet().stream()
-                    .filter(t -> t.getName().equalsIgnoreCase(name))
+                    .filter(t -> threadNamesLower.contains(t.getName().toLowerCase()))
                     .mapToLong(Thread::getId)
                     .toArray();
         }
