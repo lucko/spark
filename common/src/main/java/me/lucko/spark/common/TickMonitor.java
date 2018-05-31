@@ -15,6 +15,7 @@ public abstract class TickMonitor implements Runnable {
     private double lastTickTime = 0;
     private State state = null;
     private DoubleSummaryStatistics averageTickTime = new DoubleSummaryStatistics();
+    private double avg;
 
     public TickMonitor(TickCounter tickCounter, int percentageChangeThreshold) {
         this.tickCounter = tickCounter;
@@ -39,7 +40,7 @@ public abstract class TickMonitor implements Runnable {
             this.state = State.SETUP;
             this.lastTickTime = now;
             sendMessage("Tick monitor started. Before the monitor becomes fully active, the server's " +
-                    "average tick rate will be calculated over a period of 100 ticks (approx 5 seconds).");
+                    "average tick rate will be calculated over a period of 120 ticks (approx 6 seconds).");
             return;
         }
 
@@ -52,7 +53,7 @@ public abstract class TickMonitor implements Runnable {
             this.averageTickTime.accept(diff);
 
             // move onto the next state
-            if (this.averageTickTime.getCount() >= 100) {
+            if (this.averageTickTime.getCount() >= 120) {
 
                 sendMessage("&bAnalysis is now complete.");
                 sendMessage("&f> &7Max: " + df.format(this.averageTickTime.getMax()) + "ms");
@@ -60,19 +61,19 @@ public abstract class TickMonitor implements Runnable {
                 sendMessage("&f> &7Avg: " + df.format(this.averageTickTime.getAverage()) + "ms");
                 sendMessage("Starting now, any ticks with >" + this.percentageChangeThreshold + "% increase in " +
                         "duration compared to the average will be reported.");
+
+                this.avg = this.averageTickTime.getAverage();
                 this.state = State.MONITORING;
             }
         }
 
         if (this.state == State.MONITORING) {
-            double avg = this.averageTickTime.getAverage();
-
-            double increase = diff - avg;
+            double increase = diff - this.avg;
             if (increase <= 0) {
                 return;
             }
 
-            double percentageChange = (increase * 100d) / avg;
+            double percentageChange = (increase * 100d) / this.avg;
             if (percentageChange > this.percentageChangeThreshold) {
                 sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7lasted &b" + df.format(diff) + "&7 milliseconds. " +
                         "&7(a &b" + df.format(percentageChange) + "% &7increase from average)");
