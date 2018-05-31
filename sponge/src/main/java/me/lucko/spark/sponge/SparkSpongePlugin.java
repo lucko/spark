@@ -4,18 +4,20 @@ import com.google.inject.Inject;
 
 import me.lucko.spark.common.CommandHandler;
 import me.lucko.spark.profiler.ThreadDumper;
+import me.lucko.spark.profiler.TickCounter;
 import me.lucko.spark.sponge.utils.PomData;
 
 import org.spongepowered.api.Game;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.AsynchronousExecutor;
 import org.spongepowered.api.scheduler.SpongeExecutorService;
-import org.spongepowered.api.text.LiteralText;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.action.TextActions;
 import org.spongepowered.api.text.format.TextColors;
@@ -41,20 +43,38 @@ import javax.annotation.Nullable;
 public class SparkSpongePlugin implements CommandCallable {
 
     private final CommandHandler<CommandSource> commandHandler = new CommandHandler<CommandSource>() {
-        @Override
-        protected void sendMessage(CommandSource sender, String message) {
-            sender.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(message));
+        private Text colorize(String message) {
+            return TextSerializers.FORMATTING_CODE.deserialize(message);
+        }
+
+        private void broadcast(Text msg) {
+            Sponge.getServer().getConsole().sendMessage(msg);
+            for (Player player : Sponge.getServer().getOnlinePlayers()) {
+                if (player.hasPermission("spark.profiler")) {
+                    player.sendMessage(msg);
+                }
+            }
         }
 
         @Override
-        protected void sendLink(CommandSource sender, String url) {
+        protected void sendMessage(CommandSource sender, String message) {
+            sender.sendMessage(colorize(message));
+        }
+
+        @Override
+        protected void sendMessage(String message) {
+            Text msg = colorize(message);
+            broadcast(msg);
+        }
+
+        @Override
+        protected void sendLink(String url) {
             try {
-                LiteralText text = Text.builder(url)
+                Text msg = Text.builder(url)
                         .color(TextColors.GRAY)
                         .onClick(TextActions.openUrl(new URL(url)))
                         .build();
-
-                sender.sendMessage(text);
+                broadcast(msg);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
@@ -68,6 +88,11 @@ public class SparkSpongePlugin implements CommandCallable {
         @Override
         protected ThreadDumper getDefaultThreadDumper() {
             return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+        }
+
+        @Override
+        protected TickCounter newTickCounter() {
+            return new SpongeTickCounter(SparkSpongePlugin.this);
         }
     };
 

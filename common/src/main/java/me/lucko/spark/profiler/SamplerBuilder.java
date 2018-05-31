@@ -15,6 +15,9 @@ public class SamplerBuilder {
     private ThreadDumper threadDumper = ThreadDumper.ALL;
     private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;
 
+    private int ticksOver = -1;
+    private TickCounter tickCounter = null;
+
     public SamplerBuilder() {
     }
 
@@ -39,8 +42,20 @@ public class SamplerBuilder {
         return this;
     }
 
+    public SamplerBuilder ticksOver(int ticksOver, TickCounter tickCounter) {
+        this.ticksOver = ticksOver;
+        this.tickCounter = tickCounter;
+        return this;
+    }
+
     public Sampler start(Timer samplingThread) {
-        Sampler sampler = new Sampler(this.samplingInterval, this.threadDumper, this.threadGrouper, this.timeout);
+        Sampler sampler;
+        if (this.ticksOver != -1 && this.tickCounter != null) {
+            sampler = new Sampler(this.samplingInterval, this.threadDumper, this.threadGrouper, this.timeout, this.tickCounter, this.ticksOver);
+        } else {
+            sampler = new Sampler(this.samplingInterval, this.threadDumper, this.threadGrouper, this.timeout);
+        }
+
         sampler.start(samplingThread);
         return sampler;
     }

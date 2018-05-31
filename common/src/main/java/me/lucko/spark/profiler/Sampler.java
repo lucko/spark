@@ -31,10 +31,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -43,35 +41,39 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Sampler extends TimerTask {
     private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
 
-    /** The thread management interface for the current JVM */
-    private final ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-
-    /** A map of root stack nodes for each thread with sampling data */
-    private final Map<String, StackNode> threadData = new ConcurrentHashMap<>();
-
     /** The worker pool for inserting stack nodes */
     private final ExecutorService workerPool = Executors.newFixedThreadPool(
             6, new ThreadFactoryBuilder().setNameFormat("spark-worker-" + THREAD_ID.getAndIncrement()).build()
     );
+
+    /** The thread management interface for the current JVM */
+    private final ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+    /** The instance used to generate thread information for use in sampling */
+    private final ThreadDumper threadDumper;
+    /** Responsible for aggregating and then outputting collected sampling data */
+    private final DataAggregator dataAggregator;
 
     /** A future to encapsulation the completion of this sampler instance */
     private final CompletableFuture<Sampler> future = new CompletableFuture<>();
 
     /** The interval to wait between sampling, in milliseconds */
     private final int interval;
-    /** The instance used to generate thread information for use in sampling */
-    private final ThreadDumper threadDumper;
-    /** The instance used to group threads together */
-    private final ThreadGrouper threadGrouper;
     /** The time when sampling first began */
     private long startTime = -1;
     /** The unix timestamp (in millis) when this sampler should automatically complete.*/
     private final long endTime; // -1 for nothing
     
     public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
-        this.interval = interval;
         this.threadDumper = threadDumper;
-        this.threadGrouper = threadGrouper;
+        this.dataAggregator = new AsyncDataAggregator(this.workerPool, threadGrouper, interval);
+        this.interval = interval;
+        this.endTime = endTime;
+    }
+
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, TickCounter tickCounter, int tickLengthThreshold) {
+        this.threadDumper = threadDumper;
+        this.dataAggregator = new TickedDataAggregator(this.workerPool, tickCounter, threadGrouper, interval, tickLengthThreshold);
+        this.interval = interval;
         this.endTime = endTime;
     }
 
@@ -81,35 +83,9 @@ public class Sampler extends TimerTask {
      * @param samplingThread the timer to schedule the sampling on
      */
     public void start(Timer samplingThread) {
-        samplingThread.scheduleAtFixedRate(this, 0, this.interval);
         this.startTime = System.currentTimeMillis();
-    }
-
-    private void insertData(QueuedThreadInfo data) {
-        try {
-            String group = this.threadGrouper.getGroup(data.threadName);
-            StackNode node = this.threadData.computeIfAbsent(group, StackNode::new);
-            node.log(data.stack, Sampler.this.interval);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Gets the sampling data recorded by this instance.
-     *
-     * @return the data
-     */
-    public Map<String, StackNode> getData() {
-        // wait for all pending data to be inserted
-        this.workerPool.shutdown();
-        try {
-            this.workerPool.awaitTermination(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return this.threadData;
+        this.dataAggregator.start();
+        samplingThread.scheduleAtFixedRate(this, 0, this.interval);
     }
 
     public long getStartTime() {
@@ -145,10 +121,7 @@ public class Sampler extends TimerTask {
                     continue;
                 }
 
-                // form the queued data
-                QueuedThreadInfo queuedData = new QueuedThreadInfo(threadName, stack);
-                // schedule insertion of the data
-                this.workerPool.execute(queuedData);
+                this.dataAggregator.insertData(threadName, stack);
             }
         } catch (Throwable t) {
             this.future.completeExceptionally(t);
@@ -161,7 +134,7 @@ public class Sampler extends TimerTask {
 
         JsonArray threads = new JsonArray();
 
-        List<Map.Entry<String, StackNode>> data = new ArrayList<>(getData().entrySet());
+        List<Map.Entry<String, StackNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
         data.sort(Map.Entry.comparingByKey());
 
         for (Map.Entry<String, StackNode> entry : data) {
@@ -175,21 +148,6 @@ public class Sampler extends TimerTask {
         out.add("threads", threads);
 
         return out;
-    }
-
-    private final class QueuedThreadInfo implements Runnable {
-        private final String threadName;
-        private final StackTraceElement[] stack;
-
-        private QueuedThreadInfo(String threadName, StackTraceElement[] stack) {
-            this.threadName = threadName;
-            this.stack = stack;
-        }
-
-        @Override
-        public void run() {
-            insertData(this);
-        }
     }
 
 }

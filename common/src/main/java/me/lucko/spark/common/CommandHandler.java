@@ -10,6 +10,7 @@ import me.lucko.spark.profiler.Sampler;
 import me.lucko.spark.profiler.SamplerBuilder;
 import me.lucko.spark.profiler.ThreadDumper;
 import me.lucko.spark.profiler.ThreadGrouper;
+import me.lucko.spark.profiler.TickCounter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,6 +34,8 @@ public abstract class CommandHandler<T> {
 
     /** The URL of the viewer frontend */
     private static final String VIEWER_URL = "https://sparkprofiler.github.io/?";
+    /** The prefix used in all messages */
+    private static final String PREFIX = "&8[&fspark&8] &7";
 
     /**
      * The {@link Timer} being used by the {@link #activeSampler}.
@@ -43,17 +46,25 @@ public abstract class CommandHandler<T> {
     private final Object[] activeSamplerMutex = new Object[0];
     /** The WarmRoast instance currently running, if any */
     private Sampler activeSampler = null;
+    /** The tick monitor instance currently running, if any */
+    private ReportingTickMonitor activeTickMonitor = null;
 
 
     // abstract methods implemented by each platform
 
     protected abstract void sendMessage(T sender, String message);
-    protected abstract void sendLink(T sender, String url);
+    protected abstract void sendMessage(String message);
+    protected abstract void sendLink(String url);
     protected abstract void runAsync(Runnable r);
     protected abstract ThreadDumper getDefaultThreadDumper();
+    protected abstract TickCounter newTickCounter();
 
     private void sendPrefixedMessage(T sender, String message) {
-        sendMessage(sender, "&8[&fspark&8] &7" + message);
+        sendMessage(sender, PREFIX + message);
+    }
+
+    private void sendPrefixedMessage(String message) {
+        sendMessage(PREFIX + message);
     }
 
     public void handleCommand(T sender, String[] args) {
@@ -79,6 +90,9 @@ public abstract class CommandHandler<T> {
                 case "paste":
                     handleStop(sender);
                     break;
+                case "monitoring":
+                    handleMonitoring(sender, arguments);
+                    break;
                 default:
                     sendInfo(sender);
                     break;
@@ -95,9 +109,11 @@ public abstract class CommandHandler<T> {
         sendMessage(sender, "       &8[&7--thread&8 <thread name>]");
         sendMessage(sender, "       &8[&7--not-combined]");
         sendMessage(sender, "       &8[&7--interval&8 <interval millis>]");
+        sendMessage(sender, "       &8[&7--only-ticks-over&8 <tick length millis>]");
         sendMessage(sender, "&b&l> &7/profiler info");
         sendMessage(sender, "&b&l> &7/profiler stop");
         sendMessage(sender, "&b&l> &7/profiler cancel");
+        sendMessage(sender, "&b&l> &7/profiler monitoring");
     }
 
     private void handleStart(T sender, List<String> args) {
@@ -136,6 +152,17 @@ public abstract class CommandHandler<T> {
             threadGrouper = ThreadGrouper.BY_POOL;
         }
 
+        int ticksOver = parseInt(arguments, "only-ticks-over", "o");
+        TickCounter tickCounter = null;
+        if (ticksOver != -1) {
+            try {
+                tickCounter = newTickCounter();
+            } catch (UnsupportedOperationException e) {
+                sendPrefixedMessage(sender, "&cTick counting is not supported on BungeeCord!");
+                return;
+            }
+        }
+
         Sampler sampler;
         synchronized (this.activeSamplerMutex) {
             if (this.activeSampler != null) {
@@ -143,7 +170,7 @@ public abstract class CommandHandler<T> {
                 return;
             }
 
-            sendPrefixedMessage(sender, "&7Initializing a new profiler, please wait...");
+            sendPrefixedMessage("&7Initializing a new profiler, please wait...");
 
             SamplerBuilder builder = new SamplerBuilder();
             builder.threadDumper(threadDumper);
@@ -152,13 +179,16 @@ public abstract class CommandHandler<T> {
                 builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
             }
             builder.samplingInterval(intervalMillis);
+            if (ticksOver != -1) {
+                builder.ticksOver(ticksOver, tickCounter);
+            }
             sampler = this.activeSampler = builder.start(this.samplingThread);
 
-            sendPrefixedMessage(sender, "&bProfiler now active!");
+            sendPrefixedMessage("&bProfiler now active!");
             if (timeoutSeconds == -1) {
-                sendPrefixedMessage(sender, "&7Use '/profiler stop' to stop profiling and upload the results.");
+                sendPrefixedMessage("&7Use '/profiler stop' to stop profiling and upload the results.");
             } else {
-                sendPrefixedMessage(sender, "&7The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds.");
+                sendPrefixedMessage("&7The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds.");
             }
         }
 
@@ -167,7 +197,7 @@ public abstract class CommandHandler<T> {
         // send message if profiling fails
         future.whenCompleteAsync((s, throwable) -> {
             if (throwable != null) {
-                sendPrefixedMessage(sender, "&cSampling operation failed unexpectedly. Error: " + throwable.toString());
+                sendPrefixedMessage("&cSampling operation failed unexpectedly. Error: " + throwable.toString());
                 throwable.printStackTrace();
             }
         });
@@ -184,8 +214,8 @@ public abstract class CommandHandler<T> {
         // await the result
         if (timeoutSeconds != -1) {
             future.thenAcceptAsync(s -> {
-                sendPrefixedMessage(sender, "&7The active sampling operation has completed! Uploading results...");
-                handleUpload(sender, s);
+                sendPrefixedMessage("&7The active sampling operation has completed! Uploading results...");
+                handleUpload(s);
             });
         }
     }
@@ -215,8 +245,8 @@ public abstract class CommandHandler<T> {
                 sendPrefixedMessage(sender, "&7There isn't an active sampling task running.");
             } else {
                 this.activeSampler.cancel();
-                sendPrefixedMessage(sender, "&7The active sampling operation has been stopped! Uploading results...");
-                handleUpload(sender, this.activeSampler);
+                sendPrefixedMessage("&7The active sampling operation has been stopped! Uploading results...");
+                handleUpload(this.activeSampler);
                 this.activeSampler = null;
             }
         }
@@ -229,23 +259,57 @@ public abstract class CommandHandler<T> {
             } else {
                 this.activeSampler.cancel();
                 this.activeSampler = null;
-                sendPrefixedMessage(sender, "&bThe active sampling task has been cancelled.");
+                sendPrefixedMessage("&bThe active sampling task has been cancelled.");
             }
         }
     }
 
-    private void handleUpload(T sender, Sampler sampler) {
+    private void handleUpload(Sampler sampler) {
         runAsync(() -> {
             JsonObject output = sampler.formOutput();
             try {
                 String pasteId = Bytebin.postContent(output);
-                sendPrefixedMessage(sender, "&bSampling results:");
-                sendLink(sender, VIEWER_URL + pasteId);
+                sendPrefixedMessage("&bSampling results:");
+                sendLink(VIEWER_URL + pasteId);
             } catch (IOException e) {
-                sendPrefixedMessage(sender, "&cAn error occurred whilst uploading the results.");
+                sendPrefixedMessage("&cAn error occurred whilst uploading the results.");
                 e.printStackTrace();
             }
         });
+    }
+
+    private void handleMonitoring(T sender, List<String> args) {
+        SetMultimap<String, String> arguments = parseArguments(args);
+
+        if (this.activeTickMonitor == null) {
+
+            int threshold = parseInt(arguments, "threshold", "t");
+            if (threshold == -1) {
+                threshold = 100;
+            }
+
+            try {
+                TickCounter tickCounter = newTickCounter();
+                this.activeTickMonitor = new ReportingTickMonitor(tickCounter, threshold);
+            } catch (UnsupportedOperationException e) {
+                sendPrefixedMessage(sender, "&cNot supported on BungeeCord!");
+            }
+        } else {
+            this.activeTickMonitor.close();
+            this.activeTickMonitor = null;
+            sendPrefixedMessage("&7Tick monitor disabled.");
+        }
+    }
+
+    private class ReportingTickMonitor extends TickMonitor {
+        public ReportingTickMonitor(TickCounter tickCounter, int percentageChangeThreshold) {
+            super(tickCounter, percentageChangeThreshold);
+        }
+
+        @Override
+        protected void sendMessage(String message) {
+            sendPrefixedMessage(message);
+        }
     }
 
     private int parseInt(SetMultimap<String, String> arguments, String longArg, String shortArg) {
