@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SamplerBuilder {
 
-    private int samplingInterval = 10;
+    private int samplingInterval = 4;
     private long timeout = -1;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
     private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;

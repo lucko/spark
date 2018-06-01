@@ -131,7 +131,7 @@ public abstract class CommandHandler<T> {
 
         int intervalMillis = parseInt(arguments, "interval", "i");
         if (intervalMillis <= 0) {
-            intervalMillis = 10;
+            intervalMillis = 4;
         }
 
         Set<String> threads = Sets.union(arguments.get("thread"), arguments.get("t"));
