@@ -1,7 +1,5 @@
 package me.lucko.spark.profiler;
 
-import com.google.common.base.Preconditions;
-
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
@@ -27,7 +25,9 @@ public class SamplerBuilder {
     }
 
     public SamplerBuilder completeAfter(long timeout, TimeUnit unit) {
-        Preconditions.checkArgument(timeout > 0, "time > 0");
+        if (timeout <= 0) {
+            throw new IllegalArgumentException("timeout > 0");
+        }
         this.timeout = System.currentTimeMillis() + unit.toMillis(timeout);
         return this;
     }

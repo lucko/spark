@@ -3,7 +3,6 @@ package me.lucko.spark.common;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
-import com.google.gson.JsonObject;
 
 import me.lucko.spark.common.http.Bytebin;
 import me.lucko.spark.profiler.Sampler;
@@ -114,6 +113,7 @@ public abstract class CommandHandler<T> {
         sendMessage(sender, "&b&l> &7/profiler stop");
         sendMessage(sender, "&b&l> &7/profiler cancel");
         sendMessage(sender, "&b&l> &7/profiler monitoring");
+        sendMessage(sender, "       &8[&7--threshold&8 <percentage increase>]");
     }
 
     private void handleStart(T sender, List<String> args) {
@@ -266,9 +266,9 @@ public abstract class CommandHandler<T> {
 
     private void handleUpload(Sampler sampler) {
         runAsync(() -> {
-            JsonObject output = sampler.formOutput();
+            byte[] output = sampler.formCompressedDataPayload();
             try {
-                String pasteId = Bytebin.postContent(output);
+                String pasteId = Bytebin.postCompressedContent(output);
                 sendPrefixedMessage("&bSampling results:");
                 sendLink(VIEWER_URL + pasteId);
             } catch (IOException e) {

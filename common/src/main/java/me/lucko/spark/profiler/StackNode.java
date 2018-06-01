@@ -18,9 +18,9 @@
 
 package me.lucko.spark.profiler;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -112,30 +112,30 @@ public class StackNode implements Comparable<StackNode> {
         return getName().compareTo(o.getName());
     }
 
-    public JsonObject serialize() {
-        JsonObject ret = new JsonObject();
+    public void serializeTo(JsonWriter writer) throws IOException {
+        writer.beginObject();
 
         // append metadata about this node
-        appendMetadata(ret);
+        appendMetadata(writer);
 
         // include the total time recorded for this node
-        ret.addProperty("totalTime", getTotalTime());
+        writer.name("totalTime").value(getTotalTime());
 
         // append child nodes, if any are present
         Collection<StackNode> childNodes = getChildren();
         if (!childNodes.isEmpty()) {
-            JsonArray children = new JsonArray();
+            writer.name("children").beginArray();
             for (StackNode child : childNodes) {
-                children.add(child.serialize());
+                child.serializeTo(writer);
             }
-            ret.add("children", children);
+            writer.endArray();
         }
 
-        return ret;
+        writer.endObject();
     }
 
-    protected void appendMetadata(JsonObject obj) {
-        obj.addProperty("name", getName());
+    protected void appendMetadata(JsonWriter writer) throws IOException {
+        writer.name("name").value(getName());
     }
 
 }

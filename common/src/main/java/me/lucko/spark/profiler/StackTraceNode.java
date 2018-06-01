@@ -18,7 +18,9 @@
 
 package me.lucko.spark.profiler;
 
-import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
+
+import java.io.IOException;
 
 /**
  * Represents a {@link StackNode node} for a method call.
@@ -48,17 +50,17 @@ public class StackTraceNode extends StackNode {
     }
 
     public String getClassName() {
-        return className;
+        return this.className;
     }
 
     public String getMethodName() {
-        return methodName;
+        return this.methodName;
     }
 
     @Override
-    protected void appendMetadata(JsonObject obj) {
-        obj.addProperty("className", className);
-        obj.addProperty("methodName", methodName);
+    protected void appendMetadata(JsonWriter writer) throws IOException {
+        writer.name("className").value(this.className);
+        writer.name("methodName").value(this.methodName);
     }
 
     @Override

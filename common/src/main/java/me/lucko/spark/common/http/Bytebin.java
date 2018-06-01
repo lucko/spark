@@ -1,8 +1,6 @@
 package me.lucko.spark.common.http;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import okhttp3.MediaType;
@@ -12,36 +10,23 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Utility for uploading JSON data to bytebin.
  */
 public final class Bytebin {
 
-    /** Shared GSON instance */
-    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     /** Media type for JSON data */
     private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
     /** The URL used to upload sampling data */
     private static final String UPLOAD_ENDPOINT = "https://bytebin.lucko.me/post";
 
-    public static String postContent(JsonElement content) throws IOException {
-        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(byteOut), StandardCharsets.UTF_8)) {
-            GSON.toJson(content, writer);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        RequestBody body = RequestBody.create(JSON_TYPE, byteOut.toByteArray());
+    public static String postCompressedContent(byte[] buf) throws IOException {
+        RequestBody body = RequestBody.create(JSON_TYPE, buf);
 
         Request.Builder requestBuilder = new Request.Builder()
                 .url(UPLOAD_ENDPOINT)

@@ -76,7 +76,7 @@ public abstract class TickMonitor implements Runnable {
             double percentageChange = (increase * 100d) / this.avg;
             if (percentageChange > this.percentageChangeThreshold) {
                 sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7lasted &b" + df.format(diff) + "&7 milliseconds. " +
-                        "&7(a &b" + df.format(percentageChange) + "% &7increase from average)");
+                        "&7(&b" + df.format(percentageChange) + "% &7increase from average)");
             }
         }
     }

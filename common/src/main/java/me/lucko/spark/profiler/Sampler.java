@@ -19,12 +19,16 @@
 package me.lucko.spark.profiler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonWriter;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Main sampler class.
@@ -129,25 +134,37 @@ public class Sampler extends TimerTask {
         }
     }
 
-    public JsonObject formOutput() {
-        JsonObject out = new JsonObject();
+    private void writeOutput(JsonWriter writer) throws IOException {
+        writer.beginObject();
 
-        JsonArray threads = new JsonArray();
+        writer.name("threads").beginArray();
 
         List<Map.Entry<String, StackNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
         data.sort(Map.Entry.comparingByKey());
 
         for (Map.Entry<String, StackNode> entry : data) {
-            JsonObject o = new JsonObject();
-            o.addProperty("threadName", entry.getKey());
-            o.addProperty("totalTime", entry.getValue().getTotalTime());
-            o.add("rootNode", entry.getValue().serialize());
-
-            threads.add(o);
+            writer.beginObject();
+            writer.name("threadName").value(entry.getKey());
+            writer.name("totalTime").value(entry.getValue().getTotalTime());
+            writer.name("rootNode");
+            entry.getValue().serializeTo(writer);
+            writer.endObject();
         }
-        out.add("threads", threads);
 
-        return out;
+        writer.endArray();
+        writer.endObject();
+    }
+
+    public byte[] formCompressedDataPayload() {
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(byteOut), StandardCharsets.UTF_8)) {
+            try (JsonWriter jsonWriter = new JsonWriter(writer)) {
+                writeOutput(jsonWriter);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return byteOut.toByteArray();
     }
 
 }
