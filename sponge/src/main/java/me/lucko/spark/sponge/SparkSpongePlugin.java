@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
 @Plugin(
         id = "spark",
         name = "spark",
-        version = "1.0.3",
+        version = "1.0.4",
         description = PomData.DESCRIPTION,
         authors = {"Luck", "sk89q"}
 )
