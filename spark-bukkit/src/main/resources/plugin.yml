@@ -1,0 +1,10 @@
+name: spark
+version: ${pluginVersion}
+description: Spark is a CPU profiling plugin based on sk89q's WarmRoast profiler
+authors: [Luck, sk89q]
+main: me.lucko.spark.bukkit.SparkBukkitPlugin
+
+commands:
+  spark:
+    description: Main plugin command
+    aliases: [profiler]

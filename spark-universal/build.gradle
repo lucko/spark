@@ -1,0 +1,29 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+  }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+dependencies {
+  compile project(':spark-common')
+  compile project(':spark-bukkit')
+  compile project(':spark-bungeecord')
+  compile project(':spark-sponge')
+}
+
+shadowJar {
+  archiveName = 'spark.jar'
+
+  relocate 'okio', 'me.lucko.spark.lib.okio'
+  relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+}
+
+artifacts {
+  archives shadowJar
+  shadow shadowJar
+}

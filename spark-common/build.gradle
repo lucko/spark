@@ -1,0 +1,6 @@
+dependencies {
+    compile 'com.squareup.okhttp3:okhttp:3.10.0'
+    compile 'com.squareup.okio:okio:1.14.0'
+    compileOnly 'com.google.code.gson:gson:2.7'
+    compileOnly 'com.google.guava:guava:19.0'
+}

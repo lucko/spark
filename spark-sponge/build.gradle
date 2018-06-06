@@ -1,0 +1,14 @@
+plugins {
+    id 'ninja.miserable.blossom' version '1.0.1'
+}
+
+dependencies {
+    compile project(':spark-common')
+    compileOnly 'org.spongepowered:spongeapi:8.0.0-SNAPSHOT'
+    annotationProcessor 'org.spongepowered:spongeapi:8.0.0-SNAPSHOT'
+}
+
+blossom {
+    replaceTokenIn('src/main/java/me/lucko/spark/sponge/SparkSpongePlugin.java')
+    replaceToken '@version@', project.pluginVersion
+}

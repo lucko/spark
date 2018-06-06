@@ -1,0 +1,11 @@
+dependencies {
+    compile project(':spark-common')
+    compileOnly 'net.md-5:bungeecord-api:1.12-SNAPSHOT'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        expand 'pluginVersion': project.pluginVersion
+        include 'bungee.yml'
+    }
+}
