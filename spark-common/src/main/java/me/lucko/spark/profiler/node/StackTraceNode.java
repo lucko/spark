@@ -16,56 +16,63 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package me.lucko.spark.profiler;
+package me.lucko.spark.profiler.node;
 
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 
 /**
- * Represents a {@link StackNode node} for a method call.
+ * Represents a stack trace element within the {@link AbstractNode node} structure.
  */
-public class StackTraceNode extends StackNode {
+public final class StackTraceNode extends AbstractNode implements Comparable<StackTraceNode> {
 
     /**
-     * Forms the {@link StackNode#getName()} for a {@link StackTraceNode}.
+     * Forms a key to represent the given node.
      *
      * @param className the name of the class
      * @param methodName the name of the method
-     * @return the name
+     * @param lineNumber the line number
+     * @return the key
      */
-    static String formName(String className, String methodName) {
-        return className + "." + methodName + "()";
+    static String generateKey(String className, String methodName, int lineNumber) {
+        return className + "." + methodName + "#" + lineNumber;
     }
 
     /** The name of the class */
     private final String className;
     /** The name of the method */
     private final String methodName;
+    /** The line number of the call */
+    private final int lineNumber;
 
-    public StackTraceNode(String className, String methodName) {
-        super(formName(className, methodName));
+    public StackTraceNode(String className, String methodName, int lineNumber) {
         this.className = className;
         this.methodName = methodName;
-    }
-
-    public String getClassName() {
-        return this.className;
-    }
-
-    public String getMethodName() {
-        return this.methodName;
+        this.lineNumber = lineNumber;
     }
 
     @Override
     protected void appendMetadata(JsonWriter writer) throws IOException {
         writer.name("className").value(this.className);
         writer.name("methodName").value(this.methodName);
+        if (this.lineNumber != 0) {
+            writer.name("lineNumber").value(this.lineNumber);
+        }
+    }
+
+    private String key() {
+        return generateKey(this.className, this.methodName, this.lineNumber);
     }
 
     @Override
-    public int compareTo(StackNode that) {
-        return Long.compare(that.getTotalTime(), this.getTotalTime());
+    public int compareTo(StackTraceNode that) {
+        int i = -Long.compare(this.getTotalTime(), that.getTotalTime());
+        if (i != 0) {
+            return i;
+        }
+
+        return this.key().compareTo(that.key());
     }
 
 }

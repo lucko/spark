@@ -22,7 +22,7 @@ public class ForgeTickCounter implements TickCounter {
 
     @SubscribeEvent
     public void onTick(TickEvent e) {
-        if (e.phase != TickEvent.Phase.END) {
+        if (e.phase != TickEvent.Phase.START) {
             return;
         }
 

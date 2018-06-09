@@ -1,4 +1,6 @@
-package me.lucko.spark.profiler;
+package me.lucko.spark.profiler.aggregator;
+
+import me.lucko.spark.profiler.node.ThreadNode;
 
 import java.util.Map;
 
@@ -19,7 +21,7 @@ public interface DataAggregator {
      *
      * @return the output data
      */
-    Map<String, StackNode> getData();
+    Map<String, ThreadNode> getData();
 
     /**
      * Inserts sampling data into this aggregator

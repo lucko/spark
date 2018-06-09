@@ -21,6 +21,11 @@ package me.lucko.spark.profiler;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.stream.JsonWriter;
 
+import me.lucko.spark.profiler.aggregator.DataAggregator;
+import me.lucko.spark.profiler.aggregator.SimpleDataAggregator;
+import me.lucko.spark.profiler.aggregator.TickedDataAggregator;
+import me.lucko.spark.profiler.node.ThreadNode;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -144,10 +149,10 @@ public class Sampler implements Runnable {
 
         writer.name("threads").beginArray();
 
-        List<Map.Entry<String, StackNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
+        List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
         data.sort(Map.Entry.comparingByKey());
 
-        for (Map.Entry<String, StackNode> entry : data) {
+        for (Map.Entry<String, ThreadNode> entry : data) {
             writer.beginObject();
             writer.name("threadName").value(entry.getKey());
             writer.name("totalTime").value(entry.getValue().getTotalTime());

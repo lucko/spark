@@ -1,4 +1,8 @@
-package me.lucko.spark.profiler;
+package me.lucko.spark.profiler.aggregator;
+
+import me.lucko.spark.profiler.ThreadGrouper;
+import me.lucko.spark.profiler.node.AbstractNode;
+import me.lucko.spark.profiler.node.ThreadNode;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -6,13 +10,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Implementation of {@link DataAggregator} that makes use of a "worker" thread pool for inserting
- * data.
+ * Basic implementation of {@link DataAggregator}.
  */
 public class SimpleDataAggregator implements DataAggregator {
 
     /** A map of root stack nodes for each thread with sampling data */
-    private final Map<String, StackNode> threadData = new ConcurrentHashMap<>();
+    private final Map<String, ThreadNode> threadData = new ConcurrentHashMap<>();
 
     /** The worker pool used for sampling */
     private final ExecutorService workerPool;
@@ -33,7 +36,7 @@ public class SimpleDataAggregator implements DataAggregator {
     public void insertData(String threadName, StackTraceElement[] stack) {
         try {
             String group = this.threadGrouper.getGroup(threadName);
-            StackNode node = this.threadData.computeIfAbsent(group, StackNode::new);
+            AbstractNode node = this.threadData.computeIfAbsent(group, ThreadNode::new);
             node.log(stack, this.interval);
         } catch (Exception e) {
             e.printStackTrace();
@@ -41,7 +44,7 @@ public class SimpleDataAggregator implements DataAggregator {
     }
 
     @Override
-    public Map<String, StackNode> getData() {
+    public Map<String, ThreadNode> getData() {
         // wait for all pending data to be inserted
         this.workerPool.shutdown();
         try {

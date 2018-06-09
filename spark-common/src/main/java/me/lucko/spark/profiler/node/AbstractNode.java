@@ -16,7 +16,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package me.lucko.spark.profiler;
+package me.lucko.spark.profiler.node;
 
 import com.google.gson.stream.JsonWriter;
 
@@ -30,66 +30,39 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
- * Represents a node in the overall sampling stack.
- *
- * <p>The base implementation of this class is only used for the root of node structures. The
- * {@link StackTraceNode} class is used for representing method calls in the structure.</p>
+ * Encapsulates a timed node in the sampling stack.
  */
-public class StackNode implements Comparable<StackNode> {
+public abstract class AbstractNode {
 
     private static final int MAX_STACK_DEPTH = 300;
 
     /**
-     * The name of this node
-     */
-    private final String name;
-
-    /**
      * A map of this nodes children
      */
-    private final Map<String, StackNode> children = new ConcurrentHashMap<>();
+    private final Map<String, StackTraceNode> children = new ConcurrentHashMap<>();
 
     /**
      * The accumulated sample time for this node
      */
     private final LongAdder totalTime = new LongAdder();
-
-    public StackNode(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
-    public Collection<StackNode> getChildren() {
-        if (this.children.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<StackNode> list = new ArrayList<>(this.children.values());
-        list.sort(null);
-        return list;
-    }
-    
-    private StackNode resolveChild(String name) {
-        return this.children.computeIfAbsent(name, StackNode::new);
-    }
-    
-    private StackNode resolveChild(String className, String methodName) {
-        return this.children.computeIfAbsent(StackTraceNode.formName(className, methodName), name -> new StackTraceNode(className, methodName));
-    }
     
     public long getTotalTime() {
         return this.totalTime.longValue();
     }
 
-    public void accumulateTime(long time) {
-        this.totalTime.add(time);
+    private AbstractNode resolveChild(String className, String methodName, int lineNumber) {
+        return this.children.computeIfAbsent(
+                StackTraceNode.generateKey(className, methodName, lineNumber),
+                name -> new StackTraceNode(className, methodName, lineNumber)
+        );
+    }
+
+    public void log(StackTraceElement[] elements, long time) {
+        log(elements, 0, time);
     }
     
     private void log(StackTraceElement[] elements, int skip, long time) {
-        accumulateTime(time);
+        this.totalTime.add(time);
 
         if (skip >= MAX_STACK_DEPTH) {
             return;
@@ -100,16 +73,17 @@ public class StackNode implements Comparable<StackNode> {
         }
         
         StackTraceElement bottom = elements[elements.length - (skip + 1)];
-        resolveChild(bottom.getClassName(), bottom.getMethodName()).log(elements, skip + 1, time);
-    }
-    
-    public void log(StackTraceElement[] elements, long time) {
-        log(elements, 0, time);
+        resolveChild(bottom.getClassName(), bottom.getMethodName(), Math.max(0, bottom.getLineNumber())).log(elements, skip + 1, time);
     }
 
-    @Override
-    public int compareTo(StackNode o) {
-        return getName().compareTo(o.getName());
+    private Collection<? extends AbstractNode> getChildren() {
+        if (this.children.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<StackTraceNode> list = new ArrayList<>(this.children.values());
+        list.sort(null);
+        return list;
     }
 
     public void serializeTo(JsonWriter writer) throws IOException {
@@ -122,10 +96,10 @@ public class StackNode implements Comparable<StackNode> {
         writer.name("totalTime").value(getTotalTime());
 
         // append child nodes, if any are present
-        Collection<StackNode> childNodes = getChildren();
+        Collection<? extends AbstractNode> childNodes = getChildren();
         if (!childNodes.isEmpty()) {
             writer.name("children").beginArray();
-            for (StackNode child : childNodes) {
+            for (AbstractNode child : childNodes) {
                 child.serializeTo(writer);
             }
             writer.endArray();
@@ -134,8 +108,6 @@ public class StackNode implements Comparable<StackNode> {
         writer.endObject();
     }
 
-    protected void appendMetadata(JsonWriter writer) throws IOException {
-        writer.name("name").value(getName());
-    }
+    protected abstract void appendMetadata(JsonWriter writer) throws IOException;
 
 }

@@ -1,4 +1,9 @@
-package me.lucko.spark.profiler;
+package me.lucko.spark.profiler.aggregator;
+
+import me.lucko.spark.profiler.ThreadGrouper;
+import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.profiler.node.AbstractNode;
+import me.lucko.spark.profiler.node.ThreadNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 public class TickedDataAggregator implements DataAggregator {
 
     /** A map of root stack nodes for each thread with sampling data */
-    private final Map<String, StackNode> threadData = new ConcurrentHashMap<>();
+    private final Map<String, ThreadNode> threadData = new ConcurrentHashMap<>();
 
     /** The worker pool for inserting stack nodes */
     private final ExecutorService workerPool;
@@ -88,7 +93,7 @@ public class TickedDataAggregator implements DataAggregator {
     }
 
     @Override
-    public Map<String, StackNode> getData() {
+    public Map<String, ThreadNode> getData() {
         // push the current tick
         synchronized (this.mutex) {
             pushCurrentTick();
@@ -113,7 +118,7 @@ public class TickedDataAggregator implements DataAggregator {
         for (QueuedThreadInfo data : dataList) {
             try {
                 String group = this.threadGrouper.getGroup(data.threadName);
-                StackNode node = this.threadData.computeIfAbsent(group, StackNode::new);
+                AbstractNode node = this.threadData.computeIfAbsent(group, ThreadNode::new);
                 node.log(data.stack, this.interval);
             } catch (Exception e) {
                 e.printStackTrace();
