@@ -32,24 +32,27 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
 /**
  * Main sampler class.
  */
-public class Sampler extends TimerTask {
+public class Sampler implements Runnable {
     private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
 
     /** The worker pool for inserting stack nodes */
-    private final ExecutorService workerPool = Executors.newFixedThreadPool(
-            6, new ThreadFactoryBuilder().setNameFormat("spark-worker-" + THREAD_ID.getAndIncrement()).build()
+    private final ScheduledExecutorService workerPool = Executors.newScheduledThreadPool(
+            9, new ThreadFactoryBuilder().setNameFormat("spark-worker-" + THREAD_ID.getAndIncrement() + "-%d").build()
     );
+
+    /** The main sampling task */
+    private ScheduledFuture<?> task;
 
     /** The thread management interface for the current JVM */
     private final ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
@@ -70,7 +73,7 @@ public class Sampler extends TimerTask {
     
     public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new AsyncDataAggregator(this.workerPool, threadGrouper, interval);
+        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval);
         this.interval = interval;
         this.endTime = endTime;
     }
@@ -84,13 +87,11 @@ public class Sampler extends TimerTask {
 
     /**
      * Starts the sampler.
-     *
-     * @param samplingThread the timer to schedule the sampling on
      */
-    public void start(Timer samplingThread) {
+    public void start() {
         this.startTime = System.currentTimeMillis();
         this.dataAggregator.start();
-        samplingThread.scheduleAtFixedRate(this, 0, this.interval);
+        this.task = workerPool.scheduleAtFixedRate(this, 0, interval, TimeUnit.MILLISECONDS);
     }
 
     public long getStartTime() {
@@ -106,6 +107,10 @@ public class Sampler extends TimerTask {
 
     public CompletableFuture<Sampler> getFuture() {
         return this.future;
+    }
+
+    public void cancel() {
+        task.cancel(false);
     }
 
     @Override

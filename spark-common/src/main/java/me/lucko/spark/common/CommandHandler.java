@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -35,11 +34,6 @@ public abstract class CommandHandler<T> {
     private static final String VIEWER_URL = "https://sparkprofiler.github.io/?";
     /** The prefix used in all messages */
     private static final String PREFIX = "&8[&fspark&8] &7";
-
-    /**
-     * The {@link Timer} being used by the {@link #activeSampler}.
-     */
-    private final Timer samplingThread = new Timer("spark-sampling-thread", true);
 
     /** Guards {@link #activeSampler} */
     private final Object[] activeSamplerMutex = new Object[0];
@@ -183,7 +177,7 @@ public abstract class CommandHandler<T> {
             if (ticksOver != -1) {
                 builder.ticksOver(ticksOver, tickCounter);
             }
-            sampler = this.activeSampler = builder.start(this.samplingThread);
+            sampler = this.activeSampler = builder.start();
 
             sendPrefixedMessage("&bProfiler now active!");
             if (timeoutSeconds == -1) {

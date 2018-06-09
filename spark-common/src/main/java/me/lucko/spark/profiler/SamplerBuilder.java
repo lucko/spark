@@ -1,6 +1,5 @@
 package me.lucko.spark.profiler;
 
-import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -48,7 +47,7 @@ public class SamplerBuilder {
         return this;
     }
 
-    public Sampler start(Timer samplingThread) {
+    public Sampler start() {
         Sampler sampler;
         if (this.ticksOver != -1 && this.tickCounter != null) {
             sampler = new Sampler(this.samplingInterval, this.threadDumper, this.threadGrouper, this.timeout, this.tickCounter, this.ticksOver);
@@ -56,7 +55,7 @@ public class SamplerBuilder {
             sampler = new Sampler(this.samplingInterval, this.threadDumper, this.threadGrouper, this.timeout);
         }
 
-        sampler.start(samplingThread);
+        sampler.start();
         return sampler;
     }
 

@@ -34,6 +34,8 @@ public class TickedDataAggregator implements DataAggregator {
     /** The expected number of samples in each tick */
     private final int expectedSize;
 
+    private final Object mutex = new Object();
+
     // state
     private long currentTick = -1;
     private TickList currentData = new TickList(0);
@@ -48,22 +50,24 @@ public class TickedDataAggregator implements DataAggregator {
         this.expectedSize = (50 / interval) + 10;
     }
 
-    // this is effectively synchronized by the Timer instance in Sampler
     @Override
     public void insertData(String threadName, StackTraceElement[] stack) {
-        long tick = this.tickCounter.getCurrentTick();
-        if (this.currentTick != tick) {
-            pushCurrentTick();
-            this.currentTick = tick;
-            this.currentData = new TickList(this.expectedSize);
-        }
+        synchronized (this.mutex) {
+            long tick = this.tickCounter.getCurrentTick();
+            if (this.currentTick != tick) {
+                pushCurrentTick();
+                this.currentTick = tick;
+                this.currentData = new TickList(this.expectedSize);
+            }
 
-        // form the queued data
-        QueuedThreadInfo queuedData = new QueuedThreadInfo(threadName, stack);
-        // insert it
-        this.currentData.addData(queuedData);
+            // form the queued data
+            QueuedThreadInfo queuedData = new QueuedThreadInfo(threadName, stack);
+            // insert it
+            this.currentData.addData(queuedData);
+        }
     }
 
+    // guarded by 'mutex'
     private void pushCurrentTick() {
         TickList currentData = this.currentData;
 
@@ -86,7 +90,9 @@ public class TickedDataAggregator implements DataAggregator {
     @Override
     public Map<String, StackNode> getData() {
         // push the current tick
-        pushCurrentTick();
+        synchronized (this.mutex) {
+            pushCurrentTick();
+        }
 
         // close the tick counter
         this.tickCounter.close();
@@ -102,6 +108,7 @@ public class TickedDataAggregator implements DataAggregator {
         return this.threadData;
     }
 
+    // called by TickList
     void insertData(List<QueuedThreadInfo> dataList) {
         for (QueuedThreadInfo data : dataList) {
             try {
