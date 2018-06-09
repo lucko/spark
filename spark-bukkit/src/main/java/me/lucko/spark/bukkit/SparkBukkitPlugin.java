@@ -28,6 +28,11 @@ public class SparkBukkitPlugin extends JavaPlugin {
         }
 
         @Override
+        protected String getLabel() {
+            return "spark";
+        }
+
+        @Override
         protected void sendMessage(CommandSender sender, String message) {
             sender.sendMessage(colorize(message));
         }

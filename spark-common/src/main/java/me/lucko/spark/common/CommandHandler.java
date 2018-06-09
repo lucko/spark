@@ -51,6 +51,7 @@ public abstract class CommandHandler<T> {
 
     // abstract methods implemented by each platform
 
+    protected abstract String getLabel();
     protected abstract void sendMessage(T sender, String message);
     protected abstract void sendMessage(String message);
     protected abstract void sendLink(String url);
@@ -103,16 +104,16 @@ public abstract class CommandHandler<T> {
 
     private void sendInfo(T sender) {
         sendPrefixedMessage(sender, "&fspark profiler &7v1.0");
-        sendMessage(sender, "&b&l> &7/profiler start");
+        sendMessage(sender, "&b&l> &7/" + getLabel() + " start");
         sendMessage(sender, "       &8[&7--timeout&8 <timeout seconds>]");
         sendMessage(sender, "       &8[&7--thread&8 <thread name>]");
         sendMessage(sender, "       &8[&7--not-combined]");
         sendMessage(sender, "       &8[&7--interval&8 <interval millis>]");
         sendMessage(sender, "       &8[&7--only-ticks-over&8 <tick length millis>]");
-        sendMessage(sender, "&b&l> &7/profiler info");
-        sendMessage(sender, "&b&l> &7/profiler stop");
-        sendMessage(sender, "&b&l> &7/profiler cancel");
-        sendMessage(sender, "&b&l> &7/profiler monitoring");
+        sendMessage(sender, "&b&l> &7/" + getLabel() + " info");
+        sendMessage(sender, "&b&l> &7/" + getLabel() + " stop");
+        sendMessage(sender, "&b&l> &7/" + getLabel() + " cancel");
+        sendMessage(sender, "&b&l> &7/" + getLabel() + " monitoring");
         sendMessage(sender, "       &8[&7--threshold&8 <percentage increase>]");
     }
 

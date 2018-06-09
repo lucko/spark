@@ -30,6 +30,11 @@ public class SparkBungeeCordPlugin extends Plugin {
         }
 
         @Override
+        protected String getLabel() {
+            return "sparkbungee";
+        }
+
+        @Override
         protected void sendMessage(CommandSender sender, String message) {
             sender.sendMessage(colorize(message));
         }

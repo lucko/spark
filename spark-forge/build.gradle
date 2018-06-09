@@ -1,0 +1,60 @@
+buildscript {
+    repositories {
+        jcenter()
+        maven { url = "http://files.minecraftforge.net/maven" }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+minecraft {
+    version = '1.12.2-14.23.4.2705'
+    runDir = 'run'
+    mappings = 'snapshot_20171003'
+
+    replaceIn 'me/lucko/spark/forge/SparkForgeMod.java'
+    replace '@version@', project.pluginVersion
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        expand 'pluginVersion': project.pluginVersion
+        include 'mcmod.info'
+    }
+}
+
+dependencies {
+    compile project(':spark-common')
+
+    def textWithoutLibs = {
+        exclude group: 'com.google.code.gson', module: 'gson'
+        exclude group: 'com.google.guava', module: 'guava'
+        exclude group: 'net.kyori', module: 'blizzard'
+    }
+
+    compile 'net.kyori:text:1.11-1.4.0', textWithoutLibs
+}
+
+shadowJar {
+    archiveName = 'spark-forge.jar'
+
+    relocate 'okio', 'me.lucko.spark.lib.okio'
+    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'net.kyori.text', 'me.lucko.spark.lib.text'
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
+}
+
+reobf {
+    shadowJar {
+        mappingType = 'SEARGE'
+    }
+}

@@ -56,6 +56,11 @@ public class SparkSpongePlugin implements CommandCallable {
         }
 
         @Override
+        protected String getLabel() {
+            return "spark";
+        }
+
+        @Override
         protected void sendMessage(CommandSource sender, String message) {
             sender.sendMessage(colorize(message));
         }
