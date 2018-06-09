@@ -50,10 +50,10 @@ public abstract class AbstractNode {
         return this.totalTime.longValue();
     }
 
-    private AbstractNode resolveChild(String className, String methodName, int lineNumber) {
+    private AbstractNode resolveChild(String className, String methodName) {
         return this.children.computeIfAbsent(
-                StackTraceNode.generateKey(className, methodName, lineNumber),
-                name -> new StackTraceNode(className, methodName, lineNumber)
+                StackTraceNode.generateKey(className, methodName),
+                name -> new StackTraceNode(className, methodName)
         );
     }
 
@@ -73,7 +73,7 @@ public abstract class AbstractNode {
         }
         
         StackTraceElement bottom = elements[elements.length - (skip + 1)];
-        resolveChild(bottom.getClassName(), bottom.getMethodName(), Math.max(0, bottom.getLineNumber())).log(elements, skip + 1, time);
+        resolveChild(bottom.getClassName(), bottom.getMethodName()).log(elements, skip + 1, time);
     }
 
     private Collection<? extends AbstractNode> getChildren() {
@@ -93,12 +93,12 @@ public abstract class AbstractNode {
         appendMetadata(writer);
 
         // include the total time recorded for this node
-        writer.name("totalTime").value(getTotalTime());
+        writer.name("t").value(getTotalTime());
 
         // append child nodes, if any are present
         Collection<? extends AbstractNode> childNodes = getChildren();
         if (!childNodes.isEmpty()) {
-            writer.name("children").beginArray();
+            writer.name("c").beginArray();
             for (AbstractNode child : childNodes) {
                 child.serializeTo(writer);
             }

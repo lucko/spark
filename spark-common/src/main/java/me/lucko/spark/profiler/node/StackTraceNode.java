@@ -32,37 +32,30 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
      *
      * @param className the name of the class
      * @param methodName the name of the method
-     * @param lineNumber the line number
      * @return the key
      */
-    static String generateKey(String className, String methodName, int lineNumber) {
-        return className + "." + methodName + "#" + lineNumber;
+    static String generateKey(String className, String methodName) {
+        return className + "." + methodName;
     }
 
     /** The name of the class */
     private final String className;
     /** The name of the method */
     private final String methodName;
-    /** The line number of the call */
-    private final int lineNumber;
 
-    public StackTraceNode(String className, String methodName, int lineNumber) {
+    public StackTraceNode(String className, String methodName) {
         this.className = className;
         this.methodName = methodName;
-        this.lineNumber = lineNumber;
     }
 
     @Override
     protected void appendMetadata(JsonWriter writer) throws IOException {
-        writer.name("className").value(this.className);
-        writer.name("methodName").value(this.methodName);
-        if (this.lineNumber != 0) {
-            writer.name("lineNumber").value(this.lineNumber);
-        }
+        writer.name("cl").value(this.className);
+        writer.name("m").value(this.methodName);
     }
 
     private String key() {
-        return generateKey(this.className, this.methodName, this.lineNumber);
+        return generateKey(this.className, this.methodName);
     }
 
     @Override
