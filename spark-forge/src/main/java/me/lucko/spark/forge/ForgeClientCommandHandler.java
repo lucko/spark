@@ -3,6 +3,8 @@ package me.lucko.spark.forge;
 import me.lucko.spark.profiler.TickCounter;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -39,5 +41,10 @@ public class ForgeClientCommandHandler extends ForgeCommandHandler {
     @Override
     public List<String> getAliases() {
         return Collections.singletonList("cprofiler");
+    }
+
+    @Override
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+        return true;
     }
 }

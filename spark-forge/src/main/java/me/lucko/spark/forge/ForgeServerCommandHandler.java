@@ -2,7 +2,9 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.profiler.TickCounter;
 
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -42,5 +44,10 @@ public class ForgeServerCommandHandler extends ForgeCommandHandler {
     @Override
     public List<String> getAliases() {
         return Collections.singletonList("profiler");
+    }
+
+    @Override
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+        return sender.canUseCommand(4, "spark.profiler");
     }
 }

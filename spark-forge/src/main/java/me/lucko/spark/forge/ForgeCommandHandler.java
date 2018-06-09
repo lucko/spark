@@ -95,11 +95,6 @@ public abstract class ForgeCommandHandler extends CommandHandler<ICommandSender>
     }
 
     @Override
-    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return sender.canUseCommand(4, "spark.profiler");
-    }
-
-    @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos blockPos) {
         return Collections.emptyList();
     }
