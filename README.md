@@ -1,6 +1,8 @@
 # :zap: spark
 Spark is a CPU profiling plugin based on sk89q's [WarmRoast profiler](https://github.com/sk89q/WarmRoast).
 
+The latest downloads are [available on Jenkins](https://ci.lucko.me/job/spark/).
+
 ## What does it do?
 
 Effectively, it monitors the activity of the server, and records statistical data about which actions take up the most processing time. These statistics can then be used to diagnose potential performance issues with certain parts of the server or specific plugins.
@@ -83,6 +85,10 @@ Starts a new profiling operation.
 	* Specifies the interval between samples. Measured in milliseconds.
 	* Lower values will improve the accuracy of the results, but may result in server lag.
 	* If left unspecified, a default interval of 10 milliseconds is used.
+* `--not-combined`
+	* Specifies that threads from a pool should not be combined into a single node.
+* `--only-ticks-over <tick length millis>`
+	* Specifies that entries should only be included if they were part of a tick that took longer than the specified duration to execute.
 ___
 #### `/profiler info`
 Prints information about the active profiler, if present.
@@ -94,6 +100,14 @@ Ends the current profiling operation, uploads the resultant data, and returns a 
 ___
 #### `/profiler cancel`
 Cancels the current profiling operation, and discards any recorded data without uploading it.
+
+___
+#### `/profiler monitoring`
+Starts/stops the tick monitoring system.
+
+**Arguments**
+* `--threshold <percentage increase>`
+	* Specifies the report threshold, measured as a percentage increase from the average tick duration.
 
 ## License
 
