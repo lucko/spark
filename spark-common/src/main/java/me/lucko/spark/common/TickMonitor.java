@@ -20,19 +20,22 @@
 
 package me.lucko.spark.common;
 
+import com.sun.management.GarbageCollectionNotificationInfo;
+
 import me.lucko.spark.profiler.TickCounter;
 
 import java.text.DecimalFormat;
 import java.util.DoubleSummaryStatistics;
 
-public abstract class TickMonitor implements Runnable {
+public abstract class TickMonitor implements Runnable, AutoCloseable {
     private static final DecimalFormat df = new DecimalFormat("#.##");
 
     private final TickCounter tickCounter;
+    private final GarbageCollectionMonitor garbageCollectionMonitor;
     private final int percentageChangeThreshold;
 
     // data
-    private double lastTickTime = 0;
+    private volatile double lastTickTime = 0;
     private State state = null;
     private DoubleSummaryStatistics averageTickTime = new DoubleSummaryStatistics();
     private double avg;
@@ -43,12 +46,16 @@ public abstract class TickMonitor implements Runnable {
 
         this.tickCounter.start();
         this.tickCounter.addTickTask(this);
+
+        this.garbageCollectionMonitor = new GarbageCollectionMonitor(this);
     }
 
     protected abstract void sendMessage(String message);
 
+    @Override
     public void close() {
         this.tickCounter.close();
+        this.garbageCollectionMonitor.close();
     }
 
     @Override
@@ -65,8 +72,14 @@ public abstract class TickMonitor implements Runnable {
         }
 
         // find the diff
-        double diff = now - this.lastTickTime;
+        double last = this.lastTickTime;
+        double diff = now - last;
+        boolean ignore = last == 0;
         this.lastTickTime = now;
+
+        if (ignore) {
+            return;
+        }
 
         // form averages
         if (this.state == State.SETUP) {
@@ -95,10 +108,28 @@ public abstract class TickMonitor implements Runnable {
 
             double percentageChange = (increase * 100d) / this.avg;
             if (percentageChange > this.percentageChangeThreshold) {
-                sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7lasted &b" + df.format(diff) + "&7 milliseconds. " +
-                        "&7(&b" + df.format(percentageChange) + "% &7increase from average)");
+                sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7lasted &b" + df.format(diff) +
+                        "&7 ms. (&b" + df.format(percentageChange) + "% &7increase from average)");
             }
         }
+    }
+
+    void onGc(GarbageCollectionNotificationInfo data) {
+        if (this.state == State.SETUP) {
+            // set lastTickTime to zero so this tick won't be counted in the average
+            this.lastTickTime = 0;
+            return;
+        }
+
+        String gcType = data.getGcAction();
+        if (gcType.equals("end of minor GC")) {
+            gcType = "Young Gen GC";
+        } else if (gcType.equals("end of major GC")) {
+            gcType = "Old Gen GC";
+        }
+
+        sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7included &4GC &7lasting &b" +
+                df.format(data.getGcInfo().getDuration()) + "&7 ms. (type = " + gcType + ")");
     }
 
     private enum State {

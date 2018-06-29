@@ -50,10 +50,10 @@ public class ForgeTickCounter implements TickCounter {
             return;
         }
 
-        this.tick.increment();
         for (Runnable r : this.tasks){
             r.run();
         }
+        this.tick.increment();
     }
 
     @Override

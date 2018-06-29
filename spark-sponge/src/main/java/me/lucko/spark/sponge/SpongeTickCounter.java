@@ -41,10 +41,10 @@ public class SpongeTickCounter implements TickCounter, Runnable {
 
     @Override
     public void run() {
-        this.tick.increment();
         for (Runnable r : this.tasks){
             r.run();
         }
+        this.tick.increment();
     }
 
     @Override

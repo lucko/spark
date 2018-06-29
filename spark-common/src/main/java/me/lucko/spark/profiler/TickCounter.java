@@ -23,7 +23,7 @@ package me.lucko.spark.profiler;
 /**
  * A hook with the game's "tick loop".
  */
-public interface TickCounter {
+public interface TickCounter extends AutoCloseable {
 
     /**
      * Starts the counter
@@ -33,6 +33,7 @@ public interface TickCounter {
     /**
      * Stops the counter
      */
+    @Override
     void close();
 
     /**
