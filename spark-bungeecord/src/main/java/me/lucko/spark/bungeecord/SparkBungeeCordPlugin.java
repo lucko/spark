@@ -79,7 +79,7 @@ public class SparkBungeeCordPlugin extends Plugin {
 
         @Override
         protected ThreadDumper getDefaultThreadDumper() {
-            return new ThreadDumper.All();
+            return ThreadDumper.ALL;
         }
 
         @Override

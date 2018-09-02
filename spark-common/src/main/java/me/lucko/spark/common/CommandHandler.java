@@ -173,7 +173,7 @@ public abstract class CommandHandler<T> {
             try {
                 tickCounter = newTickCounter();
             } catch (UnsupportedOperationException e) {
-                sendPrefixedMessage(sender, "&cTick counting is not supported on BungeeCord!");
+                sendPrefixedMessage(sender, "&cTick counting is not supported!");
                 return;
             }
         }
@@ -307,7 +307,7 @@ public abstract class CommandHandler<T> {
                 TickCounter tickCounter = newTickCounter();
                 this.activeTickMonitor = new ReportingTickMonitor(tickCounter, threshold);
             } catch (UnsupportedOperationException e) {
-                sendPrefixedMessage(sender, "&cNot supported on BungeeCord!");
+                sendPrefixedMessage(sender, "&cNot supported!");
             }
         } else {
             this.activeTickMonitor.close();
@@ -317,7 +317,7 @@ public abstract class CommandHandler<T> {
     }
 
     private class ReportingTickMonitor extends TickMonitor {
-        public ReportingTickMonitor(TickCounter tickCounter, int percentageChangeThreshold) {
+        ReportingTickMonitor(TickCounter tickCounter, int percentageChangeThreshold) {
             super(tickCounter, percentageChangeThreshold);
         }
 

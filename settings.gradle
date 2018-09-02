@@ -1,2 +1,2 @@
 rootProject.name = 'spark'
-include 'spark-common', 'spark-bukkit', 'spark-bungeecord', 'spark-sponge', 'spark-universal', 'spark-forge'
+include 'spark-common', 'spark-bukkit', 'spark-bungeecord', 'spark-velocity', 'spark-sponge', 'spark-universal', 'spark-forge'

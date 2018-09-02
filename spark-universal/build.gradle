@@ -13,6 +13,7 @@ dependencies {
   compile project(':spark-common')
   compile project(':spark-bukkit')
   compile project(':spark-bungeecord')
+  compile project(':spark-velocity')
   compile project(':spark-sponge')
 }
 

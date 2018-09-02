@@ -1,0 +1,14 @@
+plugins {
+    id 'ninja.miserable.blossom' version '1.0.1'
+}
+
+dependencies {
+    compile project(':spark-common')
+    compileOnly 'com.velocitypowered:velocity-api:1.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:1.0-SNAPSHOT'
+}
+
+blossom {
+    replaceTokenIn('src/main/java/me/lucko/spark/velocity/SparkVelocityPlugin.java')
+    replaceToken '@version@', project.pluginVersion
+}
