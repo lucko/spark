@@ -150,6 +150,7 @@ public class Sampler implements Runnable {
     private void writeOutput(JsonWriter writer) throws IOException {
         writer.beginObject();
 
+        writer.name("type").value("sampler");
         writer.name("threads").beginArray();
 
         List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());

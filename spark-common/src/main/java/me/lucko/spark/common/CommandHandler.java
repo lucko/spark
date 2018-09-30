@@ -25,6 +25,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
 import me.lucko.spark.common.http.Bytebin;
+import me.lucko.spark.memory.HeapDump;
 import me.lucko.spark.profiler.Sampler;
 import me.lucko.spark.profiler.SamplerBuilder;
 import me.lucko.spark.profiler.ThreadDumper;
@@ -32,6 +33,7 @@ import me.lucko.spark.profiler.ThreadGrouper;
 import me.lucko.spark.profiler.TickCounter;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -106,6 +108,10 @@ public abstract class CommandHandler<T> {
                     break;
                 case "monitoring":
                     handleMonitoring(sender, arguments);
+                    break;
+                case "heap":
+                case "memory":
+                    handleHeap(sender);
                     break;
                 default:
                     sendInfo(sender);
@@ -316,6 +322,31 @@ public abstract class CommandHandler<T> {
         }
     }
 
+    private void handleHeap(T sender) {
+        runAsync(() -> {
+            sendPrefixedMessage("&7Creating a new heap dump, please wait...");
+
+            HeapDump heapDump;
+            try {
+                heapDump = HeapDump.createNew();
+            } catch (Exception e) {
+                sendPrefixedMessage("&cAn error occurred whilst inspecting the heap.");
+                e.printStackTrace();
+                return;
+            }
+
+            byte[] output = heapDump.formCompressedDataPayload();
+            try {
+                String pasteId = Bytebin.postCompressedContent(output);
+                sendPrefixedMessage("&bHeap dump output:");
+                sendLink(VIEWER_URL + pasteId);
+            } catch (IOException e) {
+                sendPrefixedMessage("&cAn error occurred whilst uploading the data.");
+                e.printStackTrace();
+            }
+        });
+    }
+
     private class ReportingTickMonitor extends TickMonitor {
         ReportingTickMonitor(TickCounter tickCounter, int percentageChangeThreshold) {
             super(tickCounter, percentageChangeThreshold);
@@ -365,7 +396,7 @@ public abstract class CommandHandler<T> {
 
                 // store existing value, if present
                 if (flag != null) {
-                    arguments.put(flag, value.stream().collect(Collectors.joining(" ")));
+                    arguments.put(flag, String.join(" ", value));
                 }
 
                 flag = match.toLowerCase();
@@ -378,7 +409,7 @@ public abstract class CommandHandler<T> {
 
         // store remaining value, if present
         if (flag != null) {
-            arguments.put(flag, value.stream().collect(Collectors.joining(" ")));
+            arguments.put(flag, String.join(" ", value));
         }
 
         return arguments;
