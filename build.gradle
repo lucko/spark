@@ -1,6 +1,6 @@
 allprojects {
     group = 'me.lucko'
-    version = '1.0-SNAPSHOT'
+    version = '1.1-SNAPSHOT'
 }
 
 subprojects {
@@ -8,7 +8,7 @@ subprojects {
     apply plugin: 'maven'
 
     ext {
-        pluginVersion = '1.0.4'
+        pluginVersion = '1.1.0'
     }
 
     sourceCompatibility = 1.8

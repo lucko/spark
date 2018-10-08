@@ -37,6 +37,7 @@ import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +52,11 @@ public abstract class ForgeCommandHandler extends CommandHandler<ICommandSender>
     private final ExecutorService worker = Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
     );
+
+    @Override
+    public String getVersion() {
+        return SparkForgeMod.class.getAnnotation(Mod.class).version();
+    }
 
     @SuppressWarnings("deprecation")
     protected ITextComponent colorize(String message) {

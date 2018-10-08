@@ -76,6 +76,11 @@ public class SparkSpongePlugin implements CommandCallable {
         }
 
         @Override
+        protected String getVersion() {
+            return SparkSpongePlugin.class.getAnnotation(Plugin.class).version();
+        }
+
+        @Override
         protected String getLabel() {
             return "spark";
         }

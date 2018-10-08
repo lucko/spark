@@ -33,7 +33,6 @@ import me.lucko.spark.profiler.ThreadGrouper;
 import me.lucko.spark.profiler.TickCounter;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -43,7 +42,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Abstract command handling class used by all platforms.
@@ -67,6 +65,7 @@ public abstract class CommandHandler<T> {
 
     // abstract methods implemented by each platform
 
+    protected abstract String getVersion();
     protected abstract String getLabel();
     protected abstract void sendMessage(T sender, String message);
     protected abstract void sendMessage(String message);
@@ -123,7 +122,7 @@ public abstract class CommandHandler<T> {
     }
 
     private void sendInfo(T sender) {
-        sendPrefixedMessage(sender, "&fspark profiler &7v1.0");
+        sendPrefixedMessage(sender, "&fspark profiler &7v" + getVersion());
         sendMessage(sender, "&b&l> &7/" + getLabel() + " start");
         sendMessage(sender, "       &8[&7--timeout&8 <timeout seconds>]");
         sendMessage(sender, "       &8[&7--thread&8 <thread name>]");
@@ -207,7 +206,7 @@ public abstract class CommandHandler<T> {
 
             sendPrefixedMessage("&bProfiler now active!");
             if (timeoutSeconds == -1) {
-                sendPrefixedMessage("&7Use '/profiler stop' to stop profiling and upload the results.");
+                sendPrefixedMessage("&7Use '/" + getLabel() + " stop' to stop profiling and upload the results.");
             } else {
                 sendPrefixedMessage("&7The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds.");
             }

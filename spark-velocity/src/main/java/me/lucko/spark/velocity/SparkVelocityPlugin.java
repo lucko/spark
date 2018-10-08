@@ -66,6 +66,11 @@ public class SparkVelocityPlugin {
         }
 
         @Override
+        protected String getVersion() {
+            return SparkVelocityPlugin.class.getAnnotation(Plugin.class).version();
+        }
+
+        @Override
         protected String getLabel() {
             return "sparkvelocity";
         }

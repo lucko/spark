@@ -50,6 +50,11 @@ public class SparkBungeeCordPlugin extends Plugin {
         }
 
         @Override
+        protected String getVersion() {
+            return SparkBungeeCordPlugin.this.getDescription().getVersion();
+        }
+
+        @Override
         protected String getLabel() {
             return "sparkbungee";
         }

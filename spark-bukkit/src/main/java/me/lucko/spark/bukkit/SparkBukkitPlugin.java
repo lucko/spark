@@ -48,6 +48,11 @@ public class SparkBukkitPlugin extends JavaPlugin {
         }
 
         @Override
+        protected String getVersion() {
+            return SparkBukkitPlugin.this.getDescription().getVersion();
+        }
+
+        @Override
         protected String getLabel() {
             return "spark";
         }
