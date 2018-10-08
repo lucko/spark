@@ -19,7 +19,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.profiler;
+package me.lucko.spark.sampler;
 
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;

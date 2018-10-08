@@ -23,8 +23,8 @@ package me.lucko.spark.sponge;
 import com.google.inject.Inject;
 
 import me.lucko.spark.common.CommandHandler;
-import me.lucko.spark.profiler.ThreadDumper;
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.sampler.ThreadDumper;
+import me.lucko.spark.sampler.TickCounter;
 
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Sponge;

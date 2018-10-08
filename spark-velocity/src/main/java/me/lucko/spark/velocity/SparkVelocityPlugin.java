@@ -30,8 +30,8 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
 import me.lucko.spark.common.CommandHandler;
-import me.lucko.spark.profiler.ThreadDumper;
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.sampler.ThreadDumper;
+import me.lucko.spark.sampler.TickCounter;
 
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;

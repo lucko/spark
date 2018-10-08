@@ -20,7 +20,7 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.sampler.TickCounter;
 
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;

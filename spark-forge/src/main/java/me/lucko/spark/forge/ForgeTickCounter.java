@@ -20,7 +20,7 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.sampler.TickCounter;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;

@@ -20,7 +20,7 @@
 
 package me.lucko.spark.sponge;
 
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.sampler.TickCounter;
 
 import org.spongepowered.api.scheduler.Task;
 

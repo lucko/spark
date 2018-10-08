@@ -26,11 +26,12 @@ import com.google.common.collect.Sets;
 
 import me.lucko.spark.common.http.Bytebin;
 import me.lucko.spark.memory.HeapDump;
-import me.lucko.spark.profiler.Sampler;
-import me.lucko.spark.profiler.SamplerBuilder;
-import me.lucko.spark.profiler.ThreadDumper;
-import me.lucko.spark.profiler.ThreadGrouper;
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.monitor.TickMonitor;
+import me.lucko.spark.sampler.Sampler;
+import me.lucko.spark.sampler.SamplerBuilder;
+import me.lucko.spark.sampler.ThreadDumper;
+import me.lucko.spark.sampler.ThreadGrouper;
+import me.lucko.spark.sampler.TickCounter;
 
 import java.io.IOException;
 import java.util.ArrayList;

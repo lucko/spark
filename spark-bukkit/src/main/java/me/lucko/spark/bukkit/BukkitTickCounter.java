@@ -20,7 +20,7 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.sampler.TickCounter;
 
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;

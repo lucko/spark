@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.profiler.node;
+package me.lucko.spark.sampler.node;
 
 import com.google.gson.stream.JsonWriter;
 

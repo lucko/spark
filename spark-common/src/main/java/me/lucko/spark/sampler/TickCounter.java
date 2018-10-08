@@ -18,37 +18,43 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.profiler.aggregator;
-
-import me.lucko.spark.profiler.node.ThreadNode;
-
-import java.util.Map;
+package me.lucko.spark.sampler;
 
 /**
- * Aggregates sampling data.
+ * A hook with the game's "tick loop".
  */
-public interface DataAggregator {
+public interface TickCounter extends AutoCloseable {
 
     /**
-     * Called before the sampler begins to insert data
+     * Starts the counter
      */
-    default void start() {
-
-    }
+    void start();
 
     /**
-     * Forms the output data
+     * Stops the counter
+     */
+    @Override
+    void close();
+
+    /**
+     * Gets the current tick number
      *
-     * @return the output data
+     * @return the current tick
      */
-    Map<String, ThreadNode> getData();
+    long getCurrentTick();
 
     /**
-     * Inserts sampling data into this aggregator
+     * Adds a task to be called each time the tick increments
      *
-     * @param threadName the name of the thread
-     * @param stack the call stack
+     * @param runnable the task
      */
-    void insertData(String threadName, StackTraceElement[] stack);
+    void addTickTask(Runnable runnable);
+
+    /**
+     * Removes a tick task
+     *
+     * @param runnable the task
+     */
+    void removeTickTask(Runnable runnable);
 
 }

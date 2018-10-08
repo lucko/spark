@@ -23,7 +23,7 @@ package me.lucko.spark.forge;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import me.lucko.spark.common.CommandHandler;
-import me.lucko.spark.profiler.ThreadDumper;
+import me.lucko.spark.sampler.ThreadDumper;
 
 import net.kyori.text.TextComponent;
 import net.kyori.text.serializer.ComponentSerializers;

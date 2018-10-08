@@ -18,11 +18,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common;
+package me.lucko.spark.monitor;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.sampler.TickCounter;
 
 import java.text.DecimalFormat;
 import java.util.DoubleSummaryStatistics;

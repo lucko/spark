@@ -21,8 +21,8 @@
 package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.CommandHandler;
-import me.lucko.spark.profiler.ThreadDumper;
-import me.lucko.spark.profiler.TickCounter;
+import me.lucko.spark.sampler.ThreadDumper;
+import me.lucko.spark.sampler.TickCounter;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;

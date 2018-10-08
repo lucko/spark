@@ -18,11 +18,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.profiler.aggregator;
+package me.lucko.spark.sampler.aggregator;
 
-import me.lucko.spark.profiler.ThreadGrouper;
-import me.lucko.spark.profiler.node.AbstractNode;
-import me.lucko.spark.profiler.node.ThreadNode;
+import me.lucko.spark.sampler.ThreadGrouper;
+import me.lucko.spark.sampler.node.AbstractNode;
+import me.lucko.spark.sampler.node.ThreadNode;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
