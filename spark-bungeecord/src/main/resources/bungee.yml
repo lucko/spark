@@ -1,5 +1,5 @@
 name: spark
 version: ${pluginVersion}
-description: Spark is a CPU profiling plugin based on sk89q's WarmRoast profiler
+description: ${pluginDesc}
 author: Luck, sk89q
 main: me.lucko.spark.bungeecord.SparkBungeeCordPlugin

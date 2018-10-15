@@ -40,7 +40,7 @@ public class ForgeServerSparkPlatform extends ForgeSparkPlatform {
 
         List<EntityPlayerMP> players = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
         for (EntityPlayerMP player : players) {
-            if (player.canUseCommand(4, "spark.profiler")) {
+            if (player.canUseCommand(4, "spark")) {
                 player.sendMessage(msg);
             }
         }
@@ -63,11 +63,11 @@ public class ForgeServerSparkPlatform extends ForgeSparkPlatform {
 
     @Override
     public List<String> getAliases() {
-        return Collections.singletonList("profiler");
+        return Collections.emptyList();
     }
 
     @Override
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return sender.canUseCommand(4, "spark.profiler");
+        return sender.canUseCommand(4, "spark");
     }
 }

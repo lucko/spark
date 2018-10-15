@@ -32,6 +32,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
+import net.md_5.bungee.api.plugin.TabExecutor;
+
+import java.util.Collections;
 
 public class SparkBungeeCordPlugin extends Plugin {
 
@@ -43,7 +46,7 @@ public class SparkBungeeCordPlugin extends Plugin {
         private void broadcast(BaseComponent... msg) {
             getProxy().getConsole().sendMessage(msg);
             for (ProxiedPlayer player : getProxy().getPlayers()) {
-                if (player.hasPermission("spark.profiler")) {
+                if (player.hasPermission("spark")) {
                     player.sendMessage(msg);
                 }
             }
@@ -56,7 +59,7 @@ public class SparkBungeeCordPlugin extends Plugin {
 
         @Override
         public String getLabel() {
-            return "sparkbungee";
+            return "sparkb";
         }
 
         @Override
@@ -95,18 +98,32 @@ public class SparkBungeeCordPlugin extends Plugin {
 
     @Override
     public void onEnable() {
-        getProxy().getPluginManager().registerCommand(this, new Command("sparkbungee", null, "gprofiler") {
-            @Override
-            public void execute(CommandSender sender, String[] args) {
-                if (!sender.hasPermission("spark.profiler")) {
-                    TextComponent msg = new TextComponent("You do not have permission to use this command.");
-                    msg.setColor(ChatColor.RED);
-                    sender.sendMessage(msg);
-                    return;
-                }
+        getProxy().getPluginManager().registerCommand(this, new SparkCommand());
+    }
 
-                SparkBungeeCordPlugin.this.sparkPlatform.executeCommand(sender, args);
+    private final class SparkCommand extends Command implements TabExecutor {
+        public SparkCommand() {
+            super("sparkb", null, "sparkbungee");
+        }
+
+        @Override
+        public void execute(CommandSender sender, String[] args) {
+            if (!sender.hasPermission("spark")) {
+                TextComponent msg = new TextComponent("You do not have permission to use this command.");
+                msg.setColor(ChatColor.RED);
+                sender.sendMessage(msg);
+                return;
             }
-        });
+
+            SparkBungeeCordPlugin.this.sparkPlatform.executeCommand(sender, args);
+        }
+
+        @Override
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
+            if (!sender.hasPermission("spark")) {
+                return Collections.emptyList();
+            }
+            return SparkBungeeCordPlugin.this.sparkPlatform.tabCompleteCommand(sender, args);
+        }
     }
 }

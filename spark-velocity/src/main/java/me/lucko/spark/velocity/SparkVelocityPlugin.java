@@ -43,7 +43,7 @@ import net.kyori.text.serializer.ComponentSerializers;
         id = "spark",
         name = "spark",
         version = "@version@",
-        description = "Spark is a CPU profiling plugin based on sk89q's WarmRoast profiler",
+        description = "@desc@",
         authors = {"Luck", "sk89q"}
 )
 public class SparkVelocityPlugin {
@@ -59,7 +59,7 @@ public class SparkVelocityPlugin {
         private void broadcast(Component msg) {
             SparkVelocityPlugin.this.proxy.getConsoleCommandSource().sendMessage(msg);
             for (Player player : SparkVelocityPlugin.this.proxy.getAllPlayers()) {
-                if (player.hasPermission("spark.profiler")) {
+                if (player.hasPermission("spark")) {
                     player.sendMessage(msg);
                 }
             }
@@ -72,7 +72,7 @@ public class SparkVelocityPlugin {
 
         @Override
         public String getLabel() {
-            return "sparkvelocity";
+            return "sparkv";
         }
 
         @Override
@@ -118,13 +118,13 @@ public class SparkVelocityPlugin {
     @Subscribe(order = PostOrder.FIRST)
     public void onEnable(ProxyInitializeEvent e) {
         this.proxy.getCommandManager().register((sender, args) -> {
-            if (!sender.hasPermission("spark.profiler")) {
+            if (!sender.hasPermission("spark")) {
                 TextComponent msg = TextComponent.builder("You do not have permission to use this command.").color(TextColor.RED).build();
                 sender.sendMessage(msg);
                 return;
             }
 
             SparkVelocityPlugin.this.sparkPlatform.executeCommand(sender, args);
-        }, "sparkvelocity", "vprofiler");
+        }, "sparkv", "sparkvelocity");
     }
 }

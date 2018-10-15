@@ -30,6 +30,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Collections;
+import java.util.List;
+
 public class SparkBukkitPlugin extends JavaPlugin {
 
     private final SparkPlatform<CommandSender> sparkPlatform = new SparkPlatform<CommandSender>() {
@@ -41,7 +44,7 @@ public class SparkBukkitPlugin extends JavaPlugin {
         private void broadcast(String msg) {
             getServer().getConsoleSender().sendMessage(msg);
             for (Player player : getServer().getOnlinePlayers()) {
-                if (player.hasPermission("spark.profiler")) {
+                if (player.hasPermission("spark")) {
                     player.sendMessage(msg);
                 }
             }
@@ -92,12 +95,20 @@ public class SparkBukkitPlugin extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("spark.profiler")) {
+        if (!sender.hasPermission("spark")) {
             sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
         }
 
         this.sparkPlatform.executeCommand(sender, args);
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!sender.hasPermission("spark")) {
+            return Collections.emptyList();
+        }
+        return this.sparkPlatform.tabCompleteCommand(sender, args);
     }
 }

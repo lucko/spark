@@ -27,10 +27,16 @@ import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.modules.HeapModule;
 import me.lucko.spark.common.command.modules.MonitoringModule;
 import me.lucko.spark.common.command.modules.SamplerModule;
+import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
+import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.TickCounter;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Abstract command handling class used by all platforms.
@@ -55,7 +61,6 @@ public abstract class SparkPlatform<S> {
     private final List<Command<S>> commands = prepareCommands();
     
     // abstract methods implemented by each platform
-
     public abstract String getVersion();
     public abstract String getLabel();
     public abstract void sendMessage(S sender, String message);
@@ -75,7 +80,7 @@ public abstract class SparkPlatform<S> {
 
     public void executeCommand(S sender, String[] args) {
         if (args.length == 0) {
-            sendInfo(sender);
+            sendUsage(sender);
             return;
         }
 
@@ -93,23 +98,41 @@ public abstract class SparkPlatform<S> {
             }
         }
 
-        sendInfo(sender);
+        sendUsage(sender);
     }
 
-    private void sendInfo(S sender) {
-        // todo automagically generate this
+    public List<String> tabCompleteCommand(S sender, String[] args) {
+        List<String> arguments = new ArrayList<>(Arrays.asList(args));
+
+        if (args.length <= 1) {
+            List<String> mainCommands = this.commands.stream().map(c -> c.aliases().get(0)).collect(Collectors.toList());
+            return TabCompleter.create()
+                    .at(0, CompletionSupplier.startsWith(mainCommands))
+                    .complete(arguments);
+        }
+
+        String alias = arguments.remove(0);
+        for (Command<S> command : this.commands) {
+            if (command.aliases().contains(alias)) {
+                return command.tabCompleter().completions(this, sender, arguments);
+            }
+        }
+
+        return Collections.emptyList();
+    }
+
+    private void sendUsage(S sender) {
         sendPrefixedMessage(sender, "&fspark &7v" + getVersion());
-        sendMessage(sender, "&b&l> &7/spark start");
-        sendMessage(sender, "       &8[&7--timeout&8 <timeout seconds>]");
-        sendMessage(sender, "       &8[&7--thread&8 <thread name>]");
-        sendMessage(sender, "       &8[&7--not-combined]");
-        sendMessage(sender, "       &8[&7--interval&8 <interval millis>]");
-        sendMessage(sender, "       &8[&7--only-ticks-over&8 <tick length millis>]");
-        sendMessage(sender, "&b&l> &7/spark info");
-        sendMessage(sender, "&b&l> &7/spark stop");
-        sendMessage(sender, "&b&l> &7/spark cancel");
-        sendMessage(sender, "&b&l> &7/spark monitoring");
-        sendMessage(sender, "       &8[&7--threshold&8 <percentage increase>]");
+        for (Command<S> command : this.commands) {
+            sendMessage(sender, "&b&l> &7/" + getLabel() + " " + command.aliases().get(0));
+            for (Command.ArgumentInfo arg : command.arguments()) {
+                if (arg.requiresParameter()) {
+                    sendMessage(sender, "       &8[&7--" + arg.argumentName() + "&8 <" + arg.parameterDescription() + ">]");
+                } else {
+                    sendMessage(sender, "       &8[&7--" + arg.argumentName() + "]");
+                }
+            }
+        }
     }
 
 }

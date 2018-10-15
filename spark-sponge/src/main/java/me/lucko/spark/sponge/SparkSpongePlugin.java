@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
         id = "spark",
         name = "spark",
         version = "@version@",
-        description = "Spark is a CPU profiling plugin based on sk89q's WarmRoast profiler",
+        description = "@desc@",
         authors = {"Luck", "sk89q"}
 )
 public class SparkSpongePlugin implements CommandCallable {
@@ -69,7 +69,7 @@ public class SparkSpongePlugin implements CommandCallable {
         private void broadcast(Text msg) {
             Sponge.getServer().getConsole().sendMessage(msg);
             for (Player player : Sponge.getServer().getOnlinePlayers()) {
-                if (player.hasPermission("spark.profiler")) {
+                if (player.hasPermission("spark")) {
                     player.sendMessage(msg);
                 }
             }
@@ -134,7 +134,7 @@ public class SparkSpongePlugin implements CommandCallable {
 
     @Listener
     public void onServerStart(GameStartedServerEvent event) {
-        game.getCommandManager().register(this, this, "spark", "profiler");
+        game.getCommandManager().register(this, this, "spark");
     }
 
     @Override
@@ -155,7 +155,7 @@ public class SparkSpongePlugin implements CommandCallable {
 
     @Override
     public boolean testPermission(CommandSource source) {
-        return source.hasPermission("spark.profiler");
+        return source.hasPermission("spark");
     }
 
     @Override
@@ -165,11 +165,11 @@ public class SparkSpongePlugin implements CommandCallable {
 
     @Override
     public Optional<Text> getHelp(CommandSource source) {
-        return Optional.of(Text.of("Run '/profiler' to view usage."));
+        return Optional.of(Text.of("Run '/spark' to view usage."));
     }
 
     @Override
     public Text getUsage(CommandSource source) {
-        return Text.of("Run '/profiler' to view usage.");
+        return Text.of("Run '/spark' to view usage.");
     }
 }

@@ -20,14 +20,13 @@
 
 package me.lucko.spark.common.command;
 
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableList;
 
 import me.lucko.spark.common.SparkPlatform;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public class Command<S> {
 
@@ -35,18 +34,24 @@ public class Command<S> {
         return new Builder<>();
     }
 
-    private final Set<String> aliases;
+    private final List<String> aliases;
+    private final List<ArgumentInfo> arguments;
     private final Executor<S> executor;
     private final TabCompleter<S> tabCompleter;
 
-    private Command(Set<String> aliases, Executor<S> executor, TabCompleter<S> tabCompleter) {
+    private Command(List<String> aliases, List<ArgumentInfo> arguments, Executor<S> executor, TabCompleter<S> tabCompleter) {
         this.aliases = aliases;
+        this.arguments = arguments;
         this.executor = executor;
         this.tabCompleter = tabCompleter;
     }
 
-    public Set<String> aliases() {
+    public List<String> aliases() {
         return this.aliases;
+    }
+
+    public List<ArgumentInfo> arguments() {
+        return this.arguments;
     }
 
     public Executor<S> executor() {
@@ -58,7 +63,8 @@ public class Command<S> {
     }
 
     public static final class Builder<S> {
-        private ImmutableSet.Builder<String> aliases = ImmutableSet.builder();
+        private ImmutableList.Builder<String> aliases = ImmutableList.builder();
+        private ImmutableList.Builder<ArgumentInfo> arguments = ImmutableList.builder();
         private Executor<S> executor = null;
         private TabCompleter<S> tabCompleter = null;
 
@@ -68,6 +74,11 @@ public class Command<S> {
 
         public Builder<S> aliases(String... aliases) {
             this.aliases.add(aliases);
+            return this;
+        }
+
+        public Builder<S> argumentUsage(String argumentName, String parameterDescription) {
+            this.arguments.add(new ArgumentInfo(argumentName, parameterDescription));
             return this;
         }
 
@@ -82,7 +93,7 @@ public class Command<S> {
         }
 
         public Command<S> build() {
-            Set<String> aliases = this.aliases.build();
+            List<String> aliases = this.aliases.build();
             if (aliases.isEmpty()) {
                 throw new IllegalStateException("No aliases defined");
             }
@@ -92,7 +103,7 @@ public class Command<S> {
             if (this.tabCompleter == null) {
                 this.tabCompleter = TabCompleter.empty();
             }
-            return new Command<>(aliases, this.executor, this.tabCompleter);
+            return new Command<>(aliases, this.arguments.build(), this.executor, this.tabCompleter);
         }
     }
 
@@ -108,6 +119,28 @@ public class Command<S> {
         }
 
         List<String> completions(SparkPlatform<S> platform, S sender, List<String> arguments);
+    }
+
+    public static final class ArgumentInfo {
+        private final String argumentName;
+        private final String parameterDescription;
+
+        public ArgumentInfo(String argumentName, String parameterDescription) {
+            this.argumentName = argumentName;
+            this.parameterDescription = parameterDescription;
+        }
+
+        public String argumentName() {
+            return this.argumentName;
+        }
+
+        public String parameterDescription() {
+            return this.parameterDescription;
+        }
+
+        public boolean requiresParameter() {
+            return this.parameterDescription != null;
+        }
     }
 
 }

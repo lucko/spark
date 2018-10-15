@@ -59,9 +59,6 @@ public class HeapModule<S> implements CommandModule<S> {
                         }
                     });
                 })
-                .tabCompleter((platform, sender, arguments) -> {
-                    return null;
-                })
                 .build()
         );
     }

@@ -6,6 +6,7 @@ dependencies {
 processResources {
     from(sourceSets.main.resources.srcDirs) {
         expand 'pluginVersion': project.pluginVersion
+        expand 'pluginDesc': project.pluginDesc
         include 'bungee.yml'
     }
 }

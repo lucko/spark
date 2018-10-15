@@ -1,7 +1,7 @@
 [{
   "modid": "spark",
   "name": "spark",
-  "description": "Spark is a CPU profiling plugin based on sk89q's WarmRoast profiler",
+  "description": "${pluginDesc}",
   "version": "${pluginVersion}",
   "authors": ["Luck", "sk89q"]
 }]

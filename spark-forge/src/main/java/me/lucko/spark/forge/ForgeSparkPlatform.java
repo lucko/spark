@@ -122,7 +122,10 @@ public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> i
 
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos blockPos) {
-        return Collections.emptyList();
+        if (!checkPermission(server, sender)) {
+            return Collections.emptyList();
+        }
+        return tabCompleteCommand(sender, args);
     }
 
     @Override

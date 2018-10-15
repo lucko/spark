@@ -23,9 +23,14 @@ package me.lucko.spark.common.command.modules;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
+import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
+import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.monitor.TickMonitor;
 import me.lucko.spark.sampler.TickCounter;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class MonitoringModule<S> implements CommandModule<S> {
@@ -37,6 +42,7 @@ public class MonitoringModule<S> implements CommandModule<S> {
     public void registerCommands(Consumer<Command<S>> consumer) {
         consumer.accept(Command.<S>builder()
                 .aliases("monitoring")
+                .argumentUsage("threshold", "percentage increase")
                 .executor((platform, sender, arguments) -> {
                     if (this.activeTickMonitor == null) {
 
@@ -58,7 +64,12 @@ public class MonitoringModule<S> implements CommandModule<S> {
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> {
-                    return null;
+                    List<String> opts = new ArrayList<>(Collections.singletonList("--threshold"));
+                    opts.removeAll(arguments);
+
+                    return TabCompleter.create()
+                            .from(0, CompletionSupplier.startsWith(opts))
+                            .complete(arguments);
                 })
                 .build()
         );

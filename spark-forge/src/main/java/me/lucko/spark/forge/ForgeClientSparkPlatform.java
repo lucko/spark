@@ -50,17 +50,17 @@ public class ForgeClientSparkPlatform extends ForgeSparkPlatform {
 
     @Override
     public String getLabel() {
-        return "sparkclient";
+        return "sparkc";
     }
 
     @Override
     public String getName() {
-        return "sparkclient";
+        return "sparkc";
     }
 
     @Override
     public List<String> getAliases() {
-        return Collections.singletonList("cprofiler");
+        return Collections.singletonList("sparkclient");
     }
 
     @Override

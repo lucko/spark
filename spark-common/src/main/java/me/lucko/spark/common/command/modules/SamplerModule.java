@@ -23,6 +23,8 @@ package me.lucko.spark.common.command.modules;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
+import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
+import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.http.Bytebin;
 import me.lucko.spark.sampler.Sampler;
 import me.lucko.spark.sampler.SamplerBuilder;
@@ -31,6 +33,9 @@ import me.lucko.spark.sampler.ThreadGrouper;
 import me.lucko.spark.sampler.TickCounter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +52,11 @@ public class SamplerModule<S> implements CommandModule<S> {
     public void registerCommands(Consumer<Command<S>> consumer) {
         consumer.accept(Command.<S>builder()
                 .aliases("start")
+                .argumentUsage("timeout", "timeout seconds")
+                .argumentUsage("thread", "thread name")
+                .argumentUsage("not-combined", null)
+                .argumentUsage("interval", "interval millis")
+                .argumentUsage("only-ticks-over", "tick length millis")
                 .executor((platform, sender, arguments) -> {
                     int timeoutSeconds = arguments.intFlag("timeout");
                     if (timeoutSeconds != -1 && timeoutSeconds <= 10) {
@@ -149,7 +159,14 @@ public class SamplerModule<S> implements CommandModule<S> {
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> {
-                    return null;
+                    List<String> opts = new ArrayList<>(Arrays.asList("--timeout", "--interval",
+                            "--not-combined", "--only-ticks-over"));
+                    opts.removeAll(arguments);
+                    opts.add("--thread"); // allowed multiple times
+
+                    return TabCompleter.create()
+                            .from(0, CompletionSupplier.startsWith(opts))
+                            .complete(arguments);
                 })
                 .build()
         );
@@ -174,9 +191,6 @@ public class SamplerModule<S> implements CommandModule<S> {
                         }
                     }
                 })
-                .tabCompleter((platform, sender, arguments) -> {
-                    return null;
-                })
                 .build()
         );
 
@@ -194,9 +208,6 @@ public class SamplerModule<S> implements CommandModule<S> {
                         }
                     }
                 })
-                .tabCompleter((platform, sender, arguments) -> {
-                    return null;
-                })
                 .build()
         );
 
@@ -212,9 +223,6 @@ public class SamplerModule<S> implements CommandModule<S> {
                             platform.sendPrefixedMessage("&bThe active sampling task has been cancelled.");
                         }
                     }
-                })
-                .tabCompleter((platform, sender, arguments) -> {
-                    return null;
                 })
                 .build()
         );
