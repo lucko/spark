@@ -1,7 +1,7 @@
 [{
   "modid": "spark",
   "name": "spark",
-  "description": "${pluginDesc}",
+  "description": "${pluginDescription}",
   "version": "${pluginVersion}",
   "authors": ["Luck", "sk89q"]
 }]

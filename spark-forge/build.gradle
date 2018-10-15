@@ -1,16 +1,17 @@
 buildscript {
     repositories {
-        jcenter()
         maven { url = "http://files.minecraftforge.net/maven" }
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
     }
 }
 
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
+}
+
 apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 minecraft {
     version = '1.12.2-14.23.4.2705'
@@ -23,8 +24,10 @@ minecraft {
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
-        expand 'pluginVersion': project.pluginVersion
-        expand 'pluginDesc': project.pluginDesc
+        expand (
+                'pluginVersion': project.pluginVersion,
+                'pluginDescription': project.pluginDescription
+        )
         include 'mcmod.info'
     }
 }
