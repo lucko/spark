@@ -29,7 +29,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-import me.lucko.spark.common.CommandHandler;
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.TickCounter;
 
@@ -50,7 +50,7 @@ public class SparkVelocityPlugin {
 
     private final ProxyServer proxy;
 
-    private final CommandHandler<CommandSource> commandHandler = new CommandHandler<CommandSource>() {
+    private final SparkPlatform<CommandSource> sparkPlatform = new SparkPlatform<CommandSource>() {
         @SuppressWarnings("deprecation")
         private TextComponent colorize(String message) {
             return ComponentSerializers.LEGACY.deserialize(message, '&');
@@ -66,27 +66,27 @@ public class SparkVelocityPlugin {
         }
 
         @Override
-        protected String getVersion() {
+        public String getVersion() {
             return SparkVelocityPlugin.class.getAnnotation(Plugin.class).version();
         }
 
         @Override
-        protected String getLabel() {
+        public String getLabel() {
             return "sparkvelocity";
         }
 
         @Override
-        protected void sendMessage(CommandSource sender, String message) {
+        public void sendMessage(CommandSource sender, String message) {
             sender.sendMessage(colorize(message));
         }
 
         @Override
-        protected void sendMessage(String message) {
+        public void sendMessage(String message) {
             broadcast(colorize(message));
         }
 
         @Override
-        protected void sendLink(String url) {
+        public void sendLink(String url) {
             TextComponent msg = TextComponent.builder(url)
                     .color(TextColor.GRAY)
                     .clickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
@@ -95,17 +95,17 @@ public class SparkVelocityPlugin {
         }
 
         @Override
-        protected void runAsync(Runnable r) {
+        public void runAsync(Runnable r) {
             SparkVelocityPlugin.this.proxy.getScheduler().buildTask(SparkVelocityPlugin.this, r).schedule();
         }
 
         @Override
-        protected ThreadDumper getDefaultThreadDumper() {
+        public ThreadDumper getDefaultThreadDumper() {
             return ThreadDumper.ALL;
         }
 
         @Override
-        protected TickCounter newTickCounter() {
+        public TickCounter newTickCounter() {
             throw new UnsupportedOperationException();
         }
     };
@@ -124,7 +124,7 @@ public class SparkVelocityPlugin {
                 return;
             }
 
-            SparkVelocityPlugin.this.commandHandler.handleCommand(sender, args);
+            SparkVelocityPlugin.this.sparkPlatform.executeCommand(sender, args);
         }, "sparkvelocity", "vprofiler");
     }
 }

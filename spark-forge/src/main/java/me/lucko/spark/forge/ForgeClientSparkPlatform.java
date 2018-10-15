@@ -22,52 +22,49 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.sampler.TickCounter;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.Collections;
 import java.util.List;
 
-public class ForgeServerCommandHandler extends ForgeCommandHandler {
+public class ForgeClientSparkPlatform extends ForgeSparkPlatform {
 
-    @Override
-    protected void broadcast(ITextComponent msg) {
-        FMLCommonHandler.instance().getMinecraftServerInstance().sendMessage(msg);
-
-        List<EntityPlayerMP> players = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
-        for (EntityPlayerMP player : players) {
-            if (player.canUseCommand(4, "spark.profiler")) {
-                player.sendMessage(msg);
-            }
-        }
+    public static void register() {
+        ClientCommandHandler.instance.registerCommand(new ForgeClientSparkPlatform());
     }
 
     @Override
-    protected TickCounter newTickCounter() {
-        return new ForgeTickCounter(TickEvent.Type.SERVER);
+    protected void broadcast(ITextComponent msg) {
+        Minecraft.getMinecraft().player.sendMessage(msg);
+    }
+
+    @Override
+    public TickCounter newTickCounter() {
+        return new ForgeTickCounter(TickEvent.Type.CLIENT);
     }
 
     @Override
     public String getLabel() {
-        return "spark";
+        return "sparkclient";
     }
 
     @Override
     public String getName() {
-        return "spark";
+        return "sparkclient";
     }
 
     @Override
     public List<String> getAliases() {
-        return Collections.singletonList("profiler");
+        return Collections.singletonList("cprofiler");
     }
 
     @Override
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return sender.canUseCommand(4, "spark.profiler");
+        return true;
     }
 }

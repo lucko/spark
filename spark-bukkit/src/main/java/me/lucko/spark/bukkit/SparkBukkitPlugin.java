@@ -20,7 +20,7 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.CommandHandler;
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.TickCounter;
 
@@ -32,7 +32,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class SparkBukkitPlugin extends JavaPlugin {
 
-    private final CommandHandler<CommandSender> commandHandler = new CommandHandler<CommandSender>() {
+    private final SparkPlatform<CommandSender> sparkPlatform = new SparkPlatform<CommandSender>() {
 
         private String colorize(String message) {
             return ChatColor.translateAlternateColorCodes('&', message);
@@ -48,44 +48,44 @@ public class SparkBukkitPlugin extends JavaPlugin {
         }
 
         @Override
-        protected String getVersion() {
+        public String getVersion() {
             return SparkBukkitPlugin.this.getDescription().getVersion();
         }
 
         @Override
-        protected String getLabel() {
+        public String getLabel() {
             return "spark";
         }
 
         @Override
-        protected void sendMessage(CommandSender sender, String message) {
+        public void sendMessage(CommandSender sender, String message) {
             sender.sendMessage(colorize(message));
         }
 
         @Override
-        protected void sendMessage(String message) {
+        public void sendMessage(String message) {
             String msg = colorize(message);
             broadcast(msg);
         }
 
         @Override
-        protected void sendLink(String url) {
+        public void sendLink(String url) {
             String msg = colorize("&7" + url);
             broadcast(msg);
         }
 
         @Override
-        protected void runAsync(Runnable r) {
+        public void runAsync(Runnable r) {
             getServer().getScheduler().runTaskAsynchronously(SparkBukkitPlugin.this, r);
         }
 
         @Override
-        protected ThreadDumper getDefaultThreadDumper() {
+        public ThreadDumper getDefaultThreadDumper() {
             return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
         }
 
         @Override
-        protected TickCounter newTickCounter() {
+        public TickCounter newTickCounter() {
             return new BukkitTickCounter(SparkBukkitPlugin.this);
         }
     };
@@ -97,7 +97,7 @@ public class SparkBukkitPlugin extends JavaPlugin {
             return true;
         }
 
-        this.commandHandler.handleCommand(sender, args);
+        this.sparkPlatform.executeCommand(sender, args);
         return true;
     }
 }

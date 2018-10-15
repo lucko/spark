@@ -22,7 +22,7 @@ package me.lucko.spark.forge;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import me.lucko.spark.common.CommandHandler;
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.sampler.ThreadDumper;
 
 import net.kyori.text.TextComponent;
@@ -47,7 +47,7 @@ import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("NullableProblems")
-public abstract class ForgeCommandHandler extends CommandHandler<ICommandSender> implements ICommand {
+public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> implements ICommand {
 
     private final ExecutorService worker = Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
@@ -67,18 +67,18 @@ public abstract class ForgeCommandHandler extends CommandHandler<ICommandSender>
     protected abstract void broadcast(ITextComponent msg);
 
     @Override
-    protected void sendMessage(ICommandSender sender, String message) {
+    public void sendMessage(ICommandSender sender, String message) {
         sender.sendMessage(colorize(message));
     }
 
     @Override
-    protected void sendMessage(String message) {
+    public void sendMessage(String message) {
         ITextComponent msg = colorize(message);
         broadcast(msg);
     }
 
     @Override
-    protected void sendLink(String url) {
+    public void sendLink(String url) {
         TextComponentString msg = new TextComponentString(url);
         Style style = msg.getStyle();
         style.setColor(TextFormatting.GRAY);
@@ -89,12 +89,12 @@ public abstract class ForgeCommandHandler extends CommandHandler<ICommandSender>
     }
 
     @Override
-    protected void runAsync(Runnable r) {
+    public void runAsync(Runnable r) {
         worker.execute(r);
     }
 
     @Override
-    protected ThreadDumper getDefaultThreadDumper() {
+    public ThreadDumper getDefaultThreadDumper() {
         return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
     }
 
@@ -117,7 +117,7 @@ public abstract class ForgeCommandHandler extends CommandHandler<ICommandSender>
             return;
         }
 
-        handleCommand(sender, args);
+        executeCommand(sender, args);
     }
 
     @Override

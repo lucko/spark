@@ -20,7 +20,7 @@
 
 package me.lucko.spark.bungeecord;
 
-import me.lucko.spark.common.CommandHandler;
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.TickCounter;
 
@@ -35,7 +35,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 
 public class SparkBungeeCordPlugin extends Plugin {
 
-    private final CommandHandler<CommandSender> commandHandler = new CommandHandler<CommandSender>() {
+    private final SparkPlatform<CommandSender> sparkPlatform = new SparkPlatform<CommandSender>() {
         private BaseComponent[] colorize(String message) {
             return TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', message));
         }
@@ -50,27 +50,27 @@ public class SparkBungeeCordPlugin extends Plugin {
         }
 
         @Override
-        protected String getVersion() {
+        public String getVersion() {
             return SparkBungeeCordPlugin.this.getDescription().getVersion();
         }
 
         @Override
-        protected String getLabel() {
+        public String getLabel() {
             return "sparkbungee";
         }
 
         @Override
-        protected void sendMessage(CommandSender sender, String message) {
+        public void sendMessage(CommandSender sender, String message) {
             sender.sendMessage(colorize(message));
         }
 
         @Override
-        protected void sendMessage(String message) {
+        public void sendMessage(String message) {
             broadcast(colorize(message));
         }
 
         @Override
-        protected void sendLink(String url) {
+        public void sendLink(String url) {
             TextComponent component = new TextComponent(url);
             component.setColor(ChatColor.GRAY);
             component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
@@ -78,17 +78,17 @@ public class SparkBungeeCordPlugin extends Plugin {
         }
 
         @Override
-        protected void runAsync(Runnable r) {
+        public void runAsync(Runnable r) {
             getProxy().getScheduler().runAsync(SparkBungeeCordPlugin.this, r);
         }
 
         @Override
-        protected ThreadDumper getDefaultThreadDumper() {
+        public ThreadDumper getDefaultThreadDumper() {
             return ThreadDumper.ALL;
         }
 
         @Override
-        protected TickCounter newTickCounter() {
+        public TickCounter newTickCounter() {
             throw new UnsupportedOperationException();
         }
     };
@@ -105,7 +105,7 @@ public class SparkBungeeCordPlugin extends Plugin {
                     return;
                 }
 
-                SparkBungeeCordPlugin.this.commandHandler.handleCommand(sender, args);
+                SparkBungeeCordPlugin.this.sparkPlatform.executeCommand(sender, args);
             }
         });
     }

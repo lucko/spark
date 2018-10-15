@@ -38,13 +38,13 @@ public class SparkForgeMod {
     @EventHandler
     public void init(FMLInitializationEvent e) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            ForgeClientCommandHandler.register();
+            ForgeClientSparkPlatform.register();
         }
     }
 
     @EventHandler
     public void serverInit(FMLServerStartingEvent e) {
-        e.registerServerCommand(new ForgeServerCommandHandler());
+        e.registerServerCommand(new ForgeServerSparkPlatform());
     }
 
 }

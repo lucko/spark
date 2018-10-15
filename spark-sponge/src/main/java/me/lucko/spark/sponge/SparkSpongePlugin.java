@@ -22,7 +22,7 @@ package me.lucko.spark.sponge;
 
 import com.google.inject.Inject;
 
-import me.lucko.spark.common.CommandHandler;
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.TickCounter;
 
@@ -61,7 +61,7 @@ import javax.annotation.Nullable;
 )
 public class SparkSpongePlugin implements CommandCallable {
 
-    private final CommandHandler<CommandSource> commandHandler = new CommandHandler<CommandSource>() {
+    private final SparkPlatform<CommandSource> sparkPlatform = new SparkPlatform<CommandSource>() {
         private Text colorize(String message) {
             return TextSerializers.FORMATTING_CODE.deserialize(message);
         }
@@ -76,28 +76,28 @@ public class SparkSpongePlugin implements CommandCallable {
         }
 
         @Override
-        protected String getVersion() {
+        public String getVersion() {
             return SparkSpongePlugin.class.getAnnotation(Plugin.class).version();
         }
 
         @Override
-        protected String getLabel() {
+        public String getLabel() {
             return "spark";
         }
 
         @Override
-        protected void sendMessage(CommandSource sender, String message) {
+        public void sendMessage(CommandSource sender, String message) {
             sender.sendMessage(colorize(message));
         }
 
         @Override
-        protected void sendMessage(String message) {
+        public void sendMessage(String message) {
             Text msg = colorize(message);
             broadcast(msg);
         }
 
         @Override
-        protected void sendLink(String url) {
+        public void sendLink(String url) {
             try {
                 Text msg = Text.builder(url)
                         .color(TextColors.GRAY)
@@ -110,17 +110,17 @@ public class SparkSpongePlugin implements CommandCallable {
         }
 
         @Override
-        protected void runAsync(Runnable r) {
+        public void runAsync(Runnable r) {
             asyncExecutor.execute(r);
         }
 
         @Override
-        protected ThreadDumper getDefaultThreadDumper() {
+        public ThreadDumper getDefaultThreadDumper() {
             return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
         }
 
         @Override
-        protected TickCounter newTickCounter() {
+        public TickCounter newTickCounter() {
             return new SpongeTickCounter(SparkSpongePlugin.this);
         }
     };
@@ -144,7 +144,7 @@ public class SparkSpongePlugin implements CommandCallable {
             return CommandResult.empty();
         }
 
-        commandHandler.handleCommand(source, arguments.split(" "));
+        sparkPlatform.executeCommand(source, arguments.split(" "));
         return CommandResult.empty();
     }
 
