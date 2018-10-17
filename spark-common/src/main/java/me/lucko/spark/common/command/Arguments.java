@@ -24,7 +24,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -37,8 +36,8 @@ public class Arguments {
     private final List<String> rawArgs;
     private final SetMultimap<String, String> parsedArgs;
 
-    public Arguments(String[] args) {
-        this.rawArgs = new ArrayList<>(Arrays.asList(args));
+    public Arguments(List<String> rawArgs) {
+        this.rawArgs = rawArgs;
         this.parsedArgs = HashMultimap.create();
 
         String flag = null;

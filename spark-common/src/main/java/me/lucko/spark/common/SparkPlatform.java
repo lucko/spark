@@ -84,13 +84,13 @@ public abstract class SparkPlatform<S> {
             return;
         }
 
-        Arguments arguments = new Arguments(args);
-        String alias = arguments.raw().remove(0).toLowerCase();
+        ArrayList<String> rawArgs = new ArrayList<>(Arrays.asList(args));
+        String alias = rawArgs.remove(0).toLowerCase();
 
         for (Command<S> command : this.commands) {
             if (command.aliases().contains(alias)) {
                 try {
-                    command.executor().execute(this, sender, arguments);
+                    command.executor().execute(this, sender, new Arguments(rawArgs));
                 } catch (IllegalArgumentException e) {
                     sendMessage(sender, "&c" + e.getMessage());
                 }
