@@ -1,23 +1,32 @@
 plugins {
-  id 'com.github.johnrengelman.shadow' version '4.0.1'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
 dependencies {
-  compile project(':spark-common')
-  compile project(':spark-bukkit')
-  compile project(':spark-bungeecord')
-  compile project(':spark-velocity')
-  compile project(':spark-sponge')
+    compile project(':spark-common')
+    compile project(':spark-bukkit')
+    compile project(':spark-bungeecord')
+    compile project(':spark-velocity')
+    compile project(':spark-sponge')
 }
 
 shadowJar {
-  archiveName = 'spark.jar'
+    archiveName = 'spark.jar'
 
-  relocate 'okio', 'me.lucko.spark.lib.okio'
-  relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'okio', 'me.lucko.spark.lib.okio'
+    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
 }
 
 artifacts {
-  archives shadowJar
-  shadow shadowJar
+    archives shadowJar
+    shadow shadowJar
 }
+
+// Only used occasionally for deployment - not needed for normal builds.
+/*
+apply plugin: 'signing'
+signing {
+    useGpgCmd()
+    sign configurations.archives
+}
+*/

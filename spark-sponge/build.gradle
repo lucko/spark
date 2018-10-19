@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
     compile project(':spark-common')
-    compileOnly 'org.spongepowered:spongeapi:8.0.0-SNAPSHOT'
-    annotationProcessor 'org.spongepowered:spongeapi:8.0.0-SNAPSHOT'
+    compileOnly 'org.spongepowered:spongeapi:7.1.0'
+    annotationProcessor 'org.spongepowered:spongeapi:7.1.0'
 }
 
 blossom {
@@ -13,12 +13,3 @@ blossom {
     replaceToken '@version@', project.pluginVersion
     replaceToken '@desc@', project.pluginDescription
 }
-
-// Only used occasionally for deployment - not needed for normal builds.
-/*
-apply plugin: 'signing'
-signing {
-    useGpgCmd()
-    sign configurations.archives
-}
-*/
