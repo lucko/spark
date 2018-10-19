@@ -13,3 +13,12 @@ blossom {
     replaceToken '@version@', project.pluginVersion
     replaceToken '@desc@', project.pluginDescription
 }
+
+// Only used occasionally for deployment - not needed for normal builds.
+/*
+apply plugin: 'signing'
+signing {
+    useGpgCmd()
+    sign configurations.archives
+}
+*/

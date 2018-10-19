@@ -34,6 +34,7 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
+import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.AsynchronousExecutor;
 import org.spongepowered.api.scheduler.SpongeExecutorService;
@@ -57,7 +58,11 @@ import javax.annotation.Nullable;
         name = "spark",
         version = "@version@",
         description = "@desc@",
-        authors = {"Luck", "sk89q"}
+        authors = {"Luck", "sk89q"},
+        dependencies = {
+                // explicit dependency on spongeapi with no defined API version
+                @Dependency(id = "spongeapi")
+        }
 )
 public class SparkSpongePlugin implements CommandCallable {
 
