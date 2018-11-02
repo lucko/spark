@@ -53,30 +53,47 @@ public abstract class AbstractNode {
         return this.totalTime.longValue();
     }
 
-    private AbstractNode resolveChild(String className, String methodName) {
+    private AbstractNode resolveChild(String className, String methodName, int lineNumber) {
         return this.children.computeIfAbsent(
-                StackTraceNode.generateKey(className, methodName),
-                name -> new StackTraceNode(className, methodName)
+                StackTraceNode.generateKey(className, methodName, lineNumber),
+                name -> new StackTraceNode(className, methodName, lineNumber)
         );
     }
 
-    public void log(StackTraceElement[] elements, long time) {
-        log(elements, 0, time);
+    public void log(StackTraceElement[] elements, long time, boolean includeLineNumbers) {
+        log(elements, 0, time, includeLineNumbers);
     }
     
-    private void log(StackTraceElement[] elements, int skip, long time) {
+    private void log(StackTraceElement[] elements, int offset, long time, boolean includeLineNumbers) {
         this.totalTime.add(time);
 
-        if (skip >= MAX_STACK_DEPTH) {
+        if (offset >= MAX_STACK_DEPTH) {
             return;
         }
         
-        if (elements.length - skip == 0) {
+        if (elements.length - offset == 0) {
             return;
         }
-        
-        StackTraceElement bottom = elements[elements.length - (skip + 1)];
-        resolveChild(bottom.getClassName(), bottom.getMethodName()).log(elements, skip + 1, time);
+
+        // the first element in the array is the top of the call stack, and the last is the root
+        // offset starts at 0.
+
+        // pointer is determined by subtracting the offset from the index of the last element
+        int pointer = (elements.length - 1) - offset;
+        StackTraceElement element = elements[pointer];
+
+        // the parent stack element is located at pointer+1.
+        // when the current offset is 0, we know the current pointer is at the last element in the
+        // array (the root) and therefore there is no parent.
+        StackTraceElement parent = offset == 0 ? null : elements[pointer + 1];
+
+        // get the line number of the parent element - the line which called "us"
+        int lineNumber = parent == null || !includeLineNumbers ? StackTraceNode.NULL_LINE_NUMBER : parent.getLineNumber();
+
+        // resolve a child element within the structure for the element at pointer
+        AbstractNode child = resolveChild(element.getClassName(), element.getMethodName(), lineNumber);
+        // call the log method on the found child, with an incremented offset.
+        child.log(elements, offset + 1, time, includeLineNumbers);
     }
 
     private Collection<? extends AbstractNode> getChildren() {

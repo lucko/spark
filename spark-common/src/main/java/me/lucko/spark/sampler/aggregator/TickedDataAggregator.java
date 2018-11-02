@@ -53,6 +53,9 @@ public class TickedDataAggregator implements DataAggregator {
     /** The interval to wait between sampling, in milliseconds */
     private final int interval;
 
+    /** If line numbers should be included in the output */
+    private final boolean includeLineNumbers;
+
     /** Tick durations under this threshold will not be inserted */
     private final int tickLengthThreshold;
 
@@ -65,11 +68,12 @@ public class TickedDataAggregator implements DataAggregator {
     private long currentTick = -1;
     private TickList currentData = new TickList(0);
 
-    public TickedDataAggregator(ExecutorService workerPool, TickCounter tickCounter, ThreadGrouper threadGrouper, int interval, int tickLengthThreshold) {
+    public TickedDataAggregator(ExecutorService workerPool, TickCounter tickCounter, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, int tickLengthThreshold) {
         this.workerPool = workerPool;
         this.tickCounter = tickCounter;
         this.threadGrouper = threadGrouper;
         this.interval = interval;
+        this.includeLineNumbers = includeLineNumbers;
         this.tickLengthThreshold = tickLengthThreshold;
         // 50 millis in a tick, plus 10 so we have a bit of room to go over
         this.expectedSize = (50 / interval) + 10;
@@ -139,7 +143,7 @@ public class TickedDataAggregator implements DataAggregator {
             try {
                 String group = this.threadGrouper.getGroup(data.threadName);
                 AbstractNode node = this.threadData.computeIfAbsent(group, ThreadNode::new);
-                node.log(data.stack, this.interval);
+                node.log(data.stack, this.interval, this.includeLineNumbers);
             } catch (Exception e) {
                 e.printStackTrace();
             }

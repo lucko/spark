@@ -31,34 +31,46 @@ import java.io.IOException;
 public final class StackTraceNode extends AbstractNode implements Comparable<StackTraceNode> {
 
     /**
+     * Magic number to denote "no present" line number for a node.
+     */
+    public static final int NULL_LINE_NUMBER = -1;
+
+    /**
      * Forms a key to represent the given node.
      *
      * @param className the name of the class
      * @param methodName the name of the method
+     * @param lineNumber the line number of the parent method call
      * @return the key
      */
-    static String generateKey(String className, String methodName) {
-        return className + "." + methodName;
+    static String generateKey(String className, String methodName, int lineNumber) {
+        return className + "." + methodName + "." + lineNumber;
     }
 
     /** The name of the class */
     private final String className;
     /** The name of the method */
     private final String methodName;
+    /** The line number of the invocation which created this node */
+    private final int lineNumber;
 
-    public StackTraceNode(String className, String methodName) {
+    public StackTraceNode(String className, String methodName, int lineNumber) {
         this.className = className;
         this.methodName = methodName;
+        this.lineNumber = lineNumber;
     }
 
     @Override
     protected void appendMetadata(JsonWriter writer) throws IOException {
         writer.name("cl").value(this.className);
         writer.name("m").value(this.methodName);
+        if (this.lineNumber != NULL_LINE_NUMBER) {
+            writer.name("ln").value(this.lineNumber);
+        }
     }
 
     private String key() {
-        return generateKey(this.className, this.methodName);
+        return generateKey(this.className, this.methodName, this.lineNumber);
     }
 
     @Override

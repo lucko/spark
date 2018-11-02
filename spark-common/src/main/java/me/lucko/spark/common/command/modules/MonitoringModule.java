@@ -29,7 +29,7 @@ import me.lucko.spark.monitor.TickMonitor;
 import me.lucko.spark.sampler.TickCounter;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -65,7 +65,7 @@ public class MonitoringModule<S> implements CommandModule<S> {
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> {
-                    List<String> opts = new ArrayList<>(Collections.singletonList("--threshold"));
+                    List<String> opts = new ArrayList<>(Arrays.asList("--threshold", "--without-gc"));
                     opts.removeAll(arguments);
 
                     return TabCompleter.create()

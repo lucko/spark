@@ -79,16 +79,16 @@ public class Sampler implements Runnable {
     /** The unix timestamp (in millis) when this sampler should automatically complete.*/
     private final long endTime; // -1 for nothing
     
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval);
+        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, includeLineNumbers);
         this.interval = interval;
         this.endTime = endTime;
     }
 
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, TickCounter tickCounter, int tickLengthThreshold) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers, TickCounter tickCounter, int tickLengthThreshold) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, tickCounter, threadGrouper, interval, tickLengthThreshold);
+        this.dataAggregator = new TickedDataAggregator(this.workerPool, tickCounter, threadGrouper, interval, includeLineNumbers, tickLengthThreshold);
         this.interval = interval;
         this.endTime = endTime;
     }

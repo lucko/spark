@@ -46,10 +46,14 @@ public class SimpleDataAggregator implements DataAggregator {
     /** The interval to wait between sampling, in milliseconds */
     private final int interval;
 
-    public SimpleDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval) {
+    /** If line numbers should be included in the output */
+    private final boolean includeLineNumbers;
+
+    public SimpleDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers) {
         this.workerPool = workerPool;
         this.threadGrouper = threadGrouper;
         this.interval = interval;
+        this.includeLineNumbers = includeLineNumbers;
     }
 
     @Override
@@ -57,7 +61,7 @@ public class SimpleDataAggregator implements DataAggregator {
         try {
             String group = this.threadGrouper.getGroup(threadName);
             AbstractNode node = this.threadData.computeIfAbsent(group, ThreadNode::new);
-            node.log(stack, this.interval);
+            node.log(stack, this.interval, this.includeLineNumbers);
         } catch (Exception e) {
             e.printStackTrace();
         }

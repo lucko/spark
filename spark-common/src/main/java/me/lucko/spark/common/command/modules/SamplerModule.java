@@ -57,6 +57,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                 .argumentUsage("not-combined", null)
                 .argumentUsage("interval", "interval millis")
                 .argumentUsage("only-ticks-over", "tick length millis")
+                .argumentUsage("include-line-numbers", null)
                 .executor((platform, sender, arguments) -> {
                     int timeoutSeconds = arguments.intFlag("timeout");
                     if (timeoutSeconds != -1 && timeoutSeconds <= 10) {
@@ -72,6 +73,8 @@ public class SamplerModule<S> implements CommandModule<S> {
                     if (intervalMillis <= 0) {
                         intervalMillis = 4;
                     }
+
+                    boolean includeLineNumbers = arguments.boolFlag("include-line-numbers");
 
                     Set<String> threads = arguments.stringFlag("thread");
                     ThreadDumper threadDumper;
@@ -118,6 +121,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                             builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
                         }
                         builder.samplingInterval(intervalMillis);
+                        builder.includeLineNumbers(includeLineNumbers);
                         if (ticksOver != -1) {
                             builder.ticksOver(ticksOver, tickCounter);
                         }
@@ -160,7 +164,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                 })
                 .tabCompleter((platform, sender, arguments) -> {
                     List<String> opts = new ArrayList<>(Arrays.asList("--timeout", "--interval",
-                            "--not-combined", "--only-ticks-over"));
+                            "--not-combined", "--only-ticks-over", "--include-line-numbers"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times
 
