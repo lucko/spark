@@ -64,7 +64,7 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
     protected void appendMetadata(JsonWriter writer) throws IOException {
         writer.name("cl").value(this.className);
         writer.name("m").value(this.methodName);
-        if (this.lineNumber != NULL_LINE_NUMBER) {
+        if (this.lineNumber >= 0) {
             writer.name("ln").value(this.lineNumber);
         }
     }
