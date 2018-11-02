@@ -40,14 +40,14 @@ public abstract class TickMonitor implements Runnable, AutoCloseable {
     private DoubleSummaryStatistics averageTickTime = new DoubleSummaryStatistics();
     private double avg;
 
-    public TickMonitor(TickCounter tickCounter, int percentageChangeThreshold) {
+    public TickMonitor(TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
         this.tickCounter = tickCounter;
         this.percentageChangeThreshold = percentageChangeThreshold;
 
         this.tickCounter.start();
         this.tickCounter.addTickTask(this);
 
-        this.garbageCollectionMonitor = new GarbageCollectionMonitor(this);
+        this.garbageCollectionMonitor = monitorGc ? new GarbageCollectionMonitor(this) : null;
     }
 
     protected abstract void sendMessage(String message);
@@ -55,7 +55,9 @@ public abstract class TickMonitor implements Runnable, AutoCloseable {
     @Override
     public void close() {
         this.tickCounter.close();
-        this.garbageCollectionMonitor.close();
+        if (this.garbageCollectionMonitor != null) {
+            this.garbageCollectionMonitor.close();
+        }
     }
 
     @Override

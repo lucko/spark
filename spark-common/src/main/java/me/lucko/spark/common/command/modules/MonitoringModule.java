@@ -43,6 +43,7 @@ public class MonitoringModule<S> implements CommandModule<S> {
         consumer.accept(Command.<S>builder()
                 .aliases("monitoring")
                 .argumentUsage("threshold", "percentage increase")
+                .argumentUsage("without-gc", null)
                 .executor((platform, sender, arguments) -> {
                     if (this.activeTickMonitor == null) {
 
@@ -53,7 +54,7 @@ public class MonitoringModule<S> implements CommandModule<S> {
 
                         try {
                             TickCounter tickCounter = platform.newTickCounter();
-                            this.activeTickMonitor = new ReportingTickMonitor(platform, tickCounter, threshold);
+                            this.activeTickMonitor = new ReportingTickMonitor(platform, tickCounter, threshold, !arguments.boolFlag("without-gc"));
                         } catch (UnsupportedOperationException e) {
                             platform.sendPrefixedMessage(sender, "&cNot supported!");
                         }
@@ -78,8 +79,8 @@ public class MonitoringModule<S> implements CommandModule<S> {
     private class ReportingTickMonitor extends TickMonitor {
         private final SparkPlatform<S> platform;
 
-        ReportingTickMonitor(SparkPlatform<S> platform, TickCounter tickCounter, int percentageChangeThreshold) {
-            super(tickCounter, percentageChangeThreshold);
+        ReportingTickMonitor(SparkPlatform<S> platform, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
+            super(tickCounter, percentageChangeThreshold, monitorGc);
             this.platform = platform;
         }
 
