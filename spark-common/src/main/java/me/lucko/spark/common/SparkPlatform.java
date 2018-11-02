@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 public abstract class SparkPlatform<S> {
 
     /** The URL of the viewer frontend */
-    public static final String VIEWER_URL = "https://sparkprofiler.github.io/?";
+    public static final String VIEWER_URL = "https://sparkprofiler.github.io/#";
     /** The prefix used in all messages */
     private static final String PREFIX = "&8[&fspark&8] &7";
     
