@@ -22,6 +22,8 @@ package me.lucko.spark.memory;
 
 import com.google.gson.stream.JsonWriter;
 
+import me.lucko.spark.util.TypeDescriptors;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -92,7 +94,7 @@ public class HeapDump {
                             Integer.parseInt(matcher.group(1)),
                             Integer.parseInt(matcher.group(2)),
                             Long.parseLong(matcher.group(3)),
-                            getFriendlyTypeName(matcher.group(4))
+                            TypeDescriptors.getJavaType(matcher.group(4))
                     );
                 })
                 .filter(Objects::nonNull)
@@ -132,41 +134,6 @@ public class HeapDump {
             throw new RuntimeException(e);
         }
         return byteOut.toByteArray();
-    }
-
-    private static String getPrimitiveTypeName(char character) {
-        switch (character) {
-            case 'B':
-                return "byte";
-            case 'C':
-                return "char";
-            case 'D':
-                return "double";
-            case 'F':
-                return "float";
-            case 'I':
-                return "int";
-            case 'J':
-                return "long";
-            case 'S':
-                return "short";
-            case 'V':
-                return "void";
-            case 'Z':
-                return "boolean";
-            default:
-                throw new IllegalArgumentException();
-        }
-    }
-
-    private static String getFriendlyTypeName(String internalDesc) {
-        if (internalDesc.length() == 2 && internalDesc.charAt(0) == '[') {
-            return getPrimitiveTypeName(internalDesc.charAt(1)) + " array";
-        }
-        if (internalDesc.startsWith("[L") && internalDesc.endsWith(";")) {
-            return internalDesc.substring(2, internalDesc.length() - 1) + " array";
-        }
-        return internalDesc;
     }
 
     public static final class Entry {
