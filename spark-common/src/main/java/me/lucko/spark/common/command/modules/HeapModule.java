@@ -23,13 +23,15 @@ package me.lucko.spark.common.command.modules;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
-import me.lucko.spark.common.http.Bytebin;
 import me.lucko.spark.memory.HeapDump;
+
+import okhttp3.MediaType;
 
 import java.io.IOException;
 import java.util.function.Consumer;
 
 public class HeapModule<S> implements CommandModule<S> {
+    private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
     @Override
     public void registerCommands(Consumer<Command<S>> consumer) {
@@ -50,9 +52,9 @@ public class HeapModule<S> implements CommandModule<S> {
 
                         byte[] output = heapDump.formCompressedDataPayload();
                         try {
-                            String pasteId = Bytebin.postCompressedContent(output);
+                            String key = SparkPlatform.BYTEBIN_CLIENT.postGzippedContent(output, JSON_TYPE);
                             platform.sendPrefixedMessage("&bHeap dump output:");
-                            platform.sendLink(SparkPlatform.VIEWER_URL + pasteId);
+                            platform.sendLink(SparkPlatform.VIEWER_URL + key);
                         } catch (IOException e) {
                             platform.sendPrefixedMessage("&cAn error occurred whilst uploading the data.");
                             e.printStackTrace();

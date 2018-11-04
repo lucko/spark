@@ -25,12 +25,13 @@ import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import me.lucko.spark.common.http.Bytebin;
 import me.lucko.spark.sampler.Sampler;
 import me.lucko.spark.sampler.SamplerBuilder;
 import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.ThreadGrouper;
 import me.lucko.spark.sampler.TickCounter;
+
+import okhttp3.MediaType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class SamplerModule<S> implements CommandModule<S> {
+    private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
     /** Guards {@link #activeSampler} */
     private final Object[] activeSamplerMutex = new Object[0];
@@ -236,9 +238,9 @@ public class SamplerModule<S> implements CommandModule<S> {
         platform.runAsync(() -> {
             byte[] output = sampler.formCompressedDataPayload();
             try {
-                String pasteId = Bytebin.postCompressedContent(output);
+                String key = SparkPlatform.BYTEBIN_CLIENT.postGzippedContent(output, JSON_TYPE);
                 platform.sendPrefixedMessage("&bSampling results:");
-                platform.sendLink(SparkPlatform.VIEWER_URL + pasteId);
+                platform.sendLink(SparkPlatform.VIEWER_URL + key);
             } catch (IOException e) {
                 platform.sendPrefixedMessage("&cAn error occurred whilst uploading the results.");
                 e.printStackTrace();

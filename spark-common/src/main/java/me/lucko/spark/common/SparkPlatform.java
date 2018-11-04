@@ -31,6 +31,7 @@ import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.TickCounter;
+import me.lucko.spark.util.BytebinClient;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -47,6 +48,9 @@ public abstract class SparkPlatform<S> {
 
     /** The URL of the viewer frontend */
     public static final String VIEWER_URL = "https://sparkprofiler.github.io/#";
+    /** The bytebin instance used by the platform */
+    public static final BytebinClient BYTEBIN_CLIENT = new BytebinClient("https://bytebin.lucko.me/", "spark-plugin");
+
     /** The prefix used in all messages */
     private static final String PREFIX = "&8[&fspark&8] &7";
     

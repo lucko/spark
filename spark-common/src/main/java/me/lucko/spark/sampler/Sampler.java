@@ -99,7 +99,7 @@ public class Sampler implements Runnable {
     public void start() {
         this.startTime = System.currentTimeMillis();
         this.dataAggregator.start();
-        this.task = workerPool.scheduleAtFixedRate(this, 0, interval, TimeUnit.MILLISECONDS);
+        this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MILLISECONDS);
     }
 
     public long getStartTime() {
@@ -118,7 +118,7 @@ public class Sampler implements Runnable {
     }
 
     public void cancel() {
-        task.cancel(false);
+        this.task.cancel(false);
     }
 
     @Override
