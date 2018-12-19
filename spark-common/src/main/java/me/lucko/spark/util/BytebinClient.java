@@ -31,12 +31,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import java.io.IOException;
-import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.SocketAddress;
-import java.net.URI;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Utility for posting content to bytebin.
@@ -63,31 +57,7 @@ public class BytebinClient {
             this.url = url + "/post";
         }
         this.userAgent = userAgent;
-        this.okHttp = new OkHttpClient.Builder()
-                .proxySelector(new NullSafeProxySelector())
-                .build();
-    }
-
-    /**
-     * Posts content to bytebin.
-     *
-     * @param buf the content
-     * @param contentType the type of the content
-     * @return the key of the resultant content
-     * @throws IOException if an error occurs
-     */
-    public String postContent(byte[] buf, MediaType contentType) throws IOException {
-        RequestBody body = RequestBody.create(contentType, buf);
-
-        Request.Builder requestBuilder = new Request.Builder()
-                .header("User-Agent", this.userAgent)
-                .url(this.url)
-                .post(body);
-
-        Request request = requestBuilder.build();
-        try (Response response = makeHttpRequest(request)) {
-            return response.header("Location");
-        }
+        this.okHttp = new OkHttpClient();
     }
 
     /**
@@ -119,27 +89,5 @@ public class BytebinClient {
             throw new RuntimeException("Request was unsuccessful: " + response.code() + " - " + response.message());
         }
         return response;
-    }
-
-    // sometimes ProxySelector#getDefault returns null, and okhttp doesn't like that
-    private static final class NullSafeProxySelector extends ProxySelector {
-        private static final List<Proxy> DIRECT = Collections.singletonList(Proxy.NO_PROXY);
-
-        @Override
-        public List<Proxy> select(URI uri) {
-            ProxySelector def = ProxySelector.getDefault();
-            if (def == null) {
-                return DIRECT;
-            }
-            return def.select(uri);
-        }
-
-        @Override
-        public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
-            ProxySelector def = ProxySelector.getDefault();
-            if (def != null) {
-                def.connectFailed(uri, sa, ioe);
-            }
-        }
     }
 }
