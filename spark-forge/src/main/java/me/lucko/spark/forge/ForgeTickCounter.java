@@ -28,13 +28,12 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.LongAdder;
 
 public class ForgeTickCounter implements TickCounter {
     private final TickEvent.Type type;
 
     private final Set<Runnable> tasks = new HashSet<>();
-    private final LongAdder tick = new LongAdder();
+    private int tick = 0;
 
     public ForgeTickCounter(TickEvent.Type type) {
         this.type = type;
@@ -53,7 +52,7 @@ public class ForgeTickCounter implements TickCounter {
         for (Runnable r : this.tasks){
             r.run();
         }
-        this.tick.increment();
+        this.tick++;
     }
 
     @Override
@@ -67,8 +66,8 @@ public class ForgeTickCounter implements TickCounter {
     }
 
     @Override
-    public long getCurrentTick() {
-        return this.tick.longValue();
+    public int getCurrentTick() {
+        return this.tick;
     }
 
     @Override

@@ -26,14 +26,13 @@ import org.spongepowered.api.scheduler.Task;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.LongAdder;
 
 public class SpongeTickCounter implements TickCounter, Runnable {
     private final SparkSpongePlugin plugin;
     private Task task;
 
     private final Set<Runnable> tasks = new HashSet<>();
-    private final LongAdder tick = new LongAdder();
+    private int tick = 0;
 
     public SpongeTickCounter(SparkSpongePlugin plugin) {
         this.plugin = plugin;
@@ -44,7 +43,7 @@ public class SpongeTickCounter implements TickCounter, Runnable {
         for (Runnable r : this.tasks){
             r.run();
         }
-        this.tick.increment();
+        this.tick++;
     }
 
     @Override
@@ -58,8 +57,8 @@ public class SpongeTickCounter implements TickCounter, Runnable {
     }
 
     @Override
-    public long getCurrentTick() {
-        return this.tick.longValue();
+    public int getCurrentTick() {
+        return this.tick;
     }
 
     @Override

@@ -86,7 +86,7 @@ public class MonitoringModule<S> implements CommandModule<S> {
 
         @Override
         protected void sendMessage(String message) {
-            platform.sendPrefixedMessage(message);
+            this.platform.sendPrefixedMessage(message);
         }
     }
 }

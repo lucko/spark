@@ -116,7 +116,7 @@ public class SparkSpongePlugin implements CommandCallable {
 
         @Override
         public void runAsync(Runnable r) {
-            asyncExecutor.execute(r);
+            SparkSpongePlugin.this.asyncExecutor.execute(r);
         }
 
         @Override
@@ -139,7 +139,7 @@ public class SparkSpongePlugin implements CommandCallable {
 
     @Listener
     public void onServerStart(GameStartedServerEvent event) {
-        game.getCommandManager().register(this, this, "spark");
+        this.game.getCommandManager().register(this, this, "spark");
     }
 
     @Override
@@ -149,7 +149,7 @@ public class SparkSpongePlugin implements CommandCallable {
             return CommandResult.empty();
         }
 
-        sparkPlatform.executeCommand(source, arguments.split(" "));
+        this.sparkPlatform.executeCommand(source, arguments.split(" "));
         return CommandResult.empty();
     }
 

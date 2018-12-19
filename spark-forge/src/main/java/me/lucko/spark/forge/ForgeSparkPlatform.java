@@ -27,7 +27,6 @@ import me.lucko.spark.sampler.ThreadDumper;
 
 import net.kyori.text.TextComponent;
 import net.kyori.text.serializer.ComponentSerializers;
-import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
@@ -90,7 +89,7 @@ public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> i
 
     @Override
     public void runAsync(Runnable r) {
-        worker.execute(r);
+        this.worker.execute(r);
     }
 
     @Override
@@ -106,7 +105,7 @@ public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> i
     }
 
     @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
         if (!checkPermission(server, sender)) {
             TextComponentString msg = new TextComponentString("You do not have permission to use this command.");
             Style style = msg.getStyle();

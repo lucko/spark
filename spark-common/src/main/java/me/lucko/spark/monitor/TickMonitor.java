@@ -37,7 +37,7 @@ public abstract class TickMonitor implements Runnable, AutoCloseable {
     // data
     private volatile double lastTickTime = 0;
     private State state = null;
-    private DoubleSummaryStatistics averageTickTime = new DoubleSummaryStatistics();
+    private final DoubleSummaryStatistics averageTickTime = new DoubleSummaryStatistics();
     private double avg;
 
     public TickMonitor(TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {

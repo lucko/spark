@@ -65,7 +65,7 @@ public class TickedDataAggregator implements DataAggregator {
     private final Object mutex = new Object();
 
     // state
-    private long currentTick = -1;
+    private int currentTick = -1;
     private TickList currentData = new TickList(0);
 
     public TickedDataAggregator(ExecutorService workerPool, TickCounter tickCounter, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, int tickLengthThreshold) {
@@ -82,7 +82,7 @@ public class TickedDataAggregator implements DataAggregator {
     @Override
     public void insertData(String threadName, StackTraceElement[] stack) {
         synchronized (this.mutex) {
-            long tick = this.tickCounter.getCurrentTick();
+            int tick = this.tickCounter.getCurrentTick();
             if (this.currentTick != tick) {
                 pushCurrentTick();
                 this.currentTick = tick;

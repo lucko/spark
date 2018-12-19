@@ -41,7 +41,7 @@ public interface TickCounter extends AutoCloseable {
      *
      * @return the current tick
      */
-    long getCurrentTick();
+    int getCurrentTick();
 
     /**
      * Adds a task to be called each time the tick increments

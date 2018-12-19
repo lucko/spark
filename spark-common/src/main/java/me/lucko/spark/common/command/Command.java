@@ -63,8 +63,8 @@ public class Command<S> {
     }
 
     public static final class Builder<S> {
-        private ImmutableList.Builder<String> aliases = ImmutableList.builder();
-        private ImmutableList.Builder<ArgumentInfo> arguments = ImmutableList.builder();
+        private final ImmutableList.Builder<String> aliases = ImmutableList.builder();
+        private final ImmutableList.Builder<ArgumentInfo> arguments = ImmutableList.builder();
         private Executor<S> executor = null;
         private TabCompleter<S> tabCompleter = null;
 

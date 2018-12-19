@@ -27,14 +27,13 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.LongAdder;
 
 public class BukkitTickCounter implements TickCounter, Runnable {
     private final Plugin plugin;
     private BukkitTask task;
 
     private final Set<Runnable> tasks = new HashSet<>();
-    private final LongAdder tick = new LongAdder();
+    private int tick = 0;
 
     public BukkitTickCounter(Plugin plugin) {
         this.plugin = plugin;
@@ -42,10 +41,10 @@ public class BukkitTickCounter implements TickCounter, Runnable {
 
     @Override
     public void run() {
-        for (Runnable r : this.tasks){
+        for (Runnable r : this.tasks) {
             r.run();
         }
-        this.tick.increment();
+        this.tick++;
     }
 
     @Override
@@ -59,8 +58,8 @@ public class BukkitTickCounter implements TickCounter, Runnable {
     }
 
     @Override
-    public long getCurrentTick() {
-        return this.tick.longValue();
+    public int getCurrentTick() {
+        return this.tick;
     }
 
     @Override
