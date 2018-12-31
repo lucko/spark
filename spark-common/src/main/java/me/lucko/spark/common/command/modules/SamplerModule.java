@@ -171,8 +171,8 @@ public class SamplerModule<S> implements CommandModule<S> {
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> {
-                    List<String> opts = new ArrayList<>(Arrays.asList("--timeout", "--interval",
-                            "--not-combined", "--only-ticks-over", "--include-line-numbers"));
+                    List<String> opts = new ArrayList<>(Arrays.asList("--timeout", "--regex",
+                            "--not-combined", "--interval", "--only-ticks-over", "--include-line-numbers"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times
 
