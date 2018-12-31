@@ -26,6 +26,8 @@ This component provides a function which can be used to take basic snapshots of 
 
 Unlike the other "profiler"-like functionality in spark, this component is *not* intended to be a full replacement for proper memory analysis tools. It just shows a simplified view.
 
+spark also includes functionality which allows "full" hprof snapshots to be taken. These can be then analysed with conventional memory analysis tools.
+
 ## Features
 
 ### WarmRoast features
@@ -99,14 +101,16 @@ Starts a new profiling operation.
 	* Specifies the name of the thread to be profiled.
 	* If left unspecified, the profiler will only sample the main "server thread".
 	* The `*` character can be used in place of a name to mark that all threads should be profiled
+* `--not-combined`
+	* Specifies that threads from a pool should not be combined into a single node.
 * `--interval <interval>`
 	* Specifies the interval between samples. Measured in milliseconds.
 	* Lower values will improve the accuracy of the results, but may result in server lag.
 	* If left unspecified, a default interval of 10 milliseconds is used.
-* `--not-combined`
-	* Specifies that threads from a pool should not be combined into a single node.
 * `--only-ticks-over <tick length millis>`
 	* Specifies that entries should only be included if they were part of a tick that took longer than the specified duration to execute.
+* `--include-line-numbers`
+	* Specifies that line numbers of method calls should be recorded and included in the sampler output.
 ___
 #### `/spark info`
 Prints information about the active profiler, if present.
@@ -126,10 +130,26 @@ Starts/stops the tick monitoring system.
 **Arguments**
 * `--threshold <percentage increase>`
 	* Specifies the report threshold, measured as a percentage increase from the average tick duration.
+* `--without-gc`
+	* Specifies that GC notifications should not be shown.
 
 ___
-#### `/spark heap`
-Creates a new memory (heap) dump, uploads the resultant data, and returns a link to the viewer.
+#### `/spark heapsummary`
+Creates a new memory (heap) dump summary, uploads the resultant data, and returns a link to the viewer.
+
+**Arguments**
+* `--run-gc-before`
+	* Specifies that before recording data, spark should *suggest* that the system performs garbage collection.
+
+___
+#### `/spark heapdump`
+Creates a new heapdump (.hprof snapshot) file and saves to the disk.
+
+**Arguments**
+* `--run-gc-before`
+	* Specifies that before recording data, spark should *suggest* that the system performs garbage collection.
+* `--include-non-live`
+	* Specifies that "non-live" objects should be included. (objects that are not reachable from others)
 
 ## License
 
