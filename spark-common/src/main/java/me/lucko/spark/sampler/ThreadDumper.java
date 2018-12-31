@@ -21,11 +21,13 @@
 
 package me.lucko.spark.sampler;
 
-import me.lucko.spark.util.Threads;
+import me.lucko.spark.util.ThreadFinder;
 
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -56,6 +58,7 @@ public interface ThreadDumper {
      * Implementation of {@link ThreadDumper} that generates data for a specific set of threads.
      */
     final class Specific implements ThreadDumper {
+        private final ThreadFinder threadFinder = new ThreadFinder();
         private final long[] ids;
 
         public Specific(long[] ids) {
@@ -64,7 +67,7 @@ public interface ThreadDumper {
 
         public Specific(Set<String> names) {
             Set<String> namesLower = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
-            this.ids = Threads.getThreads()
+            this.ids = this.threadFinder.getThreads()
                     .filter(t -> namesLower.contains(t.getName().toLowerCase()))
                     .mapToLong(Thread::getId)
                     .toArray();
@@ -80,7 +83,9 @@ public interface ThreadDumper {
      * Implementation of {@link ThreadDumper} that generates data for a regex matched set of threads.
      */
     final class Regex implements ThreadDumper {
+        private final ThreadFinder threadFinder = new ThreadFinder();
         private final Set<Pattern> namePatterns;
+        private final Map<Long, Boolean> cache = new HashMap<>();
 
         public Regex(Set<String> namePatterns) {
             this.namePatterns = namePatterns.stream()
@@ -97,13 +102,20 @@ public interface ThreadDumper {
 
         @Override
         public Iterable<ThreadInfo> dumpThreads(ThreadMXBean threadBean) {
-            return Threads.getThreads()
+            return this.threadFinder.getThreads()
                     .filter(thread -> {
+                        Boolean result = this.cache.get(thread.getId());
+                        if (result != null) {
+                            return result;
+                        }
+
                         for (Pattern pattern : this.namePatterns) {
                             if (pattern.matcher(thread.getName()).matches()) {
+                                this.cache.put(thread.getId(), true);
                                 return true;
                             }
                         }
+                        this.cache.put(thread.getId(), false);
                         return false;
                     })
                     .map(thread -> threadBean.getThreadInfo(thread.getId()))

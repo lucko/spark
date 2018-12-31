@@ -25,14 +25,11 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
- * Utilities for working with {@link Thread}s.
+ * Utility to find active threads.
  */
-public final class Threads {
-
-    private Threads() {}
+public final class ThreadFinder {
 
     private static final ThreadGroup ROOT_THREAD_GROUP;
-
     static {
         ThreadGroup rootGroup = Thread.currentThread().getThreadGroup();
         ThreadGroup parentGroup;
@@ -42,13 +39,18 @@ public final class Threads {
         ROOT_THREAD_GROUP = rootGroup;
     }
 
+    // cache the approx active count at the time of construction.
+    // the usages of this class are likely to be somewhat short-lived, so it's good
+    // enough to just cache a value on init.
+    private final int approxActiveCount = ROOT_THREAD_GROUP.activeCount();
+
     /**
      * Gets a stream of all known active threads.
      *
      * @return a stream of threads
      */
-    public static Stream<Thread> getThreads() {
-        Thread[] threads = new Thread[ROOT_THREAD_GROUP.activeCount()];
+    public Stream<Thread> getThreads() {
+        Thread[] threads = new Thread[this.approxActiveCount + 20]; // +20 to allow a bit of growth for newly created threads
         while (ROOT_THREAD_GROUP.enumerate(threads, true ) == threads.length) {
             threads = new Thread[threads.length * 2];
         }
