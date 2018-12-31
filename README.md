@@ -101,6 +101,8 @@ Starts a new profiling operation.
 	* Specifies the name of the thread to be profiled.
 	* If left unspecified, the profiler will only sample the main "server thread".
 	* The `*` character can be used in place of a name to mark that all threads should be profiled
+* `--regex`
+	* Specifies that the set of threads defined should be interpreted as regex patterns.
 * `--not-combined`
 	* Specifies that threads from a pool should not be combined into a single node.
 * `--interval <interval>`

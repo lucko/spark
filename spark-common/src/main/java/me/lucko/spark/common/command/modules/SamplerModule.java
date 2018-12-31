@@ -56,6 +56,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                 .aliases("start")
                 .argumentUsage("timeout", "timeout seconds")
                 .argumentUsage("thread", "thread name")
+                .argumentUsage("regex", null)
                 .argumentUsage("not-combined", null)
                 .argumentUsage("interval", "interval millis")
                 .argumentUsage("only-ticks-over", "tick length millis")
@@ -86,7 +87,12 @@ public class SamplerModule<S> implements CommandModule<S> {
                     } else if (threads.contains("*")) {
                         threadDumper = ThreadDumper.ALL;
                     } else {
-                        threadDumper = new ThreadDumper.Specific(threads);
+                        if (arguments.boolFlag("regex")) {
+                            threadDumper = new ThreadDumper.Regex(threads);
+                        } else {
+                            // specific matches
+                            threadDumper = new ThreadDumper.Specific(threads);
+                        }
                     }
 
                     ThreadGrouper threadGrouper;

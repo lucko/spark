@@ -130,7 +130,7 @@ public class Sampler implements Runnable {
                 return;
             }
 
-            ThreadInfo[] threadDumps = this.threadDumper.dumpThreads(this.threadBean);
+            Iterable<ThreadInfo> threadDumps = this.threadDumper.dumpThreads(this.threadBean);
             for (ThreadInfo threadInfo : threadDumps) {
                 String threadName = threadInfo.getThreadName();
                 StackTraceElement[] stack = threadInfo.getStackTrace();

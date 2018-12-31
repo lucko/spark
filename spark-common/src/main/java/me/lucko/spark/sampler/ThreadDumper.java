@@ -21,9 +21,15 @@
 
 package me.lucko.spark.sampler;
 
+import me.lucko.spark.util.Threads;
+
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 /**
@@ -39,12 +45,12 @@ public interface ThreadDumper {
      * @param threadBean the thread bean instance to obtain the data from
      * @return an array of generated thread info instances
      */
-    ThreadInfo[] dumpThreads(ThreadMXBean threadBean);
+    Iterable<ThreadInfo> dumpThreads(ThreadMXBean threadBean);
 
     /**
      * Implementation of {@link ThreadDumper} that generates data for all threads.
      */
-    ThreadDumper ALL = threadBean -> threadBean.dumpAllThreads(false, false);
+    ThreadDumper ALL = threadBean -> Arrays.asList(threadBean.dumpAllThreads(false, false));
 
     /**
      * Implementation of {@link ThreadDumper} that generates data for a specific set of threads.
@@ -57,16 +63,52 @@ public interface ThreadDumper {
         }
 
         public Specific(Set<String> names) {
-            Set<String> threadNamesLower = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
-            this.ids = Thread.getAllStackTraces().keySet().stream()
-                    .filter(t -> threadNamesLower.contains(t.getName().toLowerCase()))
+            Set<String> namesLower = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
+            this.ids = Threads.getThreads()
+                    .filter(t -> namesLower.contains(t.getName().toLowerCase()))
                     .mapToLong(Thread::getId)
                     .toArray();
         }
 
         @Override
-        public ThreadInfo[] dumpThreads(ThreadMXBean threadBean) {
-            return threadBean.getThreadInfo(this.ids, Integer.MAX_VALUE);
+        public Iterable<ThreadInfo> dumpThreads(ThreadMXBean threadBean) {
+            return Arrays.asList(threadBean.getThreadInfo(this.ids, Integer.MAX_VALUE));
+        }
+    }
+
+    /**
+     * Implementation of {@link ThreadDumper} that generates data for a regex matched set of threads.
+     */
+    final class Regex implements ThreadDumper {
+        private final Set<Pattern> namePatterns;
+
+        public Regex(Set<String> namePatterns) {
+            this.namePatterns = namePatterns.stream()
+                    .map(regex -> {
+                        try {
+                            return Pattern.compile(regex);
+                        } catch (PatternSyntaxException e) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+        }
+
+        @Override
+        public Iterable<ThreadInfo> dumpThreads(ThreadMXBean threadBean) {
+            return Threads.getThreads()
+                    .filter(thread -> {
+                        for (Pattern pattern : this.namePatterns) {
+                            if (pattern.matcher(thread.getName()).matches()) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    })
+                    .map(thread -> threadBean.getThreadInfo(thread.getId()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
         }
     }
 
