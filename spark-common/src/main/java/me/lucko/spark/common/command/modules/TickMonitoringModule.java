@@ -23,14 +23,10 @@ package me.lucko.spark.common.command.modules;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
-import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.monitor.TickMonitor;
 import me.lucko.spark.sampler.TickCounter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.Consumer;
 
 public class TickMonitoringModule<S> implements CommandModule<S> {
@@ -64,14 +60,7 @@ public class TickMonitoringModule<S> implements CommandModule<S> {
                         platform.sendPrefixedMessage("&7Tick monitor disabled.");
                     }
                 })
-                .tabCompleter((platform, sender, arguments) -> {
-                    List<String> opts = new ArrayList<>(Arrays.asList("--threshold", "--without-gc"));
-                    opts.removeAll(arguments);
-
-                    return TabCompleter.create()
-                            .from(0, CompletionSupplier.startsWith(opts))
-                            .complete(arguments);
-                })
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--threshold", "--without-gc"))
                 .build()
         );
     }

@@ -23,6 +23,7 @@ package me.lucko.spark.common.command.modules;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
+import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.memory.HeapDump;
 import me.lucko.spark.memory.HeapDumpSummary;
 
@@ -72,6 +73,7 @@ public class MemoryModule<S> implements CommandModule<S> {
                         }
                     });
                 })
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--run-gc-before"))
                 .build()
         );
 
@@ -109,6 +111,7 @@ public class MemoryModule<S> implements CommandModule<S> {
                         platform.sendPrefixedMessage("&bHeap dump written to: " + file.toString());
                     });
                 })
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--run-gc-before", "--include-non-live"))
                 .build()
         );
     }
