@@ -34,6 +34,7 @@ import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
+import java.nio.file.Path;
 import java.util.Collections;
 
 public class SparkBungeeCordPlugin extends Plugin {
@@ -54,7 +55,12 @@ public class SparkBungeeCordPlugin extends Plugin {
 
         @Override
         public String getVersion() {
-            return SparkBungeeCordPlugin.this.getDescription().getVersion();
+            return getDescription().getVersion();
+        }
+
+        @Override
+        public Path getPluginFolder() {
+            return getDataFolder().toPath();
         }
 
         @Override

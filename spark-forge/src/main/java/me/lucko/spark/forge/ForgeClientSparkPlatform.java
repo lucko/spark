@@ -34,8 +34,12 @@ import java.util.List;
 
 public class ForgeClientSparkPlatform extends ForgeSparkPlatform {
 
-    public static void register() {
-        ClientCommandHandler.instance.registerCommand(new ForgeClientSparkPlatform());
+    public static void register(SparkForgeMod mod) {
+        ClientCommandHandler.instance.registerCommand(new ForgeClientSparkPlatform(mod));
+    }
+
+    public ForgeClientSparkPlatform(SparkForgeMod mod) {
+        super(mod);
     }
 
     @Override

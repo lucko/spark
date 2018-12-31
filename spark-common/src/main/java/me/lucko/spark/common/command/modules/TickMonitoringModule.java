@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class MonitoringModule<S> implements CommandModule<S> {
+public class TickMonitoringModule<S> implements CommandModule<S> {
 
     /** The tick monitor instance currently running, if any */
     private ReportingTickMonitor activeTickMonitor = null;

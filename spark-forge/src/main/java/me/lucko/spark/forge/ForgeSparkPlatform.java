@@ -38,6 +38,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -48,13 +49,24 @@ import javax.annotation.Nullable;
 @SuppressWarnings("NullableProblems")
 public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> implements ICommand {
 
+    private final SparkForgeMod mod;
+
     private final ExecutorService worker = Executors.newSingleThreadExecutor(
             new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
     );
 
+    protected ForgeSparkPlatform(SparkForgeMod mod) {
+        this.mod = mod;
+    }
+
     @Override
     public String getVersion() {
         return SparkForgeMod.class.getAnnotation(Mod.class).version();
+    }
+
+    @Override
+    public Path getPluginFolder() {
+        return this.mod.getConfigDirectory();
     }
 
     @SuppressWarnings("deprecation")

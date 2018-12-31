@@ -24,8 +24,11 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.relauncher.Side;
+
+import java.nio.file.Path;
 
 @Mod(
         modid = "spark",
@@ -35,16 +38,29 @@ import net.minecraftforge.fml.relauncher.Side;
 )
 public class SparkForgeMod {
 
+    private Path configDirectory = null;
+
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent e) {
+        this.configDirectory = e.getModConfigurationDirectory().toPath();
+    }
+
     @EventHandler
     public void init(FMLInitializationEvent e) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            ForgeClientSparkPlatform.register();
+            ForgeClientSparkPlatform.register(this);
         }
     }
 
     @EventHandler
     public void serverInit(FMLServerStartingEvent e) {
-        e.registerServerCommand(new ForgeServerSparkPlatform());
+        e.registerServerCommand(new ForgeServerSparkPlatform(this));
     }
 
+    public Path getConfigDirectory() {
+        if (this.configDirectory == null) {
+            throw new IllegalStateException("Config directory not set");
+        }
+        return this.configDirectory;
+    }
 }

@@ -24,15 +24,16 @@ import com.google.common.collect.ImmutableList;
 
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
-import me.lucko.spark.common.command.modules.HeapModule;
-import me.lucko.spark.common.command.modules.MonitoringModule;
+import me.lucko.spark.common.command.modules.MemoryModule;
 import me.lucko.spark.common.command.modules.SamplerModule;
+import me.lucko.spark.common.command.modules.TickMonitoringModule;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.TickCounter;
 import me.lucko.spark.util.BytebinClient;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,8 +58,8 @@ public abstract class SparkPlatform<S> {
     private static <T> List<Command<T>> prepareCommands() {
         ImmutableList.Builder<Command<T>> builder = ImmutableList.builder();
         new SamplerModule<T>().registerCommands(builder::add);
-        new MonitoringModule<T>().registerCommands(builder::add);
-        new HeapModule<T>().registerCommands(builder::add);
+        new TickMonitoringModule<T>().registerCommands(builder::add);
+        new MemoryModule<T>().registerCommands(builder::add);
         return builder.build();
     }
 
@@ -66,6 +67,7 @@ public abstract class SparkPlatform<S> {
     
     // abstract methods implemented by each platform
     public abstract String getVersion();
+    public abstract Path getPluginFolder();
     public abstract String getLabel();
     public abstract void sendMessage(S sender, String message);
     public abstract void sendMessage(String message);

@@ -27,10 +27,10 @@ import me.lucko.spark.sampler.ThreadDumper;
 import me.lucko.spark.sampler.TickCounter;
 
 import org.spongepowered.api.Game;
-import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
@@ -47,6 +47,7 @@ import org.spongepowered.api.world.World;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -66,14 +67,18 @@ import javax.annotation.Nullable;
 )
 public class SparkSpongePlugin implements CommandCallable {
 
+    private final Game game;
+    private final Path configDirectory;
+    private final SpongeExecutorService asyncExecutor;
+
     private final SparkPlatform<CommandSource> sparkPlatform = new SparkPlatform<CommandSource>() {
         private Text colorize(String message) {
             return TextSerializers.FORMATTING_CODE.deserialize(message);
         }
 
         private void broadcast(Text msg) {
-            Sponge.getServer().getConsole().sendMessage(msg);
-            for (Player player : Sponge.getServer().getOnlinePlayers()) {
+            SparkSpongePlugin.this.game.getServer().getConsole().sendMessage(msg);
+            for (Player player : SparkSpongePlugin.this.game.getServer().getOnlinePlayers()) {
                 if (player.hasPermission("spark")) {
                     player.sendMessage(msg);
                 }
@@ -83,6 +88,11 @@ public class SparkSpongePlugin implements CommandCallable {
         @Override
         public String getVersion() {
             return SparkSpongePlugin.class.getAnnotation(Plugin.class).version();
+        }
+
+        @Override
+        public Path getPluginFolder() {
+            return SparkSpongePlugin.this.configDirectory;
         }
 
         @Override
@@ -131,11 +141,11 @@ public class SparkSpongePlugin implements CommandCallable {
     };
 
     @Inject
-    @AsynchronousExecutor
-    private SpongeExecutorService asyncExecutor;
-
-    @Inject
-    private Game game;
+    public SparkSpongePlugin(Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
+        this.game = game;
+        this.configDirectory = configDirectory;
+        this.asyncExecutor = asyncExecutor;
+    }
 
     @Listener
     public void onServerStart(GameStartedServerEvent event) {

@@ -26,6 +26,7 @@ import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 
@@ -39,6 +40,8 @@ import net.kyori.text.event.ClickEvent;
 import net.kyori.text.format.TextColor;
 import net.kyori.text.serializer.ComponentSerializers;
 
+import java.nio.file.Path;
+
 @Plugin(
         id = "spark",
         name = "spark",
@@ -49,6 +52,7 @@ import net.kyori.text.serializer.ComponentSerializers;
 public class SparkVelocityPlugin {
 
     private final ProxyServer proxy;
+    private final Path configDirectory;
 
     private final SparkPlatform<CommandSource> sparkPlatform = new SparkPlatform<CommandSource>() {
         @SuppressWarnings("deprecation")
@@ -68,6 +72,11 @@ public class SparkVelocityPlugin {
         @Override
         public String getVersion() {
             return SparkVelocityPlugin.class.getAnnotation(Plugin.class).version();
+        }
+
+        @Override
+        public Path getPluginFolder() {
+            return SparkVelocityPlugin.this.configDirectory;
         }
 
         @Override
@@ -111,8 +120,9 @@ public class SparkVelocityPlugin {
     };
 
     @Inject
-    public SparkVelocityPlugin(ProxyServer proxy) {
+    public SparkVelocityPlugin(ProxyServer proxy, @DataDirectory Path configDirectory) {
         this.proxy = proxy;
+        this.configDirectory = configDirectory;
     }
 
     @Subscribe(order = PostOrder.FIRST)

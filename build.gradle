@@ -8,7 +8,7 @@ subprojects {
     apply plugin: 'maven'
 
     ext {
-        pluginVersion = '1.1.0'
+        pluginVersion = '1.2.0'
         pluginDescription = 'spark is a performance profiling plugin based on sk89q\'s WarmRoast profiler'
     }
 

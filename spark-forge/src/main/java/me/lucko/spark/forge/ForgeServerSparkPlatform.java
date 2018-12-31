@@ -34,6 +34,10 @@ import java.util.List;
 
 public class ForgeServerSparkPlatform extends ForgeSparkPlatform {
 
+    public ForgeServerSparkPlatform(SparkForgeMod mod) {
+        super(mod);
+    }
+
     @Override
     protected void broadcast(ITextComponent msg) {
         FMLCommonHandler.instance().getMinecraftServerInstance().sendMessage(msg);

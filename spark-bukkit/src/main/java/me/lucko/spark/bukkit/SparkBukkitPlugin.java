@@ -30,6 +30,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,7 +53,12 @@ public class SparkBukkitPlugin extends JavaPlugin {
 
         @Override
         public String getVersion() {
-            return SparkBukkitPlugin.this.getDescription().getVersion();
+            return getDescription().getVersion();
+        }
+
+        @Override
+        public Path getPluginFolder() {
+            return getDataFolder().toPath();
         }
 
         @Override
