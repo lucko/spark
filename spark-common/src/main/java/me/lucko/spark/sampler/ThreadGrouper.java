@@ -45,9 +45,12 @@ public interface ThreadGrouper {
     /**
      * Implementation of {@link ThreadGrouper} that attempts to group by the name of the pool
      * the thread originated from.
+     *
+     * <p>The regex pattern used to match pools expects a digit at the end of the thread name,
+     * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
      */
     ThreadGrouper BY_POOL = new ThreadGrouper() {
-        private final Pattern pattern = Pattern.compile("^(.*)[-#] ?\\d+$");
+        private final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
 
         @Override
         public String getGroup(String threadName) {

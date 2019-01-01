@@ -51,7 +51,7 @@ public final class ThreadFinder {
      */
     public Stream<Thread> getThreads() {
         Thread[] threads = new Thread[this.approxActiveCount + 20]; // +20 to allow a bit of growth for newly created threads
-        while (ROOT_THREAD_GROUP.enumerate(threads, true ) == threads.length) {
+        while (ROOT_THREAD_GROUP.enumerate(threads, true) == threads.length) {
             threads = new Thread[threads.length * 2];
         }
         return Arrays.stream(threads).filter(Objects::nonNull);
