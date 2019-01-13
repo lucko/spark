@@ -90,7 +90,7 @@ public class MemoryModule<S> implements CommandModule<S> {
                             // ignore
                         }
 
-                        Path file = pluginFolder.resolve("heap-" + DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now()) + ".hprof");
+                        Path file = pluginFolder.resolve("heap-" + DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now()) + (HeapDump.isOpenJ9() ? ".phd" : ".hprof"));
                         boolean liveOnly = !arguments.boolFlag("include-non-live");
 
                         if (arguments.boolFlag("run-gc-before")) {

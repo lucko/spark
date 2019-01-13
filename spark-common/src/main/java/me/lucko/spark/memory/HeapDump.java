@@ -22,6 +22,7 @@ package me.lucko.spark.memory;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 
 import javax.management.JMX;
@@ -46,11 +47,28 @@ public final class HeapDump {
      * @throws Exception catch all
      */
     public static void dumpHeap(Path outputPath, boolean live) throws Exception {
-        MBeanServer beanServer = ManagementFactory.getPlatformMBeanServer();
-        ObjectName diagnosticBeanName = ObjectName.getInstance(DIAGNOSTIC_BEAN);
+        String outputPathString = outputPath.toAbsolutePath().normalize().toString();
 
-        HotSpotDiagnosticMXBean proxy = JMX.newMXBeanProxy(beanServer, diagnosticBeanName, HotSpotDiagnosticMXBean.class);
-        proxy.dumpHeap(outputPath.toAbsolutePath().normalize().toString(), live);
+        if (isOpenJ9()) {
+            Class<?> dumpClass = Class.forName("com.ibm.jvm.Dump");
+            Method heapDumpMethod = dumpClass.getMethod("heapDumpToFile", String.class);
+            heapDumpMethod.invoke(null, outputPathString);
+        } else {
+            MBeanServer beanServer = ManagementFactory.getPlatformMBeanServer();
+            ObjectName diagnosticBeanName = ObjectName.getInstance(DIAGNOSTIC_BEAN);
+
+            HotSpotDiagnosticMXBean proxy = JMX.newMXBeanProxy(beanServer, diagnosticBeanName, HotSpotDiagnosticMXBean.class);
+            proxy.dumpHeap(outputPathString, live);
+        }
+    }
+
+    public static boolean isOpenJ9() {
+        try {
+            Class.forName("com.ibm.jvm.Dump");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 
     public interface HotSpotDiagnosticMXBean {
