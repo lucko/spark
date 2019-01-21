@@ -25,7 +25,6 @@ import me.lucko.spark.util.ThreadFinder;
 
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -47,12 +46,12 @@ public interface ThreadDumper {
      * @param threadBean the thread bean instance to obtain the data from
      * @return an array of generated thread info instances
      */
-    Iterable<ThreadInfo> dumpThreads(ThreadMXBean threadBean);
+    ThreadInfo[] dumpThreads(ThreadMXBean threadBean);
 
     /**
      * Implementation of {@link ThreadDumper} that generates data for all threads.
      */
-    ThreadDumper ALL = threadBean -> Arrays.asList(threadBean.dumpAllThreads(false, false));
+    ThreadDumper ALL = threadBean -> threadBean.dumpAllThreads(false, false);
 
     /**
      * Implementation of {@link ThreadDumper} that generates data for a specific set of threads.
@@ -74,8 +73,8 @@ public interface ThreadDumper {
         }
 
         @Override
-        public Iterable<ThreadInfo> dumpThreads(ThreadMXBean threadBean) {
-            return Arrays.asList(threadBean.getThreadInfo(this.ids, Integer.MAX_VALUE));
+        public ThreadInfo[] dumpThreads(ThreadMXBean threadBean) {
+            return threadBean.getThreadInfo(this.ids, Integer.MAX_VALUE);
         }
     }
 
@@ -101,7 +100,7 @@ public interface ThreadDumper {
         }
 
         @Override
-        public Iterable<ThreadInfo> dumpThreads(ThreadMXBean threadBean) {
+        public ThreadInfo[] dumpThreads(ThreadMXBean threadBean) {
             return this.threadFinder.getThreads()
                     .filter(thread -> {
                         Boolean result = this.cache.get(thread.getId());
@@ -120,7 +119,7 @@ public interface ThreadDumper {
                     })
                     .map(thread -> threadBean.getThreadInfo(thread.getId()))
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .toArray(ThreadInfo[]::new);
         }
     }
 

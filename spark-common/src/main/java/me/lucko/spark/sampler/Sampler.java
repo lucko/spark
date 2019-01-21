@@ -23,7 +23,6 @@ package me.lucko.spark.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.stream.JsonWriter;
-
 import me.lucko.spark.sampler.aggregator.DataAggregator;
 import me.lucko.spark.sampler.aggregator.SimpleDataAggregator;
 import me.lucko.spark.sampler.aggregator.TickedDataAggregator;
@@ -130,7 +129,7 @@ public class Sampler implements Runnable {
                 return;
             }
 
-            Iterable<ThreadInfo> threadDumps = this.threadDumper.dumpThreads(this.threadBean);
+            ThreadInfo[] threadDumps = this.threadDumper.dumpThreads(this.threadBean);
             for (ThreadInfo threadInfo : threadDumps) {
                 String threadName = threadInfo.getThreadName();
                 StackTraceElement[] stack = threadInfo.getStackTrace();
