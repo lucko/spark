@@ -103,6 +103,8 @@ Starts a new profiling operation.
 	* The `*` character can be used in place of a name to mark that all threads should be profiled
 * `--regex`
 	* Specifies that the set of threads defined should be interpreted as regex patterns.
+* `--combine-all`
+	* Specifies that all threads should be combined into a single node.
 * `--not-combined`
 	* Specifies that threads from a pool should not be combined into a single node.
 * `--interval <interval>`

@@ -57,6 +57,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                 .argumentUsage("timeout", "timeout seconds")
                 .argumentUsage("thread", "thread name")
                 .argumentUsage("regex", null)
+                .argumentUsage("combine-all", null)
                 .argumentUsage("not-combined", null)
                 .argumentUsage("interval", "interval millis")
                 .argumentUsage("only-ticks-over", "tick length millis")
@@ -96,7 +97,9 @@ public class SamplerModule<S> implements CommandModule<S> {
                     }
 
                     ThreadGrouper threadGrouper;
-                    if (arguments.boolFlag("not-combined")) {
+                    if (arguments.boolFlag("combine-all")) {
+                        threadGrouper = ThreadGrouper.AS_ONE;
+                    } else if (arguments.boolFlag("not-combined")) {
                         threadGrouper = ThreadGrouper.BY_NAME;
                     } else {
                         threadGrouper = ThreadGrouper.BY_POOL;
@@ -171,7 +174,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> {
-                    List<String> opts = new ArrayList<>(Arrays.asList("--timeout", "--regex",
+                    List<String> opts = new ArrayList<>(Arrays.asList("--timeout", "--regex", "--combine-all",
                             "--not-combined", "--interval", "--only-ticks-over", "--include-line-numbers"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times

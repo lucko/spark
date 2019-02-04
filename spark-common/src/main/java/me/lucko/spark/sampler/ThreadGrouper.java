@@ -63,4 +63,10 @@ public interface ThreadGrouper {
         }
     };
 
+    /**
+     * Implementation of {@link ThreadGrouper} which groups all threads as one, under
+     * the name "All".
+     */
+    ThreadGrouper AS_ONE = threadName -> "All";
+
 }
