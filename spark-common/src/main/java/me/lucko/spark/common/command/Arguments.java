@@ -89,6 +89,18 @@ public class Arguments {
         return -1; // undefined
     }
 
+    public double doubleFlag(String key) {
+        Iterator<String> it = this.parsedArgs.get(key).iterator();
+        if (it.hasNext()) {
+            try {
+                return Math.abs(Double.parseDouble(it.next()));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid input for '" + key + "' argument. Please specify a number!");
+            }
+        }
+        return -1; // undefined
+    }
+
     public Set<String> stringFlag(String key) {
         return this.parsedArgs.get(key);
     }

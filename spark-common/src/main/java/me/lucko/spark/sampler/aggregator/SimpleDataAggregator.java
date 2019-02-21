@@ -43,7 +43,7 @@ public class SimpleDataAggregator implements DataAggregator {
     /** The instance used to group threads together */
     private final ThreadGrouper threadGrouper;
 
-    /** The interval to wait between sampling, in milliseconds */
+    /** The interval to wait between sampling, in microseconds */
     private final int interval;
 
     /** If line numbers should be included in the output */

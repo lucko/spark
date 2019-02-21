@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -45,12 +46,21 @@ public abstract class AbstractNode {
     private final Map<String, StackTraceNode> children = new ConcurrentHashMap<>();
 
     /**
-     * The accumulated sample time for this node
+     * The accumulated sample time for this node, measured in microseconds
      */
     private final LongAdder totalTime = new LongAdder();
-    
+
+    /**
+     * Returns the total sample time for this node in milliseconds.
+     *
+     * @return the total time
+     */
     public long getTotalTime() {
-        return this.totalTime.longValue();
+        long millis = TimeUnit.MICROSECONDS.toMillis(this.totalTime.longValue());
+        if (millis == 0) {
+            return 1;
+        }
+        return millis;
     }
 
     private AbstractNode resolveChild(String className, String methodName, int lineNumber) {

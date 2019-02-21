@@ -73,7 +73,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                         platform.sendPrefixedMessage(sender, "&7The accuracy of the output will significantly improve when sampling is able to run for longer periods. Consider setting a timeout value over 30 seconds.");
                     }
 
-                    int intervalMillis = arguments.intFlag("interval");
+                    double intervalMillis = arguments.doubleFlag("interval");
                     if (intervalMillis <= 0) {
                         intervalMillis = 4;
                     }

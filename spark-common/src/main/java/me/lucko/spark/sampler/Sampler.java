@@ -23,6 +23,7 @@ package me.lucko.spark.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.stream.JsonWriter;
+
 import me.lucko.spark.sampler.aggregator.DataAggregator;
 import me.lucko.spark.sampler.aggregator.SimpleDataAggregator;
 import me.lucko.spark.sampler.aggregator.TickedDataAggregator;
@@ -71,7 +72,7 @@ public class Sampler implements Runnable {
     /** A future to encapsulation the completion of this sampler instance */
     private final CompletableFuture<Sampler> future = new CompletableFuture<>();
 
-    /** The interval to wait between sampling, in milliseconds */
+    /** The interval to wait between sampling, in microseconds */
     private final int interval;
     /** The time when sampling first began */
     private long startTime = -1;
@@ -98,7 +99,7 @@ public class Sampler implements Runnable {
     public void start() {
         this.startTime = System.currentTimeMillis();
         this.dataAggregator.start();
-        this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MILLISECONDS);
+        this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
     }
 
     public long getStartTime() {

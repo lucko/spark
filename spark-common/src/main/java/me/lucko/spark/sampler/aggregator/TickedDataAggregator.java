@@ -50,14 +50,14 @@ public class TickedDataAggregator implements DataAggregator {
     /** The instance used to group threads together */
     private final ThreadGrouper threadGrouper;
 
-    /** The interval to wait between sampling, in milliseconds */
+    /** The interval to wait between sampling, in microseconds */
     private final int interval;
 
     /** If line numbers should be included in the output */
     private final boolean includeLineNumbers;
 
-    /** Tick durations under this threshold will not be inserted */
-    private final int tickLengthThreshold;
+    /** Tick durations under this threshold will not be inserted, measured in microseconds */
+    private final long tickLengthThreshold;
 
     /** The expected number of samples in each tick */
     private final int expectedSize;
@@ -74,9 +74,10 @@ public class TickedDataAggregator implements DataAggregator {
         this.threadGrouper = threadGrouper;
         this.interval = interval;
         this.includeLineNumbers = includeLineNumbers;
-        this.tickLengthThreshold = tickLengthThreshold;
+        this.tickLengthThreshold = TimeUnit.MILLISECONDS.toMicros(tickLengthThreshold);
         // 50 millis in a tick, plus 10 so we have a bit of room to go over
-        this.expectedSize = (50 / interval) + 10;
+        double intervalMilliseconds = interval / 1000d;
+        this.expectedSize = (int) ((50 / intervalMilliseconds) + 10);
     }
 
     @Override
@@ -101,10 +102,10 @@ public class TickedDataAggregator implements DataAggregator {
         TickList currentData = this.currentData;
 
         // approximate how long the tick lasted
-        int tickLengthMillis = currentData.getList().size() * this.interval;
+        int tickLengthMicros = currentData.getList().size() * this.interval;
 
         // don't push data below the threshold
-        if (tickLengthMillis < this.tickLengthThreshold) {
+        if (tickLengthMicros < this.tickLengthThreshold) {
             return;
         }
 

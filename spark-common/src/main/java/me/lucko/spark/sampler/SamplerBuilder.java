@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SamplerBuilder {
 
-    private int samplingInterval = 4;
+    private double samplingInterval = 4; // milliseconds
     private boolean includeLineNumbers = false;
     private long timeout = -1;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
@@ -39,7 +39,7 @@ public class SamplerBuilder {
     public SamplerBuilder() {
     }
 
-    public SamplerBuilder samplingInterval(int samplingInterval) {
+    public SamplerBuilder samplingInterval(double samplingInterval) {
         this.samplingInterval = samplingInterval;
         return this;
     }
@@ -75,10 +75,12 @@ public class SamplerBuilder {
 
     public Sampler start() {
         Sampler sampler;
+
+        int intervalMicros = (int) (this.samplingInterval * 1000d);
         if (this.ticksOver != -1 && this.tickCounter != null) {
-            sampler = new Sampler(this.samplingInterval, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.tickCounter, this.ticksOver);
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.tickCounter, this.ticksOver);
         } else {
-            sampler = new Sampler(this.samplingInterval, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers);
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers);
         }
 
         sampler.start();
