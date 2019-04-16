@@ -21,7 +21,7 @@
 package me.lucko.spark.common.monitor.tick;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
-import me.lucko.spark.common.monitor.gc.GarbageCollectionMonitor;
+import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.sampler.TickCounter;
 
 import java.text.DecimalFormat;
@@ -91,7 +91,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
             // move onto the next state
             if (this.averageTickTime.getCount() >= 120) {
 
-                sendMessage("&bAnalysis is now complete.");
+                sendMessage("&6Analysis is now complete.");
                 sendMessage("&f> &7Max: " + df.format(this.averageTickTime.getMax()) + "ms");
                 sendMessage("&f> &7Min: " + df.format(this.averageTickTime.getMin()) + "ms");
                 sendMessage("&f> &7Avg: " + df.format(this.averageTickTime.getAverage()) + "ms");
@@ -111,8 +111,8 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
 
             double percentageChange = (increase * 100d) / this.avg;
             if (percentageChange > this.percentageChangeThreshold) {
-                sendMessage("&7Tick &8#" + counter.getCurrentTick() + " &7lasted &b" + df.format(diff) +
-                        "&7 ms. (&b" + df.format(percentageChange) + "% &7increase from average)");
+                sendMessage("&7Tick &8#" + counter.getCurrentTick() + " &7lasted &6" + df.format(diff) +
+                        "&7 ms. (&6" + df.format(percentageChange) + "% &7increase from average)");
             }
         }
     }
@@ -132,7 +132,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
             gcType = "Old Gen GC";
         }
 
-        sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7included &4GC &7lasting &b" +
+        sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7included &4GC &7lasting &6" +
                 df.format(data.getGcInfo().getDuration()) + "&7 ms. (type = " + gcType + ")");
     }
 

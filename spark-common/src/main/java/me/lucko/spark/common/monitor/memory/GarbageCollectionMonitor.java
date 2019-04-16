@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.monitor.gc;
+package me.lucko.spark.common.monitor.memory;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
 

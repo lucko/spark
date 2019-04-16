@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.memory;
+package me.lucko.spark.common.heapdump;
 
 import javax.management.JMX;
 import javax.management.MBeanServer;

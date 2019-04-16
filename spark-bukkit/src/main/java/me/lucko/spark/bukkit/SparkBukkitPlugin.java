@@ -22,6 +22,8 @@ package me.lucko.spark.bukkit;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.command.CommandResponseHandler;
+import me.lucko.spark.common.monitor.tick.TpsCalculator;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
 import org.bukkit.ChatColor;
@@ -42,6 +44,22 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<Command
     @Override
     public void onEnable() {
         this.platform.enable();
+
+        // override Spigot's TPS command with our own.
+        if (getConfig().getBoolean("override-tps-command", true)) {
+            CommandMapUtil.registerCommand(this, (sender, command, label, args) -> {
+                if (!sender.hasPermission("spark") && !sender.hasPermission("spark.tps") && !sender.hasPermission("bukkit.command.tps")) {
+                    sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
+                    return true;
+                }
+
+                CommandResponseHandler<CommandSender> resp = new CommandResponseHandler<>(this.platform, sender);
+                TpsCalculator tpsCalculator = this.platform.getTpsCalculator();
+                resp.replyPrefixed("TPS from last 5s, 10s, 1m, 5m, 15m:");
+                resp.replyPrefixed(" " + tpsCalculator.toFormattedString());
+                return true;
+            }, "tps");
+        }
     }
 
     @Override

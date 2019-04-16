@@ -24,8 +24,8 @@ import com.google.common.collect.ImmutableList;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandResponseHandler;
+import me.lucko.spark.common.command.modules.HealthModule;
 import me.lucko.spark.common.command.modules.MemoryModule;
-import me.lucko.spark.common.command.modules.MonitoringModule;
 import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.command.modules.TickMonitoringModule;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
@@ -66,7 +66,7 @@ public class SparkPlatform<S> {
 
         ImmutableList.Builder<Command<S>> commandsBuilder = ImmutableList.builder();
         new SamplerModule<S>().registerCommands(commandsBuilder::add);
-        new MonitoringModule<S>().registerCommands(commandsBuilder::add);
+        new HealthModule<S>().registerCommands(commandsBuilder::add);
         new TickMonitoringModule<S>().registerCommands(commandsBuilder::add);
         new MemoryModule<S>().registerCommands(commandsBuilder::add);
         this.commands = commandsBuilder.build();
@@ -115,6 +115,7 @@ public class SparkPlatform<S> {
                 try {
                     command.executor().execute(this, sender, resp, new Arguments(rawArgs));
                 } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
                     resp.replyPrefixed("&c" + e.getMessage());
                 }
                 return;
@@ -147,7 +148,7 @@ public class SparkPlatform<S> {
     private void sendUsage(CommandResponseHandler<S> sender) {
         sender.replyPrefixed("&fspark &7v" + getPlugin().getVersion());
         for (Command<S> command : this.commands) {
-            sender.reply("&b&l> &7/" + getPlugin().getLabel() + " " + command.aliases().get(0));
+            sender.reply("&6&l> &7/" + getPlugin().getLabel() + " " + command.aliases().get(0));
             for (Command.ArgumentInfo arg : command.arguments()) {
                 if (arg.requiresParameter()) {
                     sender.reply("       &8[&7--" + arg.argumentName() + "&8 <" + arg.parameterDescription() + ">]");

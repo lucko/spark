@@ -24,8 +24,8 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import me.lucko.spark.common.memory.HeapDump;
-import me.lucko.spark.common.memory.HeapDumpSummary;
+import me.lucko.spark.common.heapdump.HeapDump;
+import me.lucko.spark.common.heapdump.HeapDumpSummary;
 import okhttp3.MediaType;
 
 import java.io.IOException;
@@ -64,7 +64,7 @@ public class MemoryModule<S> implements CommandModule<S> {
                                     byte[] output = heapDump.formCompressedDataPayload();
                                     try {
                                         String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, JSON_TYPE, false).key();
-                                        resp.broadcastPrefixed("&bHeap dump summmary output:");
+                                        resp.broadcastPrefixed("&6Heap dump summmary output:");
                                         resp.broadcastLink(SparkPlatform.VIEWER_URL + key);
                                     } catch (IOException e) {
                                         resp.broadcastPrefixed("&cAn error occurred whilst uploading the data.");
@@ -108,7 +108,7 @@ public class MemoryModule<S> implements CommandModule<S> {
                                         return;
                                     }
 
-                                    resp.broadcastPrefixed("&bHeap dump written to: " + file.toString());
+                                    resp.broadcastPrefixed("&6Heap dump written to: " + file.toString());
                                 });
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--run-gc-before", "--include-non-live"))

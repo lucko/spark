@@ -137,7 +137,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                         }
                         sampler = this.activeSampler = builder.start();
 
-                        resp.broadcastPrefixed("&bProfiler now active!");
+                        resp.broadcastPrefixed("&6Profiler now active!");
                         if (timeoutSeconds == -1) {
                             resp.broadcastPrefixed("&7Use '/" + platform.getPlugin().getLabel() + " stop' to stop profiling and upload the results.");
                         } else {
@@ -234,7 +234,7 @@ public class SamplerModule<S> implements CommandModule<S> {
                         } else {
                             this.activeSampler.cancel();
                             this.activeSampler = null;
-                            resp.broadcastPrefixed("&bThe active sampling task has been cancelled.");
+                            resp.broadcastPrefixed("&6The active sampling task has been cancelled.");
                         }
                     }
                 })
@@ -247,7 +247,7 @@ public class SamplerModule<S> implements CommandModule<S> {
             byte[] output = sampler.formCompressedDataPayload();
             try {
                 String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, JSON_TYPE, false).key();
-                resp.broadcastPrefixed("&bSampling results:");
+                resp.broadcastPrefixed("&6Sampling results:");
                 resp.broadcastLink(SparkPlatform.VIEWER_URL + key);
             } catch (IOException e) {
                 resp.broadcastPrefixed("&cAn error occurred whilst uploading the results.");

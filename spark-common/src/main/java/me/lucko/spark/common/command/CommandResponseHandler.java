@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 public class CommandResponseHandler<S> {
 
     /** The prefix used in all messages */
-    private static final String PREFIX = "&8[&fspark&8] &7";
+    private static final String PREFIX = "&8[&e&l⚡&8] &7";
 
     private final SparkPlatform<S> platform;
     private final S sender;
