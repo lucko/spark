@@ -24,9 +24,8 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import me.lucko.spark.memory.HeapDump;
-import me.lucko.spark.memory.HeapDumpSummary;
-
+import me.lucko.spark.common.memory.HeapDump;
+import me.lucko.spark.common.memory.HeapDumpSummary;
 import okhttp3.MediaType;
 
 import java.io.IOException;
@@ -44,34 +43,34 @@ public class MemoryModule<S> implements CommandModule<S> {
         consumer.accept(Command.<S>builder()
                 .aliases("heapsummary")
                 .argumentUsage("run-gc-before", null)
-                .executor((platform, sender, arguments) -> {
-                    platform.runAsync(() -> {
-                        if (arguments.boolFlag("run-gc-before")) {
-                            platform.sendPrefixedMessage("&7Running garbage collector...");
-                            System.gc();
-                        }
+                .executor((platform, sender, resp, arguments) -> {
+                    platform.getPlugin().runAsync(() -> {
+                                    if (arguments.boolFlag("run-gc-before")) {
+                                        resp.broadcastPrefixed("&7Running garbage collector...");
+                                        System.gc();
+                                    }
 
-                        platform.sendPrefixedMessage("&7Creating a new heap dump summary, please wait...");
+                                    resp.broadcastPrefixed("&7Creating a new heap dump summary, please wait...");
 
-                        HeapDumpSummary heapDump;
-                        try {
-                            heapDump = HeapDumpSummary.createNew();
-                        } catch (Exception e) {
-                            platform.sendPrefixedMessage("&cAn error occurred whilst inspecting the heap.");
-                            e.printStackTrace();
-                            return;
-                        }
+                                    HeapDumpSummary heapDump;
+                                    try {
+                                        heapDump = HeapDumpSummary.createNew();
+                                    } catch (Exception e) {
+                                        resp.broadcastPrefixed("&cAn error occurred whilst inspecting the heap.");
+                                        e.printStackTrace();
+                                        return;
+                                    }
 
-                        byte[] output = heapDump.formCompressedDataPayload();
-                        try {
-                            String key = SparkPlatform.BYTEBIN_CLIENT.postGzippedContent(output, JSON_TYPE);
-                            platform.sendPrefixedMessage("&bHeap dump summmary output:");
-                            platform.sendLink(SparkPlatform.VIEWER_URL + key);
-                        } catch (IOException e) {
-                            platform.sendPrefixedMessage("&cAn error occurred whilst uploading the data.");
-                            e.printStackTrace();
-                        }
-                    });
+                                    byte[] output = heapDump.formCompressedDataPayload();
+                                    try {
+                                        String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, JSON_TYPE, false).key();
+                                        resp.broadcastPrefixed("&bHeap dump summmary output:");
+                                        resp.broadcastLink(SparkPlatform.VIEWER_URL + key);
+                                    } catch (IOException e) {
+                                        resp.broadcastPrefixed("&cAn error occurred whilst uploading the data.");
+                                        e.printStackTrace();
+                                    }
+                                });
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--run-gc-before"))
                 .build()
@@ -81,35 +80,36 @@ public class MemoryModule<S> implements CommandModule<S> {
                 .aliases("heapdump")
                 .argumentUsage("run-gc-before", null)
                 .argumentUsage("include-non-live", null)
-                .executor((platform, sender, arguments) -> {
-                    platform.runAsync(() -> {
-                        Path pluginFolder = platform.getPluginFolder();
-                        try {
-                            Files.createDirectories(pluginFolder);
-                        } catch (IOException e) {
-                            // ignore
-                        }
+                .executor((platform, sender, resp, arguments) -> {
+                    // ignore
+                    platform.getPlugin().runAsync(() -> {
+                                    Path pluginFolder = platform.getPlugin().getPluginFolder();
+                                    try {
+                                        Files.createDirectories(pluginFolder);
+                                    } catch (IOException e) {
+                                        // ignore
+                                    }
 
-                        Path file = pluginFolder.resolve("heap-" + DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now()) + (HeapDump.isOpenJ9() ? ".phd" : ".hprof"));
-                        boolean liveOnly = !arguments.boolFlag("include-non-live");
+                                    Path file = pluginFolder.resolve("heap-" + DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now()) + (HeapDump.isOpenJ9() ? ".phd" : ".hprof"));
+                                    boolean liveOnly = !arguments.boolFlag("include-non-live");
 
-                        if (arguments.boolFlag("run-gc-before")) {
-                            platform.sendPrefixedMessage("&7Running garbage collector...");
-                            System.gc();
-                        }
+                                    if (arguments.boolFlag("run-gc-before")) {
+                                        resp.broadcastPrefixed("&7Running garbage collector...");
+                                        System.gc();
+                                    }
 
-                        platform.sendPrefixedMessage("&7Creating a new heap dump, please wait...");
+                                    resp.broadcastPrefixed("&7Creating a new heap dump, please wait...");
 
-                        try {
-                            HeapDump.dumpHeap(file, liveOnly);
-                        } catch (Exception e) {
-                            platform.sendPrefixedMessage("&cAn error occurred whilst creating a heap dump.");
-                            e.printStackTrace();
-                            return;
-                        }
+                                    try {
+                                        HeapDump.dumpHeap(file, liveOnly);
+                                    } catch (Exception e) {
+                                        resp.broadcastPrefixed("&cAn error occurred whilst creating a heap dump.");
+                                        e.printStackTrace();
+                                        return;
+                                    }
 
-                        platform.sendPrefixedMessage("&bHeap dump written to: " + file.toString());
-                    });
+                                    resp.broadcastPrefixed("&bHeap dump written to: " + file.toString());
+                                });
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--run-gc-before", "--include-non-live"))
                 .build()

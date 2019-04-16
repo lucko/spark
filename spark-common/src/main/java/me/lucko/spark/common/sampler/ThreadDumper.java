@@ -19,9 +19,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.sampler;
+package me.lucko.spark.common.sampler;
 
-import me.lucko.spark.util.ThreadFinder;
+import me.lucko.spark.common.util.ThreadFinder;
 
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;

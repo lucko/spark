@@ -18,43 +18,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.sampler;
+package me.lucko.spark.common.util;
 
-/**
- * A hook with the game's "tick loop".
- */
-public interface TickCounter extends AutoCloseable {
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
-    /**
-     * Starts the counter
-     */
-    void start();
+import java.io.IOException;
 
-    /**
-     * Stops the counter
-     */
-    @Override
-    void close();
+public class AbstractHttpClient {
 
-    /**
-     * Gets the current tick number
-     *
-     * @return the current tick
-     */
-    int getCurrentTick();
+    /** The http client */
+    protected final OkHttpClient okHttp;
 
-    /**
-     * Adds a task to be called each time the tick increments
-     *
-     * @param runnable the task
-     */
-    void addTickTask(Runnable runnable);
+    public AbstractHttpClient(OkHttpClient okHttp) {
+        this.okHttp = okHttp;
+    }
 
-    /**
-     * Removes a tick task
-     *
-     * @param runnable the task
-     */
-    void removeTickTask(Runnable runnable);
-
+    protected Response makeHttpRequest(Request request) throws IOException {
+        Response response = this.okHttp.newCall(request).execute();
+        if (!response.isSuccessful()) {
+            throw new RuntimeException("Request was unsuccessful: " + response.code() + " - " + response.message());
+        }
+        return response;
+    }
 }

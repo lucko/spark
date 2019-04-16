@@ -20,8 +20,7 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.sampler.TickCounter;
-
+import me.lucko.spark.common.sampler.TickCounter;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -32,7 +31,7 @@ public class BukkitTickCounter implements TickCounter, Runnable {
     private final Plugin plugin;
     private BukkitTask task;
 
-    private final Set<Runnable> tasks = new HashSet<>();
+    private final Set<TickTask> tasks = new HashSet<>();
     private int tick = 0;
 
     public BukkitTickCounter(Plugin plugin) {
@@ -41,8 +40,8 @@ public class BukkitTickCounter implements TickCounter, Runnable {
 
     @Override
     public void run() {
-        for (Runnable r : this.tasks) {
-            r.run();
+        for (TickTask r : this.tasks) {
+            r.onTick(this);
         }
         this.tick++;
     }
@@ -63,12 +62,12 @@ public class BukkitTickCounter implements TickCounter, Runnable {
     }
 
     @Override
-    public void addTickTask(Runnable runnable) {
+    public void addTickTask(TickTask runnable) {
         this.tasks.add(runnable);
     }
 
     @Override
-    public void removeTickTask(Runnable runnable) {
+    public void removeTickTask(TickTask runnable) {
         this.tasks.remove(runnable);
     }
 }

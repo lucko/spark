@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.sampler;
+package me.lucko.spark.common.sampler;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

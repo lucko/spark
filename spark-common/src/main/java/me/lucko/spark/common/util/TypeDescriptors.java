@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.util;
+package me.lucko.spark.common.util;
 
 /**
  * Utilities for working with Java type descriptors.

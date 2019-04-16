@@ -18,12 +18,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.memory;
+package me.lucko.spark.common.memory;
 
 import com.google.gson.stream.JsonWriter;
+import me.lucko.spark.common.util.TypeDescriptors;
 
-import me.lucko.spark.util.TypeDescriptors;
-
+import javax.management.JMX;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -37,10 +39,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
-
-import javax.management.JMX;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 /**
  * Represents a "heap dump summary" from the VM.

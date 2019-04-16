@@ -18,29 +18,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.monitor;
+package me.lucko.spark.common.monitor.gc;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
-
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GarbageCollectionMonitor implements NotificationListener, AutoCloseable {
 
-    private final TickMonitor tickMonitor;
+    private final List<Listener> listeners = new ArrayList<>();
     private final List<NotificationEmitter> emitters = new ArrayList<>();
 
-    public GarbageCollectionMonitor(TickMonitor tickMonitor) {
-        this.tickMonitor = tickMonitor;
-
+    public GarbageCollectionMonitor() {
         List<GarbageCollectorMXBean> beans = ManagementFactory.getGarbageCollectorMXBeans();
         for (GarbageCollectorMXBean bean : beans) {
             if (!(bean instanceof NotificationEmitter)) {
@@ -53,6 +50,14 @@ public class GarbageCollectionMonitor implements NotificationListener, AutoClose
         }
     }
 
+    public void addListener(Listener listener) {
+        this.listeners.add(listener);
+    }
+
+    public void removeListener(Listener listener) {
+        this.listeners.remove(listener);
+    }
+
     @Override
     public void handleNotification(Notification notification, Object handback) {
         if (!notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
@@ -60,7 +65,9 @@ public class GarbageCollectionMonitor implements NotificationListener, AutoClose
         }
 
         GarbageCollectionNotificationInfo data = GarbageCollectionNotificationInfo.from((CompositeData) notification.getUserData());
-        this.tickMonitor.onGc(data);
+        for (Listener listener : this.listeners) {
+            listener.onGc(data);
+        }
     }
 
     @Override
@@ -73,5 +80,11 @@ public class GarbageCollectionMonitor implements NotificationListener, AutoClose
             }
         }
         this.emitters.clear();
+        this.listeners.clear();
     }
+
+    public interface Listener {
+        void onGc(GarbageCollectionNotificationInfo data);
+    }
+
 }

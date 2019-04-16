@@ -48,13 +48,13 @@ public class SparkForgeMod {
     @EventHandler
     public void init(FMLInitializationEvent e) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            ForgeClientSparkPlatform.register(this);
+            ForgeClientSparkPlugin.register(this);
         }
     }
 
     @EventHandler
     public void serverInit(FMLServerStartingEvent e) {
-        e.registerServerCommand(new ForgeServerSparkPlatform(this));
+        e.registerServerCommand(new ForgeServerSparkPlugin(this));
     }
 
     public Path getConfigDirectory() {

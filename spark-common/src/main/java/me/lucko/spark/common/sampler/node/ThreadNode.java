@@ -18,37 +18,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.sampler.aggregator;
+package me.lucko.spark.common.sampler.node;
 
-import me.lucko.spark.sampler.node.ThreadNode;
+import com.google.gson.stream.JsonWriter;
 
-import java.util.Map;
+import java.io.IOException;
 
 /**
- * Aggregates sampling data.
+ * The root of a sampling stack for a given thread / thread group.
  */
-public interface DataAggregator {
+public final class ThreadNode extends AbstractNode {
 
     /**
-     * Called before the sampler begins to insert data
+     * The name of this thread
      */
-    default void start() {
+    private final String threadName;
 
+    public ThreadNode(String threadName) {
+        this.threadName = threadName;
     }
 
-    /**
-     * Forms the output data
-     *
-     * @return the output data
-     */
-    Map<String, ThreadNode> getData();
-
-    /**
-     * Inserts sampling data into this aggregator
-     *
-     * @param threadName the name of the thread
-     * @param stack the call stack
-     */
-    void insertData(String threadName, StackTraceElement[] stack);
-
+    protected void appendMetadata(JsonWriter writer) throws IOException {
+        writer.name("name").value(this.threadName);
+    }
 }

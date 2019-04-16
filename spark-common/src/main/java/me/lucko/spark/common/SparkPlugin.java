@@ -18,27 +18,32 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.sampler.node;
+package me.lucko.spark.common;
 
-import com.google.gson.stream.JsonWriter;
+import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.TickCounter;
 
-import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Set;
 
-/**
- * The root of a sampling stack for a given thread / thread group.
- */
-public final class ThreadNode extends AbstractNode {
+public interface SparkPlugin<S> {
 
-    /**
-     * The name of this thread
-     */
-    private final String threadName;
+    String getVersion();
 
-    public ThreadNode(String threadName) {
-        this.threadName = threadName;
-    }
+    Path getPluginFolder();
 
-    protected void appendMetadata(JsonWriter writer) throws IOException {
-        writer.name("name").value(this.threadName);
-    }
+    String getLabel();
+
+    Set<S> getSenders();
+
+    void sendMessage(S sender, String message);
+
+    void sendLink(S sender, String url);
+
+    void runAsync(Runnable r);
+
+    ThreadDumper getDefaultThreadDumper();
+
+    TickCounter createTickCounter();
+
 }

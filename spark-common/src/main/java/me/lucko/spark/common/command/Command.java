@@ -21,7 +21,6 @@
 package me.lucko.spark.common.command;
 
 import com.google.common.collect.ImmutableList;
-
 import me.lucko.spark.common.SparkPlatform;
 
 import java.util.Collections;
@@ -109,7 +108,7 @@ public class Command<S> {
 
     @FunctionalInterface
     public interface Executor<S> {
-        void execute(SparkPlatform<S> platform, S sender, Arguments arguments);
+        void execute(SparkPlatform<S> platform, S sender, CommandResponseHandler resp, Arguments arguments);
     }
 
     @FunctionalInterface

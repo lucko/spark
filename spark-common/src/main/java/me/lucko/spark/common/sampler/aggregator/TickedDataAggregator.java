@@ -18,12 +18,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.sampler.aggregator;
+package me.lucko.spark.common.sampler.aggregator;
 
-import me.lucko.spark.sampler.ThreadGrouper;
-import me.lucko.spark.sampler.TickCounter;
-import me.lucko.spark.sampler.node.AbstractNode;
-import me.lucko.spark.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.node.AbstractNode;
+import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import java.util.ArrayList;
 import java.util.List;

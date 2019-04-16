@@ -21,19 +21,18 @@
 package me.lucko.spark.sponge;
 
 import com.google.inject.Inject;
-
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.sampler.ThreadDumper;
-import me.lucko.spark.sampler.TickCounter;
-
+import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.TickCounter;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.config.ConfigDir;
-import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
+import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.AsynchronousExecutor;
@@ -45,14 +44,15 @@ import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import javax.annotation.Nullable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-
-import javax.annotation.Nullable;
+import java.util.Set;
 
 @Plugin(
         id = "spark",
@@ -65,80 +65,13 @@ import javax.annotation.Nullable;
                 @Dependency(id = "spongeapi")
         }
 )
-public class SparkSpongePlugin implements CommandCallable {
+public class SparkSpongePlugin implements SparkPlugin<CommandSource> {
 
     private final Game game;
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
 
-    private final SparkPlatform<CommandSource> sparkPlatform = new SparkPlatform<CommandSource>() {
-        private Text colorize(String message) {
-            return TextSerializers.FORMATTING_CODE.deserialize(message);
-        }
-
-        private void broadcast(Text msg) {
-            SparkSpongePlugin.this.game.getServer().getConsole().sendMessage(msg);
-            for (Player player : SparkSpongePlugin.this.game.getServer().getOnlinePlayers()) {
-                if (player.hasPermission("spark")) {
-                    player.sendMessage(msg);
-                }
-            }
-        }
-
-        @Override
-        public String getVersion() {
-            return SparkSpongePlugin.class.getAnnotation(Plugin.class).version();
-        }
-
-        @Override
-        public Path getPluginFolder() {
-            return SparkSpongePlugin.this.configDirectory;
-        }
-
-        @Override
-        public String getLabel() {
-            return "spark";
-        }
-
-        @Override
-        public void sendMessage(CommandSource sender, String message) {
-            sender.sendMessage(colorize(message));
-        }
-
-        @Override
-        public void sendMessage(String message) {
-            Text msg = colorize(message);
-            broadcast(msg);
-        }
-
-        @Override
-        public void sendLink(String url) {
-            try {
-                Text msg = Text.builder(url)
-                        .color(TextColors.GRAY)
-                        .onClick(TextActions.openUrl(new URL(url)))
-                        .build();
-                broadcast(msg);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void runAsync(Runnable r) {
-            SparkSpongePlugin.this.asyncExecutor.execute(r);
-        }
-
-        @Override
-        public ThreadDumper getDefaultThreadDumper() {
-            return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
-        }
-
-        @Override
-        public TickCounter newTickCounter() {
-            return new SpongeTickCounter(SparkSpongePlugin.this);
-        }
-    };
+    private final SparkPlatform<CommandSource> platform = new SparkPlatform<>(this);
 
     @Inject
     public SparkSpongePlugin(Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
@@ -148,43 +81,112 @@ public class SparkSpongePlugin implements CommandCallable {
     }
 
     @Listener
-    public void onServerStart(GameStartedServerEvent event) {
-        this.game.getCommandManager().register(this, this, "spark");
+    public void onEnable(GameStartedServerEvent event) {
+        this.platform.enable();
+        this.game.getCommandManager().register(this, new SparkCommand(this), "spark");
+    }
+
+    @Listener
+    public void onDisable(GameStoppingServerEvent event) {
+        this.platform.disable();
     }
 
     @Override
-    public CommandResult process(CommandSource source, String arguments) {
-        if (!testPermission(source)) {
-            source.sendMessage(Text.builder("You do not have permission to use this command.").color(TextColors.RED).build());
+    public String getVersion() {
+        return SparkSpongePlugin.class.getAnnotation(Plugin.class).version();
+    }
+
+    @Override
+    public Path getPluginFolder() {
+        return this.configDirectory;
+    }
+
+    @Override
+    public String getLabel() {
+        return "spark";
+    }
+
+    @Override
+    public Set<CommandSource> getSenders() {
+        Set<CommandSource> senders = new HashSet<>(this.game.getServer().getOnlinePlayers());
+        senders.add(this.game.getServer().getConsole());
+        return senders;
+    }
+
+    @Override
+    public void sendMessage(CommandSource sender, String message) {
+        sender.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(message));
+    }
+
+    @Override
+    public void sendLink(CommandSource sender, String url) {
+        try {
+            Text msg = Text.builder(url)
+                    .color(TextColors.GRAY)
+                    .onClick(TextActions.openUrl(new URL(url)))
+                    .build();
+            sender.sendMessage(msg);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void runAsync(Runnable r) {
+        this.asyncExecutor.execute(r);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+    }
+
+    @Override
+    public TickCounter createTickCounter() {
+        return new SpongeTickCounter(this);
+    }
+
+    private static final class SparkCommand implements CommandCallable {
+        private final SparkSpongePlugin plugin;
+
+        private SparkCommand(SparkSpongePlugin plugin) {
+            this.plugin = plugin;
+        }
+
+        @Override
+        public CommandResult process(CommandSource source, String arguments) {
+            if (!testPermission(source)) {
+                source.sendMessage(Text.builder("You do not have permission to use this command.").color(TextColors.RED).build());
+                return CommandResult.empty();
+            }
+
+            this.plugin.platform.executeCommand(source, arguments.split(" "));
             return CommandResult.empty();
         }
 
-        this.sparkPlatform.executeCommand(source, arguments.split(" "));
-        return CommandResult.empty();
-    }
+        @Override
+        public List<String> getSuggestions(CommandSource source, String arguments, @Nullable Location<World> targetPosition) {
+            return Collections.emptyList();
+        }
 
-    @Override
-    public List<String> getSuggestions(CommandSource source, String arguments, @Nullable Location<World> targetPosition) {
-        return Collections.emptyList();
-    }
+        @Override
+        public boolean testPermission(CommandSource source) {
+            return source.hasPermission("spark");
+        }
 
-    @Override
-    public boolean testPermission(CommandSource source) {
-        return source.hasPermission("spark");
-    }
+        @Override
+        public Optional<Text> getShortDescription(CommandSource source) {
+            return Optional.of(Text.of("Main spark plugin command"));
+        }
 
-    @Override
-    public Optional<Text> getShortDescription(CommandSource source) {
-        return Optional.of(Text.of("Main spark plugin command"));
-    }
+        @Override
+        public Optional<Text> getHelp(CommandSource source) {
+            return Optional.of(Text.of("Run '/spark' to view usage."));
+        }
 
-    @Override
-    public Optional<Text> getHelp(CommandSource source) {
-        return Optional.of(Text.of("Run '/spark' to view usage."));
-    }
-
-    @Override
-    public Text getUsage(CommandSource source) {
-        return Text.of("Run '/spark' to view usage.");
+        @Override
+        public Text getUsage(CommandSource source) {
+            return Text.of("Run '/spark' to view usage.");
+        }
     }
 }

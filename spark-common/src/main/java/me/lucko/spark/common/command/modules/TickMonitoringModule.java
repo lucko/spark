@@ -20,12 +20,12 @@
 
 package me.lucko.spark.common.command.modules;
 
-import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
+import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import me.lucko.spark.monitor.TickMonitor;
-import me.lucko.spark.sampler.TickCounter;
+import me.lucko.spark.common.monitor.tick.TickMonitor;
+import me.lucko.spark.common.sampler.TickCounter;
 
 import java.util.function.Consumer;
 
@@ -37,27 +37,29 @@ public class TickMonitoringModule<S> implements CommandModule<S> {
     @Override
     public void registerCommands(Consumer<Command<S>> consumer) {
         consumer.accept(Command.<S>builder()
-                .aliases("monitoring")
+                .aliases("tickmonitoring")
                 .argumentUsage("threshold", "percentage increase")
                 .argumentUsage("without-gc", null)
-                .executor((platform, sender, arguments) -> {
-                    if (this.activeTickMonitor == null) {
+                .executor((platform, sender, resp, arguments) -> {
+                    TickCounter tickCounter = platform.getTickCounter();
+                    if (tickCounter == null) {
+                        resp.replyPrefixed("&cNot supported!");
+                        return;
+                    }
 
+                    if (this.activeTickMonitor == null) {
                         int threshold = arguments.intFlag("threshold");
                         if (threshold == -1) {
                             threshold = 100;
                         }
 
-                        try {
-                            TickCounter tickCounter = platform.newTickCounter();
-                            this.activeTickMonitor = new ReportingTickMonitor(platform, tickCounter, threshold, !arguments.boolFlag("without-gc"));
-                        } catch (UnsupportedOperationException e) {
-                            platform.sendPrefixedMessage(sender, "&cNot supported!");
-                        }
+                        this.activeTickMonitor = new ReportingTickMonitor(resp, tickCounter, threshold, !arguments.boolFlag("without-gc"));
+                        tickCounter.addTickTask(this.activeTickMonitor);
                     } else {
+                        tickCounter.removeTickTask(this.activeTickMonitor);
                         this.activeTickMonitor.close();
                         this.activeTickMonitor = null;
-                        platform.sendPrefixedMessage("&7Tick monitor disabled.");
+                        resp.broadcastPrefixed("&7Tick monitor disabled.");
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--threshold", "--without-gc"))
@@ -66,16 +68,16 @@ public class TickMonitoringModule<S> implements CommandModule<S> {
     }
 
     private class ReportingTickMonitor extends TickMonitor {
-        private final SparkPlatform<S> platform;
+        private final CommandResponseHandler<S> resp;
 
-        ReportingTickMonitor(SparkPlatform<S> platform, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
+        ReportingTickMonitor(CommandResponseHandler<S> resp, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
             super(tickCounter, percentageChangeThreshold, monitorGc);
-            this.platform = platform;
+            this.resp = resp;
         }
 
         @Override
         protected void sendMessage(String message) {
-            this.platform.sendPrefixedMessage(message);
+            this.resp.broadcastPrefixed(message);
         }
     }
 }

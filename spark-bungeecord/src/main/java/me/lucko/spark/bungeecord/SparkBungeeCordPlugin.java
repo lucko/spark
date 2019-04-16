@@ -21,95 +21,93 @@
 package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.sampler.ThreadDumper;
-import me.lucko.spark.sampler.TickCounter;
-
+import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.TickCounter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
-public class SparkBungeeCordPlugin extends Plugin {
+public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin<CommandSender> {
 
-    private final SparkPlatform<CommandSender> sparkPlatform = new SparkPlatform<CommandSender>() {
-        private BaseComponent[] colorize(String message) {
-            return TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', message));
-        }
-
-        private void broadcast(BaseComponent... msg) {
-            getProxy().getConsole().sendMessage(msg);
-            for (ProxiedPlayer player : getProxy().getPlayers()) {
-                if (player.hasPermission("spark")) {
-                    player.sendMessage(msg);
-                }
-            }
-        }
-
-        @Override
-        public String getVersion() {
-            return getDescription().getVersion();
-        }
-
-        @Override
-        public Path getPluginFolder() {
-            return getDataFolder().toPath();
-        }
-
-        @Override
-        public String getLabel() {
-            return "sparkb";
-        }
-
-        @Override
-        public void sendMessage(CommandSender sender, String message) {
-            sender.sendMessage(colorize(message));
-        }
-
-        @Override
-        public void sendMessage(String message) {
-            broadcast(colorize(message));
-        }
-
-        @Override
-        public void sendLink(String url) {
-            TextComponent component = new TextComponent(url);
-            component.setColor(ChatColor.GRAY);
-            component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
-            broadcast(component);
-        }
-
-        @Override
-        public void runAsync(Runnable r) {
-            getProxy().getScheduler().runAsync(SparkBungeeCordPlugin.this, r);
-        }
-
-        @Override
-        public ThreadDumper getDefaultThreadDumper() {
-            return ThreadDumper.ALL;
-        }
-
-        @Override
-        public TickCounter newTickCounter() {
-            throw new UnsupportedOperationException();
-        }
-    };
+    private final SparkPlatform<CommandSender> platform = new SparkPlatform<>(this);
 
     @Override
     public void onEnable() {
-        getProxy().getPluginManager().registerCommand(this, new SparkCommand());
+        this.platform.enable();
+        getProxy().getPluginManager().registerCommand(this, new SparkCommand(this));
     }
 
-    private final class SparkCommand extends Command implements TabExecutor {
-        public SparkCommand() {
+    @Override
+    public void onDisable() {
+        this.platform.disable();
+    }
+
+    @Override
+    public String getVersion() {
+        return getDescription().getVersion();
+    }
+
+    @Override
+    public Path getPluginFolder() {
+        return getDataFolder().toPath();
+    }
+
+    @Override
+    public String getLabel() {
+        return "sparkb";
+    }
+
+    @Override
+    public Set<CommandSender> getSenders() {
+        Set<CommandSender> senders = new HashSet<>(getProxy().getPlayers());
+        senders.add(getProxy().getConsole());
+        return senders;
+    }
+
+    @Override
+    public void sendMessage(CommandSender sender, String message) {
+        sender.sendMessage(TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', message)));
+    }
+
+    @Override
+    public void sendLink(CommandSender sender, String url) {
+        TextComponent component = new TextComponent(url);
+        component.setColor(ChatColor.GRAY);
+        component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
+        sender.sendMessage(component);
+    }
+
+    @Override
+    public void runAsync(Runnable r) {
+        getProxy().getScheduler().runAsync(SparkBungeeCordPlugin.this, r);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return ThreadDumper.ALL;
+    }
+
+    @Override
+    public TickCounter createTickCounter() {
+        return null;
+    }
+
+    private static final class SparkCommand extends Command implements TabExecutor {
+        private final SparkBungeeCordPlugin plugin;
+
+        SparkCommand(SparkBungeeCordPlugin plugin) {
             super("sparkb", null, "sparkbungee");
+            this.plugin = plugin;
         }
 
         @Override
@@ -121,7 +119,7 @@ public class SparkBungeeCordPlugin extends Plugin {
                 return;
             }
 
-            SparkBungeeCordPlugin.this.sparkPlatform.executeCommand(sender, args);
+            this.plugin.platform.executeCommand(sender, args);
         }
 
         @Override
@@ -129,7 +127,7 @@ public class SparkBungeeCordPlugin extends Plugin {
             if (!sender.hasPermission("spark")) {
                 return Collections.emptyList();
             }
-            return SparkBungeeCordPlugin.this.sparkPlatform.tabCompleteCommand(sender, args);
+            return this.plugin.platform.tabCompleteCommand(sender, args);
         }
     }
 }

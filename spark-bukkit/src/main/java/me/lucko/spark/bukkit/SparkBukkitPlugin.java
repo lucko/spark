@@ -21,83 +21,33 @@
 package me.lucko.spark.bukkit;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.sampler.ThreadDumper;
-import me.lucko.spark.sampler.TickCounter;
-
+import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.TickCounter;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class SparkBukkitPlugin extends JavaPlugin {
+public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<CommandSender> {
 
-    private final SparkPlatform<CommandSender> sparkPlatform = new SparkPlatform<CommandSender>() {
+    private final SparkPlatform<CommandSender> platform = new SparkPlatform<>(this);
 
-        private String colorize(String message) {
-            return ChatColor.translateAlternateColorCodes('&', message);
-        }
+    @Override
+    public void onEnable() {
+        this.platform.enable();
+    }
 
-        private void broadcast(String msg) {
-            getServer().getConsoleSender().sendMessage(msg);
-            for (Player player : getServer().getOnlinePlayers()) {
-                if (player.hasPermission("spark")) {
-                    player.sendMessage(msg);
-                }
-            }
-        }
-
-        @Override
-        public String getVersion() {
-            return getDescription().getVersion();
-        }
-
-        @Override
-        public Path getPluginFolder() {
-            return getDataFolder().toPath();
-        }
-
-        @Override
-        public String getLabel() {
-            return "spark";
-        }
-
-        @Override
-        public void sendMessage(CommandSender sender, String message) {
-            sender.sendMessage(colorize(message));
-        }
-
-        @Override
-        public void sendMessage(String message) {
-            String msg = colorize(message);
-            broadcast(msg);
-        }
-
-        @Override
-        public void sendLink(String url) {
-            String msg = colorize("&7" + url);
-            broadcast(msg);
-        }
-
-        @Override
-        public void runAsync(Runnable r) {
-            getServer().getScheduler().runTaskAsynchronously(SparkBukkitPlugin.this, r);
-        }
-
-        @Override
-        public ThreadDumper getDefaultThreadDumper() {
-            return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
-        }
-
-        @Override
-        public TickCounter newTickCounter() {
-            return new BukkitTickCounter(SparkBukkitPlugin.this);
-        }
-    };
+    @Override
+    public void onDisable() {
+        this.platform.disable();
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -106,7 +56,7 @@ public class SparkBukkitPlugin extends JavaPlugin {
             return true;
         }
 
-        this.sparkPlatform.executeCommand(sender, args);
+        this.platform.executeCommand(sender, args);
         return true;
     }
 
@@ -115,6 +65,53 @@ public class SparkBukkitPlugin extends JavaPlugin {
         if (!sender.hasPermission("spark")) {
             return Collections.emptyList();
         }
-        return this.sparkPlatform.tabCompleteCommand(sender, args);
+        return this.platform.tabCompleteCommand(sender, args);
+    }
+
+    @Override
+    public String getVersion() {
+        return getDescription().getVersion();
+    }
+
+    @Override
+    public Path getPluginFolder() {
+        return getDataFolder().toPath();
+    }
+
+    @Override
+    public String getLabel() {
+        return "spark";
+    }
+
+    @Override
+    public Set<CommandSender> getSenders() {
+        Set<CommandSender> senders = new HashSet<>(getServer().getOnlinePlayers());
+        senders.add(getServer().getConsoleSender());
+        return senders;
+    }
+
+    @Override
+    public void sendMessage(CommandSender sender, String message) {
+        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
+    }
+
+    @Override
+    public void sendLink(CommandSender sender, String url) {
+        sendMessage(sender, "&7" + url);
+    }
+
+    @Override
+    public void runAsync(Runnable r) {
+        getServer().getScheduler().runTaskAsynchronously(SparkBukkitPlugin.this, r);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+    }
+
+    @Override
+    public TickCounter createTickCounter() {
+        return new BukkitTickCounter(this);
     }
 }

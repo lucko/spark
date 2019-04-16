@@ -21,10 +21,9 @@
 package me.lucko.spark.forge;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.sampler.ThreadDumper;
-
+import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import net.kyori.text.TextComponent;
 import net.kyori.text.serializer.ComponentSerializers;
 import net.minecraft.command.ICommand;
@@ -38,25 +37,27 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import javax.annotation.Nullable;
+import java.util.concurrent.ScheduledExecutorService;
 
 @SuppressWarnings("NullableProblems")
-public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> implements ICommand {
+public abstract class ForgeSparkPlugin implements SparkPlugin<ICommandSender>, ICommand {
 
     private final SparkForgeMod mod;
+    private final ScheduledExecutorService scheduler;
+    private final SparkPlatform<ICommandSender> platform;
 
-    private final ExecutorService worker = Executors.newSingleThreadExecutor(
-            new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
-    );
-
-    protected ForgeSparkPlatform(SparkForgeMod mod) {
+    protected ForgeSparkPlugin(SparkForgeMod mod) {
         this.mod = mod;
+        this.scheduler = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
+        );
+        this.platform = new SparkPlatform<>(this);
+        this.platform.enable();
     }
 
     @Override
@@ -70,38 +71,27 @@ public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> i
     }
 
     @SuppressWarnings("deprecation")
-    protected ITextComponent colorize(String message) {
-        TextComponent component = ComponentSerializers.LEGACY.deserialize(message, '&');
-        return ITextComponent.Serializer.jsonToComponent(ComponentSerializers.JSON.serialize(component));
-    }
-
-    protected abstract void broadcast(ITextComponent msg);
-
     @Override
     public void sendMessage(ICommandSender sender, String message) {
-        sender.sendMessage(colorize(message));
+        TextComponent component = ComponentSerializers.LEGACY.deserialize(message, '&');
+        ITextComponent mcComponent = ITextComponent.Serializer.jsonToComponent(ComponentSerializers.JSON.serialize(component));
+        sender.sendMessage(mcComponent);
     }
 
     @Override
-    public void sendMessage(String message) {
-        ITextComponent msg = colorize(message);
-        broadcast(msg);
-    }
-
-    @Override
-    public void sendLink(String url) {
+    public void sendLink(ICommandSender sender, String url) {
         TextComponentString msg = new TextComponentString(url);
         Style style = msg.getStyle();
         style.setColor(TextFormatting.GRAY);
         style.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
         msg.setStyle(style);
 
-        broadcast(msg);
+        sender.sendMessage(msg);
     }
 
     @Override
     public void runAsync(Runnable r) {
-        this.worker.execute(r);
+        this.scheduler.execute(r);
     }
 
     @Override
@@ -128,7 +118,7 @@ public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> i
             return;
         }
 
-        executeCommand(sender, args);
+        this.platform.executeCommand(sender, args);
     }
 
     @Override
@@ -136,7 +126,7 @@ public abstract class ForgeSparkPlatform extends SparkPlatform<ICommandSender> i
         if (!checkPermission(server, sender)) {
             return Collections.emptyList();
         }
-        return tabCompleteCommand(sender, args);
+        return this.platform.tabCompleteCommand(sender, args);
     }
 
     @Override

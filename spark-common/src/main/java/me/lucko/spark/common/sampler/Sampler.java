@@ -19,15 +19,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.sampler;
+package me.lucko.spark.common.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.stream.JsonWriter;
-
-import me.lucko.spark.sampler.aggregator.DataAggregator;
-import me.lucko.spark.sampler.aggregator.SimpleDataAggregator;
-import me.lucko.spark.sampler.aggregator.TickedDataAggregator;
-import me.lucko.spark.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.aggregator.DataAggregator;
+import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
+import me.lucko.spark.common.sampler.aggregator.TickedDataAggregator;
+import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

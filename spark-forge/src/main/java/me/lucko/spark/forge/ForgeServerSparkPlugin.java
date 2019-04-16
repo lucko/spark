@@ -20,55 +20,52 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.sampler.TickCounter;
-
-import net.minecraft.client.Minecraft;
+import me.lucko.spark.common.sampler.TickCounter;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.client.ClientCommandHandler;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class ForgeClientSparkPlatform extends ForgeSparkPlatform {
-
-    public static void register(SparkForgeMod mod) {
-        ClientCommandHandler.instance.registerCommand(new ForgeClientSparkPlatform(mod));
-    }
-
-    public ForgeClientSparkPlatform(SparkForgeMod mod) {
+public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
+    public ForgeServerSparkPlugin(SparkForgeMod mod) {
         super(mod);
     }
 
     @Override
-    protected void broadcast(ITextComponent msg) {
-        Minecraft.getMinecraft().player.sendMessage(msg);
+    public Set<ICommandSender> getSenders() {
+        MinecraftServer mcServer = FMLCommonHandler.instance().getMinecraftServerInstance();
+        Set<ICommandSender> senders = new HashSet<>(mcServer.getPlayerList().getPlayers());
+        senders.add(mcServer);
+        return senders;
     }
 
     @Override
-    public TickCounter newTickCounter() {
-        return new ForgeTickCounter(TickEvent.Type.CLIENT);
+    public TickCounter createTickCounter() {
+        return new ForgeTickCounter(TickEvent.Type.SERVER);
     }
 
     @Override
     public String getLabel() {
-        return "sparkc";
+        return "spark";
     }
 
     @Override
     public String getName() {
-        return "sparkc";
+        return "spark";
     }
 
     @Override
     public List<String> getAliases() {
-        return Collections.singletonList("sparkclient");
+        return Collections.emptyList();
     }
 
     @Override
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return true;
+        return sender.canUseCommand(4, "spark");
     }
 }

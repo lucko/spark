@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.util;
+package me.lucko.spark.common.util;
 
 import java.util.Arrays;
 import java.util.Objects;

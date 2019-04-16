@@ -18,16 +18,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.monitor;
+package me.lucko.spark.common.monitor.tick;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
-
-import me.lucko.spark.sampler.TickCounter;
+import me.lucko.spark.common.monitor.gc.GarbageCollectionMonitor;
+import me.lucko.spark.common.sampler.TickCounter;
 
 import java.text.DecimalFormat;
 import java.util.DoubleSummaryStatistics;
 
-public abstract class TickMonitor implements Runnable, AutoCloseable {
+public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollectionMonitor.Listener, AutoCloseable {
     private static final DecimalFormat df = new DecimalFormat("#.##");
 
     private final TickCounter tickCounter;
@@ -44,24 +44,25 @@ public abstract class TickMonitor implements Runnable, AutoCloseable {
         this.tickCounter = tickCounter;
         this.percentageChangeThreshold = percentageChangeThreshold;
 
-        this.tickCounter.start();
-        this.tickCounter.addTickTask(this);
-
-        this.garbageCollectionMonitor = monitorGc ? new GarbageCollectionMonitor(this) : null;
+        if (monitorGc) {
+            this.garbageCollectionMonitor =  new GarbageCollectionMonitor();
+            this.garbageCollectionMonitor.addListener(this);
+        } else {
+            this.garbageCollectionMonitor = null;
+        }
     }
 
     protected abstract void sendMessage(String message);
 
     @Override
     public void close() {
-        this.tickCounter.close();
         if (this.garbageCollectionMonitor != null) {
             this.garbageCollectionMonitor.close();
         }
     }
 
     @Override
-    public void run() {
+    public void onTick(TickCounter counter) {
         double now = ((double) System.nanoTime()) / 1000000d;
 
         // init
@@ -110,13 +111,14 @@ public abstract class TickMonitor implements Runnable, AutoCloseable {
 
             double percentageChange = (increase * 100d) / this.avg;
             if (percentageChange > this.percentageChangeThreshold) {
-                sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7lasted &b" + df.format(diff) +
+                sendMessage("&7Tick &8#" + counter.getCurrentTick() + " &7lasted &b" + df.format(diff) +
                         "&7 ms. (&b" + df.format(percentageChange) + "% &7increase from average)");
             }
         }
     }
 
-    void onGc(GarbageCollectionNotificationInfo data) {
+    @Override
+    public void onGc(GarbageCollectionNotificationInfo data) {
         if (this.state == State.SETUP) {
             // set lastTickTime to zero so this tick won't be counted in the average
             this.lastTickTime = 0;

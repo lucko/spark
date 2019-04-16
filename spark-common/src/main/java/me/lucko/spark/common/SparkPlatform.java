@@ -21,19 +21,20 @@
 package me.lucko.spark.common;
 
 import com.google.common.collect.ImmutableList;
-
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
+import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.modules.MemoryModule;
+import me.lucko.spark.common.command.modules.MonitoringModule;
 import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.command.modules.TickMonitoringModule;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import me.lucko.spark.sampler.ThreadDumper;
-import me.lucko.spark.sampler.TickCounter;
-import me.lucko.spark.util.BytebinClient;
+import me.lucko.spark.common.monitor.tick.TpsCalculator;
+import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.util.BytebinClient;
+import okhttp3.OkHttpClient;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,52 +42,68 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Abstract command handling class used by all platforms.
+ * Abstract spark implementation used by all platforms.
  *
  * @param <S> the sender (e.g. CommandSender) type used by the platform
  */
-public abstract class SparkPlatform<S> {
+public class SparkPlatform<S> {
 
     /** The URL of the viewer frontend */
     public static final String VIEWER_URL = "https://sparkprofiler.github.io/#";
+    /** The shared okhttp client */
+    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
     /** The bytebin instance used by the platform */
-    public static final BytebinClient BYTEBIN_CLIENT = new BytebinClient("https://bytebin.lucko.me/", "spark-plugin");
+    public static final BytebinClient BYTEBIN_CLIENT = new BytebinClient(OK_HTTP_CLIENT, "https://bytebin.lucko.me/", "spark-plugin");
 
-    /** The prefix used in all messages */
-    private static final String PREFIX = "&8[&fspark&8] &7";
-    
-    private static <T> List<Command<T>> prepareCommands() {
-        ImmutableList.Builder<Command<T>> builder = ImmutableList.builder();
-        new SamplerModule<T>().registerCommands(builder::add);
-        new TickMonitoringModule<T>().registerCommands(builder::add);
-        new MemoryModule<T>().registerCommands(builder::add);
-        return builder.build();
+    private final List<Command<S>> commands;
+    private final SparkPlugin<S> plugin;
+
+    private final TickCounter tickCounter;
+    private final TpsCalculator tpsCalculator;
+
+    public SparkPlatform(SparkPlugin<S> plugin) {
+        this.plugin = plugin;
+
+        ImmutableList.Builder<Command<S>> commandsBuilder = ImmutableList.builder();
+        new SamplerModule<S>().registerCommands(commandsBuilder::add);
+        new MonitoringModule<S>().registerCommands(commandsBuilder::add);
+        new TickMonitoringModule<S>().registerCommands(commandsBuilder::add);
+        new MemoryModule<S>().registerCommands(commandsBuilder::add);
+        this.commands = commandsBuilder.build();
+
+        this.tickCounter = plugin.createTickCounter();
+        this.tpsCalculator = this.tickCounter != null ? new TpsCalculator() : null;
     }
 
-    private final List<Command<S>> commands = prepareCommands();
-    
-    // abstract methods implemented by each platform
-    public abstract String getVersion();
-    public abstract Path getPluginFolder();
-    public abstract String getLabel();
-    public abstract void sendMessage(S sender, String message);
-    public abstract void sendMessage(String message);
-    public abstract void sendLink(String url);
-    public abstract void runAsync(Runnable r);
-    public abstract ThreadDumper getDefaultThreadDumper();
-    public abstract TickCounter newTickCounter();
-
-    public void sendPrefixedMessage(S sender, String message) {
-        sendMessage(sender, PREFIX + message);
+    public void enable() {
+        if (this.tickCounter != null) {
+            this.tickCounter.addTickTask(this.tpsCalculator);
+            this.tickCounter.start();
+        }
     }
 
-    public void sendPrefixedMessage(String message) {
-        sendMessage(PREFIX + message);
+    public void disable() {
+        if (this.tickCounter != null) {
+            this.tickCounter.close();
+        }
+    }
+
+    public SparkPlugin<S> getPlugin() {
+        return this.plugin;
+    }
+
+    public TickCounter getTickCounter() {
+        return this.tickCounter;
+    }
+
+    public TpsCalculator getTpsCalculator() {
+        return this.tpsCalculator;
     }
 
     public void executeCommand(S sender, String[] args) {
+        CommandResponseHandler<S> resp = new CommandResponseHandler<>(this, sender);
         if (args.length == 0) {
-            sendUsage(sender);
+            sendUsage(resp);
             return;
         }
 
@@ -96,15 +113,15 @@ public abstract class SparkPlatform<S> {
         for (Command<S> command : this.commands) {
             if (command.aliases().contains(alias)) {
                 try {
-                    command.executor().execute(this, sender, new Arguments(rawArgs));
+                    command.executor().execute(this, sender, resp, new Arguments(rawArgs));
                 } catch (IllegalArgumentException e) {
-                    sendMessage(sender, "&c" + e.getMessage());
+                    resp.replyPrefixed("&c" + e.getMessage());
                 }
                 return;
             }
         }
 
-        sendUsage(sender);
+        sendUsage(resp);
     }
 
     public List<String> tabCompleteCommand(S sender, String[] args) {
@@ -127,15 +144,15 @@ public abstract class SparkPlatform<S> {
         return Collections.emptyList();
     }
 
-    private void sendUsage(S sender) {
-        sendPrefixedMessage(sender, "&fspark &7v" + getVersion());
+    private void sendUsage(CommandResponseHandler<S> sender) {
+        sender.replyPrefixed("&fspark &7v" + getPlugin().getVersion());
         for (Command<S> command : this.commands) {
-            sendMessage(sender, "&b&l> &7/" + getLabel() + " " + command.aliases().get(0));
+            sender.reply("&b&l> &7/" + getPlugin().getLabel() + " " + command.aliases().get(0));
             for (Command.ArgumentInfo arg : command.arguments()) {
                 if (arg.requiresParameter()) {
-                    sendMessage(sender, "       &8[&7--" + arg.argumentName() + "&8 <" + arg.parameterDescription() + ">]");
+                    sender.reply("       &8[&7--" + arg.argumentName() + "&8 <" + arg.parameterDescription() + ">]");
                 } else {
-                    sendMessage(sender, "       &8[&7--" + arg.argumentName() + "]");
+                    sender.reply("       &8[&7--" + arg.argumentName() + "]");
                 }
             }
         }

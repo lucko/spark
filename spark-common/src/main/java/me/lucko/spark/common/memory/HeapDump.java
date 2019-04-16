@@ -18,16 +18,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.memory;
-
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.reflect.Method;
-import java.nio.file.Path;
+package me.lucko.spark.common.memory;
 
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.reflect.Method;
+import java.nio.file.Path;
 
 /**
  * Utility for creating .hprof memory heap snapshots.

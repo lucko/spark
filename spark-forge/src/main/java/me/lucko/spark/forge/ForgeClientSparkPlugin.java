@@ -20,58 +20,55 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.sampler.TickCounter;
-
+import me.lucko.spark.common.sampler.TickCounter;
+import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class ForgeServerSparkPlatform extends ForgeSparkPlatform {
+public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
 
-    public ForgeServerSparkPlatform(SparkForgeMod mod) {
+    public static void register(SparkForgeMod mod) {
+        ClientCommandHandler.instance.registerCommand(new ForgeClientSparkPlugin(mod));
+    }
+
+    public ForgeClientSparkPlugin(SparkForgeMod mod) {
         super(mod);
     }
 
     @Override
-    protected void broadcast(ITextComponent msg) {
-        FMLCommonHandler.instance().getMinecraftServerInstance().sendMessage(msg);
-
-        List<EntityPlayerMP> players = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers();
-        for (EntityPlayerMP player : players) {
-            if (player.canUseCommand(4, "spark")) {
-                player.sendMessage(msg);
-            }
-        }
+    public Set<ICommandSender> getSenders() {
+        return new HashSet<>(Collections.singleton(Minecraft.getMinecraft().player));
     }
 
     @Override
-    public TickCounter newTickCounter() {
-        return new ForgeTickCounter(TickEvent.Type.SERVER);
+    public TickCounter createTickCounter() {
+        return new ForgeTickCounter(TickEvent.Type.CLIENT);
     }
 
     @Override
     public String getLabel() {
-        return "spark";
+        return "sparkc";
     }
 
     @Override
     public String getName() {
-        return "spark";
+        return "sparkc";
     }
 
     @Override
     public List<String> getAliases() {
-        return Collections.emptyList();
+        return Collections.singletonList("sparkclient");
     }
 
     @Override
     public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return sender.canUseCommand(4, "spark");
+        return true;
     }
 }
