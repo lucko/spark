@@ -24,13 +24,18 @@ import com.google.common.base.Strings;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
+import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TpsCalculator;
 
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
+import java.nio.file.FileStore;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -55,7 +60,7 @@ public class HealthModule<S> implements CommandModule<S> {
         );
 
         consumer.accept(Command.<S>builder()
-                .aliases("healthreport", "health")
+                .aliases("healthreport", "health", "ht")
                 .argumentUsage("memory", null)
                 .executor((platform, sender, resp, arguments) -> {
                     resp.replyPrefixed("&7Generating server health report...");
@@ -109,6 +114,38 @@ public class HealthModule<S> implements CommandModule<S> {
                                 }
                                 report.add("");
                             }
+                        }
+
+                        double systemCpuLoad = CpuMonitor.getSystemCpuLoad();
+                        double processCpuLoad = CpuMonitor.getProcessCpuLoad();
+
+                        if (systemCpuLoad >= 0 || processCpuLoad >= 0) {
+                            report.add("&8&l>&6 CPU usage: ");
+
+                            if (systemCpuLoad >= 0) {
+                                report.add("    &7System: &a" + percent(systemCpuLoad, 1.0d));
+                                report.add("    " + generateCpuUsageDiagram(systemCpuLoad, 40));
+                                report.add("");
+                            }
+                            if (processCpuLoad >= 0) {
+                                report.add("    &7Process: &a" + percent(processCpuLoad, 1.0d));
+                                report.add("    " + generateCpuUsageDiagram(processCpuLoad, 40));
+                                report.add("");
+                            }
+                        }
+
+                        try {
+                            FileStore fileStore = Files.getFileStore(Paths.get("."));
+                            long totalSpace = fileStore.getTotalSpace();
+                            long usedSpace = totalSpace - fileStore.getUsableSpace();
+
+                            report.add("&8&l>&6 Disk usage: ");
+                            report.add("    &f" + formatBytes(usedSpace) + " &7/ &f" + formatBytes(totalSpace) +
+                                    "   &7(&a" + percent(usedSpace, totalSpace) + "&7)");
+                            report.add("    " + generateDiskUsageDiagram(usedSpace, totalSpace, 40));
+                            report.add("");
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
 
                         report.forEach(resp::reply);
@@ -167,6 +204,20 @@ public class HealthModule<S> implements CommandModule<S> {
             line += Strings.repeat(" ", (length - committedChars));
         }
 
+        return "&8[" + line + "&8]";
+    }
+
+    private static String generateCpuUsageDiagram(double usage, int length) {
+        int usedChars = (int) ((usage * length));
+
+        String line = "&7" + Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
+        return "&8[" + line + "&8]";
+    }
+
+    private static String generateDiskUsageDiagram(double used, double max, int length) {
+        int usedChars = (int) ((used * length) / max);
+
+        String line = "&7" + Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
         return "&8[" + line + "&8]";
     }
 
