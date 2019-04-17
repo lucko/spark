@@ -128,7 +128,19 @@ ___
 Cancels the current profiling operation, and discards any recorded data without uploading it.
 
 ___
-#### `/spark monitoring`
+#### `/spark tps`
+Prints the server TPS history.
+
+___
+#### `/spark healthreport`
+Generates a health report for the server.
+
+**Arguments**
+* `--memory`
+	* Specifies that additional information about the JVMs memory usage should be included
+
+___
+#### `/spark tickmonitoring`
 Starts/stops the tick monitoring system.
 
 **Arguments**
