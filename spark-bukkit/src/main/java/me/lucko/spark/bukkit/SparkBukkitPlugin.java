@@ -102,8 +102,9 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<Command
     }
 
     @Override
-    public Set<CommandSender> getSenders() {
+    public Set<CommandSender> getSendersWithPermission(String permission) {
         Set<CommandSender> senders = new HashSet<>(getServer().getOnlinePlayers());
+        senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(getServer().getConsoleSender());
         return senders;
     }

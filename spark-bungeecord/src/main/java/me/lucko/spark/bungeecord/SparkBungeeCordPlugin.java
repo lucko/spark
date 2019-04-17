@@ -68,8 +68,9 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin<Command
     }
 
     @Override
-    public Set<CommandSender> getSenders() {
+    public Set<CommandSender> getSendersWithPermission(String permission) {
         Set<CommandSender> senders = new HashSet<>(getProxy().getPlayers());
+        senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(getProxy().getConsole());
         return senders;
     }

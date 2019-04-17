@@ -37,9 +37,10 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public Set<ICommandSender> getSenders() {
+    public Set<ICommandSender> getSendersWithPermission(String permission) {
         MinecraftServer mcServer = FMLCommonHandler.instance().getMinecraftServerInstance();
         Set<ICommandSender> senders = new HashSet<>(mcServer.getPlayerList().getPlayers());
+        senders.removeIf(sender -> !sender.canUseCommand(4, permission));
         senders.add(mcServer);
         return senders;
     }

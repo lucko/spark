@@ -103,8 +103,9 @@ public class SparkVelocityPlugin implements SparkPlugin<CommandSource>, Command 
     }
 
     @Override
-    public Set<CommandSource> getSenders() {
+    public Set<CommandSource> getSendersWithPermission(String permission) {
         Set<CommandSource> senders = new HashSet<>(this.proxy.getAllPlayers());
+        senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(this.proxy.getConsoleCommandSource());
         return senders;
     }

@@ -34,7 +34,7 @@ public interface SparkPlugin<S> {
 
     String getLabel();
 
-    Set<S> getSenders();
+    Set<S> getSendersWithPermission(String permission);
 
     void sendMessage(S sender, String message);
 

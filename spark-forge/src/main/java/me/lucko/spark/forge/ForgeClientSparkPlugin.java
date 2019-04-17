@@ -43,7 +43,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public Set<ICommandSender> getSenders() {
+    public Set<ICommandSender> getSendersWithPermission(String permission) {
         return new HashSet<>(Collections.singleton(Minecraft.getMinecraft().player));
     }
 

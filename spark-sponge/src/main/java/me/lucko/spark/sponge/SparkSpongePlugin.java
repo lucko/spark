@@ -107,8 +107,9 @@ public class SparkSpongePlugin implements SparkPlugin<CommandSource> {
     }
 
     @Override
-    public Set<CommandSource> getSenders() {
+    public Set<CommandSource> getSendersWithPermission(String permission) {
         Set<CommandSource> senders = new HashSet<>(this.game.getServer().getOnlinePlayers());
+        senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(this.game.getServer().getConsole());
         return senders;
     }

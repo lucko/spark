@@ -43,7 +43,7 @@ public class CommandResponseHandler<S> {
     }
 
     public void allSenders(Consumer<? super S> action) {
-        Set<S> senders = this.platform.getPlugin().getSenders();
+        Set<S> senders = this.platform.getPlugin().getSendersWithPermission("spark");
         senders.add(this.sender);
         senders.forEach(action);
     }
