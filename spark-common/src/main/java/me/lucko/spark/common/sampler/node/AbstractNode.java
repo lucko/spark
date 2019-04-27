@@ -64,10 +64,12 @@ public abstract class AbstractNode {
     }
 
     private AbstractNode resolveChild(String className, String methodName, int lineNumber) {
-        return this.children.computeIfAbsent(
-                StackTraceNode.generateKey(className, methodName, lineNumber),
-                name -> new StackTraceNode(className, methodName, lineNumber)
-        );
+        String key = StackTraceNode.generateKey(className, methodName, lineNumber);
+        StackTraceNode result = this.children.get(key); // fast path
+        if (result != null) {
+            return result;
+        }
+        return this.children.computeIfAbsent(key, name -> new StackTraceNode(className, methodName, lineNumber));
     }
 
     public void log(StackTraceElement[] elements, long time, boolean includeLineNumbers) {

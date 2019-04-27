@@ -21,7 +21,6 @@
 package me.lucko.spark.common.sampler.aggregator;
 
 import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.node.AbstractNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import java.util.Map;
@@ -56,11 +55,18 @@ public class SimpleDataAggregator implements DataAggregator {
         this.includeLineNumbers = includeLineNumbers;
     }
 
+    private ThreadNode getNode(String group) {
+        ThreadNode node = this.threadData.get(group); // fast path
+        if (node != null) {
+            return node;
+        }
+        return this.threadData.computeIfAbsent(group, ThreadNode::new);
+    }
+
     @Override
-    public void insertData(String threadName, StackTraceElement[] stack) {
+    public void insertData(long threadId, String threadName, StackTraceElement[] stack) {
         try {
-            String group = this.threadGrouper.getGroup(threadName);
-            AbstractNode node = this.threadData.computeIfAbsent(group, ThreadNode::new);
+            ThreadNode node = getNode(this.threadGrouper.getGroup(threadId, threadName));
             node.log(stack, this.interval, this.includeLineNumbers);
         } catch (Exception e) {
             e.printStackTrace();

@@ -81,7 +81,7 @@ public class TickedDataAggregator implements DataAggregator {
     }
 
     @Override
-    public void insertData(String threadName, StackTraceElement[] stack) {
+    public void insertData(long threadId, String threadName, StackTraceElement[] stack) {
         synchronized (this.mutex) {
             int tick = this.tickCounter.getCurrentTick();
             if (this.currentTick != tick) {
@@ -91,7 +91,7 @@ public class TickedDataAggregator implements DataAggregator {
             }
 
             // form the queued data
-            QueuedThreadInfo queuedData = new QueuedThreadInfo(threadName, stack);
+            QueuedThreadInfo queuedData = new QueuedThreadInfo(threadId, threadName, stack);
             // insert it
             this.currentData.addData(queuedData);
         }
@@ -113,19 +113,11 @@ public class TickedDataAggregator implements DataAggregator {
     }
 
     @Override
-    public void start() {
-        this.tickCounter.start();
-    }
-
-    @Override
     public Map<String, ThreadNode> getData() {
         // push the current tick
         synchronized (this.mutex) {
             pushCurrentTick();
         }
-
-        // close the tick counter
-        this.tickCounter.close();
 
         // wait for all pending data to be inserted
         this.workerPool.shutdown();
@@ -138,12 +130,19 @@ public class TickedDataAggregator implements DataAggregator {
         return this.threadData;
     }
 
+    private ThreadNode getNode(String group) {
+        ThreadNode node = this.threadData.get(group); // fast path
+        if (node != null) {
+            return node;
+        }
+        return this.threadData.computeIfAbsent(group, ThreadNode::new);
+    }
+
     // called by TickList
     void insertData(List<QueuedThreadInfo> dataList) {
         for (QueuedThreadInfo data : dataList) {
             try {
-                String group = this.threadGrouper.getGroup(data.threadName);
-                AbstractNode node = this.threadData.computeIfAbsent(group, ThreadNode::new);
+                AbstractNode node = getNode(this.threadGrouper.getGroup(data.threadId, data.threadName));
                 node.log(data.stack, this.interval, this.includeLineNumbers);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -173,10 +172,12 @@ public class TickedDataAggregator implements DataAggregator {
     }
 
     private static final class QueuedThreadInfo {
+        private final long threadId;
         private final String threadName;
         private final StackTraceElement[] stack;
 
-        QueuedThreadInfo(String threadName, StackTraceElement[] stack) {
+        QueuedThreadInfo(long threadId, String threadName, StackTraceElement[] stack) {
+            this.threadId = threadId;
             this.threadName = threadName;
             this.stack = stack;
         }

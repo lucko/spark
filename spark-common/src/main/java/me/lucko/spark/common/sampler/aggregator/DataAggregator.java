@@ -30,13 +30,6 @@ import java.util.Map;
 public interface DataAggregator {
 
     /**
-     * Called before the sampler begins to insert data
-     */
-    default void start() {
-
-    }
-
-    /**
      * Forms the output data
      *
      * @return the output data
@@ -45,10 +38,10 @@ public interface DataAggregator {
 
     /**
      * Inserts sampling data into this aggregator
-     *
+     * @param threadId the id of the thread
      * @param threadName the name of the thread
      * @param stack the call stack
      */
-    void insertData(String threadName, StackTraceElement[] stack);
+    void insertData(long threadId, String threadName, StackTraceElement[] stack);
 
 }

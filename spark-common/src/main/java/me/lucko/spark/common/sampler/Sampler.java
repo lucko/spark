@@ -97,7 +97,6 @@ public class Sampler implements Runnable {
      */
     public void start() {
         this.startTime = System.currentTimeMillis();
-        this.dataAggregator.start();
         this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
     }
 
@@ -151,6 +150,7 @@ public class Sampler implements Runnable {
         @Override
         public void run() {
             for (ThreadInfo threadInfo : this.threadDumps) {
+                long threadId = threadInfo.getThreadId();
                 String threadName = threadInfo.getThreadName();
                 StackTraceElement[] stack = threadInfo.getStackTrace();
 
@@ -158,7 +158,7 @@ public class Sampler implements Runnable {
                     continue;
                 }
 
-                this.dataAggregator.insertData(threadName, stack);
+                this.dataAggregator.insertData(threadId, threadName, stack);
             }
         }
     }

@@ -20,6 +20,8 @@
 
 package me.lucko.spark.common.sampler;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,15 +34,16 @@ public interface ThreadGrouper {
     /**
      * Gets the group for the given thread.
      *
+     * @param threadId the id of the thread
      * @param threadName the name of the thread
      * @return the group
      */
-    String getGroup(String threadName);
+    String getGroup(long threadId, String threadName);
 
     /**
      * Implementation of {@link ThreadGrouper} that just groups by thread name.
      */
-    ThreadGrouper BY_NAME = threadName -> threadName;
+    ThreadGrouper BY_NAME = (threadId, threadName) -> threadName;
 
     /**
      * Implementation of {@link ThreadGrouper} that attempts to group by the name of the pool
@@ -50,16 +53,24 @@ public interface ThreadGrouper {
      * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
      */
     ThreadGrouper BY_POOL = new ThreadGrouper() {
+        private final Map<Long, String> cache = new ConcurrentHashMap<>();
         private final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
 
         @Override
-        public String getGroup(String threadName) {
+        public String getGroup(long threadId, String threadName) {
+            String group = this.cache.get(threadId);
+            if (group != null) {
+                return group;
+            }
+
             Matcher matcher = this.pattern.matcher(threadName);
             if (!matcher.matches()) {
                 return threadName;
             }
 
-            return matcher.group(1).trim() + " (Combined)";
+            group = matcher.group(1).trim() + " (Combined)";
+            this.cache.put(threadId, group); // we don't care about race conditions here
+            return group;
         }
     };
 
@@ -67,6 +78,6 @@ public interface ThreadGrouper {
      * Implementation of {@link ThreadGrouper} which groups all threads as one, under
      * the name "All".
      */
-    ThreadGrouper AS_ONE = threadName -> "All";
+    ThreadGrouper AS_ONE = (threadId, threadName) -> "All";
 
 }
