@@ -33,6 +33,10 @@ import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.tick.TpsCalculator;
 import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.common.util.BytebinClient;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import net.kyori.text.format.TextColor;
+import net.kyori.text.format.TextDecoration;
 import okhttp3.OkHttpClient;
 
 import java.util.ArrayList;
@@ -116,7 +120,7 @@ public class SparkPlatform<S> {
                     command.executor().execute(this, sender, resp, new Arguments(rawArgs));
                 } catch (IllegalArgumentException e) {
                     e.printStackTrace();
-                    resp.replyPrefixed("&c" + e.getMessage());
+                    resp.replyPrefixed(TextComponent.of(e.getMessage(), TextColor.RED));
                 }
                 return;
             }
@@ -146,14 +150,36 @@ public class SparkPlatform<S> {
     }
 
     private void sendUsage(CommandResponseHandler<S> sender) {
-        sender.replyPrefixed("&fspark &7v" + getPlugin().getVersion());
+        sender.replyPrefixed(TextComponent.builder()
+                .append(TextComponent.of("spark", TextColor.WHITE))
+                .append(Component.space())
+                .append(TextComponent.of("v" + getPlugin().getVersion(), TextColor.GRAY))
+                .build()
+        );
         for (Command<S> command : this.commands) {
-            sender.reply("&6&l> &7/" + getPlugin().getLabel() + " " + command.aliases().get(0));
+            sender.reply(TextComponent.builder()
+                    .append(TextComponent.builder(">").color(TextColor.GOLD).decoration(TextDecoration.BOLD, true).build())
+                    .append(Component.space())
+                    .append(TextComponent.of("/" + getPlugin().getLabel() + " " + command.aliases().get(0), TextColor.GRAY))
+                    .build()
+            );
             for (Command.ArgumentInfo arg : command.arguments()) {
                 if (arg.requiresParameter()) {
-                    sender.reply("       &8[&7--" + arg.argumentName() + "&8 <" + arg.parameterDescription() + ">]");
+                    sender.reply(TextComponent.builder("       ")
+                            .append(TextComponent.of("[", TextColor.DARK_GRAY))
+                            .append(TextComponent.of("--" + arg.argumentName(), TextColor.GRAY))
+                            .append(Component.space())
+                            .append(TextComponent.of("<" + arg.parameterDescription() + ">", TextColor.DARK_GRAY))
+                            .append(TextComponent.of("]", TextColor.DARK_GRAY))
+                            .build()
+                    );
                 } else {
-                    sender.reply("       &8[&7--" + arg.argumentName() + "]");
+                    sender.reply(TextComponent.builder("       ")
+                            .append(TextComponent.of("[", TextColor.DARK_GRAY))
+                            .append(TextComponent.of("--" + arg.argumentName(), TextColor.GRAY))
+                            .append(TextComponent.of("]", TextColor.DARK_GRAY))
+                            .build()
+                    );
                 }
             }
         }

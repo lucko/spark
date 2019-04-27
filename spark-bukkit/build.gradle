@@ -1,5 +1,6 @@
 dependencies {
     compile project(':spark-common')
+    compile 'net.kyori:text-adapter-bukkit:1.0.3'
     compileOnly 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
 }
 

@@ -26,6 +26,10 @@ import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TpsCalculator;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import net.kyori.text.format.TextColor;
+import net.kyori.text.format.TextDecoration;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -45,50 +49,77 @@ public class HealthModule<S> implements CommandModule<S> {
     @Override
     public void registerCommands(Consumer<Command<S>> consumer) {
         consumer.accept(Command.<S>builder()
-                        .aliases("tps")
-                        .executor((platform, sender, resp, arguments) -> {
-                            TpsCalculator tpsCalculator = platform.getTpsCalculator();
-                            if (tpsCalculator != null) {
-                                resp.replyPrefixed("TPS from last 5s, 10s, 1m, 5m, 15m:");
-                                resp.replyPrefixed(" " + tpsCalculator.toFormattedString());
-                            } else {
-                                resp.replyPrefixed("Not supported!");
-                            }
-                        })
-                        .tabCompleter(Command.TabCompleter.empty())
-                        .build()
+                .aliases("tps")
+                .executor((platform, sender, resp, arguments) -> {
+                    TpsCalculator tpsCalculator = platform.getTpsCalculator();
+                    if (tpsCalculator != null) {
+                        resp.replyPrefixed(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:"));
+                        resp.replyPrefixed(TextComponent.builder(" ").append(tpsCalculator.toFormattedComponent()).build());
+                    } else {
+                        resp.replyPrefixed(TextComponent.of("Not supported!"));
+                    }
+                })
+                .tabCompleter(Command.TabCompleter.empty())
+                .build()
         );
 
         consumer.accept(Command.<S>builder()
                 .aliases("healthreport", "health", "ht")
                 .argumentUsage("memory", null)
                 .executor((platform, sender, resp, arguments) -> {
-                    resp.replyPrefixed("&7Generating server health report...");
+                    resp.replyPrefixed(TextComponent.of("Generating server health report..."));
                     platform.getPlugin().runAsync(() -> {
-                        List<String> report = new ArrayList<>(15);
-                        report.add("");
+                        List<Component> report = new ArrayList<>(15);
+                        report.add(Component.empty());
 
                         TpsCalculator tpsCalculator = platform.getTpsCalculator();
                         if (tpsCalculator != null) {
-                            report.add("&8&l>&6 TPS from last 5s, 10s, 1m, 5m, 15m:");
-                            report.add("    " + tpsCalculator.toFormattedString());
-                            report.add("");
+                            report.add(TextComponent.builder()
+                                    .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                                    .append(Component.space())
+                                    .append(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:", TextColor.GOLD))
+                                    .build()
+                            );
+                            report.add(TextComponent.builder("    ").append(tpsCalculator.toFormattedComponent()).build());
+                            report.add(Component.empty());
                         }
 
                         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-
                         MemoryUsage heapUsage = memoryMXBean.getHeapMemoryUsage();
-                        report.add("&8&l>&6 Memory usage: ");
-                        report.add("    &f" + formatBytes(heapUsage.getUsed()) + " &7/ &f" + formatBytes(heapUsage.getMax()) +
-                                "   &7(&a" + percent(heapUsage.getUsed(), heapUsage.getMax()) + "&7)");
-                        report.add("    " + generateMemoryUsageDiagram(heapUsage, 40));
-                        report.add("");
+                        report.add(TextComponent.builder()
+                                .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                                .append(Component.space())
+                                .append(TextComponent.of("Memory usage:", TextColor.GOLD))
+                                .build()
+                        );
+                        report.add(TextComponent.builder("    ")
+                                .append(TextComponent.of(formatBytes(heapUsage.getUsed()), TextColor.WHITE))
+                                .append(Component.space())
+                                .append(TextComponent.of("/", TextColor.GRAY))
+                                .append(Component.space())
+                                .append(TextComponent.of(formatBytes(heapUsage.getMax()), TextColor.WHITE))
+                                .append(TextComponent.of("   "))
+                                .append(TextComponent.of("(", TextColor.GRAY))
+                                .append(TextComponent.of(percent(heapUsage.getUsed(), heapUsage.getMax()), TextColor.GREEN))
+                                .append(TextComponent.of(")", TextColor.GRAY))
+                                .build()
+                        );
+                        report.add(TextComponent.builder("    ").append(generateMemoryUsageDiagram(heapUsage, 40)).build());
+                        report.add(Component.empty());
 
                         if (arguments.boolFlag("memory")) {
                             MemoryUsage nonHeapUsage = memoryMXBean.getNonHeapMemoryUsage();
-                            report.add("&8&l>&6 Non-heap memory usage: ");
-                            report.add("    &f" + formatBytes(nonHeapUsage.getUsed()));
-                            report.add("");
+                            report.add(TextComponent.builder()
+                                    .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                                    .append(Component.space())
+                                    .append(TextComponent.of("Non-heap memory usage:", TextColor.GOLD))
+                                    .build()
+                            );
+                            report.add(TextComponent.builder("    ")
+                                    .append(TextComponent.of(formatBytes(nonHeapUsage.getUsed()), TextColor.WHITE))
+                                    .build()
+                            );
+                            report.add(Component.empty());
 
                             List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
                             for (MemoryPoolMXBean memoryPool : memoryPoolMXBeans) {
@@ -103,16 +134,37 @@ public class HealthModule<S> implements CommandModule<S> {
                                     usage = new MemoryUsage(usage.getInit(), usage.getUsed(), usage.getCommitted(), usage.getCommitted());
                                 }
 
-                                report.add("&8&l>&6 " + memoryPool.getName() + " pool usage: ");
-                                report.add("    &f" + formatBytes(usage.getUsed()) + " &7/ &f" + formatBytes(usage.getMax()) +
-                                        "   &7(&a" + percent(usage.getUsed(), usage.getMax()) + "&7)");
-                                report.add("    " + generateMemoryPoolDiagram(usage, collectionUsage,40));
-
+                                report.add(TextComponent.builder()
+                                        .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                                        .append(Component.space())
+                                        .append(TextComponent.of(memoryPool.getName() + " pool usage:", TextColor.GOLD))
+                                        .build()
+                                );
+                                report.add(TextComponent.builder("    ")
+                                        .append(TextComponent.of(formatBytes(usage.getUsed()), TextColor.WHITE))
+                                        .append(Component.space())
+                                        .append(TextComponent.of("/", TextColor.GRAY))
+                                        .append(Component.space())
+                                        .append(TextComponent.of(formatBytes(usage.getMax()), TextColor.WHITE))
+                                        .append(TextComponent.of("   "))
+                                        .append(TextComponent.of("(", TextColor.GRAY))
+                                        .append(TextComponent.of(percent(usage.getUsed(), usage.getMax()), TextColor.GREEN))
+                                        .append(TextComponent.of(")", TextColor.GRAY))
+                                        .build()
+                                );
+                                report.add(TextComponent.builder("    ").append(generateMemoryPoolDiagram(usage, collectionUsage, 40)).build());
 
                                 if (collectionUsage != null) {
-                                    report.add("     &c- &7Usage at last GC: &f" + formatBytes(collectionUsage.getUsed()));
+                                    report.add(TextComponent.builder("     ")
+                                            .append(TextComponent.of("-", TextColor.RED))
+                                            .append(Component.space())
+                                            .append(TextComponent.of("Usage at last GC:", TextColor.GRAY))
+                                            .append(Component.space())
+                                            .append(TextComponent.of(formatBytes(collectionUsage.getUsed()), TextColor.WHITE))
+                                            .build()
+                                    );
                                 }
-                                report.add("");
+                                report.add(Component.empty());
                             }
                         }
 
@@ -120,17 +172,30 @@ public class HealthModule<S> implements CommandModule<S> {
                         double processCpuLoad = CpuMonitor.getProcessCpuLoad();
 
                         if (systemCpuLoad >= 0 || processCpuLoad >= 0) {
-                            report.add("&8&l>&6 CPU usage: ");
+                            report.add(TextComponent.builder()
+                                    .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                                    .append(Component.space())
+                                    .append(TextComponent.of("CPU usage:", TextColor.GOLD))
+                                    .build()
+                            );
 
                             if (systemCpuLoad >= 0) {
-                                report.add("    &7System: &a" + percent(systemCpuLoad, 1.0d));
-                                report.add("    " + generateCpuUsageDiagram(systemCpuLoad, 40));
-                                report.add("");
+                                report.add(TextComponent.builder("    ")
+                                        .append(TextComponent.of("System: ", TextColor.GRAY))
+                                        .append(TextComponent.of(percent(systemCpuLoad, 1.0d), TextColor.GREEN))
+                                        .build()
+                                );
+                                report.add(TextComponent.builder("    ").append(generateCpuUsageDiagram(systemCpuLoad, 40)).build());
+                                report.add(Component.empty());
                             }
                             if (processCpuLoad >= 0) {
-                                report.add("    &7Process: &a" + percent(processCpuLoad, 1.0d));
-                                report.add("    " + generateCpuUsageDiagram(processCpuLoad, 40));
-                                report.add("");
+                                report.add(TextComponent.builder("    ")
+                                        .append(TextComponent.of("Process: ", TextColor.GRAY))
+                                        .append(TextComponent.of(percent(processCpuLoad, 1.0d), TextColor.GREEN))
+                                        .build()
+                                );
+                                report.add(TextComponent.builder("    ").append(generateCpuUsageDiagram(processCpuLoad, 40)).build());
+                                report.add(Component.empty());
                             }
                         }
 
@@ -138,17 +203,33 @@ public class HealthModule<S> implements CommandModule<S> {
                             FileStore fileStore = Files.getFileStore(Paths.get("."));
                             long totalSpace = fileStore.getTotalSpace();
                             long usedSpace = totalSpace - fileStore.getUsableSpace();
-
-                            report.add("&8&l>&6 Disk usage: ");
-                            report.add("    &f" + formatBytes(usedSpace) + " &7/ &f" + formatBytes(totalSpace) +
-                                    "   &7(&a" + percent(usedSpace, totalSpace) + "&7)");
-                            report.add("    " + generateDiskUsageDiagram(usedSpace, totalSpace, 40));
-                            report.add("");
+                            report.add(TextComponent.builder()
+                                    .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                                    .append(Component.space())
+                                    .append(TextComponent.of("Disk usage:", TextColor.GOLD))
+                                    .build()
+                            );
+                            report.add(TextComponent.builder("    ")
+                                    .append(TextComponent.of(formatBytes(usedSpace), TextColor.WHITE))
+                                    .append(Component.space())
+                                    .append(TextComponent.of("/", TextColor.GRAY))
+                                    .append(Component.space())
+                                    .append(TextComponent.of(formatBytes(totalSpace), TextColor.WHITE))
+                                    .append(TextComponent.of("   "))
+                                    .append(TextComponent.of("(", TextColor.GRAY))
+                                    .append(TextComponent.of(percent(usedSpace, totalSpace), TextColor.GREEN))
+                                    .append(TextComponent.of(")", TextColor.GRAY))
+                                    .build()
+                            );
+                            report.add(TextComponent.builder("    ").append(generateDiskUsageDiagram(usedSpace, totalSpace, 40)).build());
+                            report.add(Component.empty());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
 
-                        report.forEach(resp::reply);
+                        TextComponent.Builder builder = TextComponent.builder();
+                        report.forEach(line -> builder.append(line).append(Component.newline()));
+                        resp.reply(builder.build());
                     });
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--memory"))
@@ -161,7 +242,7 @@ public class HealthModule<S> implements CommandModule<S> {
         return (int) percent + "%";
     }
 
-    private static String generateMemoryUsageDiagram(MemoryUsage usage, int length) {
+    private static TextComponent generateMemoryUsageDiagram(MemoryUsage usage, int length) {
         double used = usage.getUsed();
         double committed = usage.getCommitted();
         double max = usage.getMax();
@@ -169,18 +250,23 @@ public class HealthModule<S> implements CommandModule<S> {
         int usedChars = (int) ((used * length) / max);
         int committedChars = (int) ((committed * length) / max);
 
-        String line = "&7" + Strings.repeat("/", usedChars);
+        TextComponent.Builder line = TextComponent.builder(Strings.repeat("/", usedChars)).color(TextColor.GRAY);
         if (committedChars > usedChars) {
-            line += Strings.repeat(" ", (committedChars - usedChars) - 1) + "&e|";
+            line.append(TextComponent.of(Strings.repeat(" ", (committedChars - usedChars) - 1)));
+            line.append(TextComponent.of("|", TextColor.YELLOW));
         }
         if (length > committedChars) {
-            line += Strings.repeat(" ", (length - committedChars));
+            line.append(TextComponent.of(Strings.repeat(" ", (length - committedChars))));
         }
 
-        return "&8[" + line + "&8]";
+        return TextComponent.builder()
+                .append(TextComponent.of("[", TextColor.DARK_GRAY))
+                .append(line.build())
+                .append(TextComponent.of("]", TextColor.DARK_GRAY))
+                .build();
     }
 
-    private static String generateMemoryPoolDiagram(MemoryUsage usage, MemoryUsage collectionUsage, int length) {
+    private static TextComponent generateMemoryPoolDiagram(MemoryUsage usage, MemoryUsage collectionUsage, int length) {
         double used = usage.getUsed();
         double collectionUsed = used;
         if (collectionUsage != null) {
@@ -193,32 +279,45 @@ public class HealthModule<S> implements CommandModule<S> {
         int collectionUsedChars = (int) ((collectionUsed * length) / max);
         int committedChars = (int) ((committed * length) / max);
 
-        String line = "&7" + Strings.repeat("/", collectionUsedChars);
+        TextComponent.Builder line = TextComponent.builder(Strings.repeat("/", collectionUsedChars)).color(TextColor.GRAY);
+
         if (usedChars > collectionUsedChars) {
-            line += "&c|&7" + Strings.repeat("/", (usedChars - collectionUsedChars) - 1);
+            line.append(TextComponent.of("|", TextColor.RED));
+            line.append(TextComponent.of(Strings.repeat("/", (usedChars - collectionUsedChars) - 1), TextColor.GRAY));
         }
         if (committedChars > usedChars) {
-            line += Strings.repeat(" ", (committedChars - usedChars) - 1) + "&e|";
+            line.append(TextComponent.of(Strings.repeat(" ", (committedChars - usedChars) - 1)));
+            line.append(TextComponent.of("|", TextColor.YELLOW));
         }
         if (length > committedChars) {
-            line += Strings.repeat(" ", (length - committedChars));
+            line.append(TextComponent.of(Strings.repeat(" ", (length - committedChars))));
         }
 
-        return "&8[" + line + "&8]";
+        return TextComponent.builder()
+                .append(TextComponent.of("[", TextColor.DARK_GRAY))
+                .append(line.build())
+                .append(TextComponent.of("]", TextColor.DARK_GRAY))
+                .build();
     }
 
-    private static String generateCpuUsageDiagram(double usage, int length) {
+    private static TextComponent generateCpuUsageDiagram(double usage, int length) {
         int usedChars = (int) ((usage * length));
-
-        String line = "&7" + Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
-        return "&8[" + line + "&8]";
+        String line = Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
+        return TextComponent.builder()
+                .append(TextComponent.of("[", TextColor.DARK_GRAY))
+                .append(TextComponent.of(line, TextColor.GRAY))
+                .append(TextComponent.of("]", TextColor.DARK_GRAY))
+                .build();
     }
 
-    private static String generateDiskUsageDiagram(double used, double max, int length) {
+    private static TextComponent generateDiskUsageDiagram(double used, double max, int length) {
         int usedChars = (int) ((used * length) / max);
-
-        String line = "&7" + Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
-        return "&8[" + line + "&8]";
+        String line = Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
+        return TextComponent.builder()
+                .append(TextComponent.of("[", TextColor.DARK_GRAY))
+                .append(TextComponent.of(line, TextColor.GRAY))
+                .append(TextComponent.of("]", TextColor.DARK_GRAY))
+                .build();
     }
 
     private static String formatBytes(long bytes) {

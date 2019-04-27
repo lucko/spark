@@ -34,6 +34,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.event.ClickEvent;
 import net.kyori.text.format.TextColor;
@@ -110,19 +111,9 @@ public class SparkVelocityPlugin implements SparkPlugin<CommandSource>, Command 
         return senders;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public void sendMessage(CommandSource sender, String message) {
-        sender.sendMessage(ComponentSerializers.LEGACY.deserialize(message, '&'));
-    }
-
-    @Override
-    public void sendLink(CommandSource sender, String url) {
-        TextComponent msg = TextComponent.builder(url)
-                .color(TextColor.GRAY)
-                .clickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
-                .build();
-        sender.sendMessage(msg);
+    public void sendMessage(CommandSource sender, Component message) {
+        sender.sendMessage(message);
     }
 
     @Override

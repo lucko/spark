@@ -21,14 +21,24 @@
 package me.lucko.spark.common.command;
 
 import me.lucko.spark.common.SparkPlatform;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import net.kyori.text.event.ClickEvent;
+import net.kyori.text.format.TextColor;
+import net.kyori.text.format.TextDecoration;
 
 import java.util.Set;
 import java.util.function.Consumer;
 
 public class CommandResponseHandler<S> {
 
-    /** The prefix used in all messages */
-    private static final String PREFIX = "&8[&e&l⚡&8] &7";
+    /** The prefix used in all messages "&8[&e&l⚡&8] &7" */
+    private static final TextComponent PREFIX = TextComponent.builder().color(TextColor.GRAY)
+            .append(TextComponent.of("[", TextColor.DARK_GRAY))
+            .append(TextComponent.builder("⚡").color(TextColor.YELLOW).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE).build())
+            .append(TextComponent.of("]", TextColor.DARK_GRAY))
+            .append(TextComponent.of(" "))
+            .build();
 
     private final SparkPlatform<S> platform;
     private final S sender;
@@ -48,28 +58,21 @@ public class CommandResponseHandler<S> {
         senders.forEach(action);
     }
 
-    public void reply(String message) {
+    public void reply(Component message) {
         this.platform.getPlugin().sendMessage(this.sender, message);
     }
 
-    public void broadcast(String message) {
+    public void broadcast(Component message) {
         allSenders(sender -> this.platform.getPlugin().sendMessage(sender, message));
     }
 
-    public void replyPrefixed(String message) {
-        this.platform.getPlugin().sendMessage(this.sender, PREFIX + message);
+    public void replyPrefixed(Component message) {
+        reply(PREFIX.append(message));
     }
 
-    public void broadcastPrefixed(String message) {
-        allSenders(sender -> this.platform.getPlugin().sendMessage(sender, PREFIX + message));
+    public void broadcastPrefixed(Component message) {
+        broadcast(PREFIX.append(message));
     }
 
-    public void replyLink(String link) {
-        this.platform.getPlugin().sendLink(this.sender, link);
-    }
-
-    public void broadcastLink(String link) {
-        allSenders(sender -> this.platform.getPlugin().sendLink(sender, link));
-    }
 
 }

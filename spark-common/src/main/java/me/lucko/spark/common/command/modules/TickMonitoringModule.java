@@ -26,6 +26,9 @@ import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.tick.TickMonitor;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import net.kyori.text.format.TextColor;
 
 import java.util.function.Consumer;
 
@@ -43,7 +46,7 @@ public class TickMonitoringModule<S> implements CommandModule<S> {
                 .executor((platform, sender, resp, arguments) -> {
                     TickCounter tickCounter = platform.getTickCounter();
                     if (tickCounter == null) {
-                        resp.replyPrefixed("&cNot supported!");
+                        resp.replyPrefixed(TextComponent.of("Not supported!", TextColor.RED));
                         return;
                     }
 
@@ -59,7 +62,7 @@ public class TickMonitoringModule<S> implements CommandModule<S> {
                         tickCounter.removeTickTask(this.activeTickMonitor);
                         this.activeTickMonitor.close();
                         this.activeTickMonitor = null;
-                        resp.broadcastPrefixed("&7Tick monitor disabled.");
+                        resp.broadcastPrefixed(TextComponent.of("Tick monitor disabled."));
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--threshold", "--without-gc"))
@@ -76,7 +79,7 @@ public class TickMonitoringModule<S> implements CommandModule<S> {
         }
 
         @Override
-        protected void sendMessage(String message) {
+        protected void sendMessage(Component message) {
             this.resp.broadcastPrefixed(message);
         }
     }

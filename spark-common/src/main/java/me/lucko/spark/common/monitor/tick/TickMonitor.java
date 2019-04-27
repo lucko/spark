@@ -21,9 +21,14 @@
 package me.lucko.spark.common.monitor.tick;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
+import com.sun.org.apache.regexp.internal.RE;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import net.kyori.text.format.TextColor;
 
+import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.DoubleSummaryStatistics;
 
@@ -52,7 +57,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
         }
     }
 
-    protected abstract void sendMessage(String message);
+    protected abstract void sendMessage(Component message);
 
     @Override
     public void close() {
@@ -69,8 +74,8 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
         if (this.state == null) {
             this.state = State.SETUP;
             this.lastTickTime = now;
-            sendMessage("Tick monitor started. Before the monitor becomes fully active, the server's " +
-                    "average tick rate will be calculated over a period of 120 ticks (approx 6 seconds).");
+            sendMessage(TextComponent.of("Tick monitor started. Before the monitor becomes fully active, the server's " +
+                    "average tick rate will be calculated over a period of 120 ticks (approx 6 seconds)."));
             return;
         }
 
@@ -90,13 +95,33 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
 
             // move onto the next state
             if (this.averageTickTime.getCount() >= 120) {
-
-                sendMessage("&6Analysis is now complete.");
-                sendMessage("&f> &7Max: " + df.format(this.averageTickTime.getMax()) + "ms");
-                sendMessage("&f> &7Min: " + df.format(this.averageTickTime.getMin()) + "ms");
-                sendMessage("&f> &7Avg: " + df.format(this.averageTickTime.getAverage()) + "ms");
-                sendMessage("Starting now, any ticks with >" + this.percentageChangeThreshold + "% increase in " +
-                        "duration compared to the average will be reported.");
+                sendMessage(TextComponent.of("Analysis is now complete.", TextColor.GOLD));
+                sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                        .append(TextComponent.of(">", TextColor.WHITE))
+                        .append(Component.space())
+                        .append(TextComponent.of("Max: "))
+                        .append(TextComponent.of(df.format(this.averageTickTime.getMax())))
+                        .append(TextComponent.of("ms"))
+                        .build()
+                );
+                sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                        .append(TextComponent.of(">", TextColor.WHITE))
+                        .append(Component.space())
+                        .append(TextComponent.of("Min: "))
+                        .append(TextComponent.of(df.format(this.averageTickTime.getMin())))
+                        .append(TextComponent.of("ms"))
+                        .build()
+                );
+                sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                        .append(TextComponent.of(">", TextColor.WHITE))
+                        .append(Component.space())
+                        .append(TextComponent.of("Avg: "))
+                        .append(TextComponent.of(df.format(this.averageTickTime.getAverage())))
+                        .append(TextComponent.of("ms"))
+                        .build()
+                );
+                sendMessage(TextComponent.of("Starting now, any ticks with >" + this.percentageChangeThreshold + "% increase in " +
+                        "duration compared to the average will be reported."));
 
                 this.avg = this.averageTickTime.getAverage();
                 this.state = State.MONITORING;
@@ -111,8 +136,17 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
 
             double percentageChange = (increase * 100d) / this.avg;
             if (percentageChange > this.percentageChangeThreshold) {
-                sendMessage("&7Tick &8#" + counter.getCurrentTick() + " &7lasted &6" + df.format(diff) +
-                        "&7 ms. (&6" + df.format(percentageChange) + "% &7increase from average)");
+                sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                        .append(TextComponent.of("Tick "))
+                        .append(TextComponent.of("#" + counter.getCurrentTick(), TextColor.DARK_GRAY))
+                        .append(TextComponent.of(" lasted "))
+                        .append(TextComponent.of(df.format(diff), TextColor.GOLD))
+                        .append(TextComponent.of(" ms. "))
+                        .append(TextComponent.of("("))
+                        .append(TextComponent.of(df.format(percentageChange) + "%", TextColor.GOLD))
+                        .append(TextComponent.of("increase from avg)"))
+                        .build()
+                );
             }
         }
     }
@@ -132,8 +166,16 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
             gcType = "Old Gen GC";
         }
 
-        sendMessage("&7Tick &8#" + this.tickCounter.getCurrentTick() + " &7included &4GC &7lasting &6" +
-                df.format(data.getGcInfo().getDuration()) + "&7 ms. (type = " + gcType + ")");
+        sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                .append(TextComponent.of("Tick "))
+                .append(TextComponent.of("#" + this.tickCounter.getCurrentTick(), TextColor.DARK_GRAY))
+                .append(TextComponent.of(" included "))
+                .append(TextComponent.of("GC", TextColor.RED))
+                .append(TextComponent.of(" lasting "))
+                .append(TextComponent.of(df.format(data.getGcInfo().getDuration()), TextColor.GOLD))
+                .append(TextComponent.of(" ms. (type = " + gcType + ")"))
+                .build()
+        );
     }
 
     private enum State {

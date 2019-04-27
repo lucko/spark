@@ -24,9 +24,10 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.Component;
+import net.kyori.text.adapter.bungeecord.TextAdapter;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -76,16 +77,8 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin<Command
     }
 
     @Override
-    public void sendMessage(CommandSender sender, String message) {
-        sender.sendMessage(TextComponent.fromLegacyText(ChatColor.translateAlternateColorCodes('&', message)));
-    }
-
-    @Override
-    public void sendLink(CommandSender sender, String url) {
-        TextComponent component = new TextComponent(url);
-        component.setColor(ChatColor.GRAY);
-        component.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
-        sender.sendMessage(component);
+    public void sendMessage(CommandSender sender, Component message) {
+        TextAdapter.sendComponent(sender, message);
     }
 
     @Override

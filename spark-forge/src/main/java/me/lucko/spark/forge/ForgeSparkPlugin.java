@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.serializer.ComponentSerializers;
 import net.minecraft.command.ICommand;
@@ -70,23 +71,10 @@ public abstract class ForgeSparkPlugin implements SparkPlugin<ICommandSender>, I
         return this.mod.getConfigDirectory();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public void sendMessage(ICommandSender sender, String message) {
-        TextComponent component = ComponentSerializers.LEGACY.deserialize(message, '&');
-        ITextComponent mcComponent = ITextComponent.Serializer.jsonToComponent(ComponentSerializers.JSON.serialize(component));
-        sender.sendMessage(mcComponent);
-    }
-
-    @Override
-    public void sendLink(ICommandSender sender, String url) {
-        TextComponentString msg = new TextComponentString(url);
-        Style style = msg.getStyle();
-        style.setColor(TextFormatting.GRAY);
-        style.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
-        msg.setStyle(style);
-
-        sender.sendMessage(msg);
+    public void sendMessage(ICommandSender sender, Component message) {
+        ITextComponent component = ITextComponent.Serializer.jsonToComponent(ComponentSerializers.JSON.serialize(message));
+        sender.sendMessage(component);
     }
 
     @Override

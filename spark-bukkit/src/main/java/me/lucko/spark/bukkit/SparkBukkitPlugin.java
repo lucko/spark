@@ -26,6 +26,9 @@ import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.monitor.tick.TpsCalculator;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.Component;
+import net.kyori.text.TextComponent;
+import net.kyori.text.adapter.bukkit.TextAdapter;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -55,8 +58,8 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<Command
 
                 CommandResponseHandler<CommandSender> resp = new CommandResponseHandler<>(this.platform, sender);
                 TpsCalculator tpsCalculator = this.platform.getTpsCalculator();
-                resp.replyPrefixed("TPS from last 5s, 10s, 1m, 5m, 15m:");
-                resp.replyPrefixed(" " + tpsCalculator.toFormattedString());
+                resp.replyPrefixed(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:"));
+                resp.replyPrefixed(TextComponent.builder(" ").append(tpsCalculator.toFormattedComponent()).build());
                 return true;
             }, "tps");
         }
@@ -110,13 +113,8 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<Command
     }
 
     @Override
-    public void sendMessage(CommandSender sender, String message) {
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
-    }
-
-    @Override
-    public void sendLink(CommandSender sender, String url) {
-        sendMessage(sender, "&7" + url);
+    public void sendMessage(CommandSender sender, Component message) {
+        TextAdapter.sendComponent(sender, message);
     }
 
     @Override

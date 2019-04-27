@@ -1,5 +1,6 @@
 dependencies {
     compile project(':spark-common')
+    compile 'net.kyori:text-adapter-bungeecord:1.0.3'
     compileOnly 'net.md-5:bungeecord-api:1.12-SNAPSHOT'
 }
 

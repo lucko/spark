@@ -22,6 +22,7 @@ package me.lucko.spark.common;
 
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.Component;
 
 import java.nio.file.Path;
 import java.util.Set;
@@ -36,9 +37,7 @@ public interface SparkPlugin<S> {
 
     Set<S> getSendersWithPermission(String permission);
 
-    void sendMessage(S sender, String message);
-
-    void sendLink(S sender, String url);
+    void sendMessage(S sender, Component message);
 
     void runAsync(Runnable r);
 

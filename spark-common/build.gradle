@@ -1,6 +1,7 @@
 dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.14.1'
     compile 'com.squareup.okio:okio:1.17.3'
+    compile 'net.kyori:text-api:2.0.0'
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
 }

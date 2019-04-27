@@ -21,6 +21,8 @@
 package me.lucko.spark.common.monitor.tick;
 
 import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.TextComponent;
+import net.kyori.text.format.TextColor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -100,27 +102,27 @@ public class TpsCalculator implements TickCounter.TickTask {
         return this.tps15M;
     }
 
-    public String toFormattedString() {
-        return formatTps(this.tps5S.getAverage()) + ", " +
-                formatTps(this.tps10S.getAverage()) + ", " +
-                formatTps(this.tps1M.getAverage()) + ", " +
-                formatTps(this.tps5M.getAverage()) + ", " +
-                formatTps(this.tps15M.getAverage());
+    public TextComponent toFormattedComponent() {
+        return TextComponent.builder()
+                .append(format(this.tps5S.getAverage())).append(TextComponent.of(", "))
+                .append(format(this.tps10S.getAverage())).append(TextComponent.of(", "))
+                .append(format(this.tps1M.getAverage())).append(TextComponent.of(", "))
+                .append(format(this.tps5M.getAverage())).append(TextComponent.of(", "))
+                .append(format(this.tps15M.getAverage()))
+                .build();
     }
 
-    public static String formatTps(double tps) {
-        StringBuilder sb = new StringBuilder();
+    private static TextComponent format(double tps) {
+        TextColor color;
         if (tps > 18.0) {
-            sb.append("&a");
+            color = TextColor.GREEN;
         } else if (tps > 16.0) {
-            sb.append("&e");
+            color = TextColor.YELLOW;
         } else {
-            sb.append("&c");
+            color = TextColor.RED;
         }
-        if (tps > 20.0) {
-            sb.append('*');
-        }
-        return sb.append(Math.min(Math.round(tps * 100.0) / 100.0, 20.0)).toString();
+
+        return TextComponent.of( (tps > 20.0 ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, 20.0), color);
     }
 
     /**

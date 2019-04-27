@@ -25,6 +25,8 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.Component;
+import net.kyori.text.adapter.spongeapi.TextAdapter;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
@@ -115,21 +117,8 @@ public class SparkSpongePlugin implements SparkPlugin<CommandSource> {
     }
 
     @Override
-    public void sendMessage(CommandSource sender, String message) {
-        sender.sendMessage(TextSerializers.FORMATTING_CODE.deserialize(message));
-    }
-
-    @Override
-    public void sendLink(CommandSource sender, String url) {
-        try {
-            Text msg = Text.builder(url)
-                    .color(TextColors.GRAY)
-                    .onClick(TextActions.openUrl(new URL(url)))
-                    .build();
-            sender.sendMessage(msg);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+    public void sendMessage(CommandSource sender, Component message) {
+        TextAdapter.sendComponent(sender, message);
     }
 
     @Override
