@@ -36,6 +36,7 @@ import okhttp3.MediaType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -53,7 +54,10 @@ public class SamplerModule<S> implements CommandModule<S> {
     @Override
     public void registerCommands(Consumer<Command<S>> consumer) {
         consumer.accept(Command.<S>builder()
-                .aliases("start")
+                .aliases("sampler")
+                .argumentUsage("info", null)
+                .argumentUsage("stop", null)
+                .argumentUsage("cancel", null)
                 .argumentUsage("timeout", "timeout seconds")
                 .argumentUsage("thread", "thread name")
                 .argumentUsage("regex", null)
@@ -63,6 +67,53 @@ public class SamplerModule<S> implements CommandModule<S> {
                 .argumentUsage("only-ticks-over", "tick length millis")
                 .argumentUsage("include-line-numbers", null)
                 .executor((platform, sender, resp, arguments) -> {
+                    if (arguments.boolFlag("info")) {
+                        synchronized (this.activeSamplerMutex) {
+                            if (this.activeSampler == null) {
+                                resp.replyPrefixed("&7There isn't an active sampling task running.");
+                            } else {
+                                long timeout = this.activeSampler.getEndTime();
+                                if (timeout == -1) {
+                                    resp.replyPrefixed("&7There is an active sampler currently running, with no defined timeout.");
+                                } else {
+                                    long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
+                                    resp.replyPrefixed("&7There is an active sampler currently running, due to timeout in " + timeoutDiff + " seconds.");
+                                }
+
+                                long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
+                                resp.replyPrefixed("&7It has been sampling for " + runningTime + " seconds so far.");
+                            }
+                        }
+                        return;
+                    }
+
+                    if (arguments.boolFlag("cancel")) {
+                        synchronized (this.activeSamplerMutex) {
+                            if (this.activeSampler == null) {
+                                resp.replyPrefixed("&7There isn't an active sampling task running.");
+                            } else {
+                                this.activeSampler.cancel();
+                                this.activeSampler = null;
+                                resp.broadcastPrefixed("&6The active sampling task has been cancelled.");
+                            }
+                        }
+                        return;
+                    }
+
+                    if (arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
+                        synchronized (this.activeSamplerMutex) {
+                            if (this.activeSampler == null) {
+                                resp.replyPrefixed("&7There isn't an active sampling task running.");
+                            } else {
+                                this.activeSampler.cancel();
+                                resp.broadcastPrefixed("&7The active sampling operation has been stopped! Uploading results...");
+                                handleUpload(platform, resp, this.activeSampler);
+                                this.activeSampler = null;
+                            }
+                        }
+                        return;
+                    }
+
                     int timeoutSeconds = arguments.intFlag("timeout");
                     if (timeoutSeconds != -1 && timeoutSeconds <= 10) {
                         resp.replyPrefixed("&cThe specified timeout is not long enough for accurate results to be formed. Please choose a value greater than 10.");
@@ -173,6 +224,10 @@ public class SamplerModule<S> implements CommandModule<S> {
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> {
+                    if (arguments.contains("--info") || arguments.contains("--stop") || arguments.contains("--upload") || arguments.contains("--cancel")) {
+                        return Collections.emptyList();
+                    }
+
                     List<String> opts = new ArrayList<>(Arrays.asList("--timeout", "--regex", "--combine-all",
                             "--not-combined", "--interval", "--only-ticks-over", "--include-line-numbers"));
                     opts.removeAll(arguments);
@@ -181,62 +236,6 @@ public class SamplerModule<S> implements CommandModule<S> {
                     return TabCompleter.create()
                             .from(0, CompletionSupplier.startsWith(opts))
                             .complete(arguments);
-                })
-                .build()
-        );
-
-        consumer.accept(Command.<S>builder()
-                .aliases("info")
-                .executor((platform, sender, resp, arguments) -> {
-                    synchronized (this.activeSamplerMutex) {
-                        if (this.activeSampler == null) {
-                            resp.replyPrefixed("&7There isn't an active sampling task running.");
-                        } else {
-                            long timeout = this.activeSampler.getEndTime();
-                            if (timeout == -1) {
-                                resp.replyPrefixed("&7There is an active sampler currently running, with no defined timeout.");
-                            } else {
-                                long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
-                                resp.replyPrefixed("&7There is an active sampler currently running, due to timeout in " + timeoutDiff + " seconds.");
-                            }
-
-                            long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
-                            resp.replyPrefixed("&7It has been sampling for " + runningTime + " seconds so far.");
-                        }
-                    }
-                })
-                .build()
-        );
-
-        consumer.accept(Command.<S>builder()
-                .aliases("stop", "upload", "paste")
-                .executor((platform, sender, resp, arguments) -> {
-                    synchronized (this.activeSamplerMutex) {
-                        if (this.activeSampler == null) {
-                            resp.replyPrefixed("&7There isn't an active sampling task running.");
-                        } else {
-                            this.activeSampler.cancel();
-                            resp.broadcastPrefixed("&7The active sampling operation has been stopped! Uploading results...");
-                            handleUpload(platform, resp, this.activeSampler);
-                            this.activeSampler = null;
-                        }
-                    }
-                })
-                .build()
-        );
-
-        consumer.accept(Command.<S>builder()
-                .aliases("cancel")
-                .executor((platform, sender, resp, arguments) -> {
-                    synchronized (this.activeSamplerMutex) {
-                        if (this.activeSampler == null) {
-                            resp.replyPrefixed("&7There isn't an active sampling task running.");
-                        } else {
-                            this.activeSampler.cancel();
-                            this.activeSampler = null;
-                            resp.broadcastPrefixed("&6The active sampling task has been cancelled.");
-                        }
-                    }
                 })
                 .build()
         );
