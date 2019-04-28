@@ -20,27 +20,24 @@
 
 package me.lucko.spark.bungeecord;
 
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
-import net.kyori.text.Component;
-import net.kyori.text.adapter.bungeecord.TextAdapter;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.CommandSender;
-import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin<CommandSender> {
+public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
 
-    private final SparkPlatform<CommandSender> platform = new SparkPlatform<>(this);
+    private final SparkPlatform platform = new SparkPlatform(this);
 
     @Override
     public void onEnable() {
@@ -70,15 +67,10 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin<Command
 
     @Override
     public Set<CommandSender> getSendersWithPermission(String permission) {
-        Set<CommandSender> senders = new HashSet<>(getProxy().getPlayers());
+        List<net.md_5.bungee.api.CommandSender> senders = new LinkedList<>(getProxy().getPlayers());
         senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(getProxy().getConsole());
-        return senders;
-    }
-
-    @Override
-    public void sendMessage(CommandSender sender, Component message) {
-        TextAdapter.sendComponent(sender, message);
+        return senders.stream().map(BungeeCordCommandSender::new).collect(Collectors.toSet());
     }
 
     @Override
@@ -105,23 +97,13 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin<Command
         }
 
         @Override
-        public void execute(CommandSender sender, String[] args) {
-            if (!sender.hasPermission("spark")) {
-                TextComponent msg = new TextComponent("You do not have permission to use this command.");
-                msg.setColor(ChatColor.RED);
-                sender.sendMessage(msg);
-                return;
-            }
-
-            this.plugin.platform.executeCommand(sender, args);
+        public void execute(net.md_5.bungee.api.CommandSender sender, String[] args) {
+            this.plugin.platform.executeCommand(new BungeeCordCommandSender(sender), args);
         }
 
         @Override
-        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            if (!sender.hasPermission("spark")) {
-                return Collections.emptyList();
-            }
-            return this.plugin.platform.tabCompleteCommand(sender, args);
+        public Iterable<String> onTabComplete(net.md_5.bungee.api.CommandSender sender, String[] args) {
+            return this.plugin.platform.tabCompleteCommand(new BungeeCordCommandSender(sender), args);
         }
     }
 }

@@ -103,7 +103,7 @@ public class TpsCalculator implements TickCounter.TickTask {
     }
 
     public TextComponent toFormattedComponent() {
-        return TextComponent.builder()
+        return TextComponent.builder("")
                 .append(format(this.tps5S.getAverage())).append(TextComponent.of(", "))
                 .append(format(this.tps10S.getAverage())).append(TextComponent.of(", "))
                 .append(format(this.tps1M.getAverage())).append(TextComponent.of(", "))

@@ -22,8 +22,8 @@ package me.lucko.spark.common.command;
 
 import java.util.function.Consumer;
 
-public interface CommandModule<S> {
+public interface CommandModule {
 
-    void registerCommands(Consumer<Command<S>> consumer);
+    void registerCommands(Consumer<Command> consumer);
 
 }

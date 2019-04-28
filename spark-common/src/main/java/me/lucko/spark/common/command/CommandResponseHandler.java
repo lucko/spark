@@ -20,50 +20,50 @@
 
 package me.lucko.spark.common.command;
 
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
-import net.kyori.text.event.ClickEvent;
 import net.kyori.text.format.TextColor;
 import net.kyori.text.format.TextDecoration;
 
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class CommandResponseHandler<S> {
+public class CommandResponseHandler {
 
     /** The prefix used in all messages "&8[&e&l⚡&8] &7" */
-    private static final TextComponent PREFIX = TextComponent.builder().color(TextColor.GRAY)
+    private static final TextComponent PREFIX = TextComponent.builder("").color(TextColor.GRAY)
             .append(TextComponent.of("[", TextColor.DARK_GRAY))
             .append(TextComponent.builder("⚡").color(TextColor.YELLOW).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE).build())
             .append(TextComponent.of("]", TextColor.DARK_GRAY))
             .append(TextComponent.of(" "))
             .build();
 
-    private final SparkPlatform<S> platform;
-    private final S sender;
+    private final SparkPlatform platform;
+    private final CommandSender sender;
 
-    public CommandResponseHandler(SparkPlatform<S> platform, S sender) {
+    public CommandResponseHandler(SparkPlatform platform, CommandSender sender) {
         this.platform = platform;
         this.sender = sender;
     }
 
-    public S sender() {
+    public CommandSender sender() {
         return this.sender;
     }
 
-    public void allSenders(Consumer<? super S> action) {
-        Set<S> senders = this.platform.getPlugin().getSendersWithPermission("spark");
+    public void allSenders(Consumer<? super CommandSender> action) {
+        Set<CommandSender> senders = this.platform.getPlugin().getSendersWithPermission("spark");
         senders.add(this.sender);
         senders.forEach(action);
     }
 
     public void reply(Component message) {
-        this.platform.getPlugin().sendMessage(this.sender, message);
+        this.sender.sendMessage(message);
     }
 
     public void broadcast(Component message) {
-        allSenders(sender -> this.platform.getPlugin().sendMessage(sender, message));
+        allSenders(sender -> sender.sendMessage(message));
     }
 
     public void replyPrefixed(Component message) {

@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
+import me.lucko.spark.common.ActivityLog;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -38,12 +39,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 
-public class MemoryModule<S> implements CommandModule<S> {
+public class MemoryModule implements CommandModule {
     private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
     @Override
-    public void registerCommands(Consumer<Command<S>> consumer) {
-        consumer.accept(Command.<S>builder()
+    public void registerCommands(Consumer<Command> consumer) {
+        consumer.accept(Command.builder()
                 .aliases("heapsummary")
                 .argumentUsage("run-gc-before", null)
                 .executor((platform, sender, resp, arguments) -> {
@@ -75,6 +76,8 @@ public class MemoryModule<S> implements CommandModule<S> {
                                     .clickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
                                     .build()
                             );
+
+                            platform.getActivityLog().addToLog(new ActivityLog.Activity(sender.getName(), System.currentTimeMillis(), "Heap dump summary", url));
                         } catch (IOException e) {
                             resp.broadcastPrefixed(TextComponent.of("An error occurred whilst uploading the data.", TextColor.RED));
                             e.printStackTrace();
@@ -85,7 +88,7 @@ public class MemoryModule<S> implements CommandModule<S> {
                 .build()
         );
 
-        consumer.accept(Command.<S>builder()
+        consumer.accept(Command.builder()
                 .aliases("heapdump")
                 .argumentUsage("run-gc-before", null)
                 .argumentUsage("include-non-live", null)

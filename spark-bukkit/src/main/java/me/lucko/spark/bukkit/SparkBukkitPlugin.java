@@ -20,29 +20,27 @@
 
 package me.lucko.spark.bukkit;
 
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.monitor.tick.TpsCalculator;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
-import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
-import net.kyori.text.adapter.bukkit.TextAdapter;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<CommandSender> {
+public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
 
-    private final SparkPlatform<CommandSender> platform = new SparkPlatform<>(this);
+    private final SparkPlatform platform = new SparkPlatform(this);
 
     @Override
     public void onEnable() {
@@ -56,7 +54,7 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<Command
                     return true;
                 }
 
-                CommandResponseHandler<CommandSender> resp = new CommandResponseHandler<>(this.platform, sender);
+                CommandResponseHandler resp = new CommandResponseHandler(this.platform, new BukkitCommandSender(sender));
                 TpsCalculator tpsCalculator = this.platform.getTpsCalculator();
                 resp.replyPrefixed(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:"));
                 resp.replyPrefixed(TextComponent.builder(" ").append(tpsCalculator.toFormattedComponent()).build());
@@ -71,22 +69,14 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<Command
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("spark")) {
-            sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
-            return true;
-        }
-
-        this.platform.executeCommand(sender, args);
+    public boolean onCommand(org.bukkit.command.CommandSender sender, Command command, String label, String[] args) {
+        this.platform.executeCommand(new BukkitCommandSender(sender), args);
         return true;
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        if (!sender.hasPermission("spark")) {
-            return Collections.emptyList();
-        }
-        return this.platform.tabCompleteCommand(sender, args);
+    public List<String> onTabComplete(org.bukkit.command.CommandSender sender, Command command, String alias, String[] args) {
+        return this.platform.tabCompleteCommand(new BukkitCommandSender(sender), args);
     }
 
     @Override
@@ -106,15 +96,10 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin<Command
 
     @Override
     public Set<CommandSender> getSendersWithPermission(String permission) {
-        Set<CommandSender> senders = new HashSet<>(getServer().getOnlinePlayers());
+        List<org.bukkit.command.CommandSender> senders = new LinkedList<>(getServer().getOnlinePlayers());
         senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(getServer().getConsoleSender());
-        return senders;
-    }
-
-    @Override
-    public void sendMessage(CommandSender sender, Component message) {
-        TextAdapter.sendComponent(sender, message);
+        return senders.stream().map(BukkitCommandSender::new).collect(Collectors.toSet());
     }
 
     @Override

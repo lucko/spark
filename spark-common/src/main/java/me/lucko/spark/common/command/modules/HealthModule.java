@@ -44,11 +44,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class HealthModule<S> implements CommandModule<S> {
+public class HealthModule implements CommandModule {
 
     @Override
-    public void registerCommands(Consumer<Command<S>> consumer) {
-        consumer.accept(Command.<S>builder()
+    public void registerCommands(Consumer<Command> consumer) {
+        consumer.accept(Command.builder()
                 .aliases("tps")
                 .executor((platform, sender, resp, arguments) -> {
                     TpsCalculator tpsCalculator = platform.getTpsCalculator();
@@ -63,7 +63,7 @@ public class HealthModule<S> implements CommandModule<S> {
                 .build()
         );
 
-        consumer.accept(Command.<S>builder()
+        consumer.accept(Command.builder()
                 .aliases("healthreport", "health", "ht")
                 .argumentUsage("memory", null)
                 .executor((platform, sender, resp, arguments) -> {
@@ -74,7 +74,7 @@ public class HealthModule<S> implements CommandModule<S> {
 
                         TpsCalculator tpsCalculator = platform.getTpsCalculator();
                         if (tpsCalculator != null) {
-                            report.add(TextComponent.builder()
+                            report.add(TextComponent.builder("")
                                     .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                                     .append(Component.space())
                                     .append(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:", TextColor.GOLD))
@@ -86,7 +86,7 @@ public class HealthModule<S> implements CommandModule<S> {
 
                         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
                         MemoryUsage heapUsage = memoryMXBean.getHeapMemoryUsage();
-                        report.add(TextComponent.builder()
+                        report.add(TextComponent.builder("")
                                 .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                                 .append(Component.space())
                                 .append(TextComponent.of("Memory usage:", TextColor.GOLD))
@@ -109,7 +109,7 @@ public class HealthModule<S> implements CommandModule<S> {
 
                         if (arguments.boolFlag("memory")) {
                             MemoryUsage nonHeapUsage = memoryMXBean.getNonHeapMemoryUsage();
-                            report.add(TextComponent.builder()
+                            report.add(TextComponent.builder("")
                                     .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                                     .append(Component.space())
                                     .append(TextComponent.of("Non-heap memory usage:", TextColor.GOLD))
@@ -134,7 +134,7 @@ public class HealthModule<S> implements CommandModule<S> {
                                     usage = new MemoryUsage(usage.getInit(), usage.getUsed(), usage.getCommitted(), usage.getCommitted());
                                 }
 
-                                report.add(TextComponent.builder()
+                                report.add(TextComponent.builder("")
                                         .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                                         .append(Component.space())
                                         .append(TextComponent.of(memoryPool.getName() + " pool usage:", TextColor.GOLD))
@@ -172,7 +172,7 @@ public class HealthModule<S> implements CommandModule<S> {
                         double processCpuLoad = CpuMonitor.getProcessCpuLoad();
 
                         if (systemCpuLoad >= 0 || processCpuLoad >= 0) {
-                            report.add(TextComponent.builder()
+                            report.add(TextComponent.builder("")
                                     .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                                     .append(Component.space())
                                     .append(TextComponent.of("CPU usage:", TextColor.GOLD))
@@ -203,7 +203,7 @@ public class HealthModule<S> implements CommandModule<S> {
                             FileStore fileStore = Files.getFileStore(Paths.get("."));
                             long totalSpace = fileStore.getTotalSpace();
                             long usedSpace = totalSpace - fileStore.getUsableSpace();
-                            report.add(TextComponent.builder()
+                            report.add(TextComponent.builder("")
                                     .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                                     .append(Component.space())
                                     .append(TextComponent.of("Disk usage:", TextColor.GOLD))
@@ -227,7 +227,7 @@ public class HealthModule<S> implements CommandModule<S> {
                             e.printStackTrace();
                         }
 
-                        TextComponent.Builder builder = TextComponent.builder();
+                        TextComponent.Builder builder = TextComponent.builder("");
                         report.forEach(line -> builder.append(line).append(Component.newline()));
                         resp.reply(builder.build());
                     });
@@ -259,7 +259,7 @@ public class HealthModule<S> implements CommandModule<S> {
             line.append(TextComponent.of(Strings.repeat(" ", (length - committedChars))));
         }
 
-        return TextComponent.builder()
+        return TextComponent.builder("")
                 .append(TextComponent.of("[", TextColor.DARK_GRAY))
                 .append(line.build())
                 .append(TextComponent.of("]", TextColor.DARK_GRAY))
@@ -293,7 +293,7 @@ public class HealthModule<S> implements CommandModule<S> {
             line.append(TextComponent.of(Strings.repeat(" ", (length - committedChars))));
         }
 
-        return TextComponent.builder()
+        return TextComponent.builder("")
                 .append(TextComponent.of("[", TextColor.DARK_GRAY))
                 .append(line.build())
                 .append(TextComponent.of("]", TextColor.DARK_GRAY))
@@ -303,7 +303,7 @@ public class HealthModule<S> implements CommandModule<S> {
     private static TextComponent generateCpuUsageDiagram(double usage, int length) {
         int usedChars = (int) ((usage * length));
         String line = Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
-        return TextComponent.builder()
+        return TextComponent.builder("")
                 .append(TextComponent.of("[", TextColor.DARK_GRAY))
                 .append(TextComponent.of(line, TextColor.GRAY))
                 .append(TextComponent.of("]", TextColor.DARK_GRAY))
@@ -313,7 +313,7 @@ public class HealthModule<S> implements CommandModule<S> {
     private static TextComponent generateDiskUsageDiagram(double used, double max, int length) {
         int usedChars = (int) ((used * length) / max);
         String line = Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
-        return TextComponent.builder()
+        return TextComponent.builder("")
                 .append(TextComponent.of("[", TextColor.DARK_GRAY))
                 .append(TextComponent.of(line, TextColor.GRAY))
                 .append(TextComponent.of("]", TextColor.DARK_GRAY))

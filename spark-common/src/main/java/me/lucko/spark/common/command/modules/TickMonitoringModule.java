@@ -32,14 +32,14 @@ import net.kyori.text.format.TextColor;
 
 import java.util.function.Consumer;
 
-public class TickMonitoringModule<S> implements CommandModule<S> {
+public class TickMonitoringModule implements CommandModule {
 
     /** The tick monitor instance currently running, if any */
     private ReportingTickMonitor activeTickMonitor = null;
 
     @Override
-    public void registerCommands(Consumer<Command<S>> consumer) {
-        consumer.accept(Command.<S>builder()
+    public void registerCommands(Consumer<Command> consumer) {
+        consumer.accept(Command.builder()
                 .aliases("tickmonitoring")
                 .argumentUsage("threshold", "percentage increase")
                 .argumentUsage("without-gc", null)
@@ -71,9 +71,9 @@ public class TickMonitoringModule<S> implements CommandModule<S> {
     }
 
     private class ReportingTickMonitor extends TickMonitor {
-        private final CommandResponseHandler<S> resp;
+        private final CommandResponseHandler resp;
 
-        ReportingTickMonitor(CommandResponseHandler<S> resp, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
+        ReportingTickMonitor(CommandResponseHandler resp, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
             super(tickCounter, percentageChangeThreshold, monitorGc);
             this.resp = resp;
         }

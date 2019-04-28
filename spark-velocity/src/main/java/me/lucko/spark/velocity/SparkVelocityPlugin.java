@@ -30,21 +30,19 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.event.ClickEvent;
-import net.kyori.text.format.TextColor;
-import net.kyori.text.serializer.ComponentSerializers;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.optional.qual.MaybePresent;
 
 import java.nio.file.Path;
-import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Plugin(
         id = "spark",
@@ -53,9 +51,9 @@ import java.util.Set;
         description = "@desc@",
         authors = {"Luck", "sk89q"}
 )
-public class SparkVelocityPlugin implements SparkPlugin<CommandSource>, Command {
+public class SparkVelocityPlugin implements SparkPlugin, Command {
 
-    private final SparkPlatform<CommandSource> platform = new SparkPlatform<>(this);
+    private final SparkPlatform platform = new SparkPlatform(this);
 
     private final ProxyServer proxy;
     private final Path configDirectory;
@@ -79,13 +77,12 @@ public class SparkVelocityPlugin implements SparkPlugin<CommandSource>, Command 
 
     @Override
     public void execute(@MaybePresent CommandSource sender, @NonNull @MaybePresent String[] args) {
-        if (!sender.hasPermission("spark")) {
-            TextComponent msg = TextComponent.builder("You do not have permission to use this command.").color(TextColor.RED).build();
-            sender.sendMessage(msg);
-            return;
-        }
+        this.platform.executeCommand(new VelocityCommandSender(sender), args);
+    }
 
-        this.platform.executeCommand(sender, args);
+    @Override
+    public @MaybePresent List<String> suggest(@MaybePresent CommandSource sender, @NonNull @MaybePresent String[] currentArgs) {
+        return this.platform.tabCompleteCommand(new VelocityCommandSender(sender), currentArgs);
     }
 
     @Override
@@ -104,16 +101,11 @@ public class SparkVelocityPlugin implements SparkPlugin<CommandSource>, Command 
     }
 
     @Override
-    public Set<CommandSource> getSendersWithPermission(String permission) {
-        Set<CommandSource> senders = new HashSet<>(this.proxy.getAllPlayers());
+    public Set<CommandSender> getSendersWithPermission(String permission) {
+        List<CommandSource> senders = new LinkedList<>(this.proxy.getAllPlayers());
         senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(this.proxy.getConsoleCommandSource());
-        return senders;
-    }
-
-    @Override
-    public void sendMessage(CommandSource sender, Component message) {
-        sender.sendMessage(message);
+        return senders.stream().map(VelocityCommandSender::new).collect(Collectors.toSet());
     }
 
     @Override

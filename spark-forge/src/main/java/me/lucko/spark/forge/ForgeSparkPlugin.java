@@ -24,42 +24,35 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.serializer.ComponentSerializers;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextFormatting;
-import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 @SuppressWarnings("NullableProblems")
-public abstract class ForgeSparkPlugin implements SparkPlugin<ICommandSender>, ICommand {
+public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
 
     private final SparkForgeMod mod;
     private final ScheduledExecutorService scheduler;
-    private final SparkPlatform<ICommandSender> platform;
+    private final SparkPlatform platform;
 
     protected ForgeSparkPlugin(SparkForgeMod mod) {
         this.mod = mod;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
         );
-        this.platform = new SparkPlatform<>(this);
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
+
+    abstract boolean hasPermission(ICommandSender sender, String permission);
 
     @Override
     public String getVersion() {
@@ -69,12 +62,6 @@ public abstract class ForgeSparkPlugin implements SparkPlugin<ICommandSender>, I
     @Override
     public Path getPluginFolder() {
         return this.mod.getConfigDirectory();
-    }
-
-    @Override
-    public void sendMessage(ICommandSender sender, Component message) {
-        ITextComponent component = ITextComponent.Serializer.jsonToComponent(ComponentSerializers.JSON.serialize(message));
-        sender.sendMessage(component);
     }
 
     @Override
@@ -96,25 +83,17 @@ public abstract class ForgeSparkPlugin implements SparkPlugin<ICommandSender>, I
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
-        if (!checkPermission(server, sender)) {
-            TextComponentString msg = new TextComponentString("You do not have permission to use this command.");
-            Style style = msg.getStyle();
-            style.setColor(TextFormatting.GRAY);
-            msg.setStyle(style);
-
-            sender.sendMessage(msg);
-            return;
-        }
-
-        this.platform.executeCommand(sender, args);
+        this.platform.executeCommand(new ForgeCommandSender(sender, this), args);
     }
 
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos blockPos) {
-        if (!checkPermission(server, sender)) {
-            return Collections.emptyList();
-        }
-        return this.platform.tabCompleteCommand(sender, args);
+        return this.platform.tabCompleteCommand(new ForgeCommandSender(sender, this), args);
+    }
+
+    @Override
+    public boolean checkPermission(MinecraftServer minecraftServer, ICommandSender sender) {
+        return hasPermission(sender, "spark");
     }
 
     @Override

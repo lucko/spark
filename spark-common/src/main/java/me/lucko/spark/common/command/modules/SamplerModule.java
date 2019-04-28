@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
+import me.lucko.spark.common.ActivityLog;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -46,7 +47,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class SamplerModule<S> implements CommandModule<S> {
+public class SamplerModule implements CommandModule {
     private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
     /** Guards {@link #activeSampler} */
@@ -55,8 +56,8 @@ public class SamplerModule<S> implements CommandModule<S> {
     private Sampler activeSampler = null;
 
     @Override
-    public void registerCommands(Consumer<Command<S>> consumer) {
-        consumer.accept(Command.<S>builder()
+    public void registerCommands(Consumer<Command> consumer) {
+        consumer.accept(Command.builder()
                 .aliases("sampler")
                 .argumentUsage("info", null)
                 .argumentUsage("stop", null)
@@ -246,7 +247,7 @@ public class SamplerModule<S> implements CommandModule<S> {
         );
     }
 
-    private void handleUpload(SparkPlatform<S> platform, CommandResponseHandler<S> resp, Sampler sampler) {
+    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler) {
         platform.getPlugin().runAsync(() -> {
             byte[] output = sampler.formCompressedDataPayload();
             try {
@@ -259,6 +260,8 @@ public class SamplerModule<S> implements CommandModule<S> {
                         .clickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
                         .build()
                 );
+
+                platform.getActivityLog().addToLog(new ActivityLog.Activity(resp.sender().getName(), System.currentTimeMillis(), "Sampler", url));
             } catch (IOException e) {
                 resp.broadcastPrefixed(TextComponent.of("An error occurred whilst uploading the results.", TextColor.RED));
                 e.printStackTrace();
