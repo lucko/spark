@@ -21,24 +21,25 @@
 package me.lucko.spark.common.command;
 
 import com.google.common.collect.ImmutableList;
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class Command<S> {
+public class Command {
 
-    public static <S> Builder<S> builder() {
-        return new Builder<>();
+    public static Builder builder() {
+        return new Builder();
     }
 
     private final List<String> aliases;
     private final List<ArgumentInfo> arguments;
-    private final Executor<S> executor;
-    private final TabCompleter<S> tabCompleter;
+    private final Executor executor;
+    private final TabCompleter tabCompleter;
 
-    private Command(List<String> aliases, List<ArgumentInfo> arguments, Executor<S> executor, TabCompleter<S> tabCompleter) {
+    private Command(List<String> aliases, List<ArgumentInfo> arguments, Executor executor, TabCompleter tabCompleter) {
         this.aliases = aliases;
         this.arguments = arguments;
         this.executor = executor;
@@ -53,45 +54,45 @@ public class Command<S> {
         return this.arguments;
     }
 
-    public Executor<S> executor() {
+    public Executor executor() {
         return this.executor;
     }
 
-    public TabCompleter<S> tabCompleter() {
+    public TabCompleter tabCompleter() {
         return this.tabCompleter;
     }
 
-    public static final class Builder<S> {
+    public static final class Builder {
         private final ImmutableList.Builder<String> aliases = ImmutableList.builder();
         private final ImmutableList.Builder<ArgumentInfo> arguments = ImmutableList.builder();
-        private Executor<S> executor = null;
-        private TabCompleter<S> tabCompleter = null;
+        private Executor executor = null;
+        private TabCompleter tabCompleter = null;
 
         Builder() {
 
         }
 
-        public Builder<S> aliases(String... aliases) {
+        public Builder aliases(String... aliases) {
             this.aliases.add(aliases);
             return this;
         }
 
-        public Builder<S> argumentUsage(String argumentName, String parameterDescription) {
+        public Builder argumentUsage(String argumentName, String parameterDescription) {
             this.arguments.add(new ArgumentInfo(argumentName, parameterDescription));
             return this;
         }
 
-        public Builder<S> executor(Executor<S> executor) {
+        public Builder executor(Executor executor) {
             this.executor = Objects.requireNonNull(executor, "executor");
             return this;
         }
 
-        public Builder<S> tabCompleter(TabCompleter<S> tabCompleter) {
+        public Builder tabCompleter(TabCompleter tabCompleter) {
             this.tabCompleter = Objects.requireNonNull(tabCompleter, "tabCompleter");
             return this;
         }
 
-        public Command<S> build() {
+        public Command build() {
             List<String> aliases = this.aliases.build();
             if (aliases.isEmpty()) {
                 throw new IllegalStateException("No aliases defined");
@@ -102,22 +103,22 @@ public class Command<S> {
             if (this.tabCompleter == null) {
                 this.tabCompleter = TabCompleter.empty();
             }
-            return new Command<>(aliases, this.arguments.build(), this.executor, this.tabCompleter);
+            return new Command(aliases, this.arguments.build(), this.executor, this.tabCompleter);
         }
     }
 
     @FunctionalInterface
-    public interface Executor<S> {
-        void execute(SparkPlatform<S> platform, S sender, CommandResponseHandler resp, Arguments arguments);
+    public interface Executor {
+        void execute(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments);
     }
 
     @FunctionalInterface
-    public interface TabCompleter<S> {
-        static <S> TabCompleter<S> empty() {
+    public interface TabCompleter {
+        static <S> TabCompleter empty() {
             return (platform, sender, arguments) -> Collections.emptyList();
         }
 
-        List<String> completions(SparkPlatform<S> platform, S sender, List<String> arguments);
+        List<String> completions(SparkPlatform platform, CommandSender sender, List<String> arguments);
     }
 
     public static final class ArgumentInfo {

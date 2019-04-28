@@ -20,26 +20,14 @@
 
 package me.lucko.spark.common;
 
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.TickCounter;
+import net.kyori.text.Component;
 
-import java.nio.file.Path;
-import java.util.Set;
+public interface CommandSender {
 
-public interface SparkPlugin {
+    String getName();
 
-    String getVersion();
+    void sendMessage(Component message);
 
-    Path getPluginFolder();
-
-    String getLabel();
-
-    Set<CommandSender> getSendersWithPermission(String permission);
-
-    void runAsync(Runnable r);
-
-    ThreadDumper getDefaultThreadDumper();
-
-    TickCounter createTickCounter();
+    boolean hasPermission(String permission);
 
 }

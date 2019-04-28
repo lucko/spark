@@ -20,10 +20,10 @@
 
 package me.lucko.spark.forge;
 
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.sampler.TickCounter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -43,8 +43,13 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public Set<ICommandSender> getSendersWithPermission(String permission) {
-        return new HashSet<>(Collections.singleton(Minecraft.getMinecraft().player));
+    boolean hasPermission(ICommandSender sender, String permission) {
+        return true;
+    }
+
+    @Override
+    public Set<CommandSender> getSendersWithPermission(String permission) {
+        return new HashSet<>(Collections.singleton(new ForgeCommandSender(Minecraft.getMinecraft().player, this)));
     }
 
     @Override
@@ -65,10 +70,5 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
     @Override
     public List<String> getAliases() {
         return Collections.singletonList("sparkclient");
-    }
-
-    @Override
-    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-        return true;
     }
 }

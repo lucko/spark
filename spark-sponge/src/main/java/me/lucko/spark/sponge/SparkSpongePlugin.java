@@ -21,12 +21,11 @@
 package me.lucko.spark.sponge;
 
 import com.google.inject.Inject;
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
-import net.kyori.text.Component;
-import net.kyori.text.adapter.spongeapi.TextAdapter;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
@@ -40,21 +39,16 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.AsynchronousExecutor;
 import org.spongepowered.api.scheduler.SpongeExecutorService;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.action.TextActions;
-import org.spongepowered.api.text.format.TextColors;
-import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
 import javax.annotation.Nullable;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Plugin(
         id = "spark",
@@ -67,13 +61,13 @@ import java.util.Set;
                 @Dependency(id = "spongeapi")
         }
 )
-public class SparkSpongePlugin implements SparkPlugin<CommandSource> {
+public class SparkSpongePlugin implements SparkPlugin {
 
     private final Game game;
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
 
-    private final SparkPlatform<CommandSource> platform = new SparkPlatform<>(this);
+    private final SparkPlatform platform = new SparkPlatform(this);
 
     @Inject
     public SparkSpongePlugin(Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
@@ -109,16 +103,11 @@ public class SparkSpongePlugin implements SparkPlugin<CommandSource> {
     }
 
     @Override
-    public Set<CommandSource> getSendersWithPermission(String permission) {
-        Set<CommandSource> senders = new HashSet<>(this.game.getServer().getOnlinePlayers());
+    public Set<CommandSender> getSendersWithPermission(String permission) {
+        List<CommandSource> senders = new LinkedList<>(this.game.getServer().getOnlinePlayers());
         senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(this.game.getServer().getConsole());
-        return senders;
-    }
-
-    @Override
-    public void sendMessage(CommandSource sender, Component message) {
-        TextAdapter.sendComponent(sender, message);
+        return senders.stream().map(SpongeCommandSender::new).collect(Collectors.toSet());
     }
 
     @Override
@@ -145,18 +134,13 @@ public class SparkSpongePlugin implements SparkPlugin<CommandSource> {
 
         @Override
         public CommandResult process(CommandSource source, String arguments) {
-            if (!testPermission(source)) {
-                source.sendMessage(Text.builder("You do not have permission to use this command.").color(TextColors.RED).build());
-                return CommandResult.empty();
-            }
-
-            this.plugin.platform.executeCommand(source, arguments.split(" "));
+            this.plugin.platform.executeCommand(new SpongeCommandSender(source), arguments.split(" "));
             return CommandResult.empty();
         }
 
         @Override
         public List<String> getSuggestions(CommandSource source, String arguments, @Nullable Location<World> targetPosition) {
-            return Collections.emptyList();
+            return this.plugin.platform.tabCompleteCommand(new SpongeCommandSender(source), arguments.split(" "));
         }
 
         @Override

@@ -21,14 +21,12 @@
 package me.lucko.spark.common.monitor.tick;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
-import com.sun.org.apache.regexp.internal.RE;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.sampler.TickCounter;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
 
-import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.DoubleSummaryStatistics;
 
@@ -96,7 +94,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
             // move onto the next state
             if (this.averageTickTime.getCount() >= 120) {
                 sendMessage(TextComponent.of("Analysis is now complete.", TextColor.GOLD));
-                sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                         .append(TextComponent.of(">", TextColor.WHITE))
                         .append(Component.space())
                         .append(TextComponent.of("Max: "))
@@ -104,7 +102,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
                         .append(TextComponent.of("ms"))
                         .build()
                 );
-                sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                         .append(TextComponent.of(">", TextColor.WHITE))
                         .append(Component.space())
                         .append(TextComponent.of("Min: "))
@@ -112,7 +110,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
                         .append(TextComponent.of("ms"))
                         .build()
                 );
-                sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                         .append(TextComponent.of(">", TextColor.WHITE))
                         .append(Component.space())
                         .append(TextComponent.of("Avg: "))
@@ -136,7 +134,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
 
             double percentageChange = (increase * 100d) / this.avg;
             if (percentageChange > this.percentageChangeThreshold) {
-                sendMessage(TextComponent.builder().color(TextColor.GRAY)
+                sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                         .append(TextComponent.of("Tick "))
                         .append(TextComponent.of("#" + counter.getCurrentTick(), TextColor.DARK_GRAY))
                         .append(TextComponent.of(" lasted "))
@@ -166,7 +164,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
             gcType = "Old Gen GC";
         }
 
-        sendMessage(TextComponent.builder().color(TextColor.GRAY)
+        sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                 .append(TextComponent.of("Tick "))
                 .append(TextComponent.of("#" + this.tickCounter.getCurrentTick(), TextColor.DARK_GRAY))
                 .append(TextComponent.of(" included "))

@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandResponseHandler;
+import me.lucko.spark.common.command.modules.ActivityLogModule;
 import me.lucko.spark.common.command.modules.HealthModule;
 import me.lucko.spark.common.command.modules.MemoryModule;
 import me.lucko.spark.common.command.modules.SamplerModule;
@@ -35,6 +36,7 @@ import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.common.util.BytebinClient;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
+import net.kyori.text.event.ClickEvent;
 import net.kyori.text.format.TextColor;
 import net.kyori.text.format.TextDecoration;
 import okhttp3.OkHttpClient;
@@ -47,10 +49,8 @@ import java.util.stream.Collectors;
 
 /**
  * Abstract spark implementation used by all platforms.
- *
- * @param <S> the sender (e.g. CommandSender) type used by the platform
  */
-public class SparkPlatform<S> {
+public class SparkPlatform {
 
     /** The URL of the viewer frontend */
     public static final String VIEWER_URL = "https://sparkprofiler.github.io/#";
@@ -59,21 +59,25 @@ public class SparkPlatform<S> {
     /** The bytebin instance used by the platform */
     public static final BytebinClient BYTEBIN_CLIENT = new BytebinClient(OK_HTTP_CLIENT, "https://bytebin.lucko.me/", "spark-plugin");
 
-    private final List<Command<S>> commands;
-    private final SparkPlugin<S> plugin;
-
+    private final SparkPlugin plugin;
+    private final List<Command> commands;
+    private final ActivityLog activityLog;
     private final TickCounter tickCounter;
     private final TpsCalculator tpsCalculator;
 
-    public SparkPlatform(SparkPlugin<S> plugin) {
+    public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
 
-        ImmutableList.Builder<Command<S>> commandsBuilder = ImmutableList.builder();
-        new SamplerModule<S>().registerCommands(commandsBuilder::add);
-        new HealthModule<S>().registerCommands(commandsBuilder::add);
-        new TickMonitoringModule<S>().registerCommands(commandsBuilder::add);
-        new MemoryModule<S>().registerCommands(commandsBuilder::add);
+        ImmutableList.Builder<Command> commandsBuilder = ImmutableList.builder();
+        new SamplerModule().registerCommands(commandsBuilder::add);
+        new HealthModule().registerCommands(commandsBuilder::add);
+        new TickMonitoringModule().registerCommands(commandsBuilder::add);
+        new MemoryModule().registerCommands(commandsBuilder::add);
+        new ActivityLogModule().registerCommands(commandsBuilder::add);
         this.commands = commandsBuilder.build();
+
+        this.activityLog = new ActivityLog(plugin.getPluginFolder().resolve("activity.json"));
+        this.activityLog.load();
 
         this.tickCounter = plugin.createTickCounter();
         this.tpsCalculator = this.tickCounter != null ? new TpsCalculator() : null;
@@ -92,8 +96,12 @@ public class SparkPlatform<S> {
         }
     }
 
-    public SparkPlugin<S> getPlugin() {
+    public SparkPlugin getPlugin() {
         return this.plugin;
+    }
+
+    public ActivityLog getActivityLog() {
+        return this.activityLog;
     }
 
     public TickCounter getTickCounter() {
@@ -104,17 +112,39 @@ public class SparkPlatform<S> {
         return this.tpsCalculator;
     }
 
-    public void executeCommand(S sender, String[] args) {
-        CommandResponseHandler<S> resp = new CommandResponseHandler<>(this, sender);
+    public void executeCommand(CommandSender sender, String[] args) {
+        CommandResponseHandler resp = new CommandResponseHandler(this, sender);
+
+        if (!sender.hasPermission("spark")) {
+            resp.replyPrefixed(TextComponent.of("You do not have permission to use this command.", TextColor.RED));
+            return;
+        }
+
         if (args.length == 0) {
-            sendUsage(resp);
+            resp.replyPrefixed(TextComponent.builder("")
+                    .append(TextComponent.of("spark", TextColor.WHITE))
+                    .append(Component.space())
+                    .append(TextComponent.of("v" + getPlugin().getVersion(), TextColor.GRAY))
+                    .build()
+            );
+            resp.replyPrefixed(TextComponent.builder("").color(TextColor.GRAY)
+                    .append(TextComponent.of("Use "))
+                    .append(TextComponent.builder("/" + getPlugin().getLabel() + " help")
+                            .color(TextColor.WHITE)
+                            .decoration(TextDecoration.UNDERLINED, true)
+                            .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, getPlugin().getLabel() + " help"))
+                            .build()
+                    )
+                    .append(TextComponent.of(" to view usage information."))
+                    .build()
+            );
             return;
         }
 
         ArrayList<String> rawArgs = new ArrayList<>(Arrays.asList(args));
         String alias = rawArgs.remove(0).toLowerCase();
 
-        for (Command<S> command : this.commands) {
+        for (Command command : this.commands) {
             if (command.aliases().contains(alias)) {
                 try {
                     command.executor().execute(this, sender, resp, new Arguments(rawArgs));
@@ -129,7 +159,11 @@ public class SparkPlatform<S> {
         sendUsage(resp);
     }
 
-    public List<String> tabCompleteCommand(S sender, String[] args) {
+    public List<String> tabCompleteCommand(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("spark")) {
+            return Collections.emptyList();
+        }
+
         List<String> arguments = new ArrayList<>(Arrays.asList(args));
 
         if (args.length <= 1) {
@@ -140,7 +174,7 @@ public class SparkPlatform<S> {
         }
 
         String alias = arguments.remove(0);
-        for (Command<S> command : this.commands) {
+        for (Command command : this.commands) {
             if (command.aliases().contains(alias)) {
                 return command.tabCompleter().completions(this, sender, arguments);
             }
@@ -149,18 +183,20 @@ public class SparkPlatform<S> {
         return Collections.emptyList();
     }
 
-    private void sendUsage(CommandResponseHandler<S> sender) {
-        sender.replyPrefixed(TextComponent.builder()
+    private void sendUsage(CommandResponseHandler sender) {
+        sender.replyPrefixed(TextComponent.builder("")
                 .append(TextComponent.of("spark", TextColor.WHITE))
                 .append(Component.space())
                 .append(TextComponent.of("v" + getPlugin().getVersion(), TextColor.GRAY))
                 .build()
         );
-        for (Command<S> command : this.commands) {
-            sender.reply(TextComponent.builder()
+        for (Command command : this.commands) {
+            String usage = getPlugin().getLabel() + " " + command.aliases().get(0);
+            ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, usage);
+            sender.reply(TextComponent.builder("")
                     .append(TextComponent.builder(">").color(TextColor.GOLD).decoration(TextDecoration.BOLD, true).build())
                     .append(Component.space())
-                    .append(TextComponent.of("/" + getPlugin().getLabel() + " " + command.aliases().get(0), TextColor.GRAY))
+                    .append(TextComponent.builder("/" + usage).color(TextColor.GRAY).clickEvent(clickEvent).build())
                     .build()
             );
             for (Command.ArgumentInfo arg : command.arguments()) {

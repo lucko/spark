@@ -34,12 +34,6 @@ processResources {
 
 dependencies {
     compile project(':spark-common')
-
-    compile 'net.kyori:text:1.11-1.6.4', {
-        exclude(module: 'checker-qual')
-        exclude(module: 'guava')
-        exclude(module: 'gson')
-    }
 }
 
 shadowJar {
