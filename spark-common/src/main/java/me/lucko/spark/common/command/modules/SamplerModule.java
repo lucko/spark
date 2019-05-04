@@ -196,7 +196,7 @@ public class SamplerModule implements CommandModule {
 
                         resp.broadcastPrefixed(TextComponent.of("Profiler now active!", TextColor.GOLD));
                         if (timeoutSeconds == -1) {
-                            resp.broadcastPrefixed(TextComponent.of("Use '/" + platform.getPlugin().getLabel() + " stop' to stop profiling and upload the results."));
+                            resp.broadcastPrefixed(TextComponent.of("Use '/" + platform.getPlugin().getLabel() + " sampler --stop' to stop profiling and upload the results."));
                         } else {
                             resp.broadcastPrefixed(TextComponent.of("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
                         }
@@ -257,7 +257,7 @@ public class SamplerModule implements CommandModule {
                 resp.broadcastPrefixed(TextComponent.of("Sampling results:", TextColor.GOLD));
                 resp.broadcast(TextComponent.builder(url)
                         .color(TextColor.GRAY)
-                        .clickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
+                        .clickEvent(ClickEvent.openUrl(url))
                         .build()
                 );
 

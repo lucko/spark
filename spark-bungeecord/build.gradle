@@ -1,7 +1,8 @@
 dependencies {
     compile project(':spark-common')
-    compile('net.kyori:text-adapter-bungeecord:1.0.3') {
-        exclude(module: 'text')
+    compile('net.kyori:text-adapter-bungeecord:3.0.0') {
+        exclude(module: 'text-api')
+        exclude(module: 'text-serializer-gson')
     }
     compileOnly 'net.md-5:bungeecord-api:1.12-SNAPSHOT'
 }
