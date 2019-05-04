@@ -96,7 +96,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
                 sendMessage(TextComponent.of("Analysis is now complete.", TextColor.GOLD));
                 sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                         .append(TextComponent.of(">", TextColor.WHITE))
-                        .append(Component.space())
+                        .append(TextComponent.space())
                         .append(TextComponent.of("Max: "))
                         .append(TextComponent.of(df.format(this.averageTickTime.getMax())))
                         .append(TextComponent.of("ms"))
@@ -104,7 +104,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
                 );
                 sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                         .append(TextComponent.of(">", TextColor.WHITE))
-                        .append(Component.space())
+                        .append(TextComponent.space())
                         .append(TextComponent.of("Min: "))
                         .append(TextComponent.of(df.format(this.averageTickTime.getMin())))
                         .append(TextComponent.of("ms"))
@@ -112,7 +112,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
                 );
                 sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                         .append(TextComponent.of(">", TextColor.WHITE))
-                        .append(Component.space())
+                        .append(TextComponent.space())
                         .append(TextComponent.of("Avg: "))
                         .append(TextComponent.of(df.format(this.averageTickTime.getAverage())))
                         .append(TextComponent.of("ms"))

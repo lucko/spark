@@ -23,7 +23,6 @@ package me.lucko.spark.common.command.modules;
 import me.lucko.spark.common.ActivityLog;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
-import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.event.ClickEvent;
 import net.kyori.text.format.TextColor;
@@ -55,7 +54,7 @@ public class ActivityLogModule implements CommandModule {
 
                         resp.replyPrefixed(TextComponent.builder("")
                                 .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
-                                .append(Component.space())
+                                .append(TextComponent.space())
                                 .append(TextComponent.of("#" + count, TextColor.WHITE))
                                 .append(TextComponent.of(" - ", TextColor.DARK_GRAY))
                                 .append(TextComponent.of(activity.getType(), TextColor.YELLOW))
@@ -73,12 +72,12 @@ public class ActivityLogModule implements CommandModule {
                                 .append(TextComponent.builder(activity.getUrl())
                                         .color(TextColor.WHITE)
                                         .decoration(TextDecoration.UNDERLINED, true)
-                                        .clickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, activity.getUrl()))
+                                        .clickEvent(ClickEvent.openUrl(activity.getUrl()))
                                         .build()
                                 )
                                 .build()
                         );
-                        resp.reply(Component.space());
+                        resp.reply(TextComponent.space());
                     }
                 })
                 .tabCompleter(Command.TabCompleter.empty())

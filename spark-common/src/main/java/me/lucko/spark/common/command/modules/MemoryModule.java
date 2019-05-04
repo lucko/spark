@@ -73,7 +73,7 @@ public class MemoryModule implements CommandModule {
                             resp.broadcastPrefixed(TextComponent.of("Heap dump summmary output:", TextColor.GOLD));
                             resp.broadcast(TextComponent.builder(url)
                                     .color(TextColor.GRAY)
-                                    .clickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
+                                    .clickEvent(ClickEvent.openUrl(url))
                                     .build()
                             );
 

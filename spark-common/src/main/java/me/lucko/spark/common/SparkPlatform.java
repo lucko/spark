@@ -34,7 +34,6 @@ import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.tick.TpsCalculator;
 import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.common.util.BytebinClient;
-import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.event.ClickEvent;
 import net.kyori.text.format.TextColor;
@@ -123,7 +122,7 @@ public class SparkPlatform {
         if (args.length == 0) {
             resp.replyPrefixed(TextComponent.builder("")
                     .append(TextComponent.of("spark", TextColor.WHITE))
-                    .append(Component.space())
+                    .append(TextComponent.space())
                     .append(TextComponent.of("v" + getPlugin().getVersion(), TextColor.GRAY))
                     .build()
             );
@@ -132,7 +131,7 @@ public class SparkPlatform {
                     .append(TextComponent.builder("/" + getPlugin().getLabel() + " help")
                             .color(TextColor.WHITE)
                             .decoration(TextDecoration.UNDERLINED, true)
-                            .clickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, getPlugin().getLabel() + " help"))
+                            .clickEvent(ClickEvent.runCommand("/" + getPlugin().getLabel() + " help"))
                             .build()
                     )
                     .append(TextComponent.of(" to view usage information."))
@@ -186,17 +185,17 @@ public class SparkPlatform {
     private void sendUsage(CommandResponseHandler sender) {
         sender.replyPrefixed(TextComponent.builder("")
                 .append(TextComponent.of("spark", TextColor.WHITE))
-                .append(Component.space())
+                .append(TextComponent.space())
                 .append(TextComponent.of("v" + getPlugin().getVersion(), TextColor.GRAY))
                 .build()
         );
         for (Command command : this.commands) {
-            String usage = getPlugin().getLabel() + " " + command.aliases().get(0);
-            ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, usage);
+            String usage = "/" + getPlugin().getLabel() + " " + command.aliases().get(0);
+            ClickEvent clickEvent = ClickEvent.suggestCommand(usage);
             sender.reply(TextComponent.builder("")
                     .append(TextComponent.builder(">").color(TextColor.GOLD).decoration(TextDecoration.BOLD, true).build())
-                    .append(Component.space())
-                    .append(TextComponent.builder("/" + usage).color(TextColor.GRAY).clickEvent(clickEvent).build())
+                    .append(TextComponent.space())
+                    .append(TextComponent.builder(usage).color(TextColor.GRAY).clickEvent(clickEvent).build())
                     .build()
             );
             for (Command.ArgumentInfo arg : command.arguments()) {
@@ -204,7 +203,7 @@ public class SparkPlatform {
                     sender.reply(TextComponent.builder("       ")
                             .append(TextComponent.of("[", TextColor.DARK_GRAY))
                             .append(TextComponent.of("--" + arg.argumentName(), TextColor.GRAY))
-                            .append(Component.space())
+                            .append(TextComponent.space())
                             .append(TextComponent.of("<" + arg.parameterDescription() + ">", TextColor.DARK_GRAY))
                             .append(TextComponent.of("]", TextColor.DARK_GRAY))
                             .build()
