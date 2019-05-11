@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     compile project(':spark-common')
-    compile('net.kyori:text-adapter-spongeapi:3.0.0') {
+    compile('net.kyori:text-adapter-spongeapi:3.0.2') {
         exclude(module: 'text-api')
         exclude(module: 'text-serializer-gson')
     }

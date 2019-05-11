@@ -1,10 +1,10 @@
 dependencies {
     compile project(':spark-common')
-    compile('net.kyori:text-adapter-bukkit:3.0.0') {
+    compile('net.kyori:text-adapter-bukkit:3.0.2') {
         exclude(module: 'text-api')
         exclude(module: 'text-serializer-gson')
     }
-    compileOnly 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
+    compileOnly 'org.spigotmc:spigot-api:1.14-R0.1-SNAPSHOT'
 }
 
 processResources {
