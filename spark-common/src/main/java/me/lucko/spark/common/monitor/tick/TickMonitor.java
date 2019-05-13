@@ -34,6 +34,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
     private static final DecimalFormat df = new DecimalFormat("#.##");
 
     private final TickCounter tickCounter;
+    private final int zeroTick;
     private final GarbageCollectionMonitor garbageCollectionMonitor;
     private final int percentageChangeThreshold;
 
@@ -45,6 +46,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
 
     public TickMonitor(TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
         this.tickCounter = tickCounter;
+        this.zeroTick = tickCounter.getCurrentTick();
         this.percentageChangeThreshold = percentageChangeThreshold;
 
         if (monitorGc) {
@@ -53,6 +55,10 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
         } else {
             this.garbageCollectionMonitor = null;
         }
+    }
+
+    public int getCurrentTick() {
+        return tickCounter.getCurrentTick() - zeroTick;
     }
 
     protected abstract void sendMessage(Component message);
@@ -136,7 +142,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
             if (percentageChange > this.percentageChangeThreshold) {
                 sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                         .append(TextComponent.of("Tick "))
-                        .append(TextComponent.of("#" + counter.getCurrentTick(), TextColor.DARK_GRAY))
+                        .append(TextComponent.of("#" + getCurrentTick(), TextColor.DARK_GRAY))
                         .append(TextComponent.of(" lasted "))
                         .append(TextComponent.of(df.format(diff), TextColor.GOLD))
                         .append(TextComponent.of(" ms. "))
@@ -166,7 +172,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
 
         sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                 .append(TextComponent.of("Tick "))
-                .append(TextComponent.of("#" + this.tickCounter.getCurrentTick(), TextColor.DARK_GRAY))
+                .append(TextComponent.of("#" + getCurrentTick(), TextColor.DARK_GRAY))
                 .append(TextComponent.of(" included "))
                 .append(TextComponent.of("GC", TextColor.RED))
                 .append(TextComponent.of(" lasting "))
