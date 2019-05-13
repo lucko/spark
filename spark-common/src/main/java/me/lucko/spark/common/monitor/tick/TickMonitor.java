@@ -148,7 +148,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
                         .append(TextComponent.of(" ms. "))
                         .append(TextComponent.of("("))
                         .append(TextComponent.of(df.format(percentageChange) + "%", TextColor.GOLD))
-                        .append(TextComponent.of("increase from avg)"))
+                        .append(TextComponent.of(" increase from avg)"))
                         .build()
                 );
             }
