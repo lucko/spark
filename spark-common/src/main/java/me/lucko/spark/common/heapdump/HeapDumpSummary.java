@@ -20,7 +20,9 @@
 
 package me.lucko.spark.common.heapdump;
 
+import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.util.TypeDescriptors;
 
 import javax.management.JMX;
@@ -106,9 +108,15 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
-    private void writeOutput(JsonWriter writer) throws IOException {
+    private void writeOutput(JsonWriter writer, CommandSender creator) throws IOException {
         writer.beginObject();
         writer.name("type").value("heap");
+
+        writer.name("metadata").beginObject();
+        writer.name("user");
+        new Gson().toJson(creator.toData().serialize(), writer);
+        writer.endObject();
+
         writer.name("entries").beginArray();
         for (Entry entry : this.entries) {
             writer.beginObject();
@@ -122,11 +130,11 @@ public final class HeapDumpSummary {
         writer.endObject();
     }
 
-    public byte[] formCompressedDataPayload() {
+    public byte[] formCompressedDataPayload(CommandSender creator) {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(byteOut), StandardCharsets.UTF_8)) {
             try (JsonWriter jsonWriter = new JsonWriter(writer)) {
-                writeOutput(jsonWriter);
+                writeOutput(jsonWriter, creator);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

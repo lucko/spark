@@ -20,6 +20,9 @@
 
 package me.lucko.spark.common;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import net.kyori.text.Component;
 
 import java.util.UUID;
@@ -33,5 +36,53 @@ public interface CommandSender {
     void sendMessage(Component message);
 
     boolean hasPermission(String permission);
+
+    default Data toData() {
+        return new Data(getName(), getUniqueId());
+    }
+
+    final class Data {
+        private final String name;
+        private final UUID uniqueId;
+
+        public Data(String name, UUID uniqueId) {
+            this.name = name;
+            this.uniqueId = uniqueId;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public UUID getUniqueId() {
+            return this.uniqueId;
+        }
+
+        public boolean isPlayer() {
+            return this.uniqueId != null;
+        }
+
+        public JsonObject serialize() {
+            JsonObject user = new JsonObject();
+            user.add("type", new JsonPrimitive(isPlayer() ? "player" : "other"));
+            user.add("name", new JsonPrimitive(this.name));
+            if (this.uniqueId != null) {
+                user.add("uniqueId", new JsonPrimitive(this.uniqueId.toString()));
+            }
+            return user;
+        }
+
+        public static CommandSender.Data deserialize(JsonElement element) {
+            JsonObject userObject = element.getAsJsonObject();
+            String user = userObject.get("name").getAsJsonPrimitive().getAsString();
+            UUID uuid;
+            if (userObject.has("uniqueId")) {
+                uuid = UUID.fromString(userObject.get("uniqueId").getAsJsonPrimitive().getAsString());
+            } else {
+                uuid = null;
+            }
+            return new CommandSender.Data(user, uuid);
+        }
+    }
 
 }

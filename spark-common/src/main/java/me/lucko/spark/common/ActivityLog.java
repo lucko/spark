@@ -36,7 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class ActivityLog {
@@ -132,8 +131,7 @@ public class ActivityLog {
     }
 
     public static final class Activity {
-        private final String user;
-        private final UUID uuid;
+        private final CommandSender.Data user;
         private final long time;
         private final String type;
 
@@ -141,23 +139,22 @@ public class ActivityLog {
         private final String dataValue;
 
         public static Activity urlActivity(CommandSender user, long time, String type, String url) {
-            return new Activity(user.getName(), user.getUniqueId(), time, type, "url", url);
+            return new Activity(user.toData(), time, type, "url", url);
         }
 
         public static Activity fileActivity(CommandSender user, long time, String type, String filePath) {
-            return new Activity(user.getName(), user.getUniqueId(), time, type, "file", filePath);
+            return new Activity(user.toData(), time, type, "file", filePath);
         }
 
-        private Activity(String user, UUID uuid, long time, String type, String dataType, String dataValue) {
+        private Activity(CommandSender.Data user, long time, String type, String dataType, String dataValue) {
             this.user = user;
-            this.uuid = uuid;
             this.time = time;
             this.type = type;
             this.dataType = dataType;
             this.dataValue = dataValue;
         }
 
-        public String getUser() {
+        public CommandSender.Data getUser() {
             return this.user;
         }
 
@@ -188,14 +185,7 @@ public class ActivityLog {
         public JsonObject serialize() {
             JsonObject object = new JsonObject();
 
-            JsonObject user = new JsonObject();
-            user.add("type", new JsonPrimitive(this.uuid != null ? "player" : "other"));
-            user.add("name", new JsonPrimitive(this.user));
-            if (this.uuid != null) {
-                user.add("uuid", new JsonPrimitive(this.uuid.toString()));
-            }
-            object.add("user", user);
-
+            object.add("user", this.user.serialize());
             object.add("time", new JsonPrimitive(this.time));
             object.add("type", new JsonPrimitive(this.type));
 
@@ -210,15 +200,7 @@ public class ActivityLog {
         public static Activity deserialize(JsonElement element) {
             JsonObject object = element.getAsJsonObject();
 
-            JsonObject userObject = object.get("user").getAsJsonObject();
-            String user = userObject.get("name").getAsJsonPrimitive().getAsString();
-            UUID uuid;
-            if (userObject.has("uuid")) {
-                uuid = UUID.fromString(userObject.get("uuid").getAsJsonPrimitive().getAsString());
-            } else {
-                uuid = null;
-            }
-
+            CommandSender.Data user = CommandSender.Data.deserialize(object.get("user"));
             long time = object.get("time").getAsJsonPrimitive().getAsLong();
             String type = object.get("type").getAsJsonPrimitive().getAsString();
 
@@ -226,7 +208,7 @@ public class ActivityLog {
             String dataType = dataObject.get("type").getAsJsonPrimitive().getAsString();
             String dataValue = dataObject.get("value").getAsJsonPrimitive().getAsString();
 
-            return new Activity(user, uuid, time, type, dataType, dataValue);
+            return new Activity(user, time, type, dataType, dataValue);
         }
     }
 

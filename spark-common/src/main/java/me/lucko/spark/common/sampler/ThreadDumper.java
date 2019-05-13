@@ -76,7 +76,6 @@ public interface ThreadDumper {
      * Implementation of {@link ThreadDumper} that generates data for a specific set of threads.
      */
     final class Specific implements ThreadDumper {
-        private final ThreadFinder threadFinder = new ThreadFinder();
         private final long[] ids;
 
         public Specific(long[] ids) {
@@ -85,7 +84,7 @@ public interface ThreadDumper {
 
         public Specific(Set<String> names) {
             Set<String> namesLower = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
-            this.ids = this.threadFinder.getThreads()
+            this.ids = new ThreadFinder().getThreads()
                     .filter(t -> namesLower.contains(t.getName().toLowerCase()))
                     .mapToLong(Thread::getId)
                     .toArray();
@@ -100,7 +99,7 @@ public interface ThreadDumper {
         public void writeMetadata(JsonWriter writer) throws IOException {
             writer.name("type").value("specific");
             writer.name("ids").beginArray();
-            for (long id : ids) {
+            for (long id : this.ids) {
                 writer.value(id);
             }
             writer.endArray();
@@ -155,7 +154,7 @@ public interface ThreadDumper {
         public void writeMetadata(JsonWriter writer) throws IOException {
             writer.name("type").value("regex");
             writer.name("patterns").beginArray();
-            for (Pattern pattern : namePatterns) {
+            for (Pattern pattern : this.namePatterns) {
                 writer.value(pattern.pattern());
             }
             writer.endArray();

@@ -64,7 +64,7 @@ public class ActivityLogModule implements CommandModule {
                         );
                         resp.replyPrefixed(TextComponent.builder("  ")
                                 .append(TextComponent.of("Created by: ", TextColor.GRAY))
-                                .append(TextComponent.of(activity.getUser(), TextColor.WHITE))
+                                .append(TextComponent.of(activity.getUser().getName(), TextColor.WHITE))
                                 .build()
                         );
 

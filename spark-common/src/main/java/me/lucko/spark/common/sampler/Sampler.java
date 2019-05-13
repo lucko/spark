@@ -22,7 +22,9 @@
 package me.lucko.spark.common.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.gson.Gson;
 import com.google.gson.stream.JsonWriter;
+import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
 import me.lucko.spark.common.sampler.aggregator.TickedDataAggregator;
@@ -164,25 +166,29 @@ public class Sampler implements Runnable {
     }
 
     private void writeMetadata(JsonWriter writer) throws IOException {
-        writer.name("startTime").value(startTime);
-        writer.name("interval").value(interval);
+        writer.name("startTime").value(this.startTime);
+        writer.name("interval").value(this.interval);
 
         writer.name("threadDumper").beginObject();
-        threadDumper.writeMetadata(writer);
+        this.threadDumper.writeMetadata(writer);
         writer.endObject();
 
         writer.name("dataAggregator").beginObject();
-        dataAggregator.writeMetadata(writer);
+        this.dataAggregator.writeMetadata(writer);
         writer.endObject();
     }
 
-    private void writeOutput(JsonWriter writer) throws IOException {
+    private void writeOutput(JsonWriter writer, CommandSender creator) throws IOException {
         writer.beginObject();
 
         writer.name("type").value("sampler");
 
         writer.name("metadata").beginObject();
         writeMetadata(writer);
+
+        writer.name("user");
+        new Gson().toJson(creator.toData().serialize(), writer);
+
         writer.endObject();
 
         writer.name("threads").beginArray();
@@ -203,11 +209,11 @@ public class Sampler implements Runnable {
         writer.endObject();
     }
 
-    public byte[] formCompressedDataPayload() {
+    public byte[] formCompressedDataPayload(CommandSender creator) {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(byteOut), StandardCharsets.UTF_8)) {
             try (JsonWriter jsonWriter = new JsonWriter(writer)) {
-                writeOutput(jsonWriter);
+                writeOutput(jsonWriter, creator);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
