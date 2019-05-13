@@ -35,7 +35,17 @@ import java.util.function.Consumer;
 public class TickMonitoringModule implements CommandModule {
 
     /** The tick monitor instance currently running, if any */
+    private TickCounter tickCounter = null;
     private ReportingTickMonitor activeTickMonitor = null;
+
+    @Override
+    public void close() {
+        if (this.activeTickMonitor != null) {
+            this.tickCounter.removeTickTask(this.activeTickMonitor);
+            this.activeTickMonitor.close();
+            this.activeTickMonitor = null;
+        }
+    }
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
@@ -44,8 +54,10 @@ public class TickMonitoringModule implements CommandModule {
                 .argumentUsage("threshold", "percentage increase")
                 .argumentUsage("without-gc", null)
                 .executor((platform, sender, resp, arguments) -> {
-                    TickCounter tickCounter = platform.getTickCounter();
-                    if (tickCounter == null) {
+                    if (this.tickCounter == null) {
+                        this.tickCounter = platform.getTickCounter();
+                    }
+                    if (this.tickCounter == null) {
                         resp.replyPrefixed(TextComponent.of("Not supported!", TextColor.RED));
                         return;
                     }
@@ -56,12 +68,10 @@ public class TickMonitoringModule implements CommandModule {
                             threshold = 100;
                         }
 
-                        this.activeTickMonitor = new ReportingTickMonitor(resp, tickCounter, threshold, !arguments.boolFlag("without-gc"));
-                        tickCounter.addTickTask(this.activeTickMonitor);
+                        this.activeTickMonitor = new ReportingTickMonitor(resp, this.tickCounter, threshold, !arguments.boolFlag("without-gc"));
+                        this.tickCounter.addTickTask(this.activeTickMonitor);
                     } else {
-                        tickCounter.removeTickTask(this.activeTickMonitor);
-                        this.activeTickMonitor.close();
-                        this.activeTickMonitor = null;
+                        close();
                         resp.broadcastPrefixed(TextComponent.of("Tick monitor disabled."));
                     }
                 })

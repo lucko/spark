@@ -23,6 +23,7 @@ package me.lucko.spark.common;
 import com.google.common.collect.ImmutableList;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
+import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.modules.ActivityLogModule;
 import me.lucko.spark.common.command.modules.HealthModule;
@@ -59,6 +60,7 @@ public class SparkPlatform {
     public static final BytebinClient BYTEBIN_CLIENT = new BytebinClient(OK_HTTP_CLIENT, "https://bytebin.lucko.me/", "spark-plugin");
 
     private final SparkPlugin plugin;
+    private final List<CommandModule> commandModules;
     private final List<Command> commands;
     private final ActivityLog activityLog;
     private final TickCounter tickCounter;
@@ -67,12 +69,18 @@ public class SparkPlatform {
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
 
+        this.commandModules = ImmutableList.of(
+                new SamplerModule(),
+                new HealthModule(),
+                new TickMonitoringModule(),
+                new MemoryModule(),
+                new ActivityLogModule()
+        );
+
         ImmutableList.Builder<Command> commandsBuilder = ImmutableList.builder();
-        new SamplerModule().registerCommands(commandsBuilder::add);
-        new HealthModule().registerCommands(commandsBuilder::add);
-        new TickMonitoringModule().registerCommands(commandsBuilder::add);
-        new MemoryModule().registerCommands(commandsBuilder::add);
-        new ActivityLogModule().registerCommands(commandsBuilder::add);
+        for (CommandModule module : this.commandModules) {
+            module.registerCommands(commandsBuilder::add);
+        }
         this.commands = commandsBuilder.build();
 
         this.activityLog = new ActivityLog(plugin.getPluginFolder().resolve("activity.json"));
@@ -92,6 +100,10 @@ public class SparkPlatform {
     public void disable() {
         if (this.tickCounter != null) {
             this.tickCounter.close();
+        }
+
+        for (CommandModule module : this.commandModules) {
+            module.close();
         }
     }
 

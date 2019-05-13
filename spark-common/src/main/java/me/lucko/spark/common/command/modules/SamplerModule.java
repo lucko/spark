@@ -50,10 +50,16 @@ import java.util.function.Consumer;
 public class SamplerModule implements CommandModule {
     private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
-    /** Guards {@link #activeSampler} */
-    private final Object[] activeSamplerMutex = new Object[0];
     /** The WarmRoast instance currently running, if any */
     private Sampler activeSampler = null;
+
+    @Override
+    public void close() {
+        if (this.activeSampler != null) {
+            this.activeSampler.cancel();
+            this.activeSampler = null;
+        }
+    }
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
@@ -72,48 +78,41 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("include-line-numbers", null)
                 .executor((platform, sender, resp, arguments) -> {
                     if (arguments.boolFlag("info")) {
-                        synchronized (this.activeSamplerMutex) {
-                            if (this.activeSampler == null) {
-                                resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
+                        if (this.activeSampler == null) {
+                            resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
+                        } else {
+                            long timeout = this.activeSampler.getEndTime();
+                            if (timeout == -1) {
+                                resp.replyPrefixed(TextComponent.of("There is an active sampler currently running, with no defined timeout."));
                             } else {
-                                long timeout = this.activeSampler.getEndTime();
-                                if (timeout == -1) {
-                                    resp.replyPrefixed(TextComponent.of("There is an active sampler currently running, with no defined timeout."));
-                                } else {
-                                    long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
-                                    resp.replyPrefixed(TextComponent.of("There is an active sampler currently running, due to timeout in " + timeoutDiff + " seconds."));
-                                }
-
-                                long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
-                                resp.replyPrefixed(TextComponent.of("It has been sampling for " + runningTime + " seconds so far."));
+                                long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
+                                resp.replyPrefixed(TextComponent.of("There is an active sampler currently running, due to timeout in " + timeoutDiff + " seconds."));
                             }
+
+                            long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
+                            resp.replyPrefixed(TextComponent.of("It has been sampling for " + runningTime + " seconds so far."));
                         }
                         return;
                     }
 
                     if (arguments.boolFlag("cancel")) {
-                        synchronized (this.activeSamplerMutex) {
-                            if (this.activeSampler == null) {
-                                resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
-                            } else {
-                                this.activeSampler.cancel();
-                                this.activeSampler = null;
-                                resp.broadcastPrefixed(TextComponent.of("The active sampling task has been cancelled.", TextColor.GOLD));
-                            }
+                        if (this.activeSampler == null) {
+                            resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
+                        } else {
+                            close();
+                            resp.broadcastPrefixed(TextComponent.of("The active sampling task has been cancelled.", TextColor.GOLD));
                         }
                         return;
                     }
 
                     if (arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
-                        synchronized (this.activeSamplerMutex) {
-                            if (this.activeSampler == null) {
-                                resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
-                            } else {
-                                this.activeSampler.cancel();
-                                resp.broadcastPrefixed(TextComponent.of("The active sampling operation has been stopped! Uploading results..."));
-                                handleUpload(platform, resp, this.activeSampler);
-                                this.activeSampler = null;
-                            }
+                        if (this.activeSampler == null) {
+                            resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
+                        } else {
+                            this.activeSampler.cancel();
+                            resp.broadcastPrefixed(TextComponent.of("The active sampling operation has been stopped! Uploading results..."));
+                            handleUpload(platform, resp, this.activeSampler);
+                            this.activeSampler = null;
                         }
                         return;
                     }
@@ -172,37 +171,34 @@ public class SamplerModule implements CommandModule {
                         }
                     }
 
-                    Sampler sampler;
-                    synchronized (this.activeSamplerMutex) {
-                        if (this.activeSampler != null) {
-                            resp.replyPrefixed(TextComponent.of("An active sampler is already running."));
-                            return;
-                        }
-
-                        resp.broadcastPrefixed(TextComponent.of("Initializing a new profiler, please wait..."));
-
-                        SamplerBuilder builder = new SamplerBuilder();
-                        builder.threadDumper(threadDumper);
-                        builder.threadGrouper(threadGrouper);
-                        if (timeoutSeconds != -1) {
-                            builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
-                        }
-                        builder.samplingInterval(intervalMillis);
-                        builder.includeLineNumbers(includeLineNumbers);
-                        if (ticksOver != -1) {
-                            builder.ticksOver(ticksOver, tickCounter);
-                        }
-                        sampler = this.activeSampler = builder.start();
-
-                        resp.broadcastPrefixed(TextComponent.of("Profiler now active!", TextColor.GOLD));
-                        if (timeoutSeconds == -1) {
-                            resp.broadcastPrefixed(TextComponent.of("Use '/" + platform.getPlugin().getLabel() + " sampler --stop' to stop profiling and upload the results."));
-                        } else {
-                            resp.broadcastPrefixed(TextComponent.of("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
-                        }
+                    if (this.activeSampler != null) {
+                        resp.replyPrefixed(TextComponent.of("An active sampler is already running."));
+                        return;
                     }
 
-                    CompletableFuture<Sampler> future = sampler.getFuture();
+                    resp.broadcastPrefixed(TextComponent.of("Initializing a new profiler, please wait..."));
+
+                    SamplerBuilder builder = new SamplerBuilder();
+                    builder.threadDumper(threadDumper);
+                    builder.threadGrouper(threadGrouper);
+                    if (timeoutSeconds != -1) {
+                        builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
+                    }
+                    builder.samplingInterval(intervalMillis);
+                    builder.includeLineNumbers(includeLineNumbers);
+                    if (ticksOver != -1) {
+                        builder.ticksOver(ticksOver, tickCounter);
+                    }
+                    Sampler sampler = this.activeSampler = builder.start();
+
+                    resp.broadcastPrefixed(TextComponent.of("Profiler now active!", TextColor.GOLD));
+                    if (timeoutSeconds == -1) {
+                        resp.broadcastPrefixed(TextComponent.of("Use '/" + platform.getPlugin().getLabel() + " sampler --stop' to stop profiling and upload the results."));
+                    } else {
+                        resp.broadcastPrefixed(TextComponent.of("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
+                    }
+
+                    CompletableFuture<Sampler> future = activeSampler.getFuture();
 
                     // send message if profiling fails
                     future.whenCompleteAsync((s, throwable) -> {
@@ -214,10 +210,8 @@ public class SamplerModule implements CommandModule {
 
                     // set activeSampler to null when complete.
                     future.whenCompleteAsync((s, throwable) -> {
-                        synchronized (this.activeSamplerMutex) {
-                            if (sampler == this.activeSampler) {
-                                this.activeSampler = null;
-                            }
+                        if (sampler == this.activeSampler) {
+                            this.activeSampler = null;
                         }
                     });
 

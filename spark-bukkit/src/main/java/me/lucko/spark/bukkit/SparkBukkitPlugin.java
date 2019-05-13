@@ -30,6 +30,7 @@ import me.lucko.spark.common.sampler.TickCounter;
 import net.kyori.text.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
 
     private final SparkPlatform platform = new SparkPlatform(this);
+    private CommandExecutor tpsCommand = null;
 
     @Override
     public void onEnable() {
@@ -48,7 +50,7 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
 
         // override Spigot's TPS command with our own.
         if (getConfig().getBoolean("override-tps-command", true)) {
-            CommandMapUtil.registerCommand(this, (sender, command, label, args) -> {
+            this.tpsCommand = (sender, command, label, args) -> {
                 if (!sender.hasPermission("spark") && !sender.hasPermission("spark.tps") && !sender.hasPermission("bukkit.command.tps")) {
                     sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
                     return true;
@@ -59,13 +61,17 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
                 resp.replyPrefixed(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:"));
                 resp.replyPrefixed(TextComponent.builder(" ").append(tpsCalculator.toFormattedComponent()).build());
                 return true;
-            }, "tps");
+            };
+            CommandMapUtil.registerCommand(this, this.tpsCommand, "tps");
         }
     }
 
     @Override
     public void onDisable() {
         this.platform.disable();
+        if (this.tpsCommand != null) {
+            CommandMapUtil.unregisterCommand(this.tpsCommand);
+        }
     }
 
     @Override
