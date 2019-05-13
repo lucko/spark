@@ -20,25 +20,60 @@
 
 package me.lucko.spark.common.monitor.cpu;
 
+import me.lucko.spark.common.util.RollingAverage;
+
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
+import java.math.BigDecimal;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
+/**
+ * Exposes and monitors the system/process CPU usage.
+ */
 public final class CpuMonitor {
     private CpuMonitor() {}
 
     /** The object name of the com.sun.management.OperatingSystemMXBean */
     private static final String OPERATING_SYSTEM_BEAN = "java.lang:type=OperatingSystem";
+    /** The OperatingSystemMXBean instance */
+    private static final OperatingSystemMXBean BEAN;
+    /** The executor used to monitor & calculate rolling averages. */
+    private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread thread = Executors.defaultThreadFactory().newThread(r);
+        thread.setName("spark-cpu-monitor");
+        return thread;
+    });
 
-    private static OperatingSystemMXBean getBean() {
+    // Rolling averages for system/process data
+    private static final RollingAverage SYSTEM_AVERAGE_10_SEC = new RollingAverage(10);
+    private static final RollingAverage SYSTEM_AVERAGE_1_MIN = new RollingAverage(60);
+    private static final RollingAverage SYSTEM_AVERAGE_15_MIN = new RollingAverage(60 * 15);
+    private static final RollingAverage PROCESS_AVERAGE_10_SEC = new RollingAverage(10);
+    private static final RollingAverage PROCESS_AVERAGE_1_MIN = new RollingAverage(60);
+    private static final RollingAverage PROCESS_AVERAGE_15_MIN = new RollingAverage(60 * 15);
+
+    static {
         try {
             MBeanServer beanServer = ManagementFactory.getPlatformMBeanServer();
             ObjectName diagnosticBeanName = ObjectName.getInstance(OPERATING_SYSTEM_BEAN);
-            return JMX.newMXBeanProxy(beanServer, diagnosticBeanName, OperatingSystemMXBean.class);
+            BEAN = JMX.newMXBeanProxy(beanServer, diagnosticBeanName, OperatingSystemMXBean.class);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new UnsupportedOperationException("OperatingSystemMXBean is not supported by the system", e);
         }
+
+        // schedule rolling average calculations.
+        EXECUTOR.scheduleAtFixedRate(new RollingAverageCollectionTask(), 1, 1, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Ensures that the static initializer has been called.
+     */
+    public static void ensureMonitoring() {
+        // intentionally empty
     }
 
     /**
@@ -54,8 +89,20 @@ public final class CpuMonitor {
      * @return the "recent cpu usage" for the whole system; a negative
      * value if not available.
      */
-    public static double getSystemCpuLoad() {
-        return getBean().getSystemCpuLoad();
+    public static double systemLoad() {
+        return BEAN.getSystemCpuLoad();
+    }
+
+    public static double systemLoad10SecAvg() {
+        return SYSTEM_AVERAGE_10_SEC.getAverage();
+    }
+
+    public static double systemLoad1MinAvg() {
+        return SYSTEM_AVERAGE_1_MIN.getAverage();
+    }
+
+    public static double systemLoad15MinAvg() {
+        return SYSTEM_AVERAGE_15_MIN.getAverage();
     }
 
     /**
@@ -73,8 +120,49 @@ public final class CpuMonitor {
      * @return the "recent cpu usage" for the Java Virtual Machine process;
      * a negative value if not available.
      */
-    public static double getProcessCpuLoad() {
-        return getBean().getProcessCpuLoad();
+    public static double processLoad() {
+        return BEAN.getProcessCpuLoad();
+    }
+
+    public static double processLoad10SecAvg() {
+        return PROCESS_AVERAGE_10_SEC.getAverage();
+    }
+
+    public static double processLoad1MinAvg() {
+        return PROCESS_AVERAGE_1_MIN.getAverage();
+    }
+
+    public static double processLoad15MinAvg() {
+        return PROCESS_AVERAGE_15_MIN.getAverage();
+    }
+
+    /**
+     * Task to poll CPU loads and add to the rolling averages in the enclosing class.
+     */
+    private static final class RollingAverageCollectionTask implements Runnable {
+        private final RollingAverage[] systemAverages = new RollingAverage[]{
+                SYSTEM_AVERAGE_10_SEC,
+                SYSTEM_AVERAGE_1_MIN,
+                SYSTEM_AVERAGE_15_MIN
+        };
+        private final RollingAverage[] processAverages = new RollingAverage[]{
+                PROCESS_AVERAGE_10_SEC,
+                PROCESS_AVERAGE_1_MIN,
+                PROCESS_AVERAGE_15_MIN
+        };
+
+        @Override
+        public void run() {
+            BigDecimal systemCpuLoad = new BigDecimal(systemLoad());
+            BigDecimal processCpuLoad = new BigDecimal(processLoad());
+
+            for (RollingAverage average : this.systemAverages) {
+                average.add(systemCpuLoad);
+            }
+            for (RollingAverage average : this.processAverages) {
+                average.add(processCpuLoad);
+            }
+        }
     }
 
     public interface OperatingSystemMXBean {

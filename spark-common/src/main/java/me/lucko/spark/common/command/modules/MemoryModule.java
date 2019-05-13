@@ -65,7 +65,7 @@ public class MemoryModule implements CommandModule {
                             return;
                         }
 
-                        byte[] output = heapDump.formCompressedDataPayload();
+                        byte[] output = heapDump.formCompressedDataPayload(sender);
                         try {
                             String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, JSON_TYPE, false).key();
                             String url = SparkPlatform.VIEWER_URL + key;
@@ -120,7 +120,7 @@ public class MemoryModule implements CommandModule {
                         }
 
                         resp.broadcastPrefixed(TextComponent.builder("Heap dump written to: ", TextColor.GOLD)
-                                .append(TextComponent.of(file.toString(), TextColor.DARK_GRAY))
+                                .append(TextComponent.of(file.toString(), TextColor.GRAY))
                                 .build()
                         );
                         platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump", file.toString()));

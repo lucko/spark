@@ -23,11 +23,8 @@ package me.lucko.spark.bukkit;
 import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.command.CommandResponseHandler;
-import me.lucko.spark.common.monitor.tick.TpsCalculator;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
-import net.kyori.text.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -56,10 +53,13 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
                     return true;
                 }
 
-                CommandResponseHandler resp = new CommandResponseHandler(this.platform, new BukkitCommandSender(sender));
-                TpsCalculator tpsCalculator = this.platform.getTpsCalculator();
-                resp.replyPrefixed(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:"));
-                resp.replyPrefixed(TextComponent.builder(" ").append(tpsCalculator.toFormattedComponent()).build());
+                BukkitCommandSender s = new BukkitCommandSender(sender) {
+                    @Override
+                    public boolean hasPermission(String permission) {
+                        return true;
+                    }
+                };
+                this.platform.executeCommand(s, new String[]{"tps"});
                 return true;
             };
             CommandMapUtil.registerCommand(this, this.tpsCommand, "tps");

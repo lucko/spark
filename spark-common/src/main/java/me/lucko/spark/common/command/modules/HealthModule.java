@@ -54,10 +54,40 @@ public class HealthModule implements CommandModule {
                     TpsCalculator tpsCalculator = platform.getTpsCalculator();
                     if (tpsCalculator != null) {
                         resp.replyPrefixed(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:"));
-                        resp.replyPrefixed(TextComponent.builder(" ").append(tpsCalculator.toFormattedComponent()).build());
+                        resp.replyPrefixed(TextComponent.builder(" ")
+                                .append(formatTps(tpsCalculator.avg5Sec())).append(TextComponent.of(", "))
+                                .append(formatTps(tpsCalculator.avg10Sec())).append(TextComponent.of(", "))
+                                .append(formatTps(tpsCalculator.avg1Min())).append(TextComponent.of(", "))
+                                .append(formatTps(tpsCalculator.avg5Min())).append(TextComponent.of(", "))
+                                .append(formatTps(tpsCalculator.avg15Min()))
+                                .build()
+                        );
                     } else {
                         resp.replyPrefixed(TextComponent.of("Not supported!"));
                     }
+                })
+                .tabCompleter(Command.TabCompleter.empty())
+                .build()
+        );
+
+        consumer.accept(Command.builder()
+                .aliases("cpu")
+                .executor((platform, sender, resp, arguments) -> {
+                    resp.replyPrefixed(TextComponent.of("CPU usage from last 10s, 1m, 15m:"));
+                    resp.replyPrefixed(TextComponent.builder(" ")
+                            .append(formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(TextComponent.of(", "))
+                            .append(formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(TextComponent.of(", "))
+                            .append(formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
+                            .append(TextComponent.of("  (system)", TextColor.DARK_GRAY))
+                            .build()
+                    );
+                    resp.replyPrefixed(TextComponent.builder(" ")
+                            .append(formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(TextComponent.of(", "))
+                            .append(formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(TextComponent.of(", "))
+                            .append(formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
+                            .append(TextComponent.of("  (process)", TextColor.DARK_GRAY))
+                            .build()
+                    );
                 })
                 .tabCompleter(Command.TabCompleter.empty())
                 .build()
@@ -80,9 +110,38 @@ public class HealthModule implements CommandModule {
                                     .append(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:", TextColor.GOLD))
                                     .build()
                             );
-                            report.add(TextComponent.builder("    ").append(tpsCalculator.toFormattedComponent()).build());
+                            report.add(TextComponent.builder("    ")
+                                    .append(formatTps(tpsCalculator.avg5Sec())).append(TextComponent.of(", "))
+                                    .append(formatTps(tpsCalculator.avg10Sec())).append(TextComponent.of(", "))
+                                    .append(formatTps(tpsCalculator.avg1Min())).append(TextComponent.of(", "))
+                                    .append(formatTps(tpsCalculator.avg5Min())).append(TextComponent.of(", "))
+                                    .append(formatTps(tpsCalculator.avg15Min()))
+                                    .build()
+                            );
                             report.add(TextComponent.empty());
                         }
+
+                        report.add(TextComponent.builder("")
+                                .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                                .append(TextComponent.space())
+                                .append(TextComponent.of("CPU usage from last 10s, 1m, 15m:", TextColor.GOLD))
+                                .build()
+                        );
+                        report.add(TextComponent.builder("    ")
+                                .append(formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(TextComponent.of(", "))
+                                .append(formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(TextComponent.of(", "))
+                                .append(formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
+                                .append(TextComponent.of("  (system)", TextColor.DARK_GRAY))
+                                .build()
+                        );
+                        report.add(TextComponent.builder("    ")
+                                .append(formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(TextComponent.of(", "))
+                                .append(formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(TextComponent.of(", "))
+                                .append(formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
+                                .append(TextComponent.of("  (process)", TextColor.DARK_GRAY))
+                                .build()
+                        );
+                        report.add(TextComponent.empty());
 
                         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
                         MemoryUsage heapUsage = memoryMXBean.getHeapMemoryUsage();
@@ -168,37 +227,6 @@ public class HealthModule implements CommandModule {
                             }
                         }
 
-                        double systemCpuLoad = CpuMonitor.getSystemCpuLoad();
-                        double processCpuLoad = CpuMonitor.getProcessCpuLoad();
-
-                        if (systemCpuLoad >= 0 || processCpuLoad >= 0) {
-                            report.add(TextComponent.builder("")
-                                    .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
-                                    .append(TextComponent.space())
-                                    .append(TextComponent.of("CPU usage:", TextColor.GOLD))
-                                    .build()
-                            );
-
-                            if (systemCpuLoad >= 0) {
-                                report.add(TextComponent.builder("    ")
-                                        .append(TextComponent.of("System: ", TextColor.GRAY))
-                                        .append(TextComponent.of(percent(systemCpuLoad, 1.0d), TextColor.GREEN))
-                                        .build()
-                                );
-                                report.add(TextComponent.builder("    ").append(generateCpuUsageDiagram(systemCpuLoad, 40)).build());
-                                report.add(TextComponent.empty());
-                            }
-                            if (processCpuLoad >= 0) {
-                                report.add(TextComponent.builder("    ")
-                                        .append(TextComponent.of("Process: ", TextColor.GRAY))
-                                        .append(TextComponent.of(percent(processCpuLoad, 1.0d), TextColor.GREEN))
-                                        .build()
-                                );
-                                report.add(TextComponent.builder("    ").append(generateCpuUsageDiagram(processCpuLoad, 40)).build());
-                                report.add(TextComponent.empty());
-                            }
-                        }
-
                         try {
                             FileStore fileStore = Files.getFileStore(Paths.get("."));
                             long totalSpace = fileStore.getTotalSpace();
@@ -240,6 +268,32 @@ public class HealthModule implements CommandModule {
     private static String percent(double value, double max) {
         double percent = (value * 100d) / max;
         return (int) percent + "%";
+    }
+
+    private static TextComponent formatTps(double tps) {
+        TextColor color;
+        if (tps > 18.0) {
+            color = TextColor.GREEN;
+        } else if (tps > 16.0) {
+            color = TextColor.YELLOW;
+        } else {
+            color = TextColor.RED;
+        }
+
+        return TextComponent.of( (tps > 20.0 ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, 20.0), color);
+    }
+
+    private static TextComponent formatCpuUsage(double usage) {
+        TextColor color;
+        if (usage > 0.9) {
+            color = TextColor.RED;
+        } else if (usage > 0.65) {
+            color = TextColor.YELLOW;
+        } else {
+            color = TextColor.GREEN;
+        }
+
+        return TextComponent.of(percent(usage, 1d), color);
     }
 
     private static TextComponent generateMemoryUsageDiagram(MemoryUsage usage, int length) {
@@ -296,16 +350,6 @@ public class HealthModule implements CommandModule {
         return TextComponent.builder("")
                 .append(TextComponent.of("[", TextColor.DARK_GRAY))
                 .append(line.build())
-                .append(TextComponent.of("]", TextColor.DARK_GRAY))
-                .build();
-    }
-
-    private static TextComponent generateCpuUsageDiagram(double usage, int length) {
-        int usedChars = (int) ((usage * length));
-        String line = Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
-        return TextComponent.builder("")
-                .append(TextComponent.of("[", TextColor.DARK_GRAY))
-                .append(TextComponent.of(line, TextColor.GRAY))
                 .append(TextComponent.of("]", TextColor.DARK_GRAY))
                 .build();
     }

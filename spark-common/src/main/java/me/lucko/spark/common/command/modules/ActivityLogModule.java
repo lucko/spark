@@ -68,10 +68,7 @@ public class ActivityLogModule implements CommandModule {
                                 .build()
                         );
 
-                        TextComponent.Builder valueComponent = TextComponent.builder(activity.getDataValue())
-                                .color(TextColor.WHITE)
-                                .decoration(TextDecoration.UNDERLINED, true);
-
+                        TextComponent.Builder valueComponent = TextComponent.builder(activity.getDataValue(), TextColor.WHITE);
                         if (activity.getDataType().equals("url")) {
                             valueComponent.clickEvent(ClickEvent.openUrl(activity.getDataValue()));
                         }

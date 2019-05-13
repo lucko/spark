@@ -32,6 +32,7 @@ import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.command.modules.TickMonitoringModule;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
+import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TpsCalculator;
 import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.common.util.BytebinClient;
@@ -95,6 +96,7 @@ public class SparkPlatform {
             this.tickCounter.addTickTask(this.tpsCalculator);
             this.tickCounter.start();
         }
+        CpuMonitor.ensureMonitoring();
     }
 
     public void disable() {

@@ -21,8 +21,6 @@
 package me.lucko.spark.common.monitor.tick;
 
 import me.lucko.spark.common.sampler.TickCounter;
-import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -46,14 +44,14 @@ public class TpsCalculator implements TickCounter.TickTask {
     private static final int SAMPLE_INTERVAL = 20;
     private static final BigDecimal TPS_BASE = new BigDecimal(SEC_IN_NANO).multiply(new BigDecimal((long) SAMPLE_INTERVAL));
 
-    private final RollingAverage tps5S = new RollingAverage(5);
-    private final RollingAverage tps10S = new RollingAverage(10);
-    private final RollingAverage tps1M = new RollingAverage(60);
-    private final RollingAverage tps5M = new RollingAverage(60 * 5);
-    private final RollingAverage tps15M = new RollingAverage(60 * 15);
+    private final TpsRollingAverage avg5Sec = new TpsRollingAverage(5);
+    private final TpsRollingAverage avg10Sec = new TpsRollingAverage(10);
+    private final TpsRollingAverage avg1Min = new TpsRollingAverage(60);
+    private final TpsRollingAverage avg5Min = new TpsRollingAverage(60 * 5);
+    private final TpsRollingAverage avg15Min = new TpsRollingAverage(60 * 15);
 
-    private final RollingAverage[] averages = new RollingAverage[]{
-            this.tps5S, this.tps10S, this.tps1M, this.tps5M, this.tps15M
+    private final TpsRollingAverage[] averages = new TpsRollingAverage[]{
+            this.avg5Sec, this.avg10Sec, this.avg1Min, this.avg5Min, this.avg15Min
     };
 
     private long last = 0;
@@ -75,55 +73,34 @@ public class TpsCalculator implements TickCounter.TickTask {
         long diff = now - this.last;
         BigDecimal currentTps = TPS_BASE.divide(new BigDecimal(diff), 30, RoundingMode.HALF_UP);
 
-        for (RollingAverage rollingAverage : this.averages) {
+        for (TpsRollingAverage rollingAverage : this.averages) {
             rollingAverage.add(currentTps, diff);
         }
 
         this.last = now;
     }
 
-    public RollingAverage avg5Sec() {
-        return this.tps5S;
+    public double avg5Sec() {
+        return this.avg5Sec.getAverage();
     }
 
-    public RollingAverage avg10Sec() {
-        return this.tps10S;
+    public double avg10Sec() {
+        return this.avg10Sec.getAverage();
     }
 
-    public RollingAverage avg1Min() {
-        return this.tps1M;
+    public double avg1Min() {
+        return this.avg1Min.getAverage();
     }
 
-    public RollingAverage avg5Min() {
-        return this.tps5M;
+    public double avg5Min() {
+        return this.avg5Min.getAverage();
     }
 
-    public RollingAverage avg15Min() {
-        return this.tps15M;
+    public double avg15Min() {
+        return this.avg15Min.getAverage();
     }
 
-    public TextComponent toFormattedComponent() {
-        return TextComponent.builder("")
-                .append(format(this.tps5S.getAverage())).append(TextComponent.of(", "))
-                .append(format(this.tps10S.getAverage())).append(TextComponent.of(", "))
-                .append(format(this.tps1M.getAverage())).append(TextComponent.of(", "))
-                .append(format(this.tps5M.getAverage())).append(TextComponent.of(", "))
-                .append(format(this.tps15M.getAverage()))
-                .build();
-    }
 
-    private static TextComponent format(double tps) {
-        TextColor color;
-        if (tps > 18.0) {
-            color = TextColor.GREEN;
-        } else if (tps > 16.0) {
-            color = TextColor.YELLOW;
-        } else {
-            color = TextColor.RED;
-        }
-
-        return TextComponent.of( (tps > 20.0 ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, 20.0), color);
-    }
 
     /**
      * Rolling average calculator taken.
@@ -132,7 +109,7 @@ public class TpsCalculator implements TickCounter.TickTask {
      *
      * @author aikar (PaperMC) https://github.com/PaperMC/Paper/blob/master/Spigot-Server-Patches/0021-Further-improve-server-tick-loop.patch
      */
-    public static final class RollingAverage {
+    public static final class TpsRollingAverage {
         private final int size;
         private long time;
         private BigDecimal total;
@@ -140,7 +117,7 @@ public class TpsCalculator implements TickCounter.TickTask {
         private final BigDecimal[] samples;
         private final long[] times;
 
-        RollingAverage(int size) {
+        TpsRollingAverage(int size) {
             this.size = size;
             this.time = size * SEC_IN_NANO;
             this.total = new BigDecimal((long) TPS).multiply(new BigDecimal(SEC_IN_NANO)).multiply(new BigDecimal((long) size));

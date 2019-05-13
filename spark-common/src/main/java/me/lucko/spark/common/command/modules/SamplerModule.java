@@ -228,8 +228,9 @@ public class SamplerModule implements CommandModule {
                         return Collections.emptyList();
                     }
 
-                    List<String> opts = new ArrayList<>(Arrays.asList("--timeout", "--regex", "--combine-all",
-                            "--not-combined", "--interval", "--only-ticks-over", "--include-line-numbers"));
+                    List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
+                            "--timeout", "--regex", "--combine-all", "--not-combined", "--interval",
+                            "--only-ticks-over", "--include-line-numbers"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times
 
@@ -243,7 +244,7 @@ public class SamplerModule implements CommandModule {
 
     private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler) {
         platform.getPlugin().runAsync(() -> {
-            byte[] output = sampler.formCompressedDataPayload();
+            byte[] output = sampler.formCompressedDataPayload(resp.sender());
             try {
                 String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, JSON_TYPE, false).key();
                 String url = SparkPlatform.VIEWER_URL + key;
