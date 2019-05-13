@@ -49,7 +49,7 @@ public class HealthModule implements CommandModule {
     @Override
     public void registerCommands(Consumer<Command> consumer) {
         consumer.accept(Command.builder()
-                .aliases("tps")
+                .aliases("tps", "cpu")
                 .executor((platform, sender, resp, arguments) -> {
                     TpsCalculator tpsCalculator = platform.getTpsCalculator();
                     if (tpsCalculator != null) {
@@ -62,17 +62,9 @@ public class HealthModule implements CommandModule {
                                 .append(formatTps(tpsCalculator.avg15Min()))
                                 .build()
                         );
-                    } else {
-                        resp.replyPrefixed(TextComponent.of("Not supported!"));
+                        resp.replyPrefixed(TextComponent.empty());
                     }
-                })
-                .tabCompleter(Command.TabCompleter.empty())
-                .build()
-        );
 
-        consumer.accept(Command.builder()
-                .aliases("cpu")
-                .executor((platform, sender, resp, arguments) -> {
                     resp.replyPrefixed(TextComponent.of("CPU usage from last 10s, 1m, 15m:"));
                     resp.replyPrefixed(TextComponent.builder(" ")
                             .append(formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(TextComponent.of(", "))
