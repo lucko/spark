@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
-import me.lucko.spark.common.ActivityLog;
+import me.lucko.spark.common.ActivityLog.Activity;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -255,7 +255,7 @@ public class SamplerModule implements CommandModule {
                         .build()
                 );
 
-                platform.getActivityLog().addToLog(new ActivityLog.Activity(resp.sender().getName(), System.currentTimeMillis(), "Sampler", url));
+                platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Sampler", url));
             } catch (IOException e) {
                 resp.broadcastPrefixed(TextComponent.of("An error occurred whilst uploading the results.", TextColor.RED));
                 e.printStackTrace();

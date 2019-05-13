@@ -26,6 +26,8 @@ import com.velocitypowered.api.proxy.Player;
 import me.lucko.spark.common.CommandSender;
 import net.kyori.text.Component;
 
+import java.util.UUID;
+
 public class VelocityCommandSender implements CommandSender {
     private final CommandSource source;
 
@@ -42,6 +44,14 @@ public class VelocityCommandSender implements CommandSender {
         } else {
             return "unknown:" + this.source.getClass().getSimpleName();
         }
+    }
+
+    @Override
+    public UUID getUniqueId() {
+        if (this.source instanceof Player) {
+            return ((Player) this.source).getUniqueId();
+        }
+        return null;
     }
 
     @Override

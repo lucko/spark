@@ -24,6 +24,9 @@ import me.lucko.spark.common.CommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.adapter.spongeapi.TextAdapter;
 import org.spongepowered.api.command.CommandSource;
+import org.spongepowered.api.entity.living.player.Player;
+
+import java.util.UUID;
 
 public class SpongeCommandSender implements CommandSender {
     private final CommandSource source;
@@ -35,6 +38,14 @@ public class SpongeCommandSender implements CommandSender {
     @Override
     public String getName() {
         return this.source.getName();
+    }
+
+    @Override
+    public UUID getUniqueId() {
+        if (this.source instanceof Player) {
+            return ((Player) this.source).getUniqueId();
+        }
+        return null;
     }
 
     @Override

@@ -23,6 +23,9 @@ package me.lucko.spark.bukkit;
 import me.lucko.spark.common.CommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.adapter.bukkit.TextAdapter;
+import org.bukkit.entity.Player;
+
+import java.util.UUID;
 
 public class BukkitCommandSender implements CommandSender {
     private final org.bukkit.command.CommandSender sender;
@@ -34,6 +37,14 @@ public class BukkitCommandSender implements CommandSender {
     @Override
     public String getName() {
         return this.sender.getName();
+    }
+
+    @Override
+    public UUID getUniqueId() {
+        if (this.sender instanceof Player) {
+            return ((Player) this.sender).getUniqueId();
+        }
+        return null;
     }
 
     @Override

@@ -23,6 +23,9 @@ package me.lucko.spark.bungeecord;
 import me.lucko.spark.common.CommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.adapter.bungeecord.TextAdapter;
+import net.md_5.bungee.api.connection.ProxiedPlayer;
+
+import java.util.UUID;
 
 public class BungeeCordCommandSender implements CommandSender {
     private final net.md_5.bungee.api.CommandSender sender;
@@ -34,6 +37,14 @@ public class BungeeCordCommandSender implements CommandSender {
     @Override
     public String getName() {
         return this.sender.getName();
+    }
+
+    @Override
+    public UUID getUniqueId() {
+        if (this.sender instanceof ProxiedPlayer) {
+            return ((ProxiedPlayer) this.sender).getUniqueId();
+        }
+        return null;
     }
 
     @Override

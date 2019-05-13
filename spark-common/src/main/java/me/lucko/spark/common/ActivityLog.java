@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class ActivityLog {
@@ -45,7 +46,7 @@ public class ActivityLog {
 
     private final Path file;
 
-    private final List<Activity> log = new LinkedList<>();
+    private final LinkedList<Activity> log = new LinkedList<>();
     private final Object[] mutex = new Object[0];
 
     public ActivityLog(Path file) {
@@ -54,7 +55,7 @@ public class ActivityLog {
 
     public void addToLog(Activity activity) {
         synchronized (this.mutex) {
-            this.log.add(activity);
+            this.log.addFirst(activity);
         }
         save();
     }
@@ -132,15 +133,28 @@ public class ActivityLog {
 
     public static final class Activity {
         private final String user;
+        private final UUID uuid;
         private final long time;
         private final String type;
-        private final String url;
 
-        public Activity(String user, long time, String type, String url) {
+        private final String dataType;
+        private final String dataValue;
+
+        public static Activity urlActivity(CommandSender user, long time, String type, String url) {
+            return new Activity(user.getName(), user.getUniqueId(), time, type, "url", url);
+        }
+
+        public static Activity fileActivity(CommandSender user, long time, String type, String filePath) {
+            return new Activity(user.getName(), user.getUniqueId(), time, type, "file", filePath);
+        }
+
+        private Activity(String user, UUID uuid, long time, String type, String dataType, String dataValue) {
             this.user = user;
+            this.uuid = uuid;
             this.time = time;
             this.type = type;
-            this.url = url;
+            this.dataType = dataType;
+            this.dataValue = dataValue;
         }
 
         public String getUser() {
@@ -155,26 +169,39 @@ public class ActivityLog {
             return this.type;
         }
 
-        public String getUrl() {
-            return this.url;
+        public String getDataType() {
+            return this.dataType;
+        }
+
+        public String getDataValue() {
+            return this.dataValue;
         }
 
         public boolean shouldExpire() {
-            return (System.currentTimeMillis() - this.time) > TimeUnit.DAYS.toMillis(7);
+            if (dataType.equals("url")) {
+                return (System.currentTimeMillis() - this.time) > TimeUnit.DAYS.toMillis(7);
+            } else {
+                return false;
+            }
         }
 
         public JsonObject serialize() {
             JsonObject object = new JsonObject();
 
             JsonObject user = new JsonObject();
+            user.add("type", new JsonPrimitive(this.uuid != null ? "player" : "other"));
             user.add("name", new JsonPrimitive(this.user));
+            if (this.uuid != null) {
+                user.add("uuid", new JsonPrimitive(this.uuid.toString()));
+            }
             object.add("user", user);
 
             object.add("time", new JsonPrimitive(this.time));
             object.add("type", new JsonPrimitive(this.type));
 
             JsonObject data = new JsonObject();
-            data.add("url", new JsonPrimitive(this.url));
+            data.add("type", new JsonPrimitive(this.dataType));
+            data.add("value", new JsonPrimitive(this.dataValue));
             object.add("data", data);
 
             return object;
@@ -183,12 +210,23 @@ public class ActivityLog {
         public static Activity deserialize(JsonElement element) {
             JsonObject object = element.getAsJsonObject();
 
-            String user = object.get("user").getAsJsonObject().get("name").getAsJsonPrimitive().getAsString();
+            JsonObject userObject = object.get("user").getAsJsonObject();
+            String user = userObject.get("name").getAsJsonPrimitive().getAsString();
+            UUID uuid;
+            if (userObject.has("uuid")) {
+                uuid = UUID.fromString(userObject.get("uuid").getAsJsonPrimitive().getAsString());
+            } else {
+                uuid = null;
+            }
+
             long time = object.get("time").getAsJsonPrimitive().getAsLong();
             String type = object.get("type").getAsJsonPrimitive().getAsString();
-            String url = object.get("data").getAsJsonObject().get("url").getAsJsonPrimitive().getAsString();
 
-            return new Activity(user, time, type, url);
+            JsonObject dataObject = object.get("data").getAsJsonObject();
+            String dataType = dataObject.get("type").getAsJsonPrimitive().getAsString();
+            String dataValue = dataObject.get("value").getAsJsonPrimitive().getAsString();
+
+            return new Activity(user, uuid, time, type, dataType, dataValue);
         }
     }
 

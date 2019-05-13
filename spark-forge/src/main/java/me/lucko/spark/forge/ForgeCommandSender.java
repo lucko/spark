@@ -24,7 +24,10 @@ import me.lucko.spark.common.CommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.ITextComponent;
+
+import java.util.UUID;
 
 public class ForgeCommandSender implements CommandSender {
     private final ICommandSender sender;
@@ -38,6 +41,14 @@ public class ForgeCommandSender implements CommandSender {
     @Override
     public String getName() {
         return this.sender.getName();
+    }
+
+    @Override
+    public UUID getUniqueId() {
+        if (this.sender instanceof EntityPlayer) {
+            return ((EntityPlayer) this.sender).getUniqueID();
+        }
+        return null;
     }
 
     @Override

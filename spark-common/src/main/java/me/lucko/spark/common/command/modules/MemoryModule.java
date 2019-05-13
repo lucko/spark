@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
-import me.lucko.spark.common.ActivityLog;
+import me.lucko.spark.common.ActivityLog.Activity;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -77,7 +77,7 @@ public class MemoryModule implements CommandModule {
                                     .build()
                             );
 
-                            platform.getActivityLog().addToLog(new ActivityLog.Activity(sender.getName(), System.currentTimeMillis(), "Heap dump summary", url));
+                            platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
                         } catch (IOException e) {
                             resp.broadcastPrefixed(TextComponent.of("An error occurred whilst uploading the data.", TextColor.RED));
                             e.printStackTrace();
@@ -119,7 +119,11 @@ public class MemoryModule implements CommandModule {
                             return;
                         }
 
-                        resp.broadcastPrefixed(TextComponent.of("Heap dump written to: " + file.toString(), TextColor.GOLD));
+                        resp.broadcastPrefixed(TextComponent.builder("Heap dump written to: ", TextColor.GOLD)
+                                .append(TextComponent.of(file.toString(), TextColor.DARK_GRAY))
+                                .build()
+                        );
+                        platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump", file.toString()));
                     });
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--run-gc-before", "--include-non-live"))

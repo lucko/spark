@@ -22,9 +22,13 @@ package me.lucko.spark.common;
 
 import net.kyori.text.Component;
 
+import java.util.UUID;
+
 public interface CommandSender {
 
     String getName();
+
+    UUID getUniqueId();
 
     void sendMessage(Component message);
 

@@ -67,14 +67,18 @@ public class ActivityLogModule implements CommandModule {
                                 .append(TextComponent.of(activity.getUser(), TextColor.WHITE))
                                 .build()
                         );
+
+                        TextComponent.Builder valueComponent = TextComponent.builder(activity.getDataValue())
+                                .color(TextColor.WHITE)
+                                .decoration(TextDecoration.UNDERLINED, true);
+
+                        if (activity.getDataType().equals("url")) {
+                            valueComponent.clickEvent(ClickEvent.openUrl(activity.getDataValue()));
+                        }
+
                         resp.replyPrefixed(TextComponent.builder("  ")
-                                .append(TextComponent.of("Link: ", TextColor.GRAY))
-                                .append(TextComponent.builder(activity.getUrl())
-                                        .color(TextColor.WHITE)
-                                        .decoration(TextDecoration.UNDERLINED, true)
-                                        .clickEvent(ClickEvent.openUrl(activity.getUrl()))
-                                        .build()
-                                )
+                                .append(TextComponent.of(Character.toUpperCase(activity.getDataType().charAt(0)) + activity.getDataType().substring(1) + ": ", TextColor.GRAY))
+                                .append(valueComponent)
                                 .build()
                         );
                         resp.reply(TextComponent.space());
