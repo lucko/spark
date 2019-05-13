@@ -163,10 +163,28 @@ public class Sampler implements Runnable {
         }
     }
 
+    private void writeMetadata(JsonWriter writer) throws IOException {
+        writer.name("startTime").value(startTime);
+        writer.name("interval").value(interval);
+
+        writer.name("threadDumper").beginObject();
+        threadDumper.writeMetadata(writer);
+        writer.endObject();
+
+        writer.name("dataAggregator").beginObject();
+        dataAggregator.writeMetadata(writer);
+        writer.endObject();
+    }
+
     private void writeOutput(JsonWriter writer) throws IOException {
         writer.beginObject();
 
         writer.name("type").value("sampler");
+
+        writer.name("metadata").beginObject();
+        writeMetadata(writer);
+        writer.endObject();
+
         writer.name("threads").beginArray();
 
         List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());

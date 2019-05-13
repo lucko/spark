@@ -28,22 +28,17 @@ import java.util.regex.Pattern;
 /**
  * Function for grouping threads together
  */
-@FunctionalInterface
-public interface ThreadGrouper {
-
-    /**
-     * Gets the group for the given thread.
-     *
-     * @param threadId the id of the thread
-     * @param threadName the name of the thread
-     * @return the group
-     */
-    String getGroup(long threadId, String threadName);
+public enum ThreadGrouper {
 
     /**
      * Implementation of {@link ThreadGrouper} that just groups by thread name.
      */
-    ThreadGrouper BY_NAME = (threadId, threadName) -> threadName;
+    BY_NAME {
+        @Override
+        public String getGroup(long threadId, String threadName) {
+            return threadName;
+        }
+    },
 
     /**
      * Implementation of {@link ThreadGrouper} that attempts to group by the name of the pool
@@ -52,7 +47,7 @@ public interface ThreadGrouper {
      * <p>The regex pattern used to match pools expects a digit at the end of the thread name,
      * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
      */
-    ThreadGrouper BY_POOL = new ThreadGrouper() {
+    BY_POOL {
         private final Map<Long, String> cache = new ConcurrentHashMap<>();
         private final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
 
@@ -72,12 +67,26 @@ public interface ThreadGrouper {
             this.cache.put(threadId, group); // we don't care about race conditions here
             return group;
         }
-    };
+    },
 
     /**
      * Implementation of {@link ThreadGrouper} which groups all threads as one, under
      * the name "All".
      */
-    ThreadGrouper AS_ONE = (threadId, threadName) -> "All";
+    AS_ONE {
+        @Override
+        public String getGroup(long threadId, String threadName) {
+            return "All";
+        }
+    };
+
+    /**
+     * Gets the group for the given thread.
+     *
+     * @param threadId the id of the thread
+     * @param threadName the name of the thread
+     * @return the group
+     */
+    public abstract String getGroup(long threadId, String threadName);
 
 }

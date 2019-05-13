@@ -20,8 +20,10 @@
 
 package me.lucko.spark.common.sampler.aggregator;
 
+import com.google.gson.stream.JsonWriter;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -43,5 +45,13 @@ public interface DataAggregator {
      * @param stack the call stack
      */
     void insertData(long threadId, String threadName, StackTraceElement[] stack);
+
+    /**
+     * Writes metadata about the data aggregator instance to the given {@code writer}.
+     *
+     * @param writer the writer
+     * @throws IOException if thrown by the writer
+     */
+    void writeMetadata(JsonWriter writer) throws IOException;
 
 }

@@ -21,8 +21,10 @@
 
 package me.lucko.spark.common.sampler;
 
+import com.google.gson.stream.JsonWriter;
 import me.lucko.spark.common.util.ThreadFinder;
 
+import java.io.IOException;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.HashMap;
@@ -37,7 +39,6 @@ import java.util.stream.Collectors;
  * Uses the {@link ThreadMXBean} to generate {@link ThreadInfo} instances for the threads being
  * sampled.
  */
-@FunctionalInterface
 public interface ThreadDumper {
 
     /**
@@ -49,9 +50,27 @@ public interface ThreadDumper {
     ThreadInfo[] dumpThreads(ThreadMXBean threadBean);
 
     /**
+     * Writes metadata about the thread dumper instance to the given {@code writer}.
+     *
+     * @param writer the writer
+     * @throws IOException if thrown by the writer
+     */
+    void writeMetadata(JsonWriter writer) throws IOException;
+
+    /**
      * Implementation of {@link ThreadDumper} that generates data for all threads.
      */
-    ThreadDumper ALL = threadBean -> threadBean.dumpAllThreads(false, false);
+    ThreadDumper ALL = new ThreadDumper() {
+        @Override
+        public ThreadInfo[] dumpThreads(final ThreadMXBean threadBean) {
+            return threadBean.dumpAllThreads(false, false);
+        }
+
+        @Override
+        public void writeMetadata(JsonWriter writer) throws IOException {
+            writer.name("type").value("all");
+        }
+    };
 
     /**
      * Implementation of {@link ThreadDumper} that generates data for a specific set of threads.
@@ -75,6 +94,16 @@ public interface ThreadDumper {
         @Override
         public ThreadInfo[] dumpThreads(ThreadMXBean threadBean) {
             return threadBean.getThreadInfo(this.ids, Integer.MAX_VALUE);
+        }
+
+        @Override
+        public void writeMetadata(JsonWriter writer) throws IOException {
+            writer.name("type").value("specific");
+            writer.name("ids").beginArray();
+            for (long id : ids) {
+                writer.value(id);
+            }
+            writer.endArray();
         }
     }
 
@@ -120,6 +149,16 @@ public interface ThreadDumper {
                     .map(thread -> threadBean.getThreadInfo(thread.getId()))
                     .filter(Objects::nonNull)
                     .toArray(ThreadInfo[]::new);
+        }
+
+        @Override
+        public void writeMetadata(JsonWriter writer) throws IOException {
+            writer.name("type").value("regex");
+            writer.name("patterns").beginArray();
+            for (Pattern pattern : namePatterns) {
+                writer.value(pattern.pattern());
+            }
+            writer.endArray();
         }
     }
 
