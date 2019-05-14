@@ -1,13 +1,35 @@
-# :zap: spark
-spark is a performance profiling plugin based on sk89q's [WarmRoast profiler](https://github.com/sk89q/WarmRoast).
+<h1 align="center">
+	<img
+		alt="spark"
+		src="https://i.imgur.com/pkZ1k3R.png">
+</h1>
 
-The latest downloads are [available on Jenkins](https://ci.lucko.me/job/spark/).
+<h3 align="center">
+	spark is a performance profiling plugin based on sk89q's <a href="https://github.com/sk89q/WarmRoast">WarmRoast profiler</a>
+</h3>
+
+<p align="center">
+	<strong>
+		<a href="https://ci.lucko.me/job/spark/">Downloads</a>
+		•
+		<a href="https://github.com/lucko/spark/wiki">Wiki</a>
+		•
+		<a href="https://github.com/lucko/spark/issues">Issues</a>
+	</strong>
+</p>
+
+___
 
 ## What does it do?
 
 spark is made up of a number of components, each detailed separately below.
 
-### CPU Profiler (process sampling)
+| CPU Profiler (process sampling)      | Memory Inspection (heap analysis & GC monitoring) | Server Health reporting              |
+|--------------------------------------|---------------------------------------------------|--------------------------------------|
+| ![](https://i.imgur.com/ggSGzRq.png) | ![](https://i.imgur.com/BsdTxqA.png)              | ![](https://i.imgur.com/SrKEmA6.png) |
+
+
+### :zap: CPU Profiler (process sampling)
 This is the primary component of spark - a lightweight CPU sampler with corresponding web analysis view based on WarmRoast.
 
 The sampler records statistical data about which actions take up the most processing time. These statistics can then be used to diagnose potential performance issues with certain parts of the server or specific plugins.
@@ -16,11 +38,11 @@ Once the data has been recorded, a "call graph" can be formed and displayed in a
 
 A profiler like the one in spark will not magically fix "lag" - they are merely a tool to help diagnose the cause of poor performance.
 
-### Tick Monitor (server tick monitoring)
+### :zap: Tick Monitor (server tick monitoring)
 
 This component monitors the speed at which the game server is processing "ticks". Can be used to spot trends and identify the nature of a performance issue, relative to other system events. (garbage collection, game actions, etc)
 
-### Memory Inspection (heap analysis & GC monitoring)
+### :zap: Memory Inspection (heap analysis & GC monitoring)
 
 This component provides a function which can be used to take basic snapshots of system memory usage, including information about potentially problematic classes, estimated sizes and instance counts corresponding to objects in the JVM.
 
@@ -28,9 +50,18 @@ Unlike the other "profiler"-like functionality in spark, this component is *not*
 
 spark also includes functionality which allows "full" hprof snapshots to be taken. These can be then analysed with conventional memory analysis tools.
 
-## Features
+### :zap: Server Health reporting
 
-### WarmRoast features
+Information about the servers current "health" can be viewed in-game using commands. The output contains information about:
+
+* Server TPS (ticks per second) information, to a much more accurate degree than indicated by the /tps command.
+* CPU usage of the server process, as well as the overall system
+* Memory usage
+* Disk usage
+
+### spark vs WarmRoast
+
+#### WarmRoast features
 
 These features are carried over from the upstream "WarmRoast" project.
 
@@ -42,7 +73,7 @@ These features are carried over from the upstream "WarmRoast" project.
 * Sampling frequency can be adjusted.
 * Virtually no overheads or side effects on the target program (the server)
 
-### spark features
+#### spark features
 
 WarmRoast is an amazing tool for server admins, but it has a few flaws.
 
@@ -90,10 +121,16 @@ All commands require the `spark` permission.
 Note that `/sparkb`, `/sparkv`, and `/sparkc` must be used instead of `/spark` on BungeeCord, Velocity and Forge Client installs respectively. 
 
 ___
-#### `/spark start`
-Starts a new profiling operation.
+#### `/spark sampler`
+Starts a new CPU profiler operation.
 
 **Arguments**
+* `--info`
+	* Prints information about the active profiler, if present.
+* `--stop`
+	* Ends the current profiling operation, uploads the resultant data, and returns a link to the viewer.
+* `--cancel`
+	* Cancels the current profiling operation, and discards any recorded data without uploading it.
 * `--timeout <timeout>`
 	* Specifies how long the profiler should run before automatically stopping. Measured in seconds.
 	* If left unspecified, the profiler will run indefinitely, until it is stopped
@@ -116,20 +153,8 @@ Starts a new profiling operation.
 * `--include-line-numbers`
 	* Specifies that line numbers of method calls should be recorded and included in the sampler output.
 ___
-#### `/spark info`
-Prints information about the active profiler, if present.
-
-___
-#### `/spark stop`
-Ends the current profiling operation, uploads the resultant data, and returns a link to the viewer.
-
-___
-#### `/spark cancel`
-Cancels the current profiling operation, and discards any recorded data without uploading it.
-
-___
 #### `/spark tps`
-Prints the server TPS history.
+Prints information about the servers TPS (ticks per second) rate.
 
 ___
 #### `/spark healthreport`
@@ -166,6 +191,9 @@ Creates a new heapdump (.hprof snapshot) file and saves to the disk.
 	* Specifies that before recording data, spark should *suggest* that the system performs garbage collection.
 * `--include-non-live`
 	* Specifies that "non-live" objects should be included. (objects that are not reachable from others)
+___
+#### `/spark activity`
+Prints information about recent activity performed by the plugin.
 
 ## License
 
