@@ -51,32 +51,16 @@ public final class CommandMapUtil {
     private static final Field KNOWN_COMMANDS_FIELD;
 
     static {
-        Constructor<PluginCommand> commandConstructor;
         try {
-            commandConstructor = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
-            commandConstructor.setAccessible(true);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            COMMAND_CONSTRUCTOR = PluginCommand.class.getDeclaredConstructor(String.class, Plugin.class);
+            COMMAND_CONSTRUCTOR.setAccessible(true);
+            COMMAND_MAP_FIELD = SimplePluginManager.class.getDeclaredField("commandMap");
+            COMMAND_MAP_FIELD.setAccessible(true);
+            KNOWN_COMMANDS_FIELD = SimpleCommandMap.class.getDeclaredField("knownCommands");
+            KNOWN_COMMANDS_FIELD.setAccessible(true);
+        } catch (NoSuchMethodException | NoSuchFieldException e) {
+            throw new ExceptionInInitializerError(e);
         }
-        COMMAND_CONSTRUCTOR = commandConstructor;
-
-        Field commandMapField;
-        try {
-            commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
-            commandMapField.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-        COMMAND_MAP_FIELD = commandMapField;
-
-        Field knownCommandsField;
-        try {
-            knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
-            knownCommandsField.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-        KNOWN_COMMANDS_FIELD = knownCommandsField;
     }
 
     private static CommandMap getCommandMap() {

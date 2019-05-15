@@ -90,12 +90,17 @@ public final class HeapDumpSummary {
                         return null;
                     }
 
-                    return new Entry(
-                            Integer.parseInt(matcher.group(1)),
-                            Integer.parseInt(matcher.group(2)),
-                            Long.parseLong(matcher.group(3)),
-                            TypeDescriptors.getJavaType(matcher.group(4))
-                    );
+                    try {
+                        return new Entry(
+                                Integer.parseInt(matcher.group(1)),
+                                Integer.parseInt(matcher.group(2)),
+                                Long.parseLong(matcher.group(3)),
+                                TypeDescriptors.getJavaType(matcher.group(4))
+                        );
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList()));
