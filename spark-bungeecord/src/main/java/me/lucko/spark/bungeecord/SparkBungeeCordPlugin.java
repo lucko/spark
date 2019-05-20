@@ -37,10 +37,11 @@ import java.util.stream.Collectors;
 
 public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
 
-    private final SparkPlatform platform = new SparkPlatform(this);
+    private SparkPlatform platform;
 
     @Override
     public void onEnable() {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
         getProxy().getPluginManager().registerCommand(this, new SparkCommand(this));
     }

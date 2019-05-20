@@ -53,10 +53,10 @@ import java.util.stream.Collectors;
 )
 public class SparkVelocityPlugin implements SparkPlugin, Command {
 
-    private final SparkPlatform platform = new SparkPlatform(this);
-
     private final ProxyServer proxy;
     private final Path configDirectory;
+
+    private SparkPlatform platform;
 
     @Inject
     public SparkVelocityPlugin(ProxyServer proxy, @DataDirectory Path configDirectory) {
@@ -66,6 +66,7 @@ public class SparkVelocityPlugin implements SparkPlugin, Command {
 
     @Subscribe(order = PostOrder.FIRST)
     public void onEnable(ProxyInitializeEvent e) {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
         this.proxy.getCommandManager().register(this, "sparkv", "sparkvelocity");
     }

@@ -38,11 +38,12 @@ import java.util.stream.Collectors;
 
 public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
 
-    private final SparkPlatform platform = new SparkPlatform(this);
     private CommandExecutor tpsCommand = null;
+    private SparkPlatform platform;
 
     @Override
     public void onEnable() {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
 
         // override Spigot's TPS command with our own.

@@ -67,7 +67,7 @@ public class SparkSpongePlugin implements SparkPlugin {
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
 
-    private final SparkPlatform platform = new SparkPlatform(this);
+    private SparkPlatform platform;
 
     @Inject
     public SparkSpongePlugin(Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
@@ -78,6 +78,7 @@ public class SparkSpongePlugin implements SparkPlugin {
 
     @Listener
     public void onEnable(GameStartedServerEvent event) {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
         this.game.getCommandManager().register(this, new SparkCommand(this), "spark");
     }
