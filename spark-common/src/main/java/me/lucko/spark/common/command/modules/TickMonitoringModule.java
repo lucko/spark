@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
@@ -68,7 +69,7 @@ public class TickMonitoringModule implements CommandModule {
                             threshold = 100;
                         }
 
-                        this.activeTickMonitor = new ReportingTickMonitor(resp, this.tickCounter, threshold, !arguments.boolFlag("without-gc"));
+                        this.activeTickMonitor = new ReportingTickMonitor(platform, resp, this.tickCounter, threshold, !arguments.boolFlag("without-gc"));
                         this.tickCounter.addTickTask(this.activeTickMonitor);
                     } else {
                         close();
@@ -83,8 +84,8 @@ public class TickMonitoringModule implements CommandModule {
     private class ReportingTickMonitor extends TickMonitor {
         private final CommandResponseHandler resp;
 
-        ReportingTickMonitor(CommandResponseHandler resp, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
-            super(tickCounter, percentageChangeThreshold, monitorGc);
+        ReportingTickMonitor(SparkPlatform platform, CommandResponseHandler resp, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
+            super(platform, tickCounter, percentageChangeThreshold, monitorGc);
             this.resp = resp;
         }
 
