@@ -191,6 +191,12 @@ Creates a new heapdump (.hprof snapshot) file and saves to the disk.
 	* Specifies that before recording data, spark should *suggest* that the system performs garbage collection.
 * `--include-non-live`
 	* Specifies that "non-live" objects should be included. (objects that are not reachable from others)
+* `--xz`
+	* Compress the heap dump with LZMA2 (`.xz`) compression. (slower than gzip but a better compression ratio)
+* `--lzma`
+	* Compress the heap dump with LZMA (`.lzma`) compression. (prefer xz compression over this)
+* `--gzip`
+	* Compress the heap dump with gzip (`.gz`) compression. (faster than LZMA2 but a worse compression ratio)
 ___
 #### `/spark activity`
 Prints information about recent activity performed by the plugin.

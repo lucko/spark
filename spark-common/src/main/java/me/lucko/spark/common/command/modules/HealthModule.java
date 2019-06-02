@@ -26,6 +26,7 @@ import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TpsCalculator;
+import me.lucko.spark.common.util.FormatUtil;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
@@ -144,14 +145,14 @@ public class HealthModule implements CommandModule {
                                 .build()
                         );
                         report.add(TextComponent.builder("    ")
-                                .append(TextComponent.of(formatBytes(heapUsage.getUsed()), TextColor.WHITE))
+                                .append(TextComponent.of(FormatUtil.formatBytes(heapUsage.getUsed()), TextColor.WHITE))
                                 .append(TextComponent.space())
                                 .append(TextComponent.of("/", TextColor.GRAY))
                                 .append(TextComponent.space())
-                                .append(TextComponent.of(formatBytes(heapUsage.getMax()), TextColor.WHITE))
+                                .append(TextComponent.of(FormatUtil.formatBytes(heapUsage.getMax()), TextColor.WHITE))
                                 .append(TextComponent.of("   "))
                                 .append(TextComponent.of("(", TextColor.GRAY))
-                                .append(TextComponent.of(percent(heapUsage.getUsed(), heapUsage.getMax()), TextColor.GREEN))
+                                .append(TextComponent.of(FormatUtil.percent(heapUsage.getUsed(), heapUsage.getMax()), TextColor.GREEN))
                                 .append(TextComponent.of(")", TextColor.GRAY))
                                 .build()
                         );
@@ -167,7 +168,7 @@ public class HealthModule implements CommandModule {
                                     .build()
                             );
                             report.add(TextComponent.builder("    ")
-                                    .append(TextComponent.of(formatBytes(nonHeapUsage.getUsed()), TextColor.WHITE))
+                                    .append(TextComponent.of(FormatUtil.formatBytes(nonHeapUsage.getUsed()), TextColor.WHITE))
                                     .build()
                             );
                             report.add(TextComponent.empty());
@@ -192,14 +193,14 @@ public class HealthModule implements CommandModule {
                                         .build()
                                 );
                                 report.add(TextComponent.builder("    ")
-                                        .append(TextComponent.of(formatBytes(usage.getUsed()), TextColor.WHITE))
+                                        .append(TextComponent.of(FormatUtil.formatBytes(usage.getUsed()), TextColor.WHITE))
                                         .append(TextComponent.space())
                                         .append(TextComponent.of("/", TextColor.GRAY))
                                         .append(TextComponent.space())
-                                        .append(TextComponent.of(formatBytes(usage.getMax()), TextColor.WHITE))
+                                        .append(TextComponent.of(FormatUtil.formatBytes(usage.getMax()), TextColor.WHITE))
                                         .append(TextComponent.of("   "))
                                         .append(TextComponent.of("(", TextColor.GRAY))
-                                        .append(TextComponent.of(percent(usage.getUsed(), usage.getMax()), TextColor.GREEN))
+                                        .append(TextComponent.of(FormatUtil.percent(usage.getUsed(), usage.getMax()), TextColor.GREEN))
                                         .append(TextComponent.of(")", TextColor.GRAY))
                                         .build()
                                 );
@@ -211,7 +212,7 @@ public class HealthModule implements CommandModule {
                                             .append(TextComponent.space())
                                             .append(TextComponent.of("Usage at last GC:", TextColor.GRAY))
                                             .append(TextComponent.space())
-                                            .append(TextComponent.of(formatBytes(collectionUsage.getUsed()), TextColor.WHITE))
+                                            .append(TextComponent.of(FormatUtil.formatBytes(collectionUsage.getUsed()), TextColor.WHITE))
                                             .build()
                                     );
                                 }
@@ -230,14 +231,14 @@ public class HealthModule implements CommandModule {
                                     .build()
                             );
                             report.add(TextComponent.builder("    ")
-                                    .append(TextComponent.of(formatBytes(usedSpace), TextColor.WHITE))
+                                    .append(TextComponent.of(FormatUtil.formatBytes(usedSpace), TextColor.WHITE))
                                     .append(TextComponent.space())
                                     .append(TextComponent.of("/", TextColor.GRAY))
                                     .append(TextComponent.space())
-                                    .append(TextComponent.of(formatBytes(totalSpace), TextColor.WHITE))
+                                    .append(TextComponent.of(FormatUtil.formatBytes(totalSpace), TextColor.WHITE))
                                     .append(TextComponent.of("   "))
                                     .append(TextComponent.of("(", TextColor.GRAY))
-                                    .append(TextComponent.of(percent(usedSpace, totalSpace), TextColor.GREEN))
+                                    .append(TextComponent.of(FormatUtil.percent(usedSpace, totalSpace), TextColor.GREEN))
                                     .append(TextComponent.of(")", TextColor.GRAY))
                                     .build()
                             );
@@ -255,11 +256,6 @@ public class HealthModule implements CommandModule {
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--memory"))
                 .build()
         );
-    }
-
-    private static String percent(double value, double max) {
-        double percent = (value * 100d) / max;
-        return (int) percent + "%";
     }
 
     private static TextComponent formatTps(double tps) {
@@ -285,7 +281,7 @@ public class HealthModule implements CommandModule {
             color = TextColor.GREEN;
         }
 
-        return TextComponent.of(percent(usage, 1d), color);
+        return TextComponent.of(FormatUtil.percent(usage, 1d), color);
     }
 
     private static TextComponent generateMemoryUsageDiagram(MemoryUsage usage, int length) {
@@ -354,15 +350,6 @@ public class HealthModule implements CommandModule {
                 .append(TextComponent.of(line, TextColor.GRAY))
                 .append(TextComponent.of("]", TextColor.DARK_GRAY))
                 .build();
-    }
-
-    private static String formatBytes(long bytes) {
-        if (bytes == 0) {
-            return "0 bytes";
-        }
-        String[] sizes = new String[]{"bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
-        int sizeIndex = (int) (Math.log(bytes) / Math.log(1024));
-        return String.format("%.1f", bytes / Math.pow(1024, sizeIndex)) + " " + sizes[sizeIndex];
     }
 
 }

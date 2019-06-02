@@ -15,6 +15,7 @@ shadowJar {
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'org.tukaani.xz', 'xz'
 }
 
 artifacts {

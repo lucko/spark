@@ -1,6 +1,7 @@
 dependencies {
     compile 'com.squareup.okhttp3:okhttp:3.14.1'
     compile 'com.squareup.okio:okio:1.17.3'
+    compile 'org.tukaani:xz:1.8'
     compile('net.kyori:text-api:3.0.0') {
         exclude(module: 'checker-qual')
     }
