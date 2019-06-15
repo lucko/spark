@@ -75,7 +75,7 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
 
     @Override
     public int compareTo(StackTraceNode that) {
-        int i = -Long.compare(this.getTotalTime(), that.getTotalTime());
+        int i = -Double.compare(this.getTotalTime(), that.getTotalTime());
         if (i != 0) {
             return i;
         }

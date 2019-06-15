@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.LongAdder;
 
 /**
@@ -55,12 +54,8 @@ public abstract class AbstractNode {
      *
      * @return the total time
      */
-    public long getTotalTime() {
-        long millis = TimeUnit.MICROSECONDS.toMillis(this.totalTime.longValue());
-        if (millis == 0) {
-            return 1;
-        }
-        return millis;
+    public double getTotalTime() {
+        return this.totalTime.longValue() / 1000d;
     }
 
     private AbstractNode resolveChild(String className, String methodName, int lineNumber) {
