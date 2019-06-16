@@ -78,16 +78,16 @@ public class Sampler implements Runnable {
     /** The unix timestamp (in millis) when this sampler should automatically complete.*/
     private final long endTime; // -1 for nothing
     
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers, boolean ignoreSleeping) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, includeLineNumbers);
+        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping);
         this.interval = interval;
         this.endTime = endTime;
     }
 
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers, TickCounter tickCounter, int tickLengthThreshold) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers, boolean ignoreSleeping, TickCounter tickCounter, int tickLengthThreshold) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, tickCounter, threadGrouper, interval, includeLineNumbers, tickLengthThreshold);
+        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping, tickCounter, tickLengthThreshold);
         this.interval = interval;
         this.endTime = endTime;
     }
@@ -150,15 +150,10 @@ public class Sampler implements Runnable {
         @Override
         public void run() {
             for (ThreadInfo threadInfo : this.threadDumps) {
-                long threadId = threadInfo.getThreadId();
-                String threadName = threadInfo.getThreadName();
-                StackTraceElement[] stack = threadInfo.getStackTrace();
-
-                if (threadName == null || stack == null) {
+                if (threadInfo.getThreadName() == null || threadInfo.getStackTrace() == null) {
                     continue;
                 }
-
-                this.dataAggregator.insertData(threadId, threadName, stack);
+                this.dataAggregator.insertData(threadInfo);
             }
         }
     }

@@ -76,6 +76,7 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("interval", "interval millis")
                 .argumentUsage("only-ticks-over", "tick length millis")
                 .argumentUsage("include-line-numbers", null)
+                .argumentUsage("ignore-sleeping", null)
                 .executor((platform, sender, resp, arguments) -> {
                     if (arguments.boolFlag("info")) {
                         if (this.activeSampler == null) {
@@ -135,6 +136,7 @@ public class SamplerModule implements CommandModule {
                     }
 
                     boolean includeLineNumbers = arguments.boolFlag("include-line-numbers");
+                    boolean ignoreSleeping = arguments.boolFlag("ignore-sleeping");
 
                     Set<String> threads = arguments.stringFlag("thread");
                     ThreadDumper threadDumper;
@@ -186,6 +188,7 @@ public class SamplerModule implements CommandModule {
                     }
                     builder.samplingInterval(intervalMillis);
                     builder.includeLineNumbers(includeLineNumbers);
+                    builder.ignoreSleeping(ignoreSleeping);
                     if (ticksOver != -1) {
                         builder.ticksOver(ticksOver, tickCounter);
                     }
@@ -198,7 +201,7 @@ public class SamplerModule implements CommandModule {
                         resp.broadcastPrefixed(TextComponent.of("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
                     }
 
-                    CompletableFuture<Sampler> future = activeSampler.getFuture();
+                    CompletableFuture<Sampler> future = this.activeSampler.getFuture();
 
                     // send message if profiling fails
                     future.whenCompleteAsync((s, throwable) -> {
@@ -230,7 +233,7 @@ public class SamplerModule implements CommandModule {
 
                     List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
                             "--timeout", "--regex", "--combine-all", "--not-combined", "--interval",
-                            "--only-ticks-over", "--include-line-numbers"));
+                            "--only-ticks-over", "--include-line-numbers", "--ignore-sleeping"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times
 

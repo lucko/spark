@@ -24,54 +24,30 @@ import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
+import java.lang.management.ThreadInfo;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Basic implementation of {@link DataAggregator}.
  */
-public class SimpleDataAggregator implements DataAggregator {
-
-    /** A map of root stack nodes for each thread with sampling data */
-    private final Map<String, ThreadNode> threadData = new ConcurrentHashMap<>();
-
-    /** The worker pool used for sampling */
-    private final ExecutorService workerPool;
-
-    /** The instance used to group threads together */
-    private final ThreadGrouper threadGrouper;
-
-    /** The interval to wait between sampling, in microseconds */
-    private final int interval;
-
-    /** If line numbers should be included in the output */
-    private final boolean includeLineNumbers;
-
-    public SimpleDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers) {
-        this.workerPool = workerPool;
-        this.threadGrouper = threadGrouper;
-        this.interval = interval;
-        this.includeLineNumbers = includeLineNumbers;
-    }
-
-    private ThreadNode getNode(String group) {
-        ThreadNode node = this.threadData.get(group); // fast path
-        if (node != null) {
-            return node;
-        }
-        return this.threadData.computeIfAbsent(group, ThreadNode::new);
+public class SimpleDataAggregator extends AbstractDataAggregator {
+    public SimpleDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, boolean ignoreSleeping) {
+        super(workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping);
     }
 
     @Override
-    public void insertData(long threadId, String threadName, StackTraceElement[] stack) {
-        try {
-            ThreadNode node = getNode(this.threadGrouper.getGroup(threadId, threadName));
-            node.log(stack, this.interval, this.includeLineNumbers);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public SamplerMetadata.DataAggregator getMetadata() {
+        return SamplerMetadata.DataAggregator.newBuilder()
+                .setType(SamplerMetadata.DataAggregator.Type.SIMPLE)
+                .setThreadGrouper(ThreadGrouper.asProto(this.threadGrouper))
+                .build();
+    }
+
+    @Override
+    public void insertData(ThreadInfo threadInfo) {
+        writeData(threadInfo);
     }
 
     @Override
@@ -85,13 +61,5 @@ public class SimpleDataAggregator implements DataAggregator {
         }
 
         return this.threadData;
-    }
-
-    @Override
-    public SamplerMetadata.DataAggregator getMetadata() {
-        return SamplerMetadata.DataAggregator.newBuilder()
-                .setType(SamplerMetadata.DataAggregator.Type.SIMPLE)
-                .setThreadGrouper(ThreadGrouper.asProto(this.threadGrouper))
-                .build();
     }
 }

@@ -23,6 +23,7 @@ package me.lucko.spark.common.sampler.aggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
+import java.lang.management.ThreadInfo;
 import java.util.Map;
 
 /**
@@ -39,11 +40,10 @@ public interface DataAggregator {
 
     /**
      * Inserts sampling data into this aggregator
-     * @param threadId the id of the thread
-     * @param threadName the name of the thread
-     * @param stack the call stack
+     *
+     * @param threadInfo the thread info
      */
-    void insertData(long threadId, String threadName, StackTraceElement[] stack);
+    void insertData(ThreadInfo threadInfo);
 
     /**
      * Gets metadata about the data aggregator instance.

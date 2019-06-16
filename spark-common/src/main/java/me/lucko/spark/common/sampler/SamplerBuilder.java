@@ -29,6 +29,7 @@ public class SamplerBuilder {
 
     private double samplingInterval = 4; // milliseconds
     private boolean includeLineNumbers = false;
+    private boolean ignoreSleeping = false;
     private long timeout = -1;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
     private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;
@@ -73,14 +74,19 @@ public class SamplerBuilder {
         return this;
     }
 
+    public SamplerBuilder ignoreSleeping(boolean ignoreSleeping) {
+        this.ignoreSleeping = ignoreSleeping;
+        return this;
+    }
+
     public Sampler start() {
         Sampler sampler;
 
         int intervalMicros = (int) (this.samplingInterval * 1000d);
-        if (this.ticksOver != -1 && this.tickCounter != null) {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.tickCounter, this.ticksOver);
+        if (this.ticksOver == -1 || this.tickCounter == null) {
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.ignoreSleeping);
         } else {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers);
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.ignoreSleeping, this.tickCounter, this.ticksOver);
         }
 
         sampler.start();

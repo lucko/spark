@@ -22,14 +22,13 @@ package me.lucko.spark.common.sampler.aggregator;
 
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.TickCounter;
-import me.lucko.spark.common.sampler.node.AbstractNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
+import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -37,25 +36,10 @@ import java.util.concurrent.TimeUnit;
  * Implementation of {@link DataAggregator} which supports only including sampling data from "ticks"
  * which exceed a certain threshold in duration.
  */
-public class TickedDataAggregator implements DataAggregator {
-
-    /** A map of root stack nodes for each thread with sampling data */
-    private final Map<String, ThreadNode> threadData = new ConcurrentHashMap<>();
-
-    /** The worker pool for inserting stack nodes */
-    private final ExecutorService workerPool;
+public class TickedDataAggregator extends AbstractDataAggregator {
 
     /** Used to monitor the current "tick" of the server */
     private final TickCounter tickCounter;
-
-    /** The instance used to group threads together */
-    private final ThreadGrouper threadGrouper;
-
-    /** The interval to wait between sampling, in microseconds */
-    private final int interval;
-
-    /** If line numbers should be included in the output */
-    private final boolean includeLineNumbers;
 
     /** Tick durations under this threshold will not be inserted, measured in microseconds */
     private final long tickLengthThreshold;
@@ -69,12 +53,9 @@ public class TickedDataAggregator implements DataAggregator {
     private int currentTick = -1;
     private TickList currentData = new TickList(0);
 
-    public TickedDataAggregator(ExecutorService workerPool, TickCounter tickCounter, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, int tickLengthThreshold) {
-        this.workerPool = workerPool;
+    public TickedDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, boolean ignoreSleeping, TickCounter tickCounter, int tickLengthThreshold) {
+        super(workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping);
         this.tickCounter = tickCounter;
-        this.threadGrouper = threadGrouper;
-        this.interval = interval;
-        this.includeLineNumbers = includeLineNumbers;
         this.tickLengthThreshold = TimeUnit.MILLISECONDS.toMicros(tickLengthThreshold);
         // 50 millis in a tick, plus 10 so we have a bit of room to go over
         double intervalMilliseconds = interval / 1000d;
@@ -82,7 +63,16 @@ public class TickedDataAggregator implements DataAggregator {
     }
 
     @Override
-    public void insertData(long threadId, String threadName, StackTraceElement[] stack) {
+    public SamplerMetadata.DataAggregator getMetadata() {
+        return SamplerMetadata.DataAggregator.newBuilder()
+                .setType(SamplerMetadata.DataAggregator.Type.TICKED)
+                .setThreadGrouper(ThreadGrouper.asProto(this.threadGrouper))
+                .setTickLengthThreshold(this.tickLengthThreshold)
+                .build();
+    }
+
+    @Override
+    public void insertData(ThreadInfo threadInfo) {
         synchronized (this.mutex) {
             int tick = this.tickCounter.getCurrentTick();
             if (this.currentTick != tick) {
@@ -91,10 +81,7 @@ public class TickedDataAggregator implements DataAggregator {
                 this.currentData = new TickList(this.expectedSize);
             }
 
-            // form the queued data
-            QueuedThreadInfo queuedData = new QueuedThreadInfo(threadId, threadName, stack);
-            // insert it
-            this.currentData.addData(queuedData);
+            this.currentData.addData(threadInfo);
         }
     }
 
@@ -131,37 +118,8 @@ public class TickedDataAggregator implements DataAggregator {
         return this.threadData;
     }
 
-    private ThreadNode getNode(String group) {
-        ThreadNode node = this.threadData.get(group); // fast path
-        if (node != null) {
-            return node;
-        }
-        return this.threadData.computeIfAbsent(group, ThreadNode::new);
-    }
-
-    // called by TickList
-    void insertData(List<QueuedThreadInfo> dataList) {
-        for (QueuedThreadInfo data : dataList) {
-            try {
-                AbstractNode node = getNode(this.threadGrouper.getGroup(data.threadId, data.threadName));
-                node.log(data.stack, this.interval, this.includeLineNumbers);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    @Override
-    public SamplerMetadata.DataAggregator getMetadata() {
-        return SamplerMetadata.DataAggregator.newBuilder()
-                .setType(SamplerMetadata.DataAggregator.Type.TICKED)
-                .setThreadGrouper(ThreadGrouper.asProto(this.threadGrouper))
-                .setTickLengthThreshold(this.tickLengthThreshold)
-                .build();
-    }
-
     private final class TickList implements Runnable {
-        private final List<QueuedThreadInfo> list;
+        private final List<ThreadInfo> list;
 
         TickList(int expectedSize) {
             this.list = new ArrayList<>(expectedSize);
@@ -169,27 +127,17 @@ public class TickedDataAggregator implements DataAggregator {
 
         @Override
         public void run() {
-            insertData(this.list);
+            for (ThreadInfo data : this.list) {
+                writeData(data);
+            }
         }
 
-        public List<QueuedThreadInfo> getList() {
+        public List<ThreadInfo> getList() {
             return this.list;
         }
 
-        public void addData(QueuedThreadInfo data) {
+        public void addData(ThreadInfo data) {
             this.list.add(data);
-        }
-    }
-
-    private static final class QueuedThreadInfo {
-        private final long threadId;
-        private final String threadName;
-        private final StackTraceElement[] stack;
-
-        QueuedThreadInfo(long threadId, String threadName, StackTraceElement[] stack) {
-            this.threadId = threadId;
-            this.threadName = threadName;
-            this.stack = stack;
         }
     }
 }
