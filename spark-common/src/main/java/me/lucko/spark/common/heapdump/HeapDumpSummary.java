@@ -97,7 +97,7 @@ public final class HeapDumpSummary {
                                 TypeDescriptors.getJavaType(matcher.group(4))
                         );
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        new IllegalArgumentException("Exception parsing line: " + line, e).printStackTrace();
                         return null;
                     }
                 })
