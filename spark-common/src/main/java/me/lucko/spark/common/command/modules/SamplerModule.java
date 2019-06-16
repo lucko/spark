@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class SamplerModule implements CommandModule {
-    private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType SPARK_SAMPLER_MEDIA_TYPE = MediaType.parse("application/x-spark-sampler");
 
     /** The WarmRoast instance currently running, if any */
     private Sampler activeSampler = null;
@@ -246,7 +246,7 @@ public class SamplerModule implements CommandModule {
         platform.getPlugin().runAsync(() -> {
             byte[] output = sampler.formCompressedDataPayload(resp.sender());
             try {
-                String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, JSON_TYPE, false).key();
+                String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE, false).key();
                 String url = SparkPlatform.VIEWER_URL + key;
 
                 resp.broadcastPrefixed(TextComponent.of("Sampling results:", TextColor.GOLD));

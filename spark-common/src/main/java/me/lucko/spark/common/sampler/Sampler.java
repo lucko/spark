@@ -22,22 +22,20 @@
 package me.lucko.spark.common.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.gson.Gson;
-import com.google.gson.stream.JsonWriter;
 import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
 import me.lucko.spark.common.sampler.aggregator.TickedDataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.proto.SparkProtos.SamplerData;
+import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -165,56 +163,31 @@ public class Sampler implements Runnable {
         }
     }
 
-    private void writeMetadata(JsonWriter writer) throws IOException {
-        writer.name("startTime").value(this.startTime);
-        writer.name("interval").value(this.interval);
-
-        writer.name("threadDumper").beginObject();
-        this.threadDumper.writeMetadata(writer);
-        writer.endObject();
-
-        writer.name("dataAggregator").beginObject();
-        this.dataAggregator.writeMetadata(writer);
-        writer.endObject();
-    }
-
-    private void writeOutput(JsonWriter writer, CommandSender creator) throws IOException {
-        writer.beginObject();
-
-        writer.name("type").value("sampler");
-
-        writer.name("metadata").beginObject();
-        writeMetadata(writer);
-
-        writer.name("user");
-        new Gson().toJson(creator.toData().serialize(), writer);
-
-        writer.endObject();
-
-        writer.name("threads").beginArray();
+    private SamplerData toProto(CommandSender creator) {
+        SamplerData.Builder proto = SamplerData.newBuilder();
+        proto.setMetadata(SamplerMetadata.newBuilder()
+                .setUser(creator.toData().toProto())
+                .setStartTime(this.startTime)
+                .setInterval(this.interval)
+                .setThreadDumper(this.threadDumper.getMetadata())
+                .setDataAggregator(this.dataAggregator.getMetadata())
+                .build()
+        );
 
         List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
         data.sort(Map.Entry.comparingByKey());
 
         for (Map.Entry<String, ThreadNode> entry : data) {
-            writer.beginObject();
-            writer.name("threadName").value(entry.getKey());
-            writer.name("totalTime").value(entry.getValue().getTotalTime());
-            writer.name("rootNode");
-            entry.getValue().serializeTo(writer);
-            writer.endObject();
+            proto.addThreads(entry.getValue().toProto());
         }
 
-        writer.endArray();
-        writer.endObject();
+        return proto.build();
     }
 
     public byte[] formCompressedDataPayload(CommandSender creator) {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(byteOut), StandardCharsets.UTF_8)) {
-            try (JsonWriter jsonWriter = new JsonWriter(writer)) {
-                writeOutput(jsonWriter, creator);
-            }
+        try (OutputStream out = new GZIPOutputStream(byteOut)) {
+            toProto(creator).writeTo(out);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

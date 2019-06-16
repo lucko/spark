@@ -20,9 +20,7 @@
 
 package me.lucko.spark.common.sampler.node;
 
-import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
+import me.lucko.spark.proto.SparkProtos;
 
 /**
  * The root of a sampling stack for a given thread / thread group.
@@ -38,7 +36,15 @@ public final class ThreadNode extends AbstractNode {
         this.threadName = threadName;
     }
 
-    protected void appendMetadata(JsonWriter writer) throws IOException {
-        writer.name("name").value(this.threadName);
+    public SparkProtos.ThreadNode toProto() {
+        SparkProtos.ThreadNode.Builder proto = SparkProtos.ThreadNode.newBuilder()
+                .setName(this.threadName)
+                .setTime(getTotalTime());
+
+        for (StackTraceNode child : getChildren()) {
+            proto.addChildren(child.toProto());
+        }
+
+        return proto.build();
     }
 }

@@ -23,6 +23,7 @@ package me.lucko.spark.common;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import me.lucko.spark.proto.SparkProtos.CommandSenderData;
 import net.kyori.text.Component;
 
 import java.util.UUID;
@@ -70,6 +71,18 @@ public interface CommandSender {
                 user.add("uniqueId", new JsonPrimitive(this.uniqueId.toString()));
             }
             return user;
+        }
+
+        public CommandSenderData toProto() {
+            CommandSenderData.Builder proto = CommandSenderData.newBuilder()
+                    .setType(isPlayer() ? CommandSenderData.Type.PLAYER : CommandSenderData.Type.OTHER)
+                    .setName(this.name);
+
+            if (this.uniqueId != null) {
+                proto.setUniqueId(this.uniqueId.toString());
+            }
+
+            return proto.build();
         }
 
         public static CommandSender.Data deserialize(JsonElement element) {

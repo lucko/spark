@@ -21,9 +21,7 @@
 
 package me.lucko.spark.common.sampler.node;
 
-import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
+import me.lucko.spark.proto.SparkProtos;
 
 /**
  * Represents a stack trace element within the {@link AbstractNode node} structure.
@@ -60,13 +58,21 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
         this.lineNumber = lineNumber;
     }
 
-    @Override
-    protected void appendMetadata(JsonWriter writer) throws IOException {
-        writer.name("cl").value(this.className);
-        writer.name("m").value(this.methodName);
+    public SparkProtos.StackTraceNode toProto() {
+        SparkProtos.StackTraceNode.Builder proto = SparkProtos.StackTraceNode.newBuilder()
+                .setTime(getTotalTime())
+                .setClassName(this.className)
+                .setMethodName(this.methodName);
+
         if (this.lineNumber >= 0) {
-            writer.name("ln").value(this.lineNumber);
+            proto.setLineNumber(this.lineNumber);
         }
+
+        for (StackTraceNode child : getChildren()) {
+            proto.addChildren(child.toProto());
+        }
+
+        return proto.build();
     }
 
     private String key() {

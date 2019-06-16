@@ -20,13 +20,12 @@
 
 package me.lucko.spark.common.sampler.aggregator;
 
-import com.google.gson.stream.JsonWriter;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.common.sampler.node.AbstractNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -153,10 +152,12 @@ public class TickedDataAggregator implements DataAggregator {
     }
 
     @Override
-    public void writeMetadata(JsonWriter writer) throws IOException {
-        writer.name("type").value("ticked");
-        writer.name("threadGrouper").value(this.threadGrouper.name().toLowerCase());
-        writer.name("tickLengthThreshold").value(this.tickLengthThreshold);
+    public SamplerMetadata.DataAggregator getMetadata() {
+        return SamplerMetadata.DataAggregator.newBuilder()
+                .setType(SamplerMetadata.DataAggregator.Type.TICKED)
+                .setThreadGrouper(ThreadGrouper.asProto(this.threadGrouper))
+                .setTickLengthThreshold(this.tickLengthThreshold)
+                .build();
     }
 
     private final class TickList implements Runnable {

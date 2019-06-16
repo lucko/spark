@@ -18,36 +18,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler.aggregator;
+package me.lucko.spark.common.sampler.protocol;
 
-import me.lucko.spark.common.sampler.node.ThreadNode;
-import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+public interface ProtocolConstants {
 
-import java.util.Map;
+    int VERSION = 1;
+    int SAMPLER_TYPE = 0;
 
-/**
- * Aggregates sampling data.
- */
-public interface DataAggregator {
-
-    /**
-     * Forms the output data
-     *
-     * @return the output data
-     */
-    Map<String, ThreadNode> getData();
-
-    /**
-     * Inserts sampling data into this aggregator
-     * @param threadId the id of the thread
-     * @param threadName the name of the thread
-     * @param stack the call stack
-     */
-    void insertData(long threadId, String threadName, StackTraceElement[] stack);
-
-    /**
-     * Gets metadata about the data aggregator instance.
-     */
-    SamplerMetadata.DataAggregator getMetadata();
+    byte THREAD_NODE_TYPE = 0;
+    byte STACK_TRACE_NODE_TYPE = 1;
 
 }

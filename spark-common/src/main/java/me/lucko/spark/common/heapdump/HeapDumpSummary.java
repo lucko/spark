@@ -20,20 +20,19 @@
 
 package me.lucko.spark.common.heapdump;
 
-import com.google.gson.Gson;
-import com.google.gson.stream.JsonWriter;
 import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.util.TypeDescriptors;
+import me.lucko.spark.proto.SparkProtos;
+import me.lucko.spark.proto.SparkProtos.HeapData;
+import me.lucko.spark.proto.SparkProtos.HeapEntry;
 
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -113,34 +112,24 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
-    private void writeOutput(JsonWriter writer, CommandSender creator) throws IOException {
-        writer.beginObject();
-        writer.name("type").value("heap");
+    private HeapData toProto(CommandSender creator) {
+        HeapData.Builder proto = HeapData.newBuilder();
+        proto.setMetadata(SparkProtos.HeapMetadata.newBuilder()
+                .setUser(creator.toData().toProto())
+                .build()
+        );
 
-        writer.name("metadata").beginObject();
-        writer.name("user");
-        new Gson().toJson(creator.toData().serialize(), writer);
-        writer.endObject();
-
-        writer.name("entries").beginArray();
         for (Entry entry : this.entries) {
-            writer.beginObject();
-            writer.name("#").value(entry.getOrder());
-            writer.name("i").value(entry.getInstances());
-            writer.name("s").value(entry.getBytes());
-            writer.name("t").value(entry.getType());
-            writer.endObject();
+            proto.addEntries(entry.toProto());
         }
-        writer.endArray();
-        writer.endObject();
+
+        return proto.build();
     }
 
     public byte[] formCompressedDataPayload(CommandSender creator) {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        try (Writer writer = new OutputStreamWriter(new GZIPOutputStream(byteOut), StandardCharsets.UTF_8)) {
-            try (JsonWriter jsonWriter = new JsonWriter(writer)) {
-                writeOutput(jsonWriter, creator);
-            }
+        try (OutputStream out = new GZIPOutputStream(byteOut)) {
+            toProto(creator).writeTo(out);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -174,6 +163,15 @@ public final class HeapDumpSummary {
 
         public String getType() {
             return this.type;
+        }
+
+        public HeapEntry toProto() {
+            return HeapEntry.newBuilder()
+                    .setOrder(this.order)
+                    .setInstances(this.instances)
+                    .setSize(this.bytes)
+                    .setType(this.type)
+                    .build();
         }
     }
 

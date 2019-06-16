@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package spark;
+
+option java_package = "me.lucko.spark.proto";
+option java_outer_classname = "SparkProtos";
+
+message CommandSenderData {
+  Type type = 1;
+  string name = 2;
+  string unique_id = 3;
+
+  enum Type {
+    OTHER = 0;
+    PLAYER = 1;
+  }
+}
+
+message HeapData {
+  HeapMetadata metadata = 1;
+  repeated HeapEntry entries = 2;
+}
+
+message HeapMetadata {
+  CommandSenderData user = 1;
+}
+
+message HeapEntry {
+  int32 order = 1;
+  int32 instances = 2;
+  int64 size = 3;
+  string type = 4;
+}
+
+message SamplerData {
+  SamplerMetadata metadata = 1;
+  repeated ThreadNode threads = 2;
+}
+
+message SamplerMetadata {
+  CommandSenderData user = 1;
+  int64 start_time = 2;
+  int32 interval = 3;
+  ThreadDumper thread_dumper = 4;
+  DataAggregator data_aggregator = 5;
+
+  message ThreadDumper {
+    Type type = 1;
+    repeated int64 ids = 2; // optional
+    repeated string patterns = 3; // optional
+
+    enum Type {
+      ALL = 0;
+      SPECIFIC = 1;
+      REGEX = 2;
+    }
+  }
+
+  message DataAggregator {
+    Type type = 1;
+    ThreadGrouper thread_grouper = 2;
+    int64 tick_length_threshold = 3; // optional
+
+    enum Type {
+      SIMPLE = 0;
+      TICKED = 1;
+    }
+
+    enum ThreadGrouper {
+      BY_NAME = 0;
+      BY_POOL = 1;
+      AS_ONE = 2;
+    }
+  }
+}
+
+message StackTraceNode {
+  double time = 1;
+  repeated StackTraceNode children = 2;
+  string class_name = 3;
+  string method_name = 4;
+  int32 line_number = 5; // optional
+}
+
+message ThreadNode {
+  string name = 1;
+  double time = 2;
+  repeated StackTraceNode children = 3;
+}

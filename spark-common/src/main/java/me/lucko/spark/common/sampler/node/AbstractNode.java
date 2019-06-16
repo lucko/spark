@@ -21,11 +21,7 @@
 
 package me.lucko.spark.common.sampler.node;
 
-import com.google.gson.stream.JsonWriter;
-
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +99,7 @@ public abstract class AbstractNode {
         child.log(elements, offset + 1, time, includeLineNumbers);
     }
 
-    private Collection<? extends AbstractNode> getChildren() {
+    protected List<StackTraceNode> getChildren() {
         if (this.children.isEmpty()) {
             return Collections.emptyList();
         }
@@ -112,29 +108,5 @@ public abstract class AbstractNode {
         list.sort(null);
         return list;
     }
-
-    public void serializeTo(JsonWriter writer) throws IOException {
-        writer.beginObject();
-
-        // append metadata about this node
-        appendMetadata(writer);
-
-        // include the total time recorded for this node
-        writer.name("t").value(getTotalTime());
-
-        // append child nodes, if any are present
-        Collection<? extends AbstractNode> childNodes = getChildren();
-        if (!childNodes.isEmpty()) {
-            writer.name("c").beginArray();
-            for (AbstractNode child : childNodes) {
-                child.serializeTo(writer);
-            }
-            writer.endArray();
-        }
-
-        writer.endObject();
-    }
-
-    protected abstract void appendMetadata(JsonWriter writer) throws IOException;
 
 }

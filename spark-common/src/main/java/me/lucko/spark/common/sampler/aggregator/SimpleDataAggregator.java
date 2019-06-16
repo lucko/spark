@@ -20,11 +20,10 @@
 
 package me.lucko.spark.common.sampler.aggregator;
 
-import com.google.gson.stream.JsonWriter;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -89,8 +88,10 @@ public class SimpleDataAggregator implements DataAggregator {
     }
 
     @Override
-    public void writeMetadata(JsonWriter writer) throws IOException {
-        writer.name("type").value("simple");
-        writer.name("threadGrouper").value(this.threadGrouper.name().toLowerCase());
+    public SamplerMetadata.DataAggregator getMetadata() {
+        return SamplerMetadata.DataAggregator.newBuilder()
+                .setType(SamplerMetadata.DataAggregator.Type.SIMPLE)
+                .setThreadGrouper(ThreadGrouper.asProto(this.threadGrouper))
+                .build();
     }
 }

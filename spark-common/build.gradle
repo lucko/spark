@@ -1,4 +1,9 @@
+plugins {
+    id 'com.google.protobuf' version '0.8.8'
+}
+
 dependencies {
+    compile 'com.google.protobuf:protobuf-java:3.0.0'
     compile 'com.squareup.okhttp3:okhttp:3.14.1'
     compile 'com.squareup.okio:okio:1.17.3'
     compile 'org.tukaani:xz:1.8'
@@ -14,4 +19,10 @@ dependencies {
     }
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
+}
+
+protobuf {
+    protoc {
+        artifact = 'com.google.protobuf:protoc:3.0.0'
+    }
 }

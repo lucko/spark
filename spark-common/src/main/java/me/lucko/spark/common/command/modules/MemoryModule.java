@@ -54,7 +54,7 @@ import java.util.function.LongConsumer;
 import java.util.zip.GZIPOutputStream;
 
 public class MemoryModule implements CommandModule {
-    private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType SPARK_HEAP_MEDIA_TYPE = MediaType.parse("application/x-spark-heap");
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
@@ -81,7 +81,7 @@ public class MemoryModule implements CommandModule {
 
                         byte[] output = heapDump.formCompressedDataPayload(sender);
                         try {
-                            String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, JSON_TYPE, false).key();
+                            String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_HEAP_MEDIA_TYPE, false).key();
                             String url = SparkPlatform.VIEWER_URL + key;
 
                             resp.broadcastPrefixed(TextComponent.of("Heap dump summmary output:", TextColor.GOLD));

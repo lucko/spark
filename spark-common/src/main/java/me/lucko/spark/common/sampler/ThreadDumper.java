@@ -21,12 +21,12 @@
 
 package me.lucko.spark.common.sampler;
 
-import com.google.gson.stream.JsonWriter;
 import me.lucko.spark.common.util.ThreadFinder;
+import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
-import java.io.IOException;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -50,12 +50,9 @@ public interface ThreadDumper {
     ThreadInfo[] dumpThreads(ThreadMXBean threadBean);
 
     /**
-     * Writes metadata about the thread dumper instance to the given {@code writer}.
-     *
-     * @param writer the writer
-     * @throws IOException if thrown by the writer
+     * Gets metadata about the thread dumper instance.
      */
-    void writeMetadata(JsonWriter writer) throws IOException;
+    SamplerMetadata.ThreadDumper getMetadata();
 
     /**
      * Implementation of {@link ThreadDumper} that generates data for all threads.
@@ -67,8 +64,10 @@ public interface ThreadDumper {
         }
 
         @Override
-        public void writeMetadata(JsonWriter writer) throws IOException {
-            writer.name("type").value("all");
+        public SamplerMetadata.ThreadDumper getMetadata() {
+            return SamplerMetadata.ThreadDumper.newBuilder()
+                    .setType(SamplerMetadata.ThreadDumper.Type.ALL)
+                    .build();
         }
     };
 
@@ -96,13 +95,11 @@ public interface ThreadDumper {
         }
 
         @Override
-        public void writeMetadata(JsonWriter writer) throws IOException {
-            writer.name("type").value("specific");
-            writer.name("ids").beginArray();
-            for (long id : this.ids) {
-                writer.value(id);
-            }
-            writer.endArray();
+        public SamplerMetadata.ThreadDumper getMetadata() {
+            return SamplerMetadata.ThreadDumper.newBuilder()
+                    .setType(SamplerMetadata.ThreadDumper.Type.SPECIFIC)
+                    .addAllIds(Arrays.stream(this.ids).boxed().collect(Collectors.toList()))
+                    .build();
         }
     }
 
@@ -151,13 +148,11 @@ public interface ThreadDumper {
         }
 
         @Override
-        public void writeMetadata(JsonWriter writer) throws IOException {
-            writer.name("type").value("regex");
-            writer.name("patterns").beginArray();
-            for (Pattern pattern : this.namePatterns) {
-                writer.value(pattern.pattern());
-            }
-            writer.endArray();
+        public SamplerMetadata.ThreadDumper getMetadata() {
+            return SamplerMetadata.ThreadDumper.newBuilder()
+                    .setType(SamplerMetadata.ThreadDumper.Type.REGEX)
+                    .addAllPatterns(this.namePatterns.stream().map(Pattern::pattern).collect(Collectors.toList()))
+                    .build();
         }
     }
 

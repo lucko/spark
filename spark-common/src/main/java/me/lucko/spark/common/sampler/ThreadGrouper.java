@@ -20,6 +20,8 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -88,5 +90,18 @@ public enum ThreadGrouper {
      * @return the group
      */
     public abstract String getGroup(long threadId, String threadName);
+
+    public static SamplerMetadata.DataAggregator.ThreadGrouper asProto(ThreadGrouper threadGrouper) {
+        switch (threadGrouper) {
+            case BY_NAME:
+                return SamplerMetadata.DataAggregator.ThreadGrouper.BY_NAME;
+            case BY_POOL:
+                return SamplerMetadata.DataAggregator.ThreadGrouper.BY_POOL;
+            case AS_ONE:
+                return SamplerMetadata.DataAggregator.ThreadGrouper.AS_ONE;
+            default:
+                throw new AssertionError();
+        }
+    }
 
 }
