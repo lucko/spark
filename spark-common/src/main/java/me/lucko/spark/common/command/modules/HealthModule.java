@@ -41,7 +41,7 @@ import java.lang.management.MemoryUsage;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -92,7 +92,7 @@ public class HealthModule implements CommandModule {
                 .executor((platform, sender, resp, arguments) -> {
                     resp.replyPrefixed(TextComponent.of("Generating server health report..."));
                     platform.getPlugin().runAsync(() -> {
-                        List<Component> report = new ArrayList<>(15);
+                        List<Component> report = new LinkedList<>();
                         report.add(TextComponent.empty());
 
                         TpsCalculator tpsCalculator = platform.getTpsCalculator();
@@ -248,9 +248,7 @@ public class HealthModule implements CommandModule {
                             e.printStackTrace();
                         }
 
-                        TextComponent.Builder builder = TextComponent.builder("");
-                        report.forEach(line -> builder.append(line).append(TextComponent.newline()));
-                        resp.reply(builder.build());
+                        report.forEach(resp::reply);
                     });
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--memory"))
