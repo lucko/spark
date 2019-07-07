@@ -20,68 +20,99 @@
 
 package me.lucko.spark.common.command.modules;
 
-import me.lucko.spark.common.ActivityLog;
+import me.lucko.spark.common.ActivityLog.Activity;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
+import me.lucko.spark.common.command.tabcomplete.TabCompleter;
+import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.event.ClickEvent;
+import net.kyori.text.feature.pagination.Pagination;
+import net.kyori.text.feature.pagination.Pagination.Renderer;
+import net.kyori.text.feature.pagination.Pagination.Renderer.RowRenderer;
 import net.kyori.text.format.TextColor;
 import net.kyori.text.format.TextDecoration;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ActivityLogModule implements CommandModule {
+import static me.lucko.spark.common.command.CommandResponseHandler.*;
+
+public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
+
+    private final Pagination.Builder pagination = Pagination.builder()
+            .renderer(new Renderer() {
+                @Override
+                public Component renderEmpty() {
+                    return applyPrefix(TextComponent.of("There are no entries present in the log."));
+                }
+
+                @Override
+                public Component renderUnknownPage(int page, int pages) {
+                    return applyPrefix(TextComponent.of("Unknown page selected. " + pages + " total pages."));
+                }
+            })
+            .resultsPerPage(4);
+
+    @Override
+    public Collection<Component> renderRow(Activity activity, int index) {
+        List<Component> reply = new ArrayList<>(5);
+        reply.add(TextComponent.builder("")
+                .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                .append(TextComponent.space())
+                .append(TextComponent.of("#" + (index + 1), TextColor.WHITE))
+                .append(TextComponent.of(" - ", TextColor.DARK_GRAY))
+                .append(TextComponent.of(activity.getType(), TextColor.YELLOW))
+                .append(TextComponent.of(" - ", TextColor.DARK_GRAY))
+                .append(TextComponent.of(formatDateDiff(activity.getTime()), TextColor.GRAY))
+                .build()
+        );
+        reply.add(TextComponent.builder("  ")
+                .append(TextComponent.of("Created by: ", TextColor.GRAY))
+                .append(TextComponent.of(activity.getUser().getName(), TextColor.WHITE))
+                .build()
+        );
+
+        TextComponent.Builder valueComponent = TextComponent.builder(activity.getDataValue(), TextColor.WHITE);
+        if (activity.getDataType().equals("url")) {
+            valueComponent.clickEvent(ClickEvent.openUrl(activity.getDataValue()));
+        }
+
+        reply.add(TextComponent.builder("  ")
+                .append(TextComponent.of(Character.toUpperCase(activity.getDataType().charAt(0)) + activity.getDataType().substring(1) + ": ", TextColor.GRAY))
+                .append(valueComponent)
+                .build()
+        );
+        reply.add(TextComponent.space());
+        return reply;
+    }
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
         consumer.accept(Command.builder()
                 .aliases("activity", "activitylog", "log")
+                .argumentUsage("page", "page no")
                 .executor((platform, sender, resp, arguments) -> {
-                    List<ActivityLog.Activity> log = platform.getActivityLog().getLog();
-                    log.removeIf(ActivityLog.Activity::shouldExpire);
+                    List<Activity> log = platform.getActivityLog().getLog();
+                    log.removeIf(Activity::shouldExpire);
 
                     if (log.isEmpty()) {
                         resp.replyPrefixed(TextComponent.of("There are no entries present in the log."));
                         return;
                     }
 
-                    resp.replyPrefixed(TextComponent.of("Showing recent spark activity...", TextColor.GOLD));
+                    int page = Math.max(1, arguments.intFlag("page"));
 
-                    int count = 0;
-                    for (ActivityLog.Activity activity : log) {
-                        count++;
-
-                        resp.replyPrefixed(TextComponent.builder("")
-                                .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
-                                .append(TextComponent.space())
-                                .append(TextComponent.of("#" + count, TextColor.WHITE))
-                                .append(TextComponent.of(" - ", TextColor.DARK_GRAY))
-                                .append(TextComponent.of(activity.getType(), TextColor.YELLOW))
-                                .append(TextComponent.of(" - ", TextColor.DARK_GRAY))
-                                .append(TextComponent.of(formatDateDiff(activity.getTime()), TextColor.GRAY))
-                                .build()
-                        );
-                        resp.replyPrefixed(TextComponent.builder("  ")
-                                .append(TextComponent.of("Created by: ", TextColor.GRAY))
-                                .append(TextComponent.of(activity.getUser().getName(), TextColor.WHITE))
-                                .build()
-                        );
-
-                        TextComponent.Builder valueComponent = TextComponent.builder(activity.getDataValue(), TextColor.WHITE);
-                        if (activity.getDataType().equals("url")) {
-                            valueComponent.clickEvent(ClickEvent.openUrl(activity.getDataValue()));
-                        }
-
-                        resp.replyPrefixed(TextComponent.builder("  ")
-                                .append(TextComponent.of(Character.toUpperCase(activity.getDataType().charAt(0)) + activity.getDataType().substring(1) + ": ", TextColor.GRAY))
-                                .append(valueComponent)
-                                .build()
-                        );
-                        resp.reply(TextComponent.space());
-                    }
+                    Pagination<Activity> activityPagination = this.pagination.build(
+                            TextComponent.of("Recent spark activity", TextColor.GOLD),
+                            this,
+                            value -> "/" + platform.getPlugin().getLabel() + " activity --page " + value
+                    );
+                    activityPagination.render(log, page).forEach(resp::reply);
                 })
-                .tabCompleter(Command.TabCompleter.empty())
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--page"))
                 .build()
         );
     }
