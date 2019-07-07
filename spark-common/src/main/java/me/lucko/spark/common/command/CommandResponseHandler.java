@@ -67,11 +67,15 @@ public class CommandResponseHandler {
     }
 
     public void replyPrefixed(Component message) {
-        reply(PREFIX.append(message));
+        reply(applyPrefix(message));
     }
 
     public void broadcastPrefixed(Component message) {
-        broadcast(PREFIX.append(message));
+        broadcast(applyPrefix(message));
+    }
+
+    public static Component applyPrefix(Component message) {
+        return PREFIX.append(message);
     }
 
 
