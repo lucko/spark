@@ -34,7 +34,7 @@ public interface SparkPlugin {
 
     String getLabel();
 
-    Set<CommandSender> getSendersWithPermission(String permission);
+    Set<? extends CommandSender> getSendersWithPermission(String permission);
 
     void runAsync(Runnable r);
 

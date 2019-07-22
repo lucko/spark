@@ -4,8 +4,8 @@ plugins {
 
 dependencies {
     compile project(':spark-common')
-    compileOnly 'com.velocitypowered:velocity-api:1.0-SNAPSHOT'
-    annotationProcessor 'com.velocitypowered:velocity-api:1.0-SNAPSHOT'
+    compileOnly 'com.velocitypowered:velocity-api:1.0.2'
+    annotationProcessor 'com.velocitypowered:velocity-api:1.0.2'
 }
 
 blossom {

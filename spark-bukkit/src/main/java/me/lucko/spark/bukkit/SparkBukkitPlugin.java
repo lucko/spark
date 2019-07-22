@@ -20,7 +20,6 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
@@ -28,6 +27,7 @@ import me.lucko.spark.common.sampler.TickCounter;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
@@ -76,13 +76,13 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
-    public boolean onCommand(org.bukkit.command.CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         this.platform.executeCommand(new BukkitCommandSender(sender), args);
         return true;
     }
 
     @Override
-    public List<String> onTabComplete(org.bukkit.command.CommandSender sender, Command command, String alias, String[] args) {
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         return this.platform.tabCompleteCommand(new BukkitCommandSender(sender), args);
     }
 
@@ -102,8 +102,8 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
-    public Set<CommandSender> getSendersWithPermission(String permission) {
-        List<org.bukkit.command.CommandSender> senders = new LinkedList<>(getServer().getOnlinePlayers());
+    public Set<BukkitCommandSender> getSendersWithPermission(String permission) {
+        List<CommandSender> senders = new LinkedList<>(getServer().getOnlinePlayers());
         senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(getServer().getConsoleSender());
         return senders.stream().map(BukkitCommandSender::new).collect(Collectors.toSet());

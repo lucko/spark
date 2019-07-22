@@ -20,11 +20,11 @@
 
 package me.lucko.spark.bungeecord;
 
-import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.TabExecutor;
@@ -67,8 +67,8 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
     }
 
     @Override
-    public Set<CommandSender> getSendersWithPermission(String permission) {
-        List<net.md_5.bungee.api.CommandSender> senders = new LinkedList<>(getProxy().getPlayers());
+    public Set<BungeeCordCommandSender> getSendersWithPermission(String permission) {
+        List<CommandSender> senders = new LinkedList<>(getProxy().getPlayers());
         senders.removeIf(sender -> !sender.hasPermission(permission));
         senders.add(getProxy().getConsole());
         return senders.stream().map(BungeeCordCommandSender::new).collect(Collectors.toSet());
@@ -98,12 +98,12 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
         }
 
         @Override
-        public void execute(net.md_5.bungee.api.CommandSender sender, String[] args) {
+        public void execute(CommandSender sender, String[] args) {
             this.plugin.platform.executeCommand(new BungeeCordCommandSender(sender), args);
         }
 
         @Override
-        public Iterable<String> onTabComplete(net.md_5.bungee.api.CommandSender sender, String[] args) {
+        public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
             return this.plugin.platform.tabCompleteCommand(new BungeeCordCommandSender(sender), args);
         }
     }
