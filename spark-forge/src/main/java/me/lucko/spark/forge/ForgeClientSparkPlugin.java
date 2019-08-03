@@ -20,7 +20,6 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.sampler.TickCounter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommandSender;
@@ -28,9 +27,8 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Stream;
 
 public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
 
@@ -48,8 +46,8 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public Set<CommandSender> getSendersWithPermission(String permission) {
-        return new HashSet<>(Collections.singleton(new ForgeCommandSender(Minecraft.getMinecraft().player, this)));
+    public Stream<ForgeCommandSender> getSendersWithPermission(String permission) {
+        return Stream.of(new ForgeCommandSender(Minecraft.getMinecraft().player, this));
     }
 
     @Override

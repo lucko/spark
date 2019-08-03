@@ -21,7 +21,6 @@
 package me.lucko.spark.sponge;
 
 import com.google.inject.Inject;
-import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
@@ -44,11 +43,9 @@ import org.spongepowered.api.world.World;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Plugin(
         id = "spark",
@@ -104,11 +101,11 @@ public class SparkSpongePlugin implements SparkPlugin {
     }
 
     @Override
-    public Set<CommandSender> getSendersWithPermission(String permission) {
-        List<CommandSource> senders = new LinkedList<>(this.game.getServer().getOnlinePlayers());
-        senders.removeIf(sender -> !sender.hasPermission(permission));
-        senders.add(this.game.getServer().getConsole());
-        return senders.stream().map(SpongeCommandSender::new).collect(Collectors.toSet());
+    public Stream<SpongeCommandSender> getSendersWithPermission(String permission) {
+        return Stream.concat(
+                this.game.getServer().getOnlinePlayers().stream().filter(player -> player.hasPermission(permission)),
+                Stream.of(this.game.getServer().getConsole())
+        ).map(SpongeCommandSender::new);
     }
 
     @Override

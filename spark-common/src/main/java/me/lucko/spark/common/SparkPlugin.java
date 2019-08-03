@@ -24,7 +24,7 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
 
 import java.nio.file.Path;
-import java.util.Set;
+import java.util.stream.Stream;
 
 public interface SparkPlugin {
 
@@ -34,7 +34,7 @@ public interface SparkPlugin {
 
     String getLabel();
 
-    Set<? extends CommandSender> getSendersWithPermission(String permission);
+    Stream<? extends CommandSender> getSendersWithPermission(String permission);
 
     void runAsync(Runnable r);
 

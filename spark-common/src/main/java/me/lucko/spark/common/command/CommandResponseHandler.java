@@ -29,6 +29,7 @@ import net.kyori.text.format.TextDecoration;
 
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class CommandResponseHandler {
 
@@ -53,7 +54,7 @@ public class CommandResponseHandler {
     }
 
     public void allSenders(Consumer<? super CommandSender> action) {
-        Set<CommandSender> senders = this.platform.getPlugin().getSendersWithPermission("spark");
+        Set<CommandSender> senders = this.platform.getPlugin().getSendersWithPermission("spark").collect(Collectors.toSet());
         senders.add(this.sender);
         senders.forEach(action);
     }

@@ -31,10 +31,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
 
@@ -102,11 +100,11 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
-    public Set<BukkitCommandSender> getSendersWithPermission(String permission) {
-        List<CommandSender> senders = new LinkedList<>(getServer().getOnlinePlayers());
-        senders.removeIf(sender -> !sender.hasPermission(permission));
-        senders.add(getServer().getConsoleSender());
-        return senders.stream().map(BukkitCommandSender::new).collect(Collectors.toSet());
+    public Stream<BukkitCommandSender> getSendersWithPermission(String permission) {
+        return Stream.concat(
+                getServer().getOnlinePlayers().stream().filter(player -> player.hasPermission(permission)),
+                Stream.of(getServer().getConsoleSender())
+        ).map(BukkitCommandSender::new);
     }
 
     @Override

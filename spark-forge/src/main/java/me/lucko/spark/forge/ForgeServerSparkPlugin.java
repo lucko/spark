@@ -20,7 +20,6 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.sampler.TickCounter;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
@@ -28,10 +27,8 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
     public ForgeServerSparkPlugin(SparkForgeMod mod) {
@@ -44,12 +41,12 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public Set<CommandSender> getSendersWithPermission(String permission) {
+    public Stream<ForgeCommandSender> getSendersWithPermission(String permission) {
         MinecraftServer mcServer = FMLCommonHandler.instance().getMinecraftServerInstance();
-        List<ICommandSender> senders = new LinkedList<>(mcServer.getPlayerList().getPlayers());
-        senders.removeIf(sender -> !sender.canUseCommand(4, permission));
-        senders.add(mcServer);
-        return senders.stream().map(sender -> new ForgeCommandSender(sender, this)).collect(Collectors.toSet());
+        return Stream.concat(
+                mcServer.getPlayerList().getPlayers().stream().filter(player -> player.canUseCommand(4, permission)),
+                Stream.of(mcServer)
+        ).map(sender -> new ForgeCommandSender(sender, this));
     }
 
     @Override

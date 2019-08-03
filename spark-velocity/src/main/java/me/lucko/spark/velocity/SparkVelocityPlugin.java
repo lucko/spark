@@ -30,7 +30,6 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
@@ -39,10 +38,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.optional.qual.MaybePresent;
 
 import java.nio.file.Path;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Plugin(
         id = "spark",
@@ -102,11 +99,11 @@ public class SparkVelocityPlugin implements SparkPlugin, Command {
     }
 
     @Override
-    public Set<CommandSender> getSendersWithPermission(String permission) {
-        List<CommandSource> senders = new LinkedList<>(this.proxy.getAllPlayers());
-        senders.removeIf(sender -> !sender.hasPermission(permission));
-        senders.add(this.proxy.getConsoleCommandSource());
-        return senders.stream().map(VelocityCommandSender::new).collect(Collectors.toSet());
+    public Stream<VelocityCommandSender> getSendersWithPermission(String permission) {
+        return Stream.concat(
+                this.proxy.getAllPlayers().stream().filter(player -> player.hasPermission(permission)),
+                Stream.of(this.proxy.getConsoleCommandSource())
+        ).map(VelocityCommandSender::new);
     }
 
     @Override

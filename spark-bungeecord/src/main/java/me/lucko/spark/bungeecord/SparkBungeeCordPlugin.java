@@ -30,10 +30,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.nio.file.Path;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
 
@@ -67,11 +64,11 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
     }
 
     @Override
-    public Set<BungeeCordCommandSender> getSendersWithPermission(String permission) {
-        List<CommandSender> senders = new LinkedList<>(getProxy().getPlayers());
-        senders.removeIf(sender -> !sender.hasPermission(permission));
-        senders.add(getProxy().getConsole());
-        return senders.stream().map(BungeeCordCommandSender::new).collect(Collectors.toSet());
+    public Stream<BungeeCordCommandSender> getSendersWithPermission(String permission) {
+        return Stream.concat(
+                getProxy().getPlayers().stream().filter(player -> player.hasPermission(permission)),
+                Stream.of(getProxy().getConsole())
+        ).map(BungeeCordCommandSender::new);
     }
 
     @Override
