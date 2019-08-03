@@ -115,7 +115,7 @@ public interface ThreadDumper {
             this.namePatterns = namePatterns.stream()
                     .map(regex -> {
                         try {
-                            return Pattern.compile(regex);
+                            return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
                         } catch (PatternSyntaxException e) {
                             return null;
                         }
