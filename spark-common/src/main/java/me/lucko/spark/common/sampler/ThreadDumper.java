@@ -142,7 +142,7 @@ public interface ThreadDumper {
                         this.cache.put(thread.getId(), false);
                         return false;
                     })
-                    .map(thread -> threadBean.getThreadInfo(thread.getId()))
+                    .map(thread -> threadBean.getThreadInfo(thread.getId(), Integer.MAX_VALUE))
                     .filter(Objects::nonNull)
                     .toArray(ThreadInfo[]::new);
         }
