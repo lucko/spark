@@ -62,7 +62,7 @@ public class MemoryModule implements CommandModule {
                 .aliases("heapsummary")
                 .argumentUsage("run-gc-before", null)
                 .executor((platform, sender, resp, arguments) -> {
-                    platform.getPlugin().runAsync(() -> {
+                    platform.getPlugin().executeAsync(() -> {
                         if (arguments.boolFlag("run-gc-before")) {
                             resp.broadcastPrefixed(TextComponent.of("Running garbage collector..."));
                             System.gc();
@@ -110,8 +110,8 @@ public class MemoryModule implements CommandModule {
                 .argumentUsage("run-gc-before", null)
                 .argumentUsage("include-non-live", null)
                 .executor((platform, sender, resp, arguments) -> {
-                    platform.getPlugin().runAsync(() -> {
-                        Path pluginFolder = platform.getPlugin().getPluginFolder();
+                    platform.getPlugin().executeAsync(() -> {
+                        Path pluginFolder = platform.getPlugin().getPluginDirectory();
                         try {
                             Files.createDirectories(pluginFolder);
                         } catch (IOException e) {
@@ -153,7 +153,7 @@ public class MemoryModule implements CommandModule {
                                     if (timeSinceLastReport > TimeUnit.SECONDS.toMillis(5)) {
                                         lastReport.set(System.currentTimeMillis());
 
-                                        platform.getPlugin().runAsync(() -> {
+                                        platform.getPlugin().executeAsync(() -> {
                                             resp.broadcastPrefixed(TextComponent.builder("").color(TextColor.GRAY)
                                                     .append(TextComponent.of("Compressed "))
                                                     .append(TextComponent.of(FormatUtil.formatBytes(progress), TextColor.GOLD))

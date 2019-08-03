@@ -18,7 +18,7 @@ minecraft {
     runDir = 'run'
     mappings = 'snapshot_20171003'
 
-    replaceIn 'me/lucko/spark/forge/SparkForgeMod.java'
+    replaceIn 'me/lucko/spark/forge/ForgeSparkMod.java'
     replace '@version@', project.pluginVersion
 }
 

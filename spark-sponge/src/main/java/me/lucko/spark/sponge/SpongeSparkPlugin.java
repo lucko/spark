@@ -58,7 +58,7 @@ import java.util.stream.Stream;
                 @Dependency(id = "spongeapi")
         }
 )
-public class SparkSpongePlugin implements SparkPlugin {
+public class SpongeSparkPlugin implements SparkPlugin {
 
     private final Game game;
     private final Path configDirectory;
@@ -67,7 +67,7 @@ public class SparkSpongePlugin implements SparkPlugin {
     private SparkPlatform platform;
 
     @Inject
-    public SparkSpongePlugin(Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
+    public SpongeSparkPlugin(Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
         this.game = game;
         this.configDirectory = configDirectory;
         this.asyncExecutor = asyncExecutor;
@@ -87,16 +87,16 @@ public class SparkSpongePlugin implements SparkPlugin {
 
     @Override
     public String getVersion() {
-        return SparkSpongePlugin.class.getAnnotation(Plugin.class).version();
+        return SpongeSparkPlugin.class.getAnnotation(Plugin.class).version();
     }
 
     @Override
-    public Path getPluginFolder() {
+    public Path getPluginDirectory() {
         return this.configDirectory;
     }
 
     @Override
-    public String getLabel() {
+    public String getCommandName() {
         return "spark";
     }
 
@@ -109,8 +109,8 @@ public class SparkSpongePlugin implements SparkPlugin {
     }
 
     @Override
-    public void runAsync(Runnable r) {
-        this.asyncExecutor.execute(r);
+    public void executeAsync(Runnable task) {
+        this.asyncExecutor.execute(task);
     }
 
     @Override
@@ -124,9 +124,9 @@ public class SparkSpongePlugin implements SparkPlugin {
     }
 
     private static final class SparkCommand implements CommandCallable {
-        private final SparkSpongePlugin plugin;
+        private final SpongeSparkPlugin plugin;
 
-        private SparkCommand(SparkSpongePlugin plugin) {
+        private SparkCommand(SpongeSparkPlugin plugin) {
             this.plugin = plugin;
         }
 

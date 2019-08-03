@@ -22,8 +22,6 @@ package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.TickCounter;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -32,7 +30,7 @@ import net.md_5.bungee.api.plugin.TabExecutor;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
-public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
+public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
 
     private SparkPlatform platform;
 
@@ -54,12 +52,12 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
     }
 
     @Override
-    public Path getPluginFolder() {
+    public Path getPluginDirectory() {
         return getDataFolder().toPath();
     }
 
     @Override
-    public String getLabel() {
+    public String getCommandName() {
         return "sparkb";
     }
 
@@ -72,24 +70,14 @@ public class SparkBungeeCordPlugin extends Plugin implements SparkPlugin {
     }
 
     @Override
-    public void runAsync(Runnable r) {
-        getProxy().getScheduler().runAsync(SparkBungeeCordPlugin.this, r);
-    }
-
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return ThreadDumper.ALL;
-    }
-
-    @Override
-    public TickCounter createTickCounter() {
-        return null;
+    public void executeAsync(Runnable task) {
+        getProxy().getScheduler().runAsync(BungeeCordSparkPlugin.this, task);
     }
 
     private static final class SparkCommand extends Command implements TabExecutor {
-        private final SparkBungeeCordPlugin plugin;
+        private final BungeeCordSparkPlugin plugin;
 
-        SparkCommand(SparkBungeeCordPlugin plugin) {
+        SparkCommand(BungeeCordSparkPlugin plugin) {
             super("sparkb", null, "sparkbungee");
             this.plugin = plugin;
         }

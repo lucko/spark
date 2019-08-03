@@ -44,7 +44,7 @@ import java.util.Map;
 /**
  * Utility for interacting with the server's {@link CommandMap} instance.
  */
-public final class CommandMapUtil {
+final class CommandMapUtil {
 
     private static final Constructor<PluginCommand> COMMAND_CONSTRUCTOR;
     private static final Field COMMAND_MAP_FIELD;
@@ -96,8 +96,11 @@ public final class CommandMapUtil {
                 PluginCommand cmd = COMMAND_CONSTRUCTOR.newInstance(alias, plugin);
 
                 getCommandMap().register(plugin.getDescription().getName(), cmd);
-                getKnownCommandMap().put(plugin.getDescription().getName().toLowerCase() + ":" + alias.toLowerCase(), cmd);
-                getKnownCommandMap().put(alias.toLowerCase(), cmd);
+
+                Map<String, Command> knownCommandMap = getKnownCommandMap();
+                knownCommandMap.put(plugin.getDescription().getName().toLowerCase() + ":" + alias.toLowerCase(), cmd);
+                knownCommandMap.put(alias.toLowerCase(), cmd);
+
                 cmd.setLabel(alias.toLowerCase());
 
                 cmd.setExecutor(command);

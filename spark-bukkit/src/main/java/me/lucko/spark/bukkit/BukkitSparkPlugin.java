@@ -34,7 +34,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
+public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     private CommandExecutor tpsCommand = null;
     private SparkPlatform platform;
@@ -90,12 +90,12 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
-    public Path getPluginFolder() {
+    public Path getPluginDirectory() {
         return getDataFolder().toPath();
     }
 
     @Override
-    public String getLabel() {
+    public String getCommandName() {
         return "spark";
     }
 
@@ -108,8 +108,8 @@ public class SparkBukkitPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
-    public void runAsync(Runnable r) {
-        getServer().getScheduler().runTaskAsynchronously(SparkBukkitPlugin.this, r);
+    public void executeAsync(Runnable task) {
+        getServer().getScheduler().runTaskAsynchronously(BukkitSparkPlugin.this, task);
     }
 
     @Override

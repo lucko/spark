@@ -32,8 +32,6 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.TickCounter;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.optional.qual.MaybePresent;
 
@@ -48,7 +46,7 @@ import java.util.stream.Stream;
         description = "@desc@",
         authors = {"Luck", "sk89q"}
 )
-public class SparkVelocityPlugin implements SparkPlugin, Command {
+public class VelocitySparkPlugin implements SparkPlugin, Command {
 
     private final ProxyServer proxy;
     private final Path configDirectory;
@@ -56,7 +54,7 @@ public class SparkVelocityPlugin implements SparkPlugin, Command {
     private SparkPlatform platform;
 
     @Inject
-    public SparkVelocityPlugin(ProxyServer proxy, @DataDirectory Path configDirectory) {
+    public VelocitySparkPlugin(ProxyServer proxy, @DataDirectory Path configDirectory) {
         this.proxy = proxy;
         this.configDirectory = configDirectory;
     }
@@ -85,16 +83,16 @@ public class SparkVelocityPlugin implements SparkPlugin, Command {
 
     @Override
     public String getVersion() {
-        return SparkVelocityPlugin.class.getAnnotation(Plugin.class).version();
+        return VelocitySparkPlugin.class.getAnnotation(Plugin.class).version();
     }
 
     @Override
-    public Path getPluginFolder() {
+    public Path getPluginDirectory() {
         return this.configDirectory;
     }
 
     @Override
-    public String getLabel() {
+    public String getCommandName() {
         return "sparkv";
     }
 
@@ -107,17 +105,7 @@ public class SparkVelocityPlugin implements SparkPlugin, Command {
     }
 
     @Override
-    public void runAsync(Runnable r) {
-        this.proxy.getScheduler().buildTask(this, r).schedule();
-    }
-
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return ThreadDumper.ALL;
-    }
-
-    @Override
-    public TickCounter createTickCounter() {
-        return null;
+    public void executeAsync(Runnable task) {
+        this.proxy.getScheduler().buildTask(this, task).schedule();
     }
 }

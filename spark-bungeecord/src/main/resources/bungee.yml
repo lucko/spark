@@ -2,4 +2,4 @@ name: spark
 version: ${pluginVersion}
 description: ${pluginDescription}
 author: Luck, sk89q
-main: me.lucko.spark.bungeecord.SparkBungeeCordPlugin
+main: me.lucko.spark.bungeecord.BungeeCordSparkPlugin

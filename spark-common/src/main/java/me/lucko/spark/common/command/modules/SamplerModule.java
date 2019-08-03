@@ -196,7 +196,7 @@ public class SamplerModule implements CommandModule {
 
                     resp.broadcastPrefixed(TextComponent.of("Profiler now active!", TextColor.GOLD));
                     if (timeoutSeconds == -1) {
-                        resp.broadcastPrefixed(TextComponent.of("Use '/" + platform.getPlugin().getLabel() + " sampler --stop' to stop profiling and upload the results."));
+                        resp.broadcastPrefixed(TextComponent.of("Use '/" + platform.getPlugin().getCommandName() + " sampler --stop' to stop profiling and upload the results."));
                     } else {
                         resp.broadcastPrefixed(TextComponent.of("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
                     }
@@ -246,7 +246,7 @@ public class SamplerModule implements CommandModule {
     }
 
     private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler) {
-        platform.getPlugin().runAsync(() -> {
+        platform.getPlugin().executeAsync(() -> {
             byte[] output = sampler.formCompressedDataPayload(resp.sender());
             try {
                 String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE, false).key();

@@ -27,12 +27,13 @@ import java.util.Queue;
 
 public class RollingAverage {
 
-    private final Queue<BigDecimal> samples = new ArrayDeque<>();
+    private final Queue<BigDecimal> samples;
     private final int size;
     private BigDecimal total = BigDecimal.ZERO;
 
     public RollingAverage(int size) {
         this.size = size;
+        this.samples = new ArrayDeque<>(this.size);
     }
 
     public void add(BigDecimal num) {

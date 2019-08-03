@@ -102,7 +102,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
 
             // move onto the next state
             if (this.averageTickTime.getCount() >= 120) {
-                this.platform.getPlugin().runAsync(() -> {
+                this.platform.getPlugin().executeAsync(() -> {
                     sendMessage(TextComponent.of("Analysis is now complete.", TextColor.GOLD));
                     sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                             .append(TextComponent.of(">", TextColor.WHITE))
@@ -145,7 +145,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
 
             double percentageChange = (increase * 100d) / this.avg;
             if (percentageChange > this.percentageChangeThreshold) {
-                this.platform.getPlugin().runAsync(() -> {
+                this.platform.getPlugin().executeAsync(() -> {
                     sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                             .append(TextComponent.of("Tick "))
                             .append(TextComponent.of("#" + getCurrentTick(), TextColor.DARK_GRAY))
@@ -179,7 +179,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
             gcType = data.getGcAction();
         }
 
-        this.platform.getPlugin().runAsync(() -> {
+        this.platform.getPlugin().executeAsync(() -> {
             sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                     .append(TextComponent.of("Tick "))
                     .append(TextComponent.of("#" + getCurrentTick(), TextColor.DARK_GRAY))

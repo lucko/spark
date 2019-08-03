@@ -26,13 +26,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SpongeTickCounter implements TickCounter, Runnable {
-    private final SparkSpongePlugin plugin;
+    private final SpongeSparkPlugin plugin;
     private org.spongepowered.api.scheduler.Task task;
 
     private final Set<TickTask> tasks = new HashSet<>();
     private int tick = 0;
 
-    public SpongeTickCounter(SparkSpongePlugin plugin) {
+    public SpongeTickCounter(SpongeSparkPlugin plugin) {
         this.plugin = plugin;
     }
 

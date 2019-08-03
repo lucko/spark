@@ -91,7 +91,7 @@ public class HealthModule implements CommandModule {
                 .argumentUsage("memory", null)
                 .executor((platform, sender, resp, arguments) -> {
                     resp.replyPrefixed(TextComponent.of("Generating server health report..."));
-                    platform.getPlugin().runAsync(() -> {
+                    platform.getPlugin().executeAsync(() -> {
                         List<Component> report = new LinkedList<>();
                         report.add(TextComponent.empty());
 

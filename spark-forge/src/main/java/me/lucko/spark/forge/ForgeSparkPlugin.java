@@ -39,11 +39,11 @@ import java.util.concurrent.ScheduledExecutorService;
 @SuppressWarnings("NullableProblems")
 public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
 
-    private final SparkForgeMod mod;
+    private final ForgeSparkMod mod;
     private final ScheduledExecutorService scheduler;
     private final SparkPlatform platform;
 
-    protected ForgeSparkPlugin(SparkForgeMod mod) {
+    protected ForgeSparkPlugin(ForgeSparkMod mod) {
         this.mod = mod;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
@@ -56,17 +56,17 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public String getVersion() {
-        return SparkForgeMod.class.getAnnotation(Mod.class).version();
+        return ForgeSparkMod.class.getAnnotation(Mod.class).version();
     }
 
     @Override
-    public Path getPluginFolder() {
+    public Path getPluginDirectory() {
         return this.mod.getConfigDirectory();
     }
 
     @Override
-    public void runAsync(Runnable r) {
-        this.scheduler.execute(r);
+    public void executeAsync(Runnable task) {
+        this.scheduler.execute(task);
     }
 
     @Override
@@ -78,7 +78,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public String getUsage(ICommandSender iCommandSender) {
-        return "/" + getLabel();
+        return "/" + getCommandName();
     }
 
     @Override
@@ -103,6 +103,6 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public int compareTo(ICommand o) {
-        return getLabel().compareTo(o.getName());
+        return getCommandName().compareTo(o.getName());
     }
 }

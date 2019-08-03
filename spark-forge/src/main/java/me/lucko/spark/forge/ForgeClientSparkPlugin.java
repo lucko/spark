@@ -32,11 +32,11 @@ import java.util.stream.Stream;
 
 public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
 
-    public static void register(SparkForgeMod mod) {
+    public static void register(ForgeSparkMod mod) {
         ClientCommandHandler.instance.registerCommand(new ForgeClientSparkPlugin(mod));
     }
 
-    public ForgeClientSparkPlugin(SparkForgeMod mod) {
+    public ForgeClientSparkPlugin(ForgeSparkMod mod) {
         super(mod);
     }
 
@@ -56,7 +56,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public String getLabel() {
+    public String getCommandName() {
         return "sparkc";
     }
 

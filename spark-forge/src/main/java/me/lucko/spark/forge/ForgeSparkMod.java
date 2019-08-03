@@ -36,7 +36,7 @@ import java.nio.file.Path;
         version = "@version@",
         acceptableRemoteVersions = "*"
 )
-public class SparkForgeMod {
+public class ForgeSparkMod {
 
     private Path configDirectory = null;
 

@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
-    public ForgeServerSparkPlugin(SparkForgeMod mod) {
+    public ForgeServerSparkPlugin(ForgeSparkMod mod) {
         super(mod);
     }
 
@@ -55,7 +55,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public String getLabel() {
+    public String getCommandName() {
         return "spark";
     }
 

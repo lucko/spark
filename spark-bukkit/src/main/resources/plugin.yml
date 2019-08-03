@@ -2,7 +2,7 @@ name: spark
 version: ${pluginVersion}
 description: ${pluginDescription}
 authors: [Luck, sk89q]
-main: me.lucko.spark.bukkit.SparkBukkitPlugin
+main: me.lucko.spark.bukkit.BukkitSparkPlugin
 
 # Mark the plugin as 1.13 compatible to avoid CB having to perform quite as much unnecessary
 # remapping when the plugin is loaded. Note that despite what this setting might otherwise imply,

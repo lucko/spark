@@ -84,7 +84,7 @@ public class SparkPlatform {
         }
         this.commands = commandsBuilder.build();
 
-        this.activityLog = new ActivityLog(plugin.getPluginFolder().resolve("activity.json"));
+        this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
         this.activityLog.load();
 
         this.tickCounter = plugin.createTickCounter();
@@ -142,10 +142,10 @@ public class SparkPlatform {
             );
             resp.replyPrefixed(TextComponent.builder("").color(TextColor.GRAY)
                     .append(TextComponent.of("Use "))
-                    .append(TextComponent.builder("/" + getPlugin().getLabel() + " help")
+                    .append(TextComponent.builder("/" + getPlugin().getCommandName() + " help")
                             .color(TextColor.WHITE)
                             .decoration(TextDecoration.UNDERLINED, true)
-                            .clickEvent(ClickEvent.runCommand("/" + getPlugin().getLabel() + " help"))
+                            .clickEvent(ClickEvent.runCommand("/" + getPlugin().getCommandName() + " help"))
                             .build()
                     )
                     .append(TextComponent.of(" to view usage information."))
@@ -204,7 +204,7 @@ public class SparkPlatform {
                 .build()
         );
         for (Command command : this.commands) {
-            String usage = "/" + getPlugin().getLabel() + " " + command.aliases().get(0);
+            String usage = "/" + getPlugin().getCommandName() + " " + command.aliases().get(0);
             ClickEvent clickEvent = ClickEvent.suggestCommand(usage);
             sender.reply(TextComponent.builder("")
                     .append(TextComponent.builder(">").color(TextColor.GOLD).decoration(TextDecoration.BOLD, true).build())

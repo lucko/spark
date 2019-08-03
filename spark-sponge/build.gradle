@@ -13,7 +13,7 @@ dependencies {
 }
 
 blossom {
-    replaceTokenIn('src/main/java/me/lucko/spark/sponge/SparkSpongePlugin.java')
+    replaceTokenIn('src/main/java/me/lucko/spark/sponge/SpongeSparkPlugin.java')
     replaceToken '@version@', project.pluginVersion
     replaceToken '@desc@', project.pluginDescription
 }

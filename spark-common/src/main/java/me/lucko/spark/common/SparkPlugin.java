@@ -26,20 +26,66 @@ import me.lucko.spark.common.sampler.TickCounter;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+/**
+ * Spark plugin interface
+ */
 public interface SparkPlugin {
 
+    /**
+     * Gets the version of the plugin.
+     *
+     * @return the version
+     */
     String getVersion();
 
-    Path getPluginFolder();
+    /**
+     * Gets the plugins storage/configuration directory.
+     *
+     * @return the plugin directory
+     */
+    Path getPluginDirectory();
 
-    String getLabel();
+    /**
+     * Gets the name used for the plugin command.
+     *
+     * @return the plugin command name
+     */
+    String getCommandName();
 
+    /**
+     * Gets a {@link Stream} of the {@link CommandSender}s on the platform with the given
+     * permission.
+     *
+     * @param permission the permission
+     * @return the stream of command senders
+     */
     Stream<? extends CommandSender> getSendersWithPermission(String permission);
 
-    void runAsync(Runnable r);
+    /**
+     * Executes the given {@link Runnable} asynchronously using the plugins scheduler.
+     *
+     * @param task the task
+     */
+    void executeAsync(Runnable task);
 
-    ThreadDumper getDefaultThreadDumper();
+    /**
+     * Gets the default {@link ThreadDumper} to be used by the plugin.
+     *
+     * @return the default thread dumper
+     */
+    default ThreadDumper getDefaultThreadDumper() {
+        return ThreadDumper.ALL;
+    }
 
-    TickCounter createTickCounter();
+    /**
+     * Creates a tick counter for the platform, if supported.
+     *
+     * <p>Returns {@code null} if the platform does not have "ticks"</p>
+     *
+     * @return a new tick counter
+     */
+    default TickCounter createTickCounter() {
+        return null;
+    }
 
 }
