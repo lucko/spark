@@ -27,7 +27,6 @@ import me.lucko.spark.bukkit.BukkitSparkPlugin;
 import me.lucko.spark.common.SparkPlatform;
 
 public class SparkMVdWPlaceholders implements PlaceholderReplacer {
-
     private final SparkPlatform platform;
 
     public SparkMVdWPlaceholders(BukkitSparkPlugin plugin, SparkPlatform platform) {

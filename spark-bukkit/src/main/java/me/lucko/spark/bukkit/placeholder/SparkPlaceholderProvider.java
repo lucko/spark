@@ -30,7 +30,7 @@ import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
 enum SparkPlaceholderProvider {
     ;
 
-    public static String respond(SparkPlatform platform, String placeholder) {
+    public static TextComponent respondComponent(SparkPlatform platform, String placeholder) {
         if (placeholder.startsWith("tps")) {
             TpsCalculator tpsCalculator = platform.getTpsCalculator();
             if (tpsCalculator == null) {
@@ -39,61 +39,64 @@ enum SparkPlaceholderProvider {
 
             switch (placeholder) {
                 case "tps":
-                    TextComponent c = TextComponent.builder(" ")
+                    return TextComponent.builder(" ")
                             .append(HealthModule.formatTps(tpsCalculator.avg5Sec())).append(TextComponent.of(", "))
                             .append(HealthModule.formatTps(tpsCalculator.avg10Sec())).append(TextComponent.of(", "))
                             .append(HealthModule.formatTps(tpsCalculator.avg1Min())).append(TextComponent.of(", "))
                             .append(HealthModule.formatTps(tpsCalculator.avg5Min())).append(TextComponent.of(", "))
                             .append(HealthModule.formatTps(tpsCalculator.avg15Min()))
                             .build();
-                    return LegacyComponentSerializer.legacy().serialize(c);
                 case "tps_5s":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatTps(tpsCalculator.avg5Sec()));
+                    return HealthModule.formatTps(tpsCalculator.avg5Sec());
                 case "tps_10s":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatTps(tpsCalculator.avg10Sec()));
+                    return HealthModule.formatTps(tpsCalculator.avg10Sec());
                 case "tps_1m":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatTps(tpsCalculator.avg1Min()));
+                    return HealthModule.formatTps(tpsCalculator.avg1Min());
                 case "tps_5m":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatTps(tpsCalculator.avg5Min()));
+                    return HealthModule.formatTps(tpsCalculator.avg5Min());
                 case "tps_15m":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatTps(tpsCalculator.avg15Min()));
+                    return HealthModule.formatTps(tpsCalculator.avg15Min());
             }
         }
         
         if (placeholder.startsWith("cpu")) {
             switch (placeholder) {
-                case "cpu_system": {
-                    TextComponent c = TextComponent.builder(" ")
+                case "cpu_system":
+                    return TextComponent.builder(" ")
                             .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(TextComponent.of(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(TextComponent.of(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
                             .build();
-                    return LegacyComponentSerializer.legacy().serialize(c);
-                }
                 case "cpu_system_10s":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg()));
+                    return HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg());
                 case "cpu_system_1m":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg()));
+                    return HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg());
                 case "cpu_system_15m":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()));
-                case "cpu_process": {
-                    TextComponent c = TextComponent.builder(" ")
+                    return HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg());
+                case "cpu_process":
+                    return TextComponent.builder(" ")
                             .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(TextComponent.of(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(TextComponent.of(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
                             .build();
-                    return LegacyComponentSerializer.legacy().serialize(c);
-                }
                 case "cpu_process_10s":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg()));
+                    return HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg());
                 case "cpu_process_1m":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg()));
+                    return HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg());
                 case "cpu_process_15m":
-                    return LegacyComponentSerializer.legacy().serialize(HealthModule.formatCpuUsage(CpuMonitor.processLoad15MinAvg()));
+                    return HealthModule.formatCpuUsage(CpuMonitor.processLoad15MinAvg());
             }
         }
 
         return null;
+    }
+
+    public static String respond(SparkPlatform platform, String placeholder) {
+        TextComponent result = respondComponent(platform, placeholder);
+        if (result == null) {
+            return null;
+        }
+        return LegacyComponentSerializer.legacy().serialize(result);
     }
     
 }
