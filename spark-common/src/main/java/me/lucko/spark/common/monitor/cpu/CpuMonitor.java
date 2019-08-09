@@ -34,8 +34,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Exposes and monitors the system/process CPU usage.
  */
-public final class CpuMonitor {
-    private CpuMonitor() {}
+public enum CpuMonitor {
+    ;
 
     /** The object name of the com.sun.management.OperatingSystemMXBean */
     private static final String OPERATING_SYSTEM_BEAN = "java.lang:type=OperatingSystem";

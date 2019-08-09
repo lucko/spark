@@ -31,9 +31,8 @@ import java.nio.file.Path;
 /**
  * Utility for creating .hprof memory heap snapshots.
  */
-public final class HeapDump {
-
-    private HeapDump() {}
+public enum HeapDump {
+    ;
 
     /** The object name of the com.sun.management.HotSpotDiagnosticMXBean */
     private static final String DIAGNOSTIC_BEAN = "com.sun.management:type=HotSpotDiagnostic";

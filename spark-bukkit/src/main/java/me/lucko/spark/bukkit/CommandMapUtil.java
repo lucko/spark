@@ -44,7 +44,8 @@ import java.util.Map;
 /**
  * Utility for interacting with the server's {@link CommandMap} instance.
  */
-final class CommandMapUtil {
+enum CommandMapUtil {
+    ;
 
     private static final Constructor<PluginCommand> COMMAND_CONSTRUCTOR;
     private static final Field COMMAND_MAP_FIELD;
@@ -143,10 +144,6 @@ final class CommandMapUtil {
         }
 
         return command;
-    }
-
-    private CommandMapUtil() {
-        throw new UnsupportedOperationException("This class cannot be instantiated");
     }
 
 }

@@ -23,7 +23,8 @@ package me.lucko.spark.common.util;
 /**
  * Utilities for working with Java type descriptors.
  */
-public final class TypeDescriptors {
+public enum TypeDescriptors {
+    ;
 
     /**
      * Returns the Java type corresponding to the given type descriptor.

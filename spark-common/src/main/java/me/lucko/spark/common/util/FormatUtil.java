@@ -20,8 +20,8 @@
 
 package me.lucko.spark.common.util;
 
-public final class FormatUtil {
-    private FormatUtil() {}
+public enum FormatUtil {
+    ;
 
     public static String percent(double value, double max) {
         double percent = (value * 100d) / max;

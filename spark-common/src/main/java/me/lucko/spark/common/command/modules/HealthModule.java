@@ -256,7 +256,7 @@ public class HealthModule implements CommandModule {
         );
     }
 
-    private static TextComponent formatTps(double tps) {
+    public static TextComponent formatTps(double tps) {
         TextColor color;
         if (tps > 18.0) {
             color = TextColor.GREEN;
@@ -269,7 +269,7 @@ public class HealthModule implements CommandModule {
         return TextComponent.of( (tps > 20.0 ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, 20.0), color);
     }
 
-    private static TextComponent formatCpuUsage(double usage) {
+    public static TextComponent formatCpuUsage(double usage) {
         TextColor color;
         if (usage > 0.9) {
             color = TextColor.RED;
