@@ -5,6 +5,12 @@ dependencies {
         exclude(module: 'text-serializer-gson')
     }
     compileOnly 'org.spigotmc:spigot-api:1.14-R0.1-SNAPSHOT'
+    
+    // placeholders
+    compileOnly 'me.clip:placeholderapi:2.10.3'
+    compileOnly('be.maximvdw:MVdWPlaceholderAPI:3.0.1-SNAPSHOT') {
+        exclude(module: 'MVdWUpdater')
+    }
 }
 
 processResources {

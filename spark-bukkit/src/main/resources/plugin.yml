@@ -9,6 +9,8 @@ main: me.lucko.spark.bukkit.BukkitSparkPlugin
 # spark is still compatible with pre-1.13 releases.
 api-version: 1.13
 
+softdepend: [PlaceholderAPI, MVdWPlaceholderAPI]
+
 commands:
   spark:
     description: Main plugin command

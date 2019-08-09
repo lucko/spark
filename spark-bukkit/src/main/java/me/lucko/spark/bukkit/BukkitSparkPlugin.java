@@ -20,6 +20,8 @@
 
 package me.lucko.spark.bukkit;
 
+import me.lucko.spark.bukkit.placeholder.SparkMVdWPlaceholders;
+import me.lucko.spark.bukkit.placeholder.SparkPlaceholderApi;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
@@ -62,6 +64,15 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
                 return true;
             };
             CommandMapUtil.registerCommand(this, this.tpsCommand, "tps");
+        }
+
+        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            new SparkPlaceholderApi(this, this.platform);
+            getLogger().info("Registered PlaceholderAPI placeholders");
+        }
+        if (getServer().getPluginManager().isPluginEnabled("MVdWPlaceholderAPI")) {
+            new SparkMVdWPlaceholders(this, this.platform);
+            getLogger().info("Registered MVdWPlaceholderAPI placeholders");
         }
     }
 
