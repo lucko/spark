@@ -20,32 +20,68 @@
 
 package me.lucko.spark.forge;
 
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.lucko.spark.common.sampler.TickCounter;
-import net.minecraft.command.ICommandSender;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.ICommandSource;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.server.permission.DefaultPermissionLevel;
+import net.minecraftforge.server.permission.PermissionAPI;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.Arrays;
 import java.util.stream.Stream;
 
-public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
-    public ForgeServerSparkPlugin(ForgeSparkMod mod) {
+public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSource> {
+
+    public static void register(ForgeSparkMod mod, FMLServerStartingEvent event) {
+        MinecraftServer server = event.getServer();
+        CommandDispatcher<CommandSource> dispatcher = event.getCommandDispatcher();
+
+        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, server);
+        registerCommands(dispatcher, plugin, "spark");
+        PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
+    }
+
+    private final MinecraftServer server;
+
+    public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod);
+        this.server = server;
     }
 
     @Override
-    boolean hasPermission(ICommandSender sender, String permission) {
-        return sender.canUseCommand(4, permission);
+    public int run(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        String[] split = context.getInput().split(" ");
+        if (split.length == 0 || !split[0].equals("/spark")) {
+            return 0;
+        }
+
+        String[] args = Arrays.copyOfRange(split, 1, split.length);
+
+        this.platform.executeCommand(new ForgeCommandSender(context.getSource().asPlayer(), this), args);
+        return 1;
+    }
+
+    @Override
+    boolean hasPermission(ICommandSource sender, String permission) {
+        if (sender instanceof PlayerEntity) {
+            return PermissionAPI.hasPermission((PlayerEntity) sender, permission);
+        } else {
+            return true;
+        }
     }
 
     @Override
     public Stream<ForgeCommandSender> getSendersWithPermission(String permission) {
-        MinecraftServer mcServer = FMLCommonHandler.instance().getMinecraftServerInstance();
         return Stream.concat(
-                mcServer.getPlayerList().getPlayers().stream().filter(player -> player.canUseCommand(4, permission)),
-                Stream.of(mcServer)
+                this.server.getPlayerList().getPlayers().stream().filter(player -> PermissionAPI.hasPermission(player, permission)),
+                Stream.of(this.server)
         ).map(sender -> new ForgeCommandSender(sender, this));
     }
 
@@ -57,15 +93,5 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
     @Override
     public String getCommandName() {
         return "spark";
-    }
-
-    @Override
-    public String getName() {
-        return "spark";
-    }
-
-    @Override
-    public List<String> getAliases() {
-        return Collections.emptyList();
     }
 }

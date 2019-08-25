@@ -21,27 +21,37 @@
 package me.lucko.spark.forge;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import net.minecraft.command.ICommand;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.command.ICommandSource;
 
-import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-@SuppressWarnings("NullableProblems")
-public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
+public abstract class ForgeSparkPlugin implements SparkPlugin {
+
+    public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, String... aliases) {
+        for (String alias : aliases) {
+            LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(alias)
+                    .executes(executor)
+                    .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
+                            .executes(executor)
+                    );
+
+            dispatcher.register(command);
+        }
+    }
 
     private final ForgeSparkMod mod;
-    private final ScheduledExecutorService scheduler;
-    private final SparkPlatform platform;
+    protected final ScheduledExecutorService scheduler;
+    protected final SparkPlatform platform;
 
     protected ForgeSparkPlugin(ForgeSparkMod mod) {
         this.mod = mod;
@@ -52,11 +62,11 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
         this.platform.enable();
     }
 
-    abstract boolean hasPermission(ICommandSender sender, String permission);
+    abstract boolean hasPermission(ICommandSource sender, String permission);
 
     @Override
     public String getVersion() {
-        return ForgeSparkMod.class.getAnnotation(Mod.class).version();
+        return this.mod.getVersion();
     }
 
     @Override
@@ -72,37 +82,5 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
     @Override
     public ThreadDumper getDefaultThreadDumper() {
         return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
-    }
-
-    // implement ICommand
-
-    @Override
-    public String getUsage(ICommandSender iCommandSender) {
-        return "/" + getCommandName();
-    }
-
-    @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
-        this.platform.executeCommand(new ForgeCommandSender(sender, this), args);
-    }
-
-    @Override
-    public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos blockPos) {
-        return this.platform.tabCompleteCommand(new ForgeCommandSender(sender, this), args);
-    }
-
-    @Override
-    public boolean checkPermission(MinecraftServer minecraftServer, ICommandSender sender) {
-        return hasPermission(sender, "spark");
-    }
-
-    @Override
-    public boolean isUsernameIndex(String[] strings, int i) {
-        return false;
-    }
-
-    @Override
-    public int compareTo(ICommand o) {
-        return getCommandName().compareTo(o.getName());
     }
 }

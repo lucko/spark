@@ -3,7 +3,7 @@ buildscript {
         maven { url = "http://files.minecraftforge.net/maven" }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
     }
 }
 
@@ -11,15 +11,10 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
-apply plugin: 'net.minecraftforge.gradle.forge'
+apply plugin: 'net.minecraftforge.gradle'
 
 minecraft {
-    version = '1.12.2-14.23.4.2705'
-    runDir = 'run'
-    mappings = 'snapshot_20171003'
-
-    replaceIn 'me/lucko/spark/forge/ForgeSparkMod.java'
-    replace '@version@', project.pluginVersion
+    mappings channel: 'snapshot', version: '20190801-1.14.3'
 }
 
 processResources {
@@ -28,16 +23,27 @@ processResources {
                 'pluginVersion': project.pluginVersion,
                 'pluginDescription': project.pluginDescription
         )
-        include 'mcmod.info'
+        include 'META-INF/mods.toml'
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'META-INF/mods.toml'
     }
 }
 
+configurations {
+    shade
+    compile.extendsFrom shade
+}
+
 dependencies {
-    compile project(':spark-common')
+    minecraft 'net.minecraftforge:forge:1.14.4-28.0.45'
+    shade project(':spark-common')
 }
 
 shadowJar {
     archiveName = 'spark-forge.jar'
+    configurations = [project.configurations.shade]
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
@@ -53,6 +59,7 @@ artifacts {
 
 reobf {
     shadowJar {
-        mappingType = 'SEARGE'
+        dependsOn createMcpToSrg
+        mappings = createMcpToSrg.outputs.files.singleFile
     }
 }

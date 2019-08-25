@@ -1,0 +1,16 @@
+modLoader="javafml"
+loaderVersion="[28,)"
+authors="Luck, sk89q"
+
+[[mods]]
+modId="spark"
+displayName="spark"
+version="${pluginVersion}"
+description="${pluginDescription}"
+
+[[dependencies.spark]]
+    modId="forge"
+    mandatory=true
+    versionRange="[28,)"
+    ordering="NONE"
+    side="BOTH"

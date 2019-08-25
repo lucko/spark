@@ -20,41 +20,52 @@
 
 package me.lucko.spark.forge;
 
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLPaths;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 
-@Mod(
-        modid = "spark",
-        name = "spark",
-        version = "@version@",
-        acceptableRemoteVersions = "*"
-)
+@Mod("spark")
 public class ForgeSparkMod {
 
-    private Path configDirectory = null;
+    private static final Logger LOGGER = LogManager.getLogger();
 
-    @EventHandler
-    public void preInit(FMLPreInitializationEvent e) {
-        this.configDirectory = e.getModConfigurationDirectory().toPath();
+    private ModContainer container;
+    private Path configDirectory;
+
+    public ForgeSparkMod() {
+        FMLJavaModLoadingContext.get().getModEventBus().register(this);
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
-    @EventHandler
-    public void init(FMLInitializationEvent e) {
-        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            ForgeClientSparkPlugin.register(this);
-        }
+    public String getVersion() {
+        return this.container.getModInfo().getVersion().toString();
     }
 
-    @EventHandler
+    @SubscribeEvent
+    public void setup(FMLCommonSetupEvent e) {
+        this.container = ModLoadingContext.get().getActiveContainer();
+        this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
+    }
+
+    @SubscribeEvent
+    public void clientInit(FMLClientSetupEvent e) {
+        ForgeClientSparkPlugin.register(this, e);
+    }
+
+    @SubscribeEvent
     public void serverInit(FMLServerStartingEvent e) {
-        e.registerServerCommand(new ForgeServerSparkPlugin(this));
+        ForgeServerSparkPlugin.register(this, e);
     }
 
     public Path getConfigDirectory() {

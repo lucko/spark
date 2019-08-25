@@ -23,37 +23,44 @@ package me.lucko.spark.forge;
 import me.lucko.spark.common.CommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.command.ICommandSource;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.rcon.IServer;
 import net.minecraft.util.text.ITextComponent;
 
 import java.util.UUID;
 
 public class ForgeCommandSender implements CommandSender {
-    private final ICommandSender sender;
+    private final ICommandSource sender;
     private final ForgeSparkPlugin plugin;
 
-    public ForgeCommandSender(ICommandSender sender, ForgeSparkPlugin plugin) {
+    public ForgeCommandSender(ICommandSource sender, ForgeSparkPlugin plugin) {
         this.sender = sender;
         this.plugin = plugin;
     }
 
     @Override
     public String getName() {
-        return this.sender.getName();
+        if (this.sender instanceof PlayerEntity) {
+            return ((PlayerEntity) this.sender).getGameProfile().getName();
+        } else if (this.sender instanceof IServer) {
+            return "Console";
+        } else {
+            return "unknown:" + this.sender.getClass().getSimpleName();
+        }
     }
 
     @Override
     public UUID getUniqueId() {
-        if (this.sender instanceof EntityPlayer) {
-            return ((EntityPlayer) this.sender).getUniqueID();
+        if (this.sender instanceof PlayerEntity) {
+            return ((PlayerEntity) this.sender).getUniqueID();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        ITextComponent component = ITextComponent.Serializer.jsonToComponent(GsonComponentSerializer.INSTANCE.serialize(message));
+        ITextComponent component = ITextComponent.Serializer.fromJson(GsonComponentSerializer.INSTANCE.serialize(message));
         this.sender.sendMessage(component);
     }
 
