@@ -18,10 +18,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.forge;
+package me.lucko.spark.forge.plugin;
 
 import com.mojang.brigadier.CommandDispatcher;
 import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.forge.ForgeCommandSender;
+import me.lucko.spark.forge.ForgeSparkMod;
+import me.lucko.spark.forge.ForgeTickCounter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.network.play.ClientPlayNetHandler;
@@ -102,7 +105,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    boolean hasPermission(ICommandSource sender, String permission) {
+    public boolean hasPermission(ICommandSource sender, String permission) {
         return true;
     }
 

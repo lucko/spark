@@ -18,13 +18,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.fabric;
+package me.lucko.spark.fabric.plugin;
 
 import com.mojang.brigadier.CommandDispatcher;
 import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.fabric.FabricCommandSender;
+import me.lucko.spark.fabric.FabricSparkGameHooks;
+import me.lucko.spark.fabric.FabricSparkMod;
+import me.lucko.spark.fabric.FabricTickCounter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.CommandSource;
 
 import java.util.Arrays;
@@ -33,18 +38,18 @@ import java.util.stream.Stream;
 
 public class FabricClientSparkPlugin extends FabricSparkPlugin {
 
+    public static void register(FabricSparkMod mod, MinecraftClient client) {
+        FabricClientSparkPlugin plugin = new FabricClientSparkPlugin(mod, client);
+
+        plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
+    }
+
     private final MinecraftClient minecraft;
     private CommandDispatcher<CommandSource> dispatcher;
 
     public FabricClientSparkPlugin(FabricSparkMod mod, MinecraftClient minecraft) {
         super(mod);
         this.minecraft = minecraft;
-    }
-
-    public static void register(FabricSparkMod mod, MinecraftClient client) {
-        FabricClientSparkPlugin plugin = new FabricClientSparkPlugin(mod, client);
-
-        plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
     }
 
     private void checkCommandRegistered() {
@@ -63,15 +68,11 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin {
             if (dispatcher != this.dispatcher) {
                 this.dispatcher = dispatcher;
                 registerCommands(this.dispatcher, c -> 0, "sparkc", "sparkclient");
-                this.mod.setChatSendCallback(this::onClientChat);
+                FabricSparkGameHooks.INSTANCE.setChatSendCallback(this::onClientChat);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private FabricCommandSender createClientSender() {
-        return new FabricCommandSender(this.minecraft.player.networkHandler.getCommandSource()::hasPermissionLevel, this.minecraft.player);
     }
 
     public boolean onClientChat(String chat) {
@@ -81,19 +82,24 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin {
         }
 
         String[] args = Arrays.copyOfRange(split, 1, split.length);
-        this.platform.executeCommand(createClientSender(), args);
+        this.platform.executeCommand(new FabricCommandSender(this.minecraft.player, this), args);
         this.minecraft.inGameHud.getChatHud().addToMessageHistory(chat);
         return true;
     }
 
     @Override
+    public boolean hasPermission(CommandOutput sender, String permission) {
+        return true;
+    }
+
+    @Override
     public Stream<FabricCommandSender> getSendersWithPermission(String permission) {
-        return Stream.of(createClientSender());
+        return Stream.of(new FabricCommandSender(this.minecraft.player, this));
     }
 
     @Override
     public TickCounter createTickCounter() {
-        return new FabricTickCounter(FabricSparkMod.getInstance()::addClientCounter, FabricSparkMod.getInstance()::removeClientCounter);
+        return new FabricTickCounter.Client();
     }
 
     @Override

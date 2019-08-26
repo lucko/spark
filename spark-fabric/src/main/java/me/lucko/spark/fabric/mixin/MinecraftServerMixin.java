@@ -20,8 +20,9 @@
 
 package me.lucko.spark.fabric.mixin;
 
-import me.lucko.spark.fabric.FabricServerSparkPlugin;
+import me.lucko.spark.fabric.FabricSparkGameHooks;
 import me.lucko.spark.fabric.FabricSparkMod;
+import me.lucko.spark.fabric.plugin.FabricServerSparkPlugin;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.util.NonBlockingThreadExecutor;
@@ -41,12 +42,12 @@ public abstract class MinecraftServerMixin extends NonBlockingThreadExecutor<Ser
     @Inject(method = "run()V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;setFavicon(Lnet/minecraft/server/ServerMetadata;)V"))
     public void onRun(CallbackInfo ci) {
-        FabricServerSparkPlugin.register(FabricSparkMod.getInstance(), (MinecraftServer) (Object) this);
+        FabricServerSparkPlugin.register(FabricSparkMod.getMod(), (MinecraftServer) (Object) this);
     }
 
     @Inject(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At("RETURN"))
     public void onTick(CallbackInfo ci) {
-        FabricSparkMod.getInstance().tickServerCounters();
+        FabricSparkGameHooks.INSTANCE.tickServerCounters();
     }
 
 }

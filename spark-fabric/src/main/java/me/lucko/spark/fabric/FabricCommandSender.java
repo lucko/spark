@@ -21,6 +21,7 @@
 package me.lucko.spark.fabric;
 
 import me.lucko.spark.common.CommandSender;
+import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
 import net.kyori.text.Component;
 import net.kyori.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.entity.player.PlayerEntity;
@@ -31,13 +32,12 @@ import net.minecraft.text.Text;
 import java.util.UUID;
 
 public class FabricCommandSender implements CommandSender {
-
-    private final VanillaPermission permission;
     private final CommandOutput sender;
+    private final FabricSparkPlugin plugin;
 
-    public FabricCommandSender(VanillaPermission permission, CommandOutput sender) {
-        this.permission = permission;
+    public FabricCommandSender(CommandOutput sender, FabricSparkPlugin plugin) {
         this.sender = sender;
+        this.plugin = plugin;
     }
 
     @Override
@@ -67,7 +67,7 @@ public class FabricCommandSender implements CommandSender {
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.permission.hasPermissionLevel(4); // Require /stop access, reasonable
+        return this.plugin.hasPermission(this.sender, permission);
     }
 
     @Override
@@ -85,10 +85,5 @@ public class FabricCommandSender implements CommandSender {
     @Override
     public int hashCode() {
         return this.sender.hashCode();
-    }
-
-    public interface VanillaPermission {
-
-        boolean hasPermissionLevel(int level);
     }
 }

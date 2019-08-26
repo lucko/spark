@@ -21,6 +21,7 @@
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.CommandSender;
+import me.lucko.spark.forge.plugin.ForgeSparkPlugin;
 import net.kyori.text.Component;
 import net.kyori.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.command.ICommandSource;

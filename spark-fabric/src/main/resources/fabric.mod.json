@@ -1,13 +1,13 @@
 {
     "schemaVersion": 1,
     "id": "spark",
+    "name": "spark",
     "version": "${pluginVersion}",
-    "name": "Spark",
-    "icon": "assets/spark/icon.png",
     "description": "${pluginDescription}",
     "authors": [
-        "Lucko"
+        "Luck", "sk89q"
     ],
+    "icon": "assets/spark/icon.png",
     "contact": {
         "homepage": "https://sparkprofiler.github.io/",
         "sources": "https://github.com/lucko/spark",

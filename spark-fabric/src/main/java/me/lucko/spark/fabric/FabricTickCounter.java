@@ -24,35 +24,16 @@ import me.lucko.spark.common.sampler.TickCounter;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
-public class FabricTickCounter implements TickCounter {
-
+public abstract class FabricTickCounter implements TickCounter {
     private final Set<TickTask> tasks = new HashSet<>();
-    private final Consumer<FabricTickCounter> adder;
-    private final Consumer<FabricTickCounter> remover;
     private int tick = 0;
-
-    public FabricTickCounter(Consumer<FabricTickCounter> adder, Consumer<FabricTickCounter> remover) {
-        this.adder = adder;
-        this.remover = remover;
-    }
 
     public void onTick() {
         for (TickTask r : this.tasks) {
             r.onTick(this);
         }
         this.tick++;
-    }
-
-    @Override
-    public void start() {
-        this.adder.accept(this);
-    }
-
-    @Override
-    public void close() {
-        this.remover.accept(this);
     }
 
     @Override
@@ -68,5 +49,29 @@ public class FabricTickCounter implements TickCounter {
     @Override
     public void removeTickTask(TickTask runnable) {
         this.tasks.remove(runnable);
+    }
+
+    public static final class Server extends FabricTickCounter {
+        @Override
+        public void start() {
+            FabricSparkGameHooks.INSTANCE.addServerCounter(this);
+        }
+
+        @Override
+        public void close() {
+            FabricSparkGameHooks.INSTANCE.removeServerCounter(this);
+        }
+    }
+
+    public static final class Client extends FabricTickCounter {
+        @Override
+        public void start() {
+            FabricSparkGameHooks.INSTANCE.addClientCounter(this);
+        }
+
+        @Override
+        public void close() {
+            FabricSparkGameHooks.INSTANCE.removeClientCounter(this);
+        }
     }
 }

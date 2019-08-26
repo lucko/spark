@@ -20,6 +20,8 @@
 
 package me.lucko.spark.forge;
 
+import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
+import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModContainer;

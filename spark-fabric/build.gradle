@@ -1,3 +1,5 @@
+import net.fabricmc.loom.task.RemapJarTask
+
 plugins {
     id 'fabric-loom' version '0.2.5-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '4.0.1'
@@ -40,7 +42,7 @@ shadowJar {
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
 }
 
-task remappedShadowJar(type: net.fabricmc.loom.task.RemapJarTask) {
+task remappedShadowJar(type: RemapJarTask) {
     dependsOn tasks.shadowJar
     input = tasks.shadowJar.archiveFile
     addNestedDependencies = true

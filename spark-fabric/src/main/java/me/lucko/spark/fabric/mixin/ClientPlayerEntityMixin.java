@@ -21,7 +21,7 @@
 package me.lucko.spark.fabric.mixin;
 
 import com.mojang.authlib.GameProfile;
-import me.lucko.spark.fabric.FabricSparkMod;
+import me.lucko.spark.fabric.FabricSparkGameHooks;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
@@ -42,7 +42,7 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
             locals = LocalCapture.CAPTURE_FAILHARD,
             cancellable = true)
     public void onSendChatMessage(String message, CallbackInfo ci) {
-        if (FabricSparkMod.getInstance().tryProcessChat(message)) {
+        if (FabricSparkGameHooks.INSTANCE.tryProcessChat(message)) {
             ci.cancel();
         }
     }

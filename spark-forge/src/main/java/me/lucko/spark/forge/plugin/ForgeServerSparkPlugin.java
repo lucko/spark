@@ -18,13 +18,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.forge;
+package me.lucko.spark.forge.plugin;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.forge.ForgeCommandSender;
+import me.lucko.spark.forge.ForgeSparkMod;
+import me.lucko.spark.forge.ForgeTickCounter;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.ICommandSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -69,7 +72,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
-    boolean hasPermission(ICommandSource sender, String permission) {
+    public boolean hasPermission(ICommandSource sender, String permission) {
         if (sender instanceof PlayerEntity) {
             return PermissionAPI.hasPermission((PlayerEntity) sender, permission);
         } else {
@@ -80,7 +83,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public Stream<ForgeCommandSender> getSendersWithPermission(String permission) {
         return Stream.concat(
-                this.server.getPlayerList().getPlayers().stream().filter(player -> PermissionAPI.hasPermission(player, permission)),
+                this.server.getPlayerList().getPlayers().stream().filter(player -> hasPermission(player, permission)),
                 Stream.of(this.server)
         ).map(sender -> new ForgeCommandSender(sender, this));
     }

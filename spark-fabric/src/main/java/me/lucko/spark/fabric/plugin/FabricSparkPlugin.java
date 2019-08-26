@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.forge;
+package me.lucko.spark.fabric.plugin;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.brigadier.Command;
@@ -26,43 +26,51 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import net.minecraft.command.ICommandSource;
+import me.lucko.spark.fabric.FabricSparkMod;
+import net.minecraft.server.command.CommandOutput;
 
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-public abstract class ForgeSparkPlugin implements SparkPlugin {
+public abstract class FabricSparkPlugin implements SparkPlugin {
 
     public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, String... aliases) {
-        for (String alias : aliases) {
-            LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(alias)
-                    .executes(executor)
-                    .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
-                            .executes(executor)
-                    );
+        if (aliases.length == 0) {
+            return;
+        }
 
-            dispatcher.register(command);
+        String mainName = aliases[0];
+        LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(mainName)
+                .executes(executor)
+                .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
+                        .executes(executor)
+                );
+
+        LiteralCommandNode<T> node = dispatcher.register(command);
+        for (int i = 1; i < aliases.length; i++) {
+            dispatcher.register(LiteralArgumentBuilder.<T>literal(aliases[i]).redirect(node));
         }
     }
 
-    private final ForgeSparkMod mod;
+    private final FabricSparkMod mod;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
 
-    protected ForgeSparkPlugin(ForgeSparkMod mod) {
+    protected FabricSparkPlugin(FabricSparkMod mod) {
         this.mod = mod;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
+                new ThreadFactoryBuilder().setNameFormat("spark-fabric-async-worker").build()
         );
         this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
 
-    abstract boolean hasPermission(ICommandSource sender, String permission);
+    public abstract boolean hasPermission(CommandOutput sender, String permission);
 
     @Override
     public String getVersion() {

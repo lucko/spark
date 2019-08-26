@@ -18,21 +18,32 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.fabric;
+package me.lucko.spark.fabric.plugin;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.fabric.FabricCommandSender;
+import me.lucko.spark.fabric.FabricSparkMod;
+import me.lucko.spark.fabric.FabricTickCounter;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
 
 public class FabricServerSparkPlugin extends FabricSparkPlugin implements Command<ServerCommandSource> {
+
+    public static void register(FabricSparkMod mod, MinecraftServer server) {
+        CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
+
+        FabricServerSparkPlugin plugin = new FabricServerSparkPlugin(mod, server);
+        registerCommands(dispatcher, plugin, "spark");
+    }
 
     private final MinecraftServer server;
 
@@ -41,40 +52,40 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
         this.server = server;
     }
 
-    public static void register(FabricSparkMod mod, MinecraftServer server) {
-        CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
-
-        FabricServerSparkPlugin plugin = new FabricServerSparkPlugin(mod, server);
-        registerCommands(dispatcher, plugin, "spark");
-        //        PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
-    }
-
     @Override
     public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         String[] split = context.getInput().split(" ");
         if (split.length == 0 || !split[0].equals("/spark")) {
-            context.getSource().sendError(new LiteralText("Wrong split started with " + (split.length == 0 ? "nothing" : split[0])));
             return 0;
         }
 
         String[] args = Arrays.copyOfRange(split, 1, split.length);
 
-        this.platform.executeCommand(new FabricCommandSender(context.getSource()::hasPermissionLevel, context.getSource().getPlayer()), args);
+        this.platform.executeCommand(new FabricCommandSender(context.getSource().getPlayer(), this), args);
         return 1;
+    }
+
+    @Override
+    public boolean hasPermission(CommandOutput sender, String permission) {
+        if (sender instanceof PlayerEntity) {
+            return this.server.getPermissionLevel(((PlayerEntity) sender).getGameProfile()) >= 4;
+        } else {
+            return true;
+        }
     }
 
     @Override
     public Stream<FabricCommandSender> getSendersWithPermission(String permission) {
         return Stream.concat(
                 this.server.getPlayerManager().getPlayerList().stream()
-                        .filter(player -> this.server.getPermissionLevel(player.getGameProfile()) == 4),
+                        .filter(player -> hasPermission(player, permission)),
                 Stream.of(this.server)
-        ).map(sender -> new FabricCommandSender(i -> true, sender));
+        ).map(sender -> new FabricCommandSender(sender, this));
     }
 
     @Override
     public TickCounter createTickCounter() {
-        return new FabricTickCounter(FabricSparkMod.getInstance()::addServerCounter, FabricSparkMod.getInstance()::removeServerCounter);
+        return new FabricTickCounter.Server();
     }
 
     @Override

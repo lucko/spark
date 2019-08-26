@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.fabric;
+package me.lucko.spark.forge.plugin;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.brigadier.Command;
@@ -30,30 +30,20 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.forge.ForgeSparkMod;
+import net.minecraft.command.ICommandSource;
 
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-public abstract class FabricSparkPlugin implements SparkPlugin {
-
-    protected final ScheduledExecutorService scheduler;
-    protected final SparkPlatform platform;
-    protected final FabricSparkMod mod;
-
-    protected FabricSparkPlugin(FabricSparkMod mod) {
-        this.mod = mod;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("spark-fabric-async-worker").build()
-        );
-        this.platform = new SparkPlatform(this);
-        this.platform.enable();
-    }
+public abstract class ForgeSparkPlugin implements SparkPlugin {
 
     public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, String... aliases) {
         if (aliases.length == 0) {
             return;
         }
+
         String mainName = aliases[0];
         LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(mainName)
                 .executes(executor)
@@ -66,6 +56,21 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
             dispatcher.register(LiteralArgumentBuilder.<T>literal(aliases[i]).redirect(node));
         }
     }
+
+    private final ForgeSparkMod mod;
+    protected final ScheduledExecutorService scheduler;
+    protected final SparkPlatform platform;
+
+    protected ForgeSparkPlugin(ForgeSparkMod mod) {
+        this.mod = mod;
+        this.scheduler = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
+        );
+        this.platform = new SparkPlatform(this);
+        this.platform.enable();
+    }
+
+    public abstract boolean hasPermission(ICommandSource sender, String permission);
 
     @Override
     public String getVersion() {

@@ -22,85 +22,38 @@ package me.lucko.spark.fabric;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Predicate;
 
 public class FabricSparkMod implements ModInitializer {
+    private static FabricSparkMod mod;
 
-    private static FabricSparkMod instance;
-    private final Set<FabricTickCounter> clientCounters = new HashSet<>();
-    private final Set<FabricTickCounter> serverCounters = new HashSet<>();
-    private String version;
-    private Path configDir;
-    // Use events from Fabric API later
-    // Return true to abort sending to server
-    private Predicate<String> chatSendCallback = s -> false;
-
-    public FabricSparkMod() {
+    public static FabricSparkMod getMod() {
+        return mod;
     }
 
-    public static FabricSparkMod getInstance() {
-        return instance;
-    }
+    private ModContainer container;
+    private Path configDirectory;
 
     @Override
     public void onInitialize() {
-        FabricSparkMod.instance = this;
-        FabricLoader loader = FabricLoader.getInstance();
-        this.version = loader.getModContainer("spark")
-                .orElseThrow(() -> new IllegalStateException("Spark loaded incorrectly!"))
-                .getMetadata()
-                .getVersion()
-                .getFriendlyString();
-        this.configDir = loader.getConfigDirectory().toPath().resolve("spark");
+        FabricSparkMod.mod = this;
 
-        // When Fabric API is available, we will register event listeners here
+        FabricLoader loader = FabricLoader.getInstance();
+        this.container = loader.getModContainer("spark")
+                .orElseThrow(() -> new IllegalStateException("Unable to get container for spark"));
+        this.configDirectory = loader.getConfigDirectory().toPath().resolve("spark");
     }
 
     public String getVersion() {
-        return version;
+        return this.container.getMetadata().getVersion().getFriendlyString();
     }
 
     public Path getConfigDirectory() {
-        return configDir;
-    }
-
-    public void setChatSendCallback(Predicate<String> callback) {
-        this.chatSendCallback = callback;
-    }
-
-    public boolean tryProcessChat(String message) {
-        return chatSendCallback.test(message);
-    }
-
-    public void addClientCounter(FabricTickCounter counter) {
-        this.clientCounters.add(counter);
-    }
-
-    public void removeClientCounter(FabricTickCounter counter) {
-        this.clientCounters.remove(counter);
-    }
-
-    public void addServerCounter(FabricTickCounter counter) {
-        this.serverCounters.add(counter);
-    }
-
-    public void removeServerCounter(FabricTickCounter counter) {
-        this.serverCounters.remove(counter);
-    }
-
-    public void tickClientCounters() {
-        for (FabricTickCounter each : clientCounters) {
-            each.onTick();
+        if (this.configDirectory == null) {
+            throw new IllegalStateException("Config directory not set");
         }
-    }
-
-    public void tickServerCounters() {
-        for (FabricTickCounter each : serverCounters) {
-            each.onTick();
-        }
+        return this.configDirectory;
     }
 }

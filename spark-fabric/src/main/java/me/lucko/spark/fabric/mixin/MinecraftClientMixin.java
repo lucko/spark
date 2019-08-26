@@ -20,8 +20,9 @@
 
 package me.lucko.spark.fabric.mixin;
 
-import me.lucko.spark.fabric.FabricClientSparkPlugin;
+import me.lucko.spark.fabric.FabricSparkGameHooks;
 import me.lucko.spark.fabric.FabricSparkMod;
+import me.lucko.spark.fabric.plugin.FabricClientSparkPlugin;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.NonBlockingThreadExecutor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -40,12 +41,12 @@ public abstract class MinecraftClientMixin extends NonBlockingThreadExecutor<Run
     @Inject(method = "init()V", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/gui/screen/SplashScreen;method_18819(Lnet/minecraft/client/MinecraftClient;)V"))
     public void onInit(CallbackInfo ci) {
-        FabricClientSparkPlugin.register(FabricSparkMod.getInstance(), (MinecraftClient) (Object) this);
+        FabricClientSparkPlugin.register(FabricSparkMod.getMod(), (MinecraftClient) (Object) this);
     }
 
     @Inject(method = "tick()V", at = @At("RETURN"))
     public void onTick(CallbackInfo ci) {
-        FabricSparkMod.getInstance().tickClientCounters();
+        FabricSparkGameHooks.INSTANCE.tickClientCounters();
     }
 
 }
