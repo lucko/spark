@@ -1,0 +1,15 @@
+{
+    "required": true,
+    "package": "me.lucko.spark.fabric.mixin",
+    "compatibilityLevel": "JAVA_8",
+    "mixins": [
+        "MinecraftServerMixin"
+    ],
+    "client": [
+        "MinecraftClientMixin",
+        "ClientPlayerEntityMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
