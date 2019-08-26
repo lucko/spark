@@ -1,0 +1,29 @@
+{
+    "schemaVersion": 1,
+    "id": "spark",
+    "version": "${pluginVersion}",
+    "name": "Spark",
+    "icon": "assets/spark/icon.png",
+    "description": "${pluginDescription}",
+    "authors": [
+        "Lucko"
+    ],
+    "contact": {
+        "homepage": "https://sparkprofiler.github.io/",
+        "sources": "https://github.com/lucko/spark",
+        "issues": "https://github.com/lucko/spark/issues"
+    },
+    "license": "GNU General Public License v3.0",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "me.lucko.spark.fabric.FabricSparkMod"
+        ]
+    },
+    "mixins": [
+        "spark.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": ">=0.4.0"
+    }
+}

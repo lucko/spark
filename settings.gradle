@@ -1,3 +1,14 @@
+pluginManagement {
+    repositories {
+        jcenter()
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = 'spark'
 include (
         'spark-common',
@@ -6,5 +17,6 @@ include (
         'spark-velocity',
         'spark-sponge',
         'spark-forge',
+        'spark-fabric',
         'spark-universal'
 )

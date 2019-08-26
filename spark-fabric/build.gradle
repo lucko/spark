@@ -1,0 +1,55 @@
+plugins {
+    id 'fabric-loom' version '0.2.5-SNAPSHOT'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
+}
+
+configurations {
+    shade
+    compile.extendsFrom shade
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:19w34a"
+    mappings "net.fabricmc:yarn:19w34a+build.8"
+    modCompile "net.fabricmc:fabric-loader:0.4.9+build.161"
+
+    shade project(':spark-common')
+}
+
+processResources {
+    inputs.property "version", project.version
+
+    from(sourceSets.main.resources.srcDirs) {
+        include "fabric.mod.json"
+        expand "pluginVersion": project.pluginVersion, "pluginDescription": project.pluginDescription
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude "fabric.mod.json"
+    }
+}
+
+shadowJar {
+    archiveFileName = 'spark-fabric-dev.jar'
+    configurations = [project.configurations.shade]
+
+    relocate 'okio', 'me.lucko.spark.lib.okio'
+    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'net.kyori.text', 'me.lucko.spark.lib.text'
+    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+}
+
+task remappedShadowJar(type: net.fabricmc.loom.task.RemapJarTask) {
+    dependsOn tasks.shadowJar
+    input = tasks.shadowJar.archiveFile
+    addNestedDependencies = true
+    archiveFileName = 'spark-fabric.jar'
+}
+
+tasks.assemble.dependsOn tasks.remappedShadowJar
+
+artifacts {
+    archives remappedShadowJar
+    shadow shadowJar
+}
