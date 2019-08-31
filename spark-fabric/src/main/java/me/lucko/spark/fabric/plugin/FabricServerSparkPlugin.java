@@ -24,6 +24,9 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.fabric.FabricCommandSender;
 import me.lucko.spark.fabric.FabricSparkMod;
@@ -32,17 +35,19 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-public class FabricServerSparkPlugin extends FabricSparkPlugin implements Command<ServerCommandSource> {
+public class FabricServerSparkPlugin extends FabricSparkPlugin implements Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
 
     public static void register(FabricSparkMod mod, MinecraftServer server) {
         CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
 
         FabricServerSparkPlugin plugin = new FabricServerSparkPlugin(mod, server);
-        registerCommands(dispatcher, plugin, "spark");
+        registerCommands(dispatcher, plugin, plugin, "spark");
     }
 
     private final MinecraftServer server;
@@ -52,17 +57,39 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
         this.server = server;
     }
 
-    @Override
-    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+    private String /*Nullable*/ [] processArgs(CommandContext<ServerCommandSource> context) {
         String[] split = context.getInput().split(" ");
         if (split.length == 0 || !split[0].equals("/spark")) {
-            return 0;
+            return null;
         }
 
-        String[] args = Arrays.copyOfRange(split, 1, split.length);
+        return Arrays.copyOfRange(split, 1, split.length);
+    }
+
+    @Override
+    public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        String[] args = processArgs(context);
+        if (args == null)
+            return 0;
 
         this.platform.executeCommand(new FabricCommandSender(context.getSource().getPlayer(), this), args);
-        return 1;
+        return Command.SINGLE_SUCCESS;
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder)
+            throws CommandSyntaxException {
+        String[] args = processArgs(context);
+        if (args == null)
+            return Suggestions.empty();
+        ServerPlayerEntity player = context.getSource().getPlayer();
+
+        return CompletableFuture.supplyAsync(() -> {
+            for (String each : this.platform.tabCompleteCommand(new FabricCommandSender(player, this), args)) {
+                builder.suggest(each);
+            }
+            return builder.build();
+        });
     }
 
     @Override

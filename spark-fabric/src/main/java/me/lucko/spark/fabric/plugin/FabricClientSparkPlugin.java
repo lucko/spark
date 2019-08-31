@@ -20,7 +20,13 @@
 
 package me.lucko.spark.fabric.plugin;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.fabric.FabricCommandSender;
 import me.lucko.spark.fabric.FabricSparkGameHooks;
@@ -33,10 +39,11 @@ import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.CommandSource;
 
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-public class FabricClientSparkPlugin extends FabricSparkPlugin {
+public class FabricClientSparkPlugin extends FabricSparkPlugin implements SuggestionProvider<CommandSource> {
 
     public static void register(FabricSparkMod mod, MinecraftClient client) {
         FabricClientSparkPlugin plugin = new FabricClientSparkPlugin(mod, client);
@@ -67,7 +74,7 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin {
             CommandDispatcher<CommandSource> dispatcher = connection.getCommandDispatcher();
             if (dispatcher != this.dispatcher) {
                 this.dispatcher = dispatcher;
-                registerCommands(this.dispatcher, c -> 0, "sparkc", "sparkclient");
+                registerCommands(this.dispatcher, c -> Command.SINGLE_SUCCESS, this, "sparkc", "sparkclient");
                 FabricSparkGameHooks.INSTANCE.setChatSendCallback(this::onClientChat);
             }
         } catch (Exception e) {
@@ -85,6 +92,24 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin {
         this.platform.executeCommand(new FabricCommandSender(this.minecraft.player, this), args);
         this.minecraft.inGameHud.getChatHud().addToMessageHistory(chat);
         return true;
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context, SuggestionsBuilder builder)
+            throws CommandSyntaxException {
+        String[] split = context.getInput().split(" ");
+        if (split.length == 0 || (!split[0].equals("/sparkc") && !split[0].equals("/sparkclient"))) {
+            return Suggestions.empty();
+        }
+
+        String[] args = Arrays.copyOfRange(split, 1, split.length);
+
+        return CompletableFuture.supplyAsync(() -> {
+            for (String each : this.platform.tabCompleteCommand(new FabricCommandSender(this.minecraft.player, this), args)) {
+                builder.suggest(each);
+            }
+            return builder.build();
+        });
     }
 
     @Override

@@ -24,6 +24,9 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgeSparkMod;
@@ -31,6 +34,7 @@ import me.lucko.spark.forge.ForgeTickCounter;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.ICommandSource;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
@@ -38,16 +42,17 @@ import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
 
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSource> {
+public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSource>, SuggestionProvider<CommandSource> {
 
     public static void register(ForgeSparkMod mod, FMLServerStartingEvent event) {
         MinecraftServer server = event.getServer();
         CommandDispatcher<CommandSource> dispatcher = event.getCommandDispatcher();
 
         ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, server);
-        registerCommands(dispatcher, plugin, "spark");
+        registerCommands(dispatcher, plugin, plugin, "spark");
         PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
     }
 
@@ -58,17 +63,39 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         this.server = server;
     }
 
-    @Override
-    public int run(CommandContext<CommandSource> context) throws CommandSyntaxException {
+    private String /* Nullable */[] processArgs(CommandContext<CommandSource> context) {
         String[] split = context.getInput().split(" ");
         if (split.length == 0 || !split[0].equals("/spark")) {
-            return 0;
+            return null;
         }
 
-        String[] args = Arrays.copyOfRange(split, 1, split.length);
+        return Arrays.copyOfRange(split, 1, split.length);
+    }
+
+    @Override
+    public int run(CommandContext<CommandSource> context) throws CommandSyntaxException {
+        String[] args = processArgs(context);
+        if (args == null)
+            return 0;
 
         this.platform.executeCommand(new ForgeCommandSender(context.getSource().asPlayer(), this), args);
-        return 1;
+        return Command.SINGLE_SUCCESS;
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context, SuggestionsBuilder builder)
+            throws CommandSyntaxException {
+        String[] args = processArgs(context);
+        if (args == null)
+            return Suggestions.empty();
+
+        ServerPlayerEntity player = context.getSource().asPlayer();
+        return CompletableFuture.supplyAsync(() -> {
+            for (String each : this.platform.tabCompleteCommand(new ForgeCommandSender(player, this), args)) {
+                builder.suggest(each);
+            }
+            return builder.build();
+        });
     }
 
     @Override
