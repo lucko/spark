@@ -20,7 +20,13 @@
 
 package me.lucko.spark.forge.plugin;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgeSparkMod;
@@ -36,20 +42,12 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
-
-    private static final Field COMMAND_DISPATCHER_FIELD;
-    static {
-        COMMAND_DISPATCHER_FIELD = Arrays.stream(ClientPlayNetHandler.class.getDeclaredFields())
-                .filter(f -> f.getType() == CommandDispatcher.class)
-                .findFirst().orElseThrow(() -> new RuntimeException("No field with CommandDispatcher type"));
-        COMMAND_DISPATCHER_FIELD.setAccessible(true);
-    }
+public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements SuggestionProvider<ISuggestionProvider> {
 
     public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
         Minecraft minecraft = event.getMinecraftSupplier().get();
@@ -80,10 +78,10 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
         }
 
         try {
-            CommandDispatcher<ISuggestionProvider> dispatcher = (CommandDispatcher) COMMAND_DISPATCHER_FIELD.get(connection);
+            CommandDispatcher<ISuggestionProvider> dispatcher = connection.func_195515_i();
             if (dispatcher != this.dispatcher) {
                 this.dispatcher = dispatcher;
-                registerCommands(this.dispatcher, context -> 1, "sparkc", "sparkclient");
+                registerCommands(this.dispatcher, context -> Command.SINGLE_SUCCESS, this, "sparkc", "sparkclient");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -102,6 +100,25 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
         this.platform.executeCommand(new ForgeCommandSender(this.minecraft.player, this), args);
         this.minecraft.ingameGUI.getChatGUI().addToSentMessages(chat);
         event.setCanceled(true);
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ISuggestionProvider> context, SuggestionsBuilder builder)
+            throws CommandSyntaxException {
+        String chat = context.getInput();
+        String[] split = chat.split(" ");
+        if (split.length == 0 || (!split[0].equals("/sparkc") && !split[0].equals("/sparkclient"))) {
+            return Suggestions.empty();
+        }
+
+        String[] args = Arrays.copyOfRange(split, 1, split.length);
+
+        return CompletableFuture.supplyAsync(() -> {
+            for (String each : this.platform.tabCompleteCommand(new ForgeCommandSender(this.minecraft.player, this), args)) {
+                builder.suggest(each);
+            }
+            return builder.build();
+        });
     }
 
     @Override

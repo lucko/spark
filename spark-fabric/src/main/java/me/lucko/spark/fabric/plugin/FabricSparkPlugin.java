@@ -26,6 +26,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
@@ -39,7 +40,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public abstract class FabricSparkPlugin implements SparkPlugin {
 
-    public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, String... aliases) {
+    public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
         if (aliases.length == 0) {
             return;
         }
@@ -48,6 +49,7 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
         LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(mainName)
                 .executes(executor)
                 .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
+                        .suggests(suggestor)
                         .executes(executor)
                 );
 
