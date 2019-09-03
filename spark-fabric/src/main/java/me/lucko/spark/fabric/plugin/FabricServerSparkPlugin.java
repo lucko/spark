@@ -57,7 +57,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
         this.server = server;
     }
 
-    private String /*Nullable*/ [] processArgs(CommandContext<ServerCommandSource> context) {
+    private static String /*Nullable*/ [] processArgs(CommandContext<ServerCommandSource> context) {
         String[] split = context.getInput().split(" ");
         if (split.length == 0 || !split[0].equals("/spark")) {
             return null;
@@ -69,24 +69,25 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         String[] args = processArgs(context);
-        if (args == null)
+        if (args == null) {
             return 0;
+        }
 
         this.platform.executeCommand(new FabricCommandSender(context.getSource().getPlayer(), this), args);
         return Command.SINGLE_SUCCESS;
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder)
-            throws CommandSyntaxException {
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String[] args = processArgs(context);
-        if (args == null)
+        if (args == null) {
             return Suggestions.empty();
+        }
         ServerPlayerEntity player = context.getSource().getPlayer();
 
         return CompletableFuture.supplyAsync(() -> {
-            for (String each : this.platform.tabCompleteCommand(new FabricCommandSender(player, this), args)) {
-                builder.suggest(each);
+            for (String suggestion : this.platform.tabCompleteCommand(new FabricCommandSender(player, this), args)) {
+                builder.suggest(suggestion);
             }
             return builder.build();
         });

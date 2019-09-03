@@ -63,7 +63,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         this.server = server;
     }
 
-    private String /* Nullable */[] processArgs(CommandContext<CommandSource> context) {
+    private static String /* Nullable */[] processArgs(CommandContext<CommandSource> context) {
         String[] split = context.getInput().split(" ");
         if (split.length == 0 || !split[0].equals("/spark")) {
             return null;
@@ -83,16 +83,16 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context, SuggestionsBuilder builder)
-            throws CommandSyntaxException {
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String[] args = processArgs(context);
-        if (args == null)
+        if (args == null) {
             return Suggestions.empty();
+        }
 
         ServerPlayerEntity player = context.getSource().asPlayer();
         return CompletableFuture.supplyAsync(() -> {
-            for (String each : this.platform.tabCompleteCommand(new ForgeCommandSender(player, this), args)) {
-                builder.suggest(each);
+            for (String suggestion : this.platform.tabCompleteCommand(new ForgeCommandSender(player, this), args)) {
+                builder.suggest(suggestion);
             }
             return builder.build();
         });

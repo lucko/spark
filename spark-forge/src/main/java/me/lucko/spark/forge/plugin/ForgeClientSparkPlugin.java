@@ -103,8 +103,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ISuggestionProvider> context, SuggestionsBuilder builder)
-            throws CommandSyntaxException {
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ISuggestionProvider> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String chat = context.getInput();
         String[] split = chat.split(" ");
         if (split.length == 0 || (!split[0].equals("/sparkc") && !split[0].equals("/sparkclient"))) {
@@ -114,8 +113,8 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
         String[] args = Arrays.copyOfRange(split, 1, split.length);
 
         return CompletableFuture.supplyAsync(() -> {
-            for (String each : this.platform.tabCompleteCommand(new ForgeCommandSender(this.minecraft.player, this), args)) {
-                builder.suggest(each);
+            for (String suggestion : this.platform.tabCompleteCommand(new ForgeCommandSender(this.minecraft.player, this), args)) {
+                builder.suggest(suggestion);
             }
             return builder.build();
         });

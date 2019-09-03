@@ -95,8 +95,7 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context, SuggestionsBuilder builder)
-            throws CommandSyntaxException {
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String[] split = context.getInput().split(" ");
         if (split.length == 0 || (!split[0].equals("/sparkc") && !split[0].equals("/sparkclient"))) {
             return Suggestions.empty();
@@ -105,8 +104,8 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
         String[] args = Arrays.copyOfRange(split, 1, split.length);
 
         return CompletableFuture.supplyAsync(() -> {
-            for (String each : this.platform.tabCompleteCommand(new FabricCommandSender(this.minecraft.player, this), args)) {
-                builder.suggest(each);
+            for (String suggestion : this.platform.tabCompleteCommand(new FabricCommandSender(this.minecraft.player, this), args)) {
+                builder.suggest(suggestion);
             }
             return builder.build();
         });
