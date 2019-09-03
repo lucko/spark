@@ -45,6 +45,7 @@ public enum CpuMonitor {
     private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread thread = Executors.defaultThreadFactory().newThread(r);
         thread.setName("spark-cpu-monitor");
+        thread.setDaemon(true);
         return thread;
     });
 
