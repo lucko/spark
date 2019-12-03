@@ -20,15 +20,12 @@
 
 package me.lucko.spark.common.heapdump;
 
-import me.lucko.spark.common.CommandSender;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.util.TypeDescriptors;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.HeapData;
 import me.lucko.spark.proto.SparkProtos.HeapEntry;
 
-import javax.management.JMX;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,6 +37,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
+
+import javax.management.JMX;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 /**
  * Represents a "heap dump summary" from the VM.

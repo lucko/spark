@@ -20,53 +20,40 @@
 
 package me.lucko.spark.bungeecord;
 
-import me.lucko.spark.common.CommandSender;
+
+import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.adapter.bungeecord.TextAdapter;
+import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.UUID;
 
-public class BungeeCordCommandSender implements CommandSender {
-    private final net.md_5.bungee.api.CommandSender sender;
-
-    public BungeeCordCommandSender(net.md_5.bungee.api.CommandSender sender) {
-        this.sender = sender;
+public class BungeeCordCommandSender extends AbstractCommandSender<CommandSender> {
+    public BungeeCordCommandSender(CommandSender sender) {
+        super(sender);
     }
 
     @Override
     public String getName() {
-        return this.sender.getName();
+        return super.delegate.getName();
     }
 
     @Override
     public UUID getUniqueId() {
-        if (this.sender instanceof ProxiedPlayer) {
-            return ((ProxiedPlayer) this.sender).getUniqueId();
+        if (super.delegate instanceof ProxiedPlayer) {
+            return ((ProxiedPlayer) super.delegate).getUniqueId();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        TextAdapter.sendComponent(this.sender, message);
+        TextAdapter.sendComponent(super.delegate, message);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.sender.hasPermission(permission);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BungeeCordCommandSender that = (BungeeCordCommandSender) o;
-        return this.sender.equals(that.sender);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.sender.hashCode();
+        return super.delegate.hasPermission(permission);
     }
 }

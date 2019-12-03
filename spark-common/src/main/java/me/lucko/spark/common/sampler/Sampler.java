@@ -22,7 +22,7 @@
 package me.lucko.spark.common.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import me.lucko.spark.common.CommandSender;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
 import me.lucko.spark.common.sampler.aggregator.TickedDataAggregator;

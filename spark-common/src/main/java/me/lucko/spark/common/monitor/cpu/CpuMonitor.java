@@ -22,14 +22,15 @@ package me.lucko.spark.common.monitor.cpu;
 
 import me.lucko.spark.common.util.RollingAverage;
 
-import javax.management.JMX;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import javax.management.JMX;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 /**
  * Exposes and monitors the system/process CPU usage.
@@ -73,6 +74,7 @@ public enum CpuMonitor {
     /**
      * Ensures that the static initializer has been called.
      */
+    @SuppressWarnings("EmptyMethod")
     public static void ensureMonitoring() {
         // intentionally empty
     }

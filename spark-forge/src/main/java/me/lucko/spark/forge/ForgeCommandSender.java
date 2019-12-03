@@ -20,7 +20,7 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.CommandSender;
+import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import me.lucko.spark.forge.plugin.ForgeSparkPlugin;
 import net.kyori.text.Component;
 import net.kyori.text.serializer.gson.GsonComponentSerializer;
@@ -31,30 +31,29 @@ import net.minecraft.util.text.ITextComponent;
 
 import java.util.UUID;
 
-public class ForgeCommandSender implements CommandSender {
-    private final ICommandSource sender;
+public class ForgeCommandSender extends AbstractCommandSender<ICommandSource> {
     private final ForgeSparkPlugin plugin;
 
-    public ForgeCommandSender(ICommandSource sender, ForgeSparkPlugin plugin) {
-        this.sender = sender;
+    public ForgeCommandSender(ICommandSource source, ForgeSparkPlugin plugin) {
+        super(source);
         this.plugin = plugin;
     }
 
     @Override
     public String getName() {
-        if (this.sender instanceof PlayerEntity) {
-            return ((PlayerEntity) this.sender).getGameProfile().getName();
-        } else if (this.sender instanceof IServer) {
+        if (super.delegate instanceof PlayerEntity) {
+            return ((PlayerEntity) super.delegate).getGameProfile().getName();
+        } else if (super.delegate instanceof IServer) {
             return "Console";
         } else {
-            return "unknown:" + this.sender.getClass().getSimpleName();
+            return "unknown:" + super.delegate.getClass().getSimpleName();
         }
     }
 
     @Override
     public UUID getUniqueId() {
-        if (this.sender instanceof PlayerEntity) {
-            return ((PlayerEntity) this.sender).getUniqueID();
+        if (super.delegate instanceof PlayerEntity) {
+            return ((PlayerEntity) super.delegate).getUniqueID();
         }
         return null;
     }
@@ -62,24 +61,11 @@ public class ForgeCommandSender implements CommandSender {
     @Override
     public void sendMessage(Component message) {
         ITextComponent component = ITextComponent.Serializer.fromJson(GsonComponentSerializer.INSTANCE.serialize(message));
-        this.sender.sendMessage(component);
+        super.delegate.sendMessage(component);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.plugin.hasPermission(this.sender, permission);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ForgeCommandSender that = (ForgeCommandSender) o;
-        return this.sender.equals(that.sender);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.sender.hashCode();
+        return this.plugin.hasPermission(super.delegate, permission);
     }
 }

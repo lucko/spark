@@ -26,8 +26,6 @@ import me.lucko.spark.common.SparkPlatform;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.util.stream.Collectors;
-
 public class SparkPlaceholderApi extends PlaceholderExpansion {
     private final BukkitSparkPlugin plugin;
     private final SparkPlatform platform;
@@ -55,12 +53,12 @@ public class SparkPlaceholderApi extends PlaceholderExpansion {
 
     @Override
     public String getAuthor() {
-        return plugin.getDescription().getAuthors().stream().collect(Collectors.joining(", "));
+        return String.join(", ", this.plugin.getDescription().getAuthors());
     }
 
     @Override
     public String getVersion() {
-        return plugin.getVersion();
+        return this.plugin.getVersion();
     }
 
     @Override

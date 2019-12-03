@@ -21,6 +21,7 @@
 package me.lucko.spark.common;
 
 import com.google.common.collect.ImmutableList;
+import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -30,6 +31,7 @@ import me.lucko.spark.common.command.modules.HealthModule;
 import me.lucko.spark.common.command.modules.MemoryModule;
 import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.command.modules.TickMonitoringModule;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;

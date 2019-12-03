@@ -20,53 +20,40 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.CommandSender;
+
+import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.adapter.bukkit.TextAdapter;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
-public class BukkitCommandSender implements CommandSender {
-    private final org.bukkit.command.CommandSender sender;
-
-    public BukkitCommandSender(org.bukkit.command.CommandSender sender) {
-        this.sender = sender;
+public class BukkitCommandSender extends AbstractCommandSender<CommandSender> {
+    public BukkitCommandSender(CommandSender sender) {
+        super(sender);
     }
 
     @Override
     public String getName() {
-        return this.sender.getName();
+        return this.delegate.getName();
     }
 
     @Override
     public UUID getUniqueId() {
-        if (this.sender instanceof Player) {
-            return ((Player) this.sender).getUniqueId();
+        if (super.delegate instanceof Player) {
+            return ((Player) super.delegate).getUniqueId();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        TextAdapter.sendComponent(this.sender, message);
+        TextAdapter.sendComponent(super.delegate, message);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.sender.hasPermission(permission);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BukkitCommandSender that = (BukkitCommandSender) o;
-        return this.sender.equals(that.sender);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.sender.hashCode();
+        return super.delegate.hasPermission(permission);
     }
 }

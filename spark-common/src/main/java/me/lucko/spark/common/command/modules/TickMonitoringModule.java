@@ -81,7 +81,7 @@ public class TickMonitoringModule implements CommandModule {
         );
     }
 
-    private class ReportingTickMonitor extends TickMonitor {
+    private static class ReportingTickMonitor extends TickMonitor {
         private final CommandResponseHandler resp;
 
         ReportingTickMonitor(SparkPlatform platform, CommandResponseHandler resp, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {

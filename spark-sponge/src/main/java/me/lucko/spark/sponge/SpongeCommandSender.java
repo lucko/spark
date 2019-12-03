@@ -20,7 +20,7 @@
 
 package me.lucko.spark.sponge;
 
-import me.lucko.spark.common.CommandSender;
+import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.adapter.spongeapi.TextAdapter;
 import org.spongepowered.api.command.CommandSource;
@@ -28,46 +28,31 @@ import org.spongepowered.api.entity.living.player.Player;
 
 import java.util.UUID;
 
-public class SpongeCommandSender implements CommandSender {
-    private final CommandSource source;
-
+public class SpongeCommandSender extends AbstractCommandSender<CommandSource> {
     public SpongeCommandSender(CommandSource source) {
-        this.source = source;
+        super(source);
     }
 
     @Override
     public String getName() {
-        return this.source.getName();
+        return super.delegate.getName();
     }
 
     @Override
     public UUID getUniqueId() {
-        if (this.source instanceof Player) {
-            return ((Player) this.source).getUniqueId();
+        if (super.delegate instanceof Player) {
+            return ((Player) super.delegate).getUniqueId();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        TextAdapter.sendComponent(this.source, message);
+        TextAdapter.sendComponent(super.delegate, message);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.source.hasPermission(permission);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SpongeCommandSender that = (SpongeCommandSender) o;
-        return this.source.equals(that.source);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.source.hashCode();
+        return super.delegate.hasPermission(permission);
     }
 }

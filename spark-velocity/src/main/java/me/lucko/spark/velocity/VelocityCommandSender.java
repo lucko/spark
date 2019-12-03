@@ -23,57 +23,42 @@ package me.lucko.spark.velocity;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
-import me.lucko.spark.common.CommandSender;
+import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.kyori.text.Component;
 
 import java.util.UUID;
 
-public class VelocityCommandSender implements CommandSender {
-    private final CommandSource source;
-
+public class VelocityCommandSender extends AbstractCommandSender<CommandSource> {
     public VelocityCommandSender(CommandSource source) {
-        this.source = source;
+        super(source);
     }
 
     @Override
     public String getName() {
-        if (this.source instanceof Player) {
-            return ((Player) this.source).getUsername();
-        } else if (this.source instanceof ConsoleCommandSource) {
+        if (super.delegate instanceof Player) {
+            return ((Player) super.delegate).getUsername();
+        } else if (super.delegate instanceof ConsoleCommandSource) {
             return "Console";
         } else {
-            return "unknown:" + this.source.getClass().getSimpleName();
+            return "unknown:" + super.delegate.getClass().getSimpleName();
         }
     }
 
     @Override
     public UUID getUniqueId() {
-        if (this.source instanceof Player) {
-            return ((Player) this.source).getUniqueId();
+        if (super.delegate instanceof Player) {
+            return ((Player) super.delegate).getUniqueId();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        this.source.sendMessage(message);
+        super.delegate.sendMessage(message);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.source.hasPermission(permission);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        VelocityCommandSender that = (VelocityCommandSender) o;
-        return this.source.equals(that.source);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.source.hashCode();
+        return super.delegate.hasPermission(permission);
     }
 }

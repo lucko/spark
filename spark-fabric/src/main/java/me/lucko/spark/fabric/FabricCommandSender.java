@@ -20,7 +20,7 @@
 
 package me.lucko.spark.fabric;
 
-import me.lucko.spark.common.CommandSender;
+import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
 import net.kyori.text.Component;
 import net.kyori.text.serializer.gson.GsonComponentSerializer;
@@ -31,30 +31,29 @@ import net.minecraft.text.Text;
 
 import java.util.UUID;
 
-public class FabricCommandSender implements CommandSender {
-    private final CommandOutput sender;
+public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
     private final FabricSparkPlugin plugin;
 
-    public FabricCommandSender(CommandOutput sender, FabricSparkPlugin plugin) {
-        this.sender = sender;
+    public FabricCommandSender(CommandOutput commandOutput, FabricSparkPlugin plugin) {
+        super(commandOutput);
         this.plugin = plugin;
     }
 
     @Override
     public String getName() {
-        if (this.sender instanceof PlayerEntity) {
-            return ((PlayerEntity) this.sender).getGameProfile().getName();
-        } else if (this.sender instanceof DedicatedServer) {
+        if (super.delegate instanceof PlayerEntity) {
+            return ((PlayerEntity) super.delegate).getGameProfile().getName();
+        } else if (super.delegate instanceof DedicatedServer) {
             return "Console";
         } else {
-            return "unknown:" + this.sender.getClass().getSimpleName();
+            return "unknown:" + super.delegate.getClass().getSimpleName();
         }
     }
 
     @Override
     public UUID getUniqueId() {
-        if (this.sender instanceof PlayerEntity) {
-            return ((PlayerEntity) this.sender).getUuid();
+        if (super.delegate instanceof PlayerEntity) {
+            return ((PlayerEntity) super.delegate).getUuid();
         }
         return null;
     }
@@ -62,28 +61,11 @@ public class FabricCommandSender implements CommandSender {
     @Override
     public void sendMessage(Component message) {
         Text component = Text.Serializer.fromJson(GsonComponentSerializer.INSTANCE.serialize(message));
-        this.sender.sendMessage(component);
+        super.delegate.sendMessage(component);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.plugin.hasPermission(this.sender, permission);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        FabricCommandSender that = (FabricCommandSender) o;
-        return this.sender.equals(that.sender);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.sender.hashCode();
+        return this.plugin.hasPermission(super.delegate, permission);
     }
 }

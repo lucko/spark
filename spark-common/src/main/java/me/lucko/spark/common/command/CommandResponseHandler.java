@@ -20,8 +20,8 @@
 
 package me.lucko.spark.common.command;
 
-import me.lucko.spark.common.CommandSender;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.command.sender.CommandSender;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;

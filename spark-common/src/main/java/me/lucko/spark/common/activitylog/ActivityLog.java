@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common;
+package me.lucko.spark.common.activitylog;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -27,6 +27,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import me.lucko.spark.common.command.sender.CommandSender;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -175,7 +176,7 @@ public class ActivityLog {
         }
 
         public boolean shouldExpire() {
-            if (dataType.equals("url")) {
+            if (this.dataType.equals("url")) {
                 return (System.currentTimeMillis() - this.time) > TimeUnit.DAYS.toMillis(7);
             } else {
                 return false;

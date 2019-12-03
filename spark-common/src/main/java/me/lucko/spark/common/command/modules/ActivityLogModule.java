@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
-import me.lucko.spark.common.ActivityLog.Activity;
+import me.lucko.spark.common.activitylog.ActivityLog.Activity;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;

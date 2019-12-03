@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common;
 
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.TickCounter;
 
