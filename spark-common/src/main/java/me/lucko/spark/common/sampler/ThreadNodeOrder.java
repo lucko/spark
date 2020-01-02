@@ -41,12 +41,12 @@ public enum ThreadNodeOrder implements Comparator<Map.Entry<String, ThreadNode>>
     },
 
     /**
-     * Order by the time taken by the thread
+     * Order by the time taken by the thread (most time taken first)
      */
     BY_TIME {
         @Override
         public int compare(Map.Entry<String, ThreadNode> o1, Map.Entry<String, ThreadNode> o2) {
-            return Double.compare(o1.getValue().getTotalTime(), o2.getValue().getTotalTime());
+            return -Double.compare(o1.getValue().getTotalTime(), o2.getValue().getTotalTime());
         }
     }
 
