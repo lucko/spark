@@ -37,6 +37,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -158,7 +159,7 @@ public class Sampler implements Runnable {
         }
     }
 
-    private SamplerData toProto(CommandSender creator) {
+    private SamplerData toProto(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder) {
         SamplerData.Builder proto = SamplerData.newBuilder();
         proto.setMetadata(SamplerMetadata.newBuilder()
                 .setUser(creator.toData().toProto())
@@ -170,7 +171,7 @@ public class Sampler implements Runnable {
         );
 
         List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
-        data.sort(Map.Entry.comparingByKey());
+        data.sort(outputOrder);
 
         for (Map.Entry<String, ThreadNode> entry : data) {
             proto.addThreads(entry.getValue().toProto());
@@ -179,10 +180,10 @@ public class Sampler implements Runnable {
         return proto.build();
     }
 
-    public byte[] formCompressedDataPayload(CommandSender creator) {
+    public byte[] formCompressedDataPayload(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder) {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try (OutputStream out = new GZIPOutputStream(byteOut)) {
-            toProto(creator).writeTo(out);
+            toProto(creator, outputOrder).writeTo(out);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

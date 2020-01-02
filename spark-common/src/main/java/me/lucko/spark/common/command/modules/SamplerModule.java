@@ -31,6 +31,7 @@ import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.SamplerBuilder;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.ThreadNodeOrder;
 import me.lucko.spark.common.sampler.TickCounter;
 import net.kyori.text.TextComponent;
 import net.kyori.text.event.ClickEvent;
@@ -77,6 +78,7 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("only-ticks-over", "tick length millis")
                 .argumentUsage("include-line-numbers", null)
                 .argumentUsage("ignore-sleeping", null)
+                .argumentUsage("order-by-time", null)
                 .executor((platform, sender, resp, arguments) -> {
                     if (arguments.boolFlag("info")) {
                         if (this.activeSampler == null) {
@@ -112,7 +114,8 @@ public class SamplerModule implements CommandModule {
                         } else {
                             this.activeSampler.cancel();
                             resp.broadcastPrefixed(TextComponent.of("The active sampling operation has been stopped! Uploading results..."));
-                            handleUpload(platform, resp, this.activeSampler);
+                            ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
+                            handleUpload(platform, resp, this.activeSampler, threadOrder);
                             this.activeSampler = null;
                         }
                         return;
@@ -220,20 +223,26 @@ public class SamplerModule implements CommandModule {
 
                     // await the result
                     if (timeoutSeconds != -1) {
+                        ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
                         future.thenAcceptAsync(s -> {
                             resp.broadcastPrefixed(TextComponent.of("The active sampling operation has completed! Uploading results..."));
-                            handleUpload(platform, resp, s);
+                            handleUpload(platform, resp, s, threadOrder);
                         });
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> {
-                    if (arguments.contains("--info") || arguments.contains("--stop") || arguments.contains("--upload") || arguments.contains("--cancel")) {
+                    if (arguments.contains("--info") || arguments.contains("--cancel")) {
                         return Collections.emptyList();
+                    }
+
+                    if (arguments.contains("--stop") || arguments.contains("--upload")) {
+                        return TabCompleter.completeForOpts(arguments, "--order-by-time");
                     }
 
                     List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
                             "--timeout", "--regex", "--combine-all", "--not-combined", "--interval",
-                            "--only-ticks-over", "--include-line-numbers", "--ignore-sleeping"));
+                            "--only-ticks-over", "--include-line-numbers", "--ignore-sleeping",
+                            "--order-by-time"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times
 
@@ -245,9 +254,9 @@ public class SamplerModule implements CommandModule {
         );
     }
 
-    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler) {
+    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder) {
         platform.getPlugin().executeAsync(() -> {
-            byte[] output = sampler.formCompressedDataPayload(resp.sender());
+            byte[] output = sampler.formCompressedDataPayload(resp.sender(), threadOrder);
             try {
                 String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE, false).key();
                 String url = SparkPlatform.VIEWER_URL + key;
