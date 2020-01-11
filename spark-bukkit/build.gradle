@@ -4,7 +4,7 @@ dependencies {
         exclude(module: 'text-api')
         exclude(module: 'text-serializer-gson')
     }
-    compileOnly 'org.spigotmc:spigot-api:1.14.4-R0.1-SNAPSHOT'
+    compileOnly 'com.destroystokyo.paper:paper-api:1.14.4-R0.1-SNAPSHOT'
     
     // placeholders
     compileOnly 'me.clip:placeholderapi:2.10.3'

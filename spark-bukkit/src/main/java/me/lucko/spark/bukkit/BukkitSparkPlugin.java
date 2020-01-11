@@ -130,6 +130,21 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public TickCounter createTickCounter() {
-        return new BukkitTickCounter(this);
+        if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
+            getLogger().info("Using Paper ServerTickStartEvent for tick monitoring");
+            return new PaperTickCounter(this);
+        } else {
+            getLogger().info("Using Bukkit scheduler for tick monitoring");
+            return new BukkitTickCounter(this);
+        }
+    }
+
+    private static boolean classExists(String className) {
+        try {
+            Class.forName(className);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 }

@@ -42,7 +42,7 @@ public class TpsCalculator implements TickCounter.TickTask {
     private static final long SEC_IN_NANO = TimeUnit.SECONDS.toNanos(1);
     private static final int TPS = 20;
     private static final int SAMPLE_INTERVAL = 20;
-    private static final BigDecimal TPS_BASE = new BigDecimal(SEC_IN_NANO).multiply(new BigDecimal((long) SAMPLE_INTERVAL));
+    private static final BigDecimal TPS_BASE = new BigDecimal(SEC_IN_NANO).multiply(new BigDecimal(SAMPLE_INTERVAL));
 
     private final TpsRollingAverage avg5Sec = new TpsRollingAverage(5);
     private final TpsRollingAverage avg10Sec = new TpsRollingAverage(10);
@@ -56,7 +56,6 @@ public class TpsCalculator implements TickCounter.TickTask {
 
     private long last = 0;
 
-    // called every tick
     @Override
     public void onTick(TickCounter counter) {
         if (counter.getCurrentTick() % SAMPLE_INTERVAL != 0) {
@@ -72,9 +71,10 @@ public class TpsCalculator implements TickCounter.TickTask {
 
         long diff = now - this.last;
         BigDecimal currentTps = TPS_BASE.divide(new BigDecimal(diff), 30, RoundingMode.HALF_UP);
+        BigDecimal total = currentTps.multiply(new BigDecimal(diff));
 
         for (TpsRollingAverage rollingAverage : this.averages) {
-            rollingAverage.add(currentTps, diff);
+            rollingAverage.add(currentTps, diff, total);
         }
 
         this.last = now;
@@ -120,22 +120,22 @@ public class TpsCalculator implements TickCounter.TickTask {
         TpsRollingAverage(int size) {
             this.size = size;
             this.time = size * SEC_IN_NANO;
-            this.total = new BigDecimal((long) TPS).multiply(new BigDecimal(SEC_IN_NANO)).multiply(new BigDecimal((long) size));
+            this.total = new BigDecimal(TPS).multiply(new BigDecimal(SEC_IN_NANO)).multiply(new BigDecimal(size));
             this.samples = new BigDecimal[size];
             this.times = new long[size];
             for (int i = 0; i < size; i++) {
-                this.samples[i] = new BigDecimal((long) TPS);
+                this.samples[i] = new BigDecimal(TPS);
                 this.times[i] = SEC_IN_NANO;
             }
         }
 
-        public void add(BigDecimal x, long t) {
+        public void add(BigDecimal x, long t, BigDecimal total) {
             this.time -= this.times[this.index];
             this.total = this.total.subtract(this.samples[this.index].multiply(new BigDecimal(this.times[this.index])));
             this.samples[this.index] = x;
             this.times[this.index] = t;
             this.time += t;
-            this.total = this.total.add(x.multiply(new BigDecimal(t)));
+            this.total = this.total.add(total);
             if (++this.index == this.size) {
                 this.index = 0;
             }
