@@ -20,35 +20,14 @@
 
 package me.lucko.spark.fabric;
 
+import me.lucko.spark.common.sampler.AbstractTickCounter;
 import me.lucko.spark.common.sampler.TickCounter;
 
-import java.util.HashSet;
-import java.util.Set;
+public abstract class FabricTickCounter extends AbstractTickCounter implements TickCounter {
 
-public abstract class FabricTickCounter implements TickCounter {
-    private final Set<TickTask> tasks = new HashSet<>();
-    private int tick = 0;
-
+    @Override
     public void onTick() {
-        for (TickTask r : this.tasks) {
-            r.onTick(this);
-        }
-        this.tick++;
-    }
-
-    @Override
-    public int getCurrentTick() {
-        return this.tick;
-    }
-
-    @Override
-    public void addTickTask(TickTask runnable) {
-        this.tasks.add(runnable);
-    }
-
-    @Override
-    public void removeTickTask(TickTask runnable) {
-        this.tasks.remove(runnable);
+        super.onTick();
     }
 
     public static final class Server extends FabricTickCounter {

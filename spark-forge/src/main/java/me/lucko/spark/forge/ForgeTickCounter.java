@@ -20,19 +20,14 @@
 
 package me.lucko.spark.forge;
 
+import me.lucko.spark.common.sampler.AbstractTickCounter;
 import me.lucko.spark.common.sampler.TickCounter;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public class ForgeTickCounter implements TickCounter {
+public class ForgeTickCounter extends AbstractTickCounter implements TickCounter {
     private final TickEvent.Type type;
-
-    private final Set<TickTask> tasks = new HashSet<>();
-    private int tick = 0;
 
     public ForgeTickCounter(TickEvent.Type type) {
         this.type = type;
@@ -48,10 +43,7 @@ public class ForgeTickCounter implements TickCounter {
             return;
         }
 
-        for (TickTask r : this.tasks){
-            r.onTick(this);
-        }
-        this.tick++;
+        onTick();
     }
 
     @Override
@@ -64,18 +56,4 @@ public class ForgeTickCounter implements TickCounter {
         MinecraftForge.EVENT_BUS.unregister(this);
     }
 
-    @Override
-    public int getCurrentTick() {
-        return this.tick;
-    }
-
-    @Override
-    public void addTickTask(TickTask runnable) {
-        this.tasks.add(runnable);
-    }
-
-    @Override
-    public void removeTickTask(TickTask runnable) {
-        this.tasks.remove(runnable);
-    }
 }

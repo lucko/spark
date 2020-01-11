@@ -18,34 +18,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.bukkit;
+package me.lucko.spark.common.sampler;
 
-import me.lucko.spark.common.sampler.AbstractTickCounter;
-import me.lucko.spark.common.sampler.TickCounter;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.scheduler.BukkitTask;
+import java.util.HashSet;
+import java.util.Set;
 
-public class BukkitTickCounter extends AbstractTickCounter implements TickCounter, Runnable {
-    private final Plugin plugin;
-    private BukkitTask task;
+public abstract class AbstractTickCounter implements TickCounter {
 
-    public BukkitTickCounter(Plugin plugin) {
-        this.plugin = plugin;
+    private final Set<TickTask> tasks = new HashSet<>();
+    private int tick = 0;
+
+    protected void onTick() {
+        for (TickTask r : this.tasks) {
+            r.onTick(this);
+        }
+        this.tick++;
     }
 
     @Override
-    public void run() {
-        onTick();
+    public int getCurrentTick() {
+        return this.tick;
     }
 
     @Override
-    public void start() {
-        this.task = this.plugin.getServer().getScheduler().runTaskTimer(this.plugin, this, 1, 1);
+    public void addTickTask(TickTask runnable) {
+        this.tasks.add(runnable);
     }
 
     @Override
-    public void close() {
-        this.task.cancel();
+    public void removeTickTask(TickTask runnable) {
+        this.tasks.remove(runnable);
     }
 
 }

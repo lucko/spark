@@ -20,17 +20,13 @@
 
 package me.lucko.spark.sponge;
 
+import me.lucko.spark.common.sampler.AbstractTickCounter;
 import me.lucko.spark.common.sampler.TickCounter;
+import org.spongepowered.api.scheduler.Task;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public class SpongeTickCounter implements TickCounter, Runnable {
+public class SpongeTickCounter extends AbstractTickCounter implements TickCounter, Runnable {
     private final SpongeSparkPlugin plugin;
-    private org.spongepowered.api.scheduler.Task task;
-
-    private final Set<TickTask> tasks = new HashSet<>();
-    private int tick = 0;
+    private Task task;
 
     public SpongeTickCounter(SpongeSparkPlugin plugin) {
         this.plugin = plugin;
@@ -38,15 +34,12 @@ public class SpongeTickCounter implements TickCounter, Runnable {
 
     @Override
     public void run() {
-        for (TickTask r : this.tasks){
-            r.onTick(this);
-        }
-        this.tick++;
+        onTick();
     }
 
     @Override
     public void start() {
-        this.task = org.spongepowered.api.scheduler.Task.builder().intervalTicks(1).name("spark-ticker").execute(this).submit(this.plugin);
+        this.task = Task.builder().intervalTicks(1).name("spark-ticker").execute(this).submit(this.plugin);
     }
 
     @Override
@@ -54,18 +47,4 @@ public class SpongeTickCounter implements TickCounter, Runnable {
         this.task.cancel();
     }
 
-    @Override
-    public int getCurrentTick() {
-        return this.tick;
-    }
-
-    @Override
-    public void addTickTask(TickTask runnable) {
-        this.tasks.add(runnable);
-    }
-
-    @Override
-    public void removeTickTask(TickTask runnable) {
-        this.tasks.remove(runnable);
-    }
 }

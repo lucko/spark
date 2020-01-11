@@ -21,20 +21,15 @@
 package me.lucko.spark.bukkit;
 
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
+import me.lucko.spark.common.sampler.AbstractTickCounter;
 import me.lucko.spark.common.sampler.TickCounter;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
-import java.util.HashSet;
-import java.util.Set;
-
-public class PaperTickCounter implements TickCounter, Listener {
+public class PaperTickCounter extends AbstractTickCounter implements TickCounter, Listener {
     private final Plugin plugin;
-
-    private final Set<TickTask> tasks = new HashSet<>();
-    private int tick = 0;
 
     public PaperTickCounter(Plugin plugin) {
         this.plugin = plugin;
@@ -42,10 +37,7 @@ public class PaperTickCounter implements TickCounter, Listener {
 
     @EventHandler
     public void onServerTickEvent(ServerTickStartEvent e) {
-        for (TickTask r : this.tasks) {
-            r.onTick(this);
-        }
-        this.tick++;
+        onTick();
     }
 
     @Override
@@ -58,18 +50,4 @@ public class PaperTickCounter implements TickCounter, Listener {
         HandlerList.unregisterAll(this);
     }
 
-    @Override
-    public int getCurrentTick() {
-        return this.tick;
-    }
-
-    @Override
-    public void addTickTask(TickTask runnable) {
-        this.tasks.add(runnable);
-    }
-
-    @Override
-    public void removeTickTask(TickTask runnable) {
-        this.tasks.remove(runnable);
-    }
 }
