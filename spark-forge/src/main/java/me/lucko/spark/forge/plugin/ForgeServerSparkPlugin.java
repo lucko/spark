@@ -49,9 +49,9 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     public static void register(ForgeSparkMod mod, FMLServerStartingEvent event) {
         MinecraftServer server = event.getServer();
-        CommandDispatcher<CommandSource> dispatcher = event.getCommandDispatcher();
-
         ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, server);
+
+        CommandDispatcher<CommandSource> dispatcher = event.getCommandDispatcher();
         registerCommands(dispatcher, plugin, plugin, "spark");
         PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
     }

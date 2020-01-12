@@ -32,7 +32,6 @@ import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickCounter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.command.ICommandSource;
 import net.minecraft.command.ISuggestionProvider;
@@ -43,6 +42,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -66,19 +66,20 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
         this.minecraft = minecraft;
     }
 
-    private void checkCommandRegistered() {
-        ClientPlayerEntity player = this.minecraft.player;
-        if (player == null) {
-            return;
-        }
+    private CommandDispatcher<ISuggestionProvider> getPlayerCommandDispatcher() {
+        return Optional.ofNullable(this.minecraft.player)
+                .map(player -> player.connection)
+                .map(ClientPlayNetHandler::getCommandDispatcher)
+                .orElse(null);
+    }
 
-        ClientPlayNetHandler connection = player.connection;
-        if (connection == null) {
+    private void checkCommandRegistered() {
+        CommandDispatcher<ISuggestionProvider> dispatcher = getPlayerCommandDispatcher();
+        if (dispatcher == null) {
             return;
         }
 
         try {
-            CommandDispatcher<ISuggestionProvider> dispatcher = connection.func_195515_i();
             if (dispatcher != this.dispatcher) {
                 this.dispatcher = dispatcher;
                 registerCommands(this.dispatcher, context -> Command.SINGLE_SUCCESS, this, "sparkc", "sparkclient");
