@@ -40,25 +40,6 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public abstract class FabricSparkPlugin implements SparkPlugin {
 
-    public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
-        if (aliases.length == 0) {
-            return;
-        }
-
-        String mainName = aliases[0];
-        LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(mainName)
-                .executes(executor)
-                .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
-                        .suggests(suggestor)
-                        .executes(executor)
-                );
-
-        LiteralCommandNode<T> node = dispatcher.register(command);
-        for (int i = 1; i < aliases.length; i++) {
-            dispatcher.register(LiteralArgumentBuilder.<T>literal(aliases[i]).redirect(node));
-        }
-    }
-
     private final FabricSparkMod mod;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
@@ -93,4 +74,24 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
     public ThreadDumper getDefaultThreadDumper() {
         return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
     }
+
+    public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
+        if (aliases.length == 0) {
+            return;
+        }
+
+        String mainName = aliases[0];
+        LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(mainName)
+                .executes(executor)
+                .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
+                        .suggests(suggestor)
+                        .executes(executor)
+                );
+
+        LiteralCommandNode<T> node = dispatcher.register(command);
+        for (int i = 1; i < aliases.length; i++) {
+            dispatcher.register(LiteralArgumentBuilder.<T>literal(aliases[i]).redirect(node));
+        }
+    }
+
 }

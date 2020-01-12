@@ -20,18 +20,18 @@
 
 package me.lucko.spark.fabric;
 
+import me.lucko.spark.fabric.plugin.FabricClientSparkPlugin;
+import me.lucko.spark.fabric.plugin.FabricServerSparkPlugin;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.server.ServerStartCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.client.MinecraftClient;
 
 import java.nio.file.Path;
 
 public class FabricSparkMod implements ModInitializer {
     private static FabricSparkMod mod;
-
-    public static FabricSparkMod getMod() {
-        return mod;
-    }
 
     private ModContainer container;
     private Path configDirectory;
@@ -44,6 +44,14 @@ public class FabricSparkMod implements ModInitializer {
         this.container = loader.getModContainer("spark")
                 .orElseThrow(() -> new IllegalStateException("Unable to get container for spark"));
         this.configDirectory = loader.getConfigDirectory().toPath().resolve("spark");
+
+        // load hooks
+        ServerStartCallback.EVENT.register(server -> FabricServerSparkPlugin.register(this, server));
+    }
+
+    // called be entrypoint defined in fabric.mod.json
+    public static void initializeClient() {
+        FabricClientSparkPlugin.register(FabricSparkMod.mod, MinecraftClient.getInstance());
     }
 
     public String getVersion() {

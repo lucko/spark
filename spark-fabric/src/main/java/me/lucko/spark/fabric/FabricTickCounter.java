@@ -22,35 +22,45 @@ package me.lucko.spark.fabric;
 
 import me.lucko.spark.common.sampler.AbstractTickCounter;
 import me.lucko.spark.common.sampler.TickCounter;
+import net.fabricmc.fabric.api.event.client.ClientTickCallback;
+import net.fabricmc.fabric.api.event.server.ServerTickCallback;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.server.MinecraftServer;
 
 public abstract class FabricTickCounter extends AbstractTickCounter implements TickCounter {
 
+    protected boolean closed = false;
+
     @Override
-    public void onTick() {
-        super.onTick();
+    public void close() {
+        this.closed = true;
     }
 
-    public static final class Server extends FabricTickCounter {
+    public static final class Server extends FabricTickCounter implements ServerTickCallback {
         @Override
-        public void start() {
-            FabricSparkGameHooks.INSTANCE.addServerCounter(this);
+        public void tick(MinecraftServer minecraftServer) {
+            if (!this.closed) {
+                onTick();
+            }
         }
 
         @Override
-        public void close() {
-            FabricSparkGameHooks.INSTANCE.removeServerCounter(this);
+        public void start() {
+            ServerTickCallback.EVENT.register(this);
         }
     }
 
-    public static final class Client extends FabricTickCounter {
+    public static final class Client extends FabricTickCounter implements ClientTickCallback {
         @Override
-        public void start() {
-            FabricSparkGameHooks.INSTANCE.addClientCounter(this);
+        public void tick(MinecraftClient minecraftClient) {
+            if (!this.closed) {
+                onTick();
+            }
         }
 
         @Override
-        public void close() {
-            FabricSparkGameHooks.INSTANCE.removeClientCounter(this);
+        public void start() {
+            ClientTickCallback.EVENT.register(this);
         }
     }
 }

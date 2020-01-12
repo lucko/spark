@@ -34,11 +34,11 @@ import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickCounter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.CommandSource;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -47,7 +47,6 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
 
     public static void register(FabricSparkMod mod, MinecraftClient client) {
         FabricClientSparkPlugin plugin = new FabricClientSparkPlugin(mod, client);
-
         plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
     }
 
@@ -59,19 +58,20 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
         this.minecraft = minecraft;
     }
 
-    private void checkCommandRegistered() {
-        ClientPlayerEntity player = this.minecraft.player;
-        if (player == null) {
-            return;
-        }
+    private CommandDispatcher<CommandSource> getPlayerCommandDispatcher() {
+        return Optional.ofNullable(this.minecraft.player)
+                .map(player -> player.networkHandler)
+                .map(ClientPlayNetworkHandler::getCommandDispatcher)
+                .orElse(null);
+    }
 
-        ClientPlayNetworkHandler connection = player.networkHandler;
-        if (connection == null) {
+    private void checkCommandRegistered() {
+        CommandDispatcher<CommandSource> dispatcher = getPlayerCommandDispatcher();
+        if (dispatcher == null) {
             return;
         }
 
         try {
-            CommandDispatcher<CommandSource> dispatcher = connection.getCommandDispatcher();
             if (dispatcher != this.dispatcher) {
                 this.dispatcher = dispatcher;
                 registerCommands(this.dispatcher, c -> Command.SINGLE_SUCCESS, this, "sparkc", "sparkclient");

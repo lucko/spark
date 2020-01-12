@@ -20,15 +20,10 @@
 
 package me.lucko.spark.fabric;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Predicate;
 
 public enum FabricSparkGameHooks {
     INSTANCE;
-
-    private final Set<FabricTickCounter> clientCounters = new HashSet<>();
-    private final Set<FabricTickCounter> serverCounters = new HashSet<>();
 
     // Use events from Fabric API later
     // Return true to abort sending to server
@@ -40,34 +35,6 @@ public enum FabricSparkGameHooks {
 
     public boolean tryProcessChat(String message) {
         return this.chatSendCallback.test(message);
-    }
-
-    public void addClientCounter(FabricTickCounter counter) {
-        this.clientCounters.add(counter);
-    }
-
-    public void removeClientCounter(FabricTickCounter counter) {
-        this.clientCounters.remove(counter);
-    }
-
-    public void addServerCounter(FabricTickCounter counter) {
-        this.serverCounters.add(counter);
-    }
-
-    public void removeServerCounter(FabricTickCounter counter) {
-        this.serverCounters.remove(counter);
-    }
-
-    public void tickClientCounters() {
-        for (FabricTickCounter counter : this.clientCounters) {
-            counter.onTick();
-        }
-    }
-
-    public void tickServerCounters() {
-        for (FabricTickCounter counter : this.serverCounters) {
-            counter.onTick();
-        }
     }
 
 }

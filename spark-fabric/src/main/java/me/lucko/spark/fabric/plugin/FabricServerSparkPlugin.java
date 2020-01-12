@@ -21,7 +21,6 @@
 package me.lucko.spark.fabric.plugin;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -31,6 +30,7 @@ import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.fabric.FabricCommandSender;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickCounter;
+import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
@@ -44,10 +44,8 @@ import java.util.stream.Stream;
 public class FabricServerSparkPlugin extends FabricSparkPlugin implements Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
 
     public static void register(FabricSparkMod mod, MinecraftServer server) {
-        CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
-
         FabricServerSparkPlugin plugin = new FabricServerSparkPlugin(mod, server);
-        registerCommands(dispatcher, plugin, plugin, "spark");
+        CommandRegistry.INSTANCE.register(false, dispatcher -> registerCommands(dispatcher, plugin, plugin, "spark"));
     }
 
     private final MinecraftServer server;
