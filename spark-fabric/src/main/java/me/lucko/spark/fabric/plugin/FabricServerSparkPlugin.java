@@ -45,6 +45,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
     public static void register(FabricSparkMod mod, MinecraftServer server) {
         FabricServerSparkPlugin plugin = new FabricServerSparkPlugin(mod, server);
+        registerCommands(server.getCommandManager().getDispatcher(), plugin, plugin, "spark");
         CommandRegistry.INSTANCE.register(false, dispatcher -> registerCommands(dispatcher, plugin, plugin, "spark"));
     }
 
