@@ -12,10 +12,10 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft "com.mojang:minecraft:1.15.1"
-    mappings "net.fabricmc:yarn:1.15.1+build.35:v2"
-    modCompile "net.fabricmc:fabric-loader:0.7.3+build.176"
-    modCompile "net.fabricmc.fabric-api:fabric-api:0.4.27+build.286-1.15"
+    minecraft "com.mojang:minecraft:1.15.2"
+    mappings "net.fabricmc:yarn:1.15.2+build.7:v2"
+    modCompile "net.fabricmc:fabric-loader:0.7.6+build.179"
+    modCompile "net.fabricmc.fabric-api:fabric-api:0.4.29+build.290-1.15"
 
     shade project(':spark-common')
 }

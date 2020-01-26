@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[28,)"
+loaderVersion="[31,)"
 authors="Luck, sk89q"
 
 [[mods]]
@@ -11,6 +11,6 @@ description="${pluginDescription}"
 [[dependencies.spark]]
     modId="forge"
     mandatory=true
-    versionRange="[28,)"
+    versionRange="[31,)"
     ordering="NONE"
     side="BOTH"

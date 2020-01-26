@@ -32,7 +32,6 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.optional.qual.MaybePresent;
 
 import java.nio.file.Path;
@@ -72,12 +71,12 @@ public class VelocitySparkPlugin implements SparkPlugin, Command {
     }
 
     @Override
-    public void execute(@MaybePresent CommandSource sender, @NonNull @MaybePresent String[] args) {
+    public void execute(CommandSource sender, String[] args) {
         this.platform.executeCommand(new VelocityCommandSender(sender), args);
     }
 
     @Override
-    public @MaybePresent List<String> suggest(@MaybePresent CommandSource sender, @NonNull @MaybePresent String[] currentArgs) {
+    public @MaybePresent List<String> suggest(CommandSource sender, String[] currentArgs) {
         return this.platform.tabCompleteCommand(new VelocityCommandSender(sender), currentArgs);
     }
 

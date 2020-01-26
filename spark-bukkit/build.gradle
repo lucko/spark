@@ -4,7 +4,7 @@ dependencies {
         exclude(module: 'text-api')
         exclude(module: 'text-serializer-gson')
     }
-    compileOnly 'com.destroystokyo.paper:paper-api:1.14.4-R0.1-SNAPSHOT'
+    compileOnly 'com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT'
     
     // placeholders
     compileOnly 'me.clip:placeholderapi:2.10.3'

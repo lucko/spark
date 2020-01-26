@@ -14,7 +14,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 
 minecraft {
-    mappings channel: 'snapshot', version: '20200112-1.14.3'
+    mappings channel: 'snapshot', version: '20200125-1.15.1'
 }
 
 processResources {
@@ -37,7 +37,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.14.4-28.1.0'
+    minecraft 'net.minecraftforge:forge:1.15.2-31.0.1'
     shade project(':spark-common')
 }
 
