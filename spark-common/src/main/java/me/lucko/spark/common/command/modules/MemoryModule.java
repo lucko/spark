@@ -24,7 +24,6 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.ActivityLog.Activity;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
-import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.heapdump.HeapDump;
 import me.lucko.spark.common.heapdump.HeapDumpSummary;
@@ -44,9 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -104,9 +101,7 @@ public class MemoryModule implements CommandModule {
 
         consumer.accept(Command.builder()
                 .aliases("heapdump")
-                .argumentUsage("xz", null)
-                .argumentUsage("lzma", null)
-                .argumentUsage("gzip", null)
+                .argumentUsage("compress", "type")
                 .argumentUsage("run-gc-before", null)
                 .argumentUsage("include-non-live", null)
                 .executor((platform, sender, resp, arguments) -> {
@@ -142,7 +137,18 @@ public class MemoryModule implements CommandModule {
                         );
                         platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump", file.toString()));
 
-                        if (arguments.boolFlag("xz") || arguments.boolFlag("lzma") || arguments.boolFlag("gzip")) {
+
+                        CompressionMethod compress = null;
+                        Iterator<String> compressArgs = arguments.stringFlag("compress").iterator();
+                        if (compressArgs.hasNext()) {
+                            try {
+                                compress = CompressionMethod.valueOf(compressArgs.next().toUpperCase());
+                            } catch (IllegalArgumentException e) {
+                                // ignore
+                            }
+                        }
+
+                        if (compress != null) {
                             resp.broadcastPrefixed(TextComponent.of("Compressing heap dump, please wait..."));
                             try {
                                 long size = Files.size(file);
@@ -168,36 +174,7 @@ public class MemoryModule implements CommandModule {
                                     }
                                 };
 
-                                Path compressedFile;
-                                if (arguments.boolFlag("xz")) {
-                                    compressedFile = file.getParent().resolve(file.getFileName().toString() + ".xz");
-                                    try (InputStream in = Files.newInputStream(file)) {
-                                        try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                                            try (XZOutputStream compressionOut = new XZOutputStream(out, new LZMA2Options())) {
-                                                copy(in, compressionOut, progressHandler);
-                                            }
-                                        }
-                                    }
-                                } else if (arguments.boolFlag("lzma")) {
-                                    compressedFile = file.getParent().resolve(file.getFileName().toString() + ".lzma");
-                                    try (InputStream in = Files.newInputStream(file)) {
-                                        try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                                            try (LZMAOutputStream compressionOut = new LZMAOutputStream(out, new LZMA2Options(), true)) {
-                                                copy(in, compressionOut, progressHandler);
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    compressedFile = file.getParent().resolve(file.getFileName().toString() + ".gz");
-                                    try (InputStream in = Files.newInputStream(file)) {
-                                        try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                                            try (GZIPOutputStream compressionOut = new GZIPOutputStream(out, 1024 * 64)) {
-                                                copy(in, compressionOut, progressHandler);
-                                            }
-                                        }
-                                    }
-                                }
-
+                                Path compressedFile = compress.compress(file, progressHandler);
                                 long compressedSize = Files.size(compressedFile);
 
                                 resp.broadcastPrefixed(TextComponent.builder("").color(TextColor.GRAY)
@@ -221,40 +198,76 @@ public class MemoryModule implements CommandModule {
                         }
                     });
                 })
-                .tabCompleter((platform, sender, arguments) -> {
-                    List<String> opts = new ArrayList<>(Arrays.asList("--run-gc-before", "--include-non-live"));
-                    opts.removeAll(arguments);
-
-                    if (!arguments.contains("--xz") && !arguments.contains("--lzma") && !arguments.contains("--gzip")) {
-                        opts.addAll(Arrays.asList("--xz", "--lzma", "--gzip"));
-                    }
-
-                    return TabCompleter.create()
-                            .from(0, CompletionSupplier.startsWith(opts))
-                            .complete(arguments);
-                })
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--compress", "--run-gc-before", "--include-non-live"))
                 .build()
         );
     }
 
-    public static long copy(InputStream from, OutputStream to, LongConsumer progress) throws IOException {
-        byte[] buf = new byte[1024 * 64];
-        long total = 0;
-        long iterations = 0;
-        while (true) {
-            int r = from.read(buf);
-            if (r == -1) {
-                break;
+    public enum CompressionMethod {
+        GZIP {
+            @Override
+            public Path compress(Path file, LongConsumer progressHandler) throws IOException {
+                Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".gz");
+                try (InputStream in = Files.newInputStream(file)) {
+                    try (OutputStream out = Files.newOutputStream(compressedFile)) {
+                        try (GZIPOutputStream compressionOut = new GZIPOutputStream(out, 1024 * 64)) {
+                            copy(in, compressionOut, progressHandler);
+                        }
+                    }
+                }
+                return compressedFile;
             }
-            to.write(buf, 0, r);
-            total += r;
+        },
+        XZ {
+            @Override
+            public Path compress(Path file, LongConsumer progressHandler) throws IOException {
+                Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".xz");
+                try (InputStream in = Files.newInputStream(file)) {
+                    try (OutputStream out = Files.newOutputStream(compressedFile)) {
+                        try (XZOutputStream compressionOut = new XZOutputStream(out, new LZMA2Options())) {
+                            copy(in, compressionOut, progressHandler);
+                        }
+                    }
+                }
+                return compressedFile;
+            }
+        },
+        LZMA {
+            @Override
+            public Path compress(Path file, LongConsumer progressHandler) throws IOException {
+                Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".lzma");
+                try (InputStream in = Files.newInputStream(file)) {
+                    try (OutputStream out = Files.newOutputStream(compressedFile)) {
+                        try (LZMAOutputStream compressionOut = new LZMAOutputStream(out, new LZMA2Options(), true)) {
+                            copy(in, compressionOut, progressHandler);
+                        }
+                    }
+                }
+                return compressedFile;
+            }
+        };
 
-            // report progress every 5MB
-            if (iterations++ % ((1024 / 64) * 5) == 0) {
-                progress.accept(total);
+        public abstract Path compress(Path file, LongConsumer progressHandler) throws IOException;
+
+        private static long copy(InputStream from, OutputStream to, LongConsumer progress) throws IOException {
+            byte[] buf = new byte[1024 * 64];
+            long total = 0;
+            long iterations = 0;
+            while (true) {
+                int r = from.read(buf);
+                if (r == -1) {
+                    break;
+                }
+                to.write(buf, 0, r);
+                total += r;
+
+                // report progress every 5MB
+                if (iterations++ % ((1024 / 64) * 5) == 0) {
+                    progress.accept(total);
+                }
             }
+            return total;
         }
-        return total;
     }
 
 }
