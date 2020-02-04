@@ -23,7 +23,7 @@ package me.lucko.spark.bukkit.placeholder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.modules.HealthModule;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
-import me.lucko.spark.common.monitor.tick.TpsCalculator;
+import me.lucko.spark.common.monitor.tick.TickStatistics;
 import net.kyori.text.TextComponent;
 import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
 
@@ -32,37 +32,59 @@ enum SparkPlaceholderProvider {
 
     public static TextComponent respondComponent(SparkPlatform platform, String placeholder) {
         if (placeholder.startsWith("tps")) {
-            TpsCalculator tpsCalculator = platform.getTpsCalculator();
-            if (tpsCalculator == null) {
+            TickStatistics tickStatistics = platform.getTickStatistics();
+            if (tickStatistics == null) {
                 return null;
             }
 
             switch (placeholder) {
                 case "tps":
-                    return TextComponent.builder(" ")
-                            .append(HealthModule.formatTps(tpsCalculator.avg5Sec())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatTps(tpsCalculator.avg10Sec())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatTps(tpsCalculator.avg1Min())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatTps(tpsCalculator.avg5Min())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatTps(tpsCalculator.avg15Min()))
+                    return TextComponent.builder("")
+                            .append(HealthModule.formatTps(tickStatistics.tps5Sec())).append(TextComponent.of(", "))
+                            .append(HealthModule.formatTps(tickStatistics.tps10Sec())).append(TextComponent.of(", "))
+                            .append(HealthModule.formatTps(tickStatistics.tps1Min())).append(TextComponent.of(", "))
+                            .append(HealthModule.formatTps(tickStatistics.tps5Min())).append(TextComponent.of(", "))
+                            .append(HealthModule.formatTps(tickStatistics.tps15Min()))
                             .build();
                 case "tps_5s":
-                    return HealthModule.formatTps(tpsCalculator.avg5Sec());
+                    return HealthModule.formatTps(tickStatistics.tps5Sec());
                 case "tps_10s":
-                    return HealthModule.formatTps(tpsCalculator.avg10Sec());
+                    return HealthModule.formatTps(tickStatistics.tps10Sec());
                 case "tps_1m":
-                    return HealthModule.formatTps(tpsCalculator.avg1Min());
+                    return HealthModule.formatTps(tickStatistics.tps1Min());
                 case "tps_5m":
-                    return HealthModule.formatTps(tpsCalculator.avg5Min());
+                    return HealthModule.formatTps(tickStatistics.tps5Min());
                 case "tps_15m":
-                    return HealthModule.formatTps(tpsCalculator.avg15Min());
+                    return HealthModule.formatTps(tickStatistics.tps15Min());
+            }
+        }
+
+        if (placeholder.startsWith("tickduration")) {
+            TickStatistics tickStatistics = platform.getTickStatistics();
+            if (tickStatistics == null || !tickStatistics.isDurationSupported()) {
+                return null;
+            }
+
+            switch (placeholder) {
+                case "tickduration":
+                    return TextComponent.builder("")
+                            .append(HealthModule.formatTickDurations(tickStatistics.duration5Sec())).append(TextComponent.of(", "))
+                            .append(HealthModule.formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(", "))
+                            .append(HealthModule.formatTickDurations(tickStatistics.duration1Min()))
+                            .build();
+                case "tickduration_5s":
+                    return HealthModule.formatTickDurations(tickStatistics.duration5Sec());
+                case "tickduration_10s":
+                    return HealthModule.formatTickDurations(tickStatistics.duration10Sec());
+                case "tickduration_1m":
+                    return HealthModule.formatTickDurations(tickStatistics.duration1Min());
             }
         }
         
         if (placeholder.startsWith("cpu")) {
             switch (placeholder) {
                 case "cpu_system":
-                    return TextComponent.builder(" ")
+                    return TextComponent.builder("")
                             .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(TextComponent.of(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(TextComponent.of(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
@@ -74,7 +96,7 @@ enum SparkPlaceholderProvider {
                 case "cpu_system_15m":
                     return HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg());
                 case "cpu_process":
-                    return TextComponent.builder(" ")
+                    return TextComponent.builder("")
                             .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(TextComponent.of(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(TextComponent.of(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))

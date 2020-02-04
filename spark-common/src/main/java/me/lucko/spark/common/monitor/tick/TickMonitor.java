@@ -23,7 +23,7 @@ package me.lucko.spark.common.monitor.tick;
 import com.sun.management.GarbageCollectionNotificationInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
@@ -31,11 +31,11 @@ import net.kyori.text.format.TextColor;
 import java.text.DecimalFormat;
 import java.util.DoubleSummaryStatistics;
 
-public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollectionMonitor.Listener, AutoCloseable {
+public abstract class TickMonitor implements TickHook.Callback, GarbageCollectionMonitor.Listener, AutoCloseable {
     private static final DecimalFormat df = new DecimalFormat("#.##");
 
     private final SparkPlatform platform;
-    private final TickCounter tickCounter;
+    private final TickHook tickHook;
     private final int zeroTick;
     private final GarbageCollectionMonitor garbageCollectionMonitor;
     private final int percentageChangeThreshold;
@@ -46,10 +46,10 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
     private final DoubleSummaryStatistics averageTickTime = new DoubleSummaryStatistics();
     private double avg;
 
-    public TickMonitor(SparkPlatform platform, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
+    public TickMonitor(SparkPlatform platform, TickHook tickHook, int percentageChangeThreshold, boolean monitorGc) {
         this.platform = platform;
-        this.tickCounter = tickCounter;
-        this.zeroTick = tickCounter.getCurrentTick();
+        this.tickHook = tickHook;
+        this.zeroTick = tickHook.getCurrentTick();
         this.percentageChangeThreshold = percentageChangeThreshold;
 
         if (monitorGc) {
@@ -61,7 +61,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
     }
 
     public int getCurrentTick() {
-        return this.tickCounter.getCurrentTick() - this.zeroTick;
+        return this.tickHook.getCurrentTick() - this.zeroTick;
     }
 
     protected abstract void sendMessage(Component message);
@@ -74,7 +74,7 @@ public abstract class TickMonitor implements TickCounter.TickTask, GarbageCollec
     }
 
     @Override
-    public void onTick(TickCounter counter) {
+    public void onTick(TickHook hook) {
         double now = ((double) System.nanoTime()) / 1000000d;
 
         // init

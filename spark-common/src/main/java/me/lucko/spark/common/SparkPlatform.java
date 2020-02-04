@@ -35,8 +35,9 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
-import me.lucko.spark.common.monitor.tick.TpsCalculator;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.sampler.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import net.kyori.text.TextComponent;
 import net.kyori.text.event.ClickEvent;
@@ -66,8 +67,9 @@ public class SparkPlatform {
     private final List<CommandModule> commandModules;
     private final List<Command> commands;
     private final ActivityLog activityLog;
-    private final TickCounter tickCounter;
-    private final TpsCalculator tpsCalculator;
+    private final TickHook tickHook;
+    private final TickReporter tickReporter;
+    private final TickStatistics tickStatistics;
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
@@ -89,21 +91,29 @@ public class SparkPlatform {
         this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
         this.activityLog.load();
 
-        this.tickCounter = plugin.createTickCounter();
-        this.tpsCalculator = this.tickCounter != null ? new TpsCalculator() : null;
+        this.tickHook = plugin.createTickHook();
+        this.tickReporter = plugin.createTickReporter();
+        this.tickStatistics = this.tickHook != null ? new TickStatistics() : null;
     }
 
     public void enable() {
-        if (this.tickCounter != null) {
-            this.tickCounter.addTickTask(this.tpsCalculator);
-            this.tickCounter.start();
+        if (this.tickHook != null) {
+            this.tickHook.addCallback(this.tickStatistics);
+            this.tickHook.start();
+        }
+        if (this.tickReporter != null) {
+            this.tickReporter.addCallback(this.tickStatistics);
+            this.tickReporter.start();
         }
         CpuMonitor.ensureMonitoring();
     }
 
     public void disable() {
-        if (this.tickCounter != null) {
-            this.tickCounter.close();
+        if (this.tickHook != null) {
+            this.tickHook.close();
+        }
+        if (this.tickReporter != null) {
+            this.tickReporter.close();
         }
 
         for (CommandModule module : this.commandModules) {
@@ -119,12 +129,16 @@ public class SparkPlatform {
         return this.activityLog;
     }
 
-    public TickCounter getTickCounter() {
-        return this.tickCounter;
+    public TickHook getTickHook() {
+        return this.tickHook;
     }
 
-    public TpsCalculator getTpsCalculator() {
-        return this.tpsCalculator;
+    public TickReporter getTickReporter() {
+        return this.tickReporter;
+    }
+
+    public TickStatistics getTickStatistics() {
+        return this.tickStatistics;
     }
 
     public void executeCommand(CommandSender sender, String[] args) {

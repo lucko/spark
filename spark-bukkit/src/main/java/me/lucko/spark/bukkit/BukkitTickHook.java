@@ -20,16 +20,16 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.sampler.AbstractTickCounter;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.AbstractTickHook;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 
-public class BukkitTickCounter extends AbstractTickCounter implements TickCounter, Runnable {
+public class BukkitTickHook extends AbstractTickHook implements TickHook, Runnable {
     private final Plugin plugin;
     private BukkitTask task;
 
-    public BukkitTickCounter(Plugin plugin) {
+    public BukkitTickHook(Plugin plugin) {
         this.plugin = plugin;
     }
 

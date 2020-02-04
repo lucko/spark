@@ -25,7 +25,8 @@ import me.lucko.spark.bukkit.placeholder.SparkPlaceholderApi;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.sampler.tick.TickReporter;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -129,14 +130,22 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
-    public TickCounter createTickCounter() {
+    public TickHook createTickHook() {
         if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
             getLogger().info("Using Paper ServerTickStartEvent for tick monitoring");
-            return new PaperTickCounter(this);
+            return new PaperTickHook(this);
         } else {
             getLogger().info("Using Bukkit scheduler for tick monitoring");
-            return new BukkitTickCounter(this);
+            return new BukkitTickHook(this);
         }
+    }
+
+    @Override
+    public TickReporter createTickReporter() {
+        if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
+            return new PaperTickReporter(this);
+        }
+        return null;
     }
 
     private static boolean classExists(String className) {

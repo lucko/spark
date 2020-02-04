@@ -27,6 +27,7 @@ import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
 import me.lucko.spark.common.sampler.aggregator.TickedDataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.proto.SparkProtos.SamplerData;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
@@ -86,9 +87,9 @@ public class Sampler implements Runnable {
         this.endTime = endTime;
     }
 
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers, boolean ignoreSleeping, TickCounter tickCounter, int tickLengthThreshold) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers, boolean ignoreSleeping, TickHook tickHook, int tickLengthThreshold) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping, tickCounter, tickLengthThreshold);
+        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping, tickHook, tickLengthThreshold);
         this.interval = interval;
         this.endTime = endTime;
     }

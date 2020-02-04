@@ -21,17 +21,17 @@
 package me.lucko.spark.bukkit;
 
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
-import me.lucko.spark.common.sampler.AbstractTickCounter;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.AbstractTickHook;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.Plugin;
 
-public class PaperTickCounter extends AbstractTickCounter implements TickCounter, Listener {
+public class PaperTickHook extends AbstractTickHook implements TickHook, Listener {
     private final Plugin plugin;
 
-    public PaperTickCounter(Plugin plugin) {
+    public PaperTickHook(Plugin plugin) {
         this.plugin = plugin;
     }
 

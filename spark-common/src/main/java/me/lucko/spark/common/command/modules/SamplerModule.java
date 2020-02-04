@@ -32,7 +32,7 @@ import me.lucko.spark.common.sampler.SamplerBuilder;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.ThreadNodeOrder;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import net.kyori.text.TextComponent;
 import net.kyori.text.event.ClickEvent;
 import net.kyori.text.format.TextColor;
@@ -167,10 +167,10 @@ public class SamplerModule implements CommandModule {
                     }
 
                     int ticksOver = arguments.intFlag("only-ticks-over");
-                    TickCounter tickCounter = null;
+                    TickHook tickHook = null;
                     if (ticksOver != -1) {
-                        tickCounter = platform.getTickCounter();
-                        if (tickCounter == null) {
+                        tickHook = platform.getTickHook();
+                        if (tickHook == null) {
                             resp.replyPrefixed(TextComponent.of("Tick counting is not supported!", TextColor.RED));
                             return;
                         }
@@ -193,7 +193,7 @@ public class SamplerModule implements CommandModule {
                     builder.includeLineNumbers(includeLineNumbers);
                     builder.ignoreSleeping(ignoreSleeping);
                     if (ticksOver != -1) {
-                        builder.ticksOver(ticksOver, tickCounter);
+                        builder.ticksOver(ticksOver, tickHook);
                     }
                     Sampler sampler = this.activeSampler = builder.start();
 

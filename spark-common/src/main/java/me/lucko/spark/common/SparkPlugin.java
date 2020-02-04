@@ -22,7 +22,8 @@ package me.lucko.spark.common;
 
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.sampler.tick.TickReporter;
 
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -79,13 +80,24 @@ public interface SparkPlugin {
     }
 
     /**
-     * Creates a tick counter for the platform, if supported.
+     * Creates a tick hook for the platform, if supported.
      *
      * <p>Returns {@code null} if the platform does not have "ticks"</p>
      *
-     * @return a new tick counter
+     * @return a new tick hook
      */
-    default TickCounter createTickCounter() {
+    default TickHook createTickHook() {
+        return null;
+    }
+
+    /**
+     * Creates a tick reporter for the platform, if supported.
+     *
+     * <p>Returns {@code null} if the platform does not have "ticks"</p>
+     *
+     * @return a new tick reporter
+     */
+    default TickReporter createTickReporter() {
         return null;
     }
 

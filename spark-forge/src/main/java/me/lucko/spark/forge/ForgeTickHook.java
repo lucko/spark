@@ -18,33 +18,42 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.sponge;
+package me.lucko.spark.forge;
 
-import me.lucko.spark.common.sampler.AbstractTickCounter;
-import me.lucko.spark.common.sampler.TickCounter;
-import org.spongepowered.api.scheduler.Task;
+import me.lucko.spark.common.sampler.tick.AbstractTickHook;
+import me.lucko.spark.common.sampler.tick.TickHook;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-public class SpongeTickCounter extends AbstractTickCounter implements TickCounter, Runnable {
-    private final SpongeSparkPlugin plugin;
-    private Task task;
+public class ForgeTickHook extends AbstractTickHook implements TickHook {
+    private final TickEvent.Type type;
 
-    public SpongeTickCounter(SpongeSparkPlugin plugin) {
-        this.plugin = plugin;
+    public ForgeTickHook(TickEvent.Type type) {
+        this.type = type;
     }
 
-    @Override
-    public void run() {
+    @SubscribeEvent
+    public void onTick(TickEvent e) {
+        if (e.phase != TickEvent.Phase.START) {
+            return;
+        }
+
+        if (e.type != this.type) {
+            return;
+        }
+
         onTick();
     }
 
     @Override
     public void start() {
-        this.task = Task.builder().intervalTicks(1).name("spark-ticker").execute(this).submit(this.plugin);
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @Override
     public void close() {
-        this.task.cancel();
+        MinecraftForge.EVENT_BUS.unregister(this);
     }
 
 }

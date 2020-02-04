@@ -20,14 +20,14 @@
 
 package me.lucko.spark.fabric;
 
-import me.lucko.spark.common.sampler.AbstractTickCounter;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.AbstractTickHook;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import net.fabricmc.fabric.api.event.client.ClientTickCallback;
 import net.fabricmc.fabric.api.event.server.ServerTickCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.MinecraftServer;
 
-public abstract class FabricTickCounter extends AbstractTickCounter implements TickCounter {
+public abstract class FabricTickHook extends AbstractTickHook implements TickHook {
 
     protected boolean closed = false;
 
@@ -36,7 +36,7 @@ public abstract class FabricTickCounter extends AbstractTickCounter implements T
         this.closed = true;
     }
 
-    public static final class Server extends FabricTickCounter implements ServerTickCallback {
+    public static final class Server extends FabricTickHook implements ServerTickCallback {
         @Override
         public void tick(MinecraftServer minecraftServer) {
             if (!this.closed) {
@@ -50,7 +50,7 @@ public abstract class FabricTickCounter extends AbstractTickCounter implements T
         }
     }
 
-    public static final class Client extends FabricTickCounter implements ClientTickCallback {
+    public static final class Client extends FabricTickHook implements ClientTickCallback {
         @Override
         public void tick(MinecraftClient minecraftClient) {
             if (!this.closed) {

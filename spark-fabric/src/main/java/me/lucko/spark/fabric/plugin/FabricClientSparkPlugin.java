@@ -27,11 +27,11 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.fabric.FabricCommandSender;
 import me.lucko.spark.fabric.FabricSparkGameHooks;
 import me.lucko.spark.fabric.FabricSparkMod;
-import me.lucko.spark.fabric.FabricTickCounter;
+import me.lucko.spark.fabric.FabricTickHook;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.server.command.CommandOutput;
@@ -122,8 +122,8 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
     }
 
     @Override
-    public TickCounter createTickCounter() {
-        return new FabricTickCounter.Client();
+    public TickHook createTickHook() {
+        return new FabricTickHook.Client();
     }
 
     @Override

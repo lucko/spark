@@ -25,8 +25,9 @@ import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
-import me.lucko.spark.common.monitor.tick.TpsCalculator;
+import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.FormatUtil;
+import me.lucko.spark.common.util.RollingAverage;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
@@ -52,18 +53,29 @@ public class HealthModule implements CommandModule {
         consumer.accept(Command.builder()
                 .aliases("tps", "cpu")
                 .executor((platform, sender, resp, arguments) -> {
-                    TpsCalculator tpsCalculator = platform.getTpsCalculator();
-                    if (tpsCalculator != null) {
+                    TickStatistics tickStatistics = platform.getTickStatistics();
+                    if (tickStatistics != null) {
                         resp.replyPrefixed(TextComponent.of("TPS from last 5s, 10s, 1m, 5m, 15m:"));
                         resp.replyPrefixed(TextComponent.builder(" ")
-                                .append(formatTps(tpsCalculator.avg5Sec())).append(TextComponent.of(", "))
-                                .append(formatTps(tpsCalculator.avg10Sec())).append(TextComponent.of(", "))
-                                .append(formatTps(tpsCalculator.avg1Min())).append(TextComponent.of(", "))
-                                .append(formatTps(tpsCalculator.avg5Min())).append(TextComponent.of(", "))
-                                .append(formatTps(tpsCalculator.avg15Min()))
+                                .append(formatTps(tickStatistics.tps5Sec())).append(TextComponent.of(", "))
+                                .append(formatTps(tickStatistics.tps10Sec())).append(TextComponent.of(", "))
+                                .append(formatTps(tickStatistics.tps1Min())).append(TextComponent.of(", "))
+                                .append(formatTps(tickStatistics.tps5Min())).append(TextComponent.of(", "))
+                                .append(formatTps(tickStatistics.tps15Min()))
                                 .build()
                         );
                         resp.replyPrefixed(TextComponent.empty());
+
+                        if (tickStatistics.isDurationSupported()) {
+                            resp.replyPrefixed(TextComponent.of("Tick durations (avg/min/max ms) from last 5s, 10s, 1m:"));
+                            resp.replyPrefixed(TextComponent.builder(" ")
+                                    .append(formatTickDurations(tickStatistics.duration5Sec())).append(TextComponent.of(", "))
+                                    .append(formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(", "))
+                                    .append(formatTickDurations(tickStatistics.duration1Min()))
+                                    .build()
+                            );
+                            resp.replyPrefixed(TextComponent.empty());
+                        }
                     }
 
                     resp.replyPrefixed(TextComponent.of("CPU usage from last 10s, 1m, 15m:"));
@@ -95,8 +107,8 @@ public class HealthModule implements CommandModule {
                         List<Component> report = new LinkedList<>();
                         report.add(TextComponent.empty());
 
-                        TpsCalculator tpsCalculator = platform.getTpsCalculator();
-                        if (tpsCalculator != null) {
+                        TickStatistics tickStatistics = platform.getTickStatistics();
+                        if (tickStatistics != null) {
                             report.add(TextComponent.builder("")
                                     .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                                     .append(TextComponent.space())
@@ -104,14 +116,30 @@ public class HealthModule implements CommandModule {
                                     .build()
                             );
                             report.add(TextComponent.builder("    ")
-                                    .append(formatTps(tpsCalculator.avg5Sec())).append(TextComponent.of(", "))
-                                    .append(formatTps(tpsCalculator.avg10Sec())).append(TextComponent.of(", "))
-                                    .append(formatTps(tpsCalculator.avg1Min())).append(TextComponent.of(", "))
-                                    .append(formatTps(tpsCalculator.avg5Min())).append(TextComponent.of(", "))
-                                    .append(formatTps(tpsCalculator.avg15Min()))
+                                    .append(formatTps(tickStatistics.tps5Sec())).append(TextComponent.of(", "))
+                                    .append(formatTps(tickStatistics.tps10Sec())).append(TextComponent.of(", "))
+                                    .append(formatTps(tickStatistics.tps1Min())).append(TextComponent.of(", "))
+                                    .append(formatTps(tickStatistics.tps5Min())).append(TextComponent.of(", "))
+                                    .append(formatTps(tickStatistics.tps15Min()))
                                     .build()
                             );
                             report.add(TextComponent.empty());
+
+                            if (tickStatistics.isDurationSupported()) {
+                                report.add(TextComponent.builder("")
+                                        .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
+                                        .append(TextComponent.space())
+                                        .append(TextComponent.of("Tick durations (avg/min/max ms) from last 5s, 10s, 1m:", TextColor.GOLD))
+                                        .build()
+                                );
+                                report.add(TextComponent.builder("    ")
+                                        .append(formatTickDurations(tickStatistics.duration5Sec())).append(TextComponent.of(", "))
+                                        .append(formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(", "))
+                                        .append(formatTickDurations(tickStatistics.duration1Min()))
+                                        .build()
+                                );
+                                report.add(TextComponent.empty());
+                            }
                         }
 
                         report.add(TextComponent.builder("")
@@ -267,6 +295,29 @@ public class HealthModule implements CommandModule {
         }
 
         return TextComponent.of( (tps > 20.0 ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, 20.0), color);
+    }
+
+    public static TextComponent formatTickDurations(RollingAverage average){
+        return TextComponent.builder("")
+                .append(formatTickDuration(average.getAverage()))
+                .append(TextComponent.of('/', TextColor.GRAY))
+                .append(formatTickDuration(average.getMin()))
+                .append(TextComponent.of('/', TextColor.GRAY))
+                .append(formatTickDuration(average.getMax()))
+                .build();
+    }
+
+    public static TextComponent formatTickDuration(double duration){
+        TextColor color;
+        if (duration >= 50d) {
+            color = TextColor.RED;
+        } else if (duration >= 40d) {
+            color = TextColor.YELLOW;
+        } else {
+            color = TextColor.GREEN;
+        }
+
+        return TextComponent.of(String.format("%.1f", duration), color);
     }
 
     public static TextComponent formatCpuUsage(double usage) {

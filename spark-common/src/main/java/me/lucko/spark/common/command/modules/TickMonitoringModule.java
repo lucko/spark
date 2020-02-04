@@ -26,7 +26,7 @@ import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.tick.TickMonitor;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
@@ -35,14 +35,14 @@ import java.util.function.Consumer;
 
 public class TickMonitoringModule implements CommandModule {
 
-    /** The tick monitor instance currently running, if any */
-    private TickCounter tickCounter = null;
+    /** The tick hook instance currently running, if any */
+    private TickHook tickHook = null;
     private ReportingTickMonitor activeTickMonitor = null;
 
     @Override
     public void close() {
         if (this.activeTickMonitor != null) {
-            this.tickCounter.removeTickTask(this.activeTickMonitor);
+            this.tickHook.removeCallback(this.activeTickMonitor);
             this.activeTickMonitor.close();
             this.activeTickMonitor = null;
         }
@@ -55,10 +55,10 @@ public class TickMonitoringModule implements CommandModule {
                 .argumentUsage("threshold", "percentage increase")
                 .argumentUsage("without-gc", null)
                 .executor((platform, sender, resp, arguments) -> {
-                    if (this.tickCounter == null) {
-                        this.tickCounter = platform.getTickCounter();
+                    if (this.tickHook == null) {
+                        this.tickHook = platform.getTickHook();
                     }
-                    if (this.tickCounter == null) {
+                    if (this.tickHook == null) {
                         resp.replyPrefixed(TextComponent.of("Not supported!", TextColor.RED));
                         return;
                     }
@@ -69,8 +69,8 @@ public class TickMonitoringModule implements CommandModule {
                             threshold = 100;
                         }
 
-                        this.activeTickMonitor = new ReportingTickMonitor(platform, resp, this.tickCounter, threshold, !arguments.boolFlag("without-gc"));
-                        this.tickCounter.addTickTask(this.activeTickMonitor);
+                        this.activeTickMonitor = new ReportingTickMonitor(platform, resp, this.tickHook, threshold, !arguments.boolFlag("without-gc"));
+                        this.tickHook.addCallback(this.activeTickMonitor);
                     } else {
                         close();
                         resp.broadcastPrefixed(TextComponent.of("Tick monitor disabled."));
@@ -84,8 +84,8 @@ public class TickMonitoringModule implements CommandModule {
     private static class ReportingTickMonitor extends TickMonitor {
         private final CommandResponseHandler resp;
 
-        ReportingTickMonitor(SparkPlatform platform, CommandResponseHandler resp, TickCounter tickCounter, int percentageChangeThreshold, boolean monitorGc) {
-            super(platform, tickCounter, percentageChangeThreshold, monitorGc);
+        ReportingTickMonitor(SparkPlatform platform, CommandResponseHandler resp, TickHook tickHook, int percentageChangeThreshold, boolean monitorGc) {
+            super(platform, tickHook, percentageChangeThreshold, monitorGc);
             this.resp = resp;
         }
 

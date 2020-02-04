@@ -21,8 +21,8 @@
 package me.lucko.spark.common.sampler.aggregator;
 
 import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.TickCounter;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
 import java.lang.management.ThreadInfo;
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 public class TickedDataAggregator extends AbstractDataAggregator {
 
     /** Used to monitor the current "tick" of the server */
-    private final TickCounter tickCounter;
+    private final TickHook tickHook;
 
     /** Tick durations under this threshold will not be inserted, measured in microseconds */
     private final long tickLengthThreshold;
@@ -53,9 +53,9 @@ public class TickedDataAggregator extends AbstractDataAggregator {
     private int currentTick = -1;
     private TickList currentData = new TickList(0);
 
-    public TickedDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, boolean ignoreSleeping, TickCounter tickCounter, int tickLengthThreshold) {
+    public TickedDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, boolean ignoreSleeping, TickHook tickHook, int tickLengthThreshold) {
         super(workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping);
-        this.tickCounter = tickCounter;
+        this.tickHook = tickHook;
         this.tickLengthThreshold = TimeUnit.MILLISECONDS.toMicros(tickLengthThreshold);
         // 50 millis in a tick, plus 10 so we have a bit of room to go over
         double intervalMilliseconds = interval / 1000d;
@@ -74,7 +74,7 @@ public class TickedDataAggregator extends AbstractDataAggregator {
     @Override
     public void insertData(ThreadInfo threadInfo) {
         synchronized (this.mutex) {
-            int tick = this.tickCounter.getCurrentTick();
+            int tick = this.tickHook.getCurrentTick();
             if (this.currentTick != tick) {
                 pushCurrentTick();
                 this.currentTick = tick;

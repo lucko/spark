@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
@@ -41,11 +41,12 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
-import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
 
 @Plugin(
         id = "spark",
@@ -119,8 +120,8 @@ public class SpongeSparkPlugin implements SparkPlugin {
     }
 
     @Override
-    public TickCounter createTickCounter() {
-        return new SpongeTickCounter(this);
+    public TickHook createTickHook() {
+        return new SpongeTickHook(this);
     }
 
     private static final class SparkCommand implements CommandCallable {

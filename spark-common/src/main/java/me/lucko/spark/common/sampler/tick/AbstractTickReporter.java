@@ -18,47 +18,28 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler;
+package me.lucko.spark.common.sampler.tick;
 
-/**
- * A hook with the game's "tick loop".
- */
-public interface TickCounter extends AutoCloseable {
+import java.util.HashSet;
+import java.util.Set;
 
-    /**
-     * Starts the counter
-     */
-    void start();
+public abstract class AbstractTickReporter implements TickReporter {
+    private final Set<Callback> tasks = new HashSet<>();
 
-    /**
-     * Stops the counter
-     */
+    protected void onTick(double duration) {
+        for (Callback r : this.tasks) {
+            r.onTick(duration);
+        }
+    }
+
     @Override
-    void close();
+    public void addCallback(Callback runnable) {
+        this.tasks.add(runnable);
+    }
 
-    /**
-     * Gets the current tick number
-     *
-     * @return the current tick
-     */
-    int getCurrentTick();
-
-    /**
-     * Adds a task to be called each time the tick increments
-     *
-     * @param runnable the task
-     */
-    void addTickTask(TickTask runnable);
-
-    /**
-     * Removes a tick task
-     *
-     * @param runnable the task
-     */
-    void removeTickTask(TickTask runnable);
-
-    interface TickTask {
-        void onTick(TickCounter counter);
+    @Override
+    public void removeCallback(Callback runnable) {
+        this.tasks.remove(runnable);
     }
 
 }

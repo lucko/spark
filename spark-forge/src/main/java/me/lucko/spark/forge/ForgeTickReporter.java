@@ -20,30 +20,42 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.sampler.AbstractTickCounter;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.AbstractTickReporter;
+import me.lucko.spark.common.sampler.tick.TickReporter;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-public class ForgeTickCounter extends AbstractTickCounter implements TickCounter {
+public class ForgeTickReporter extends AbstractTickReporter implements TickReporter {
     private final TickEvent.Type type;
 
-    public ForgeTickCounter(TickEvent.Type type) {
+    private long start = 0;
+
+    public ForgeTickReporter(TickEvent.Type type) {
         this.type = type;
     }
 
     @SubscribeEvent
     public void onTick(TickEvent e) {
-        if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
         if (e.type != this.type) {
             return;
         }
 
-        onTick();
+        switch (e.phase) {
+            case START:
+                this.start = System.nanoTime();
+                break;
+            case END:
+                if (this.start == 0) {
+                    return;
+                }
+
+                double duration = (System.nanoTime() - this.start) / 1000000d;
+                onTick(duration);
+                break;
+            default:
+                throw new AssertionError(e.phase);
+        }
     }
 
     @Override

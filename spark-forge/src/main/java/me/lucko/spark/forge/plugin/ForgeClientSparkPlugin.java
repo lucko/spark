@@ -27,10 +27,12 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.sampler.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgeSparkMod;
-import me.lucko.spark.forge.ForgeTickCounter;
+import me.lucko.spark.forge.ForgeTickHook;
+import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.play.ClientPlayNetHandler;
 import net.minecraft.command.ICommandSource;
@@ -132,8 +134,13 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     }
 
     @Override
-    public TickCounter createTickCounter() {
-        return new ForgeTickCounter(TickEvent.Type.CLIENT);
+    public TickHook createTickHook() {
+        return new ForgeTickHook(TickEvent.Type.CLIENT);
+    }
+
+    @Override
+    public TickReporter createTickReporter() {
+        return new ForgeTickReporter(TickEvent.Type.CLIENT);
     }
 
     @Override

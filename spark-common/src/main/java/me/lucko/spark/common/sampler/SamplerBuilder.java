@@ -20,6 +20,8 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.common.sampler.tick.TickHook;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,7 +37,7 @@ public class SamplerBuilder {
     private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;
 
     private int ticksOver = -1;
-    private TickCounter tickCounter = null;
+    private TickHook tickHook = null;
 
     public SamplerBuilder() {
     }
@@ -63,9 +65,9 @@ public class SamplerBuilder {
         return this;
     }
 
-    public SamplerBuilder ticksOver(int ticksOver, TickCounter tickCounter) {
+    public SamplerBuilder ticksOver(int ticksOver, TickHook tickHook) {
         this.ticksOver = ticksOver;
-        this.tickCounter = tickCounter;
+        this.tickHook = tickHook;
         return this;
     }
 
@@ -83,10 +85,10 @@ public class SamplerBuilder {
         Sampler sampler;
 
         int intervalMicros = (int) (this.samplingInterval * 1000d);
-        if (this.ticksOver == -1 || this.tickCounter == null) {
+        if (this.ticksOver == -1 || this.tickHook == null) {
             sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.ignoreSleeping);
         } else {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.ignoreSleeping, this.tickCounter, this.ticksOver);
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.ignoreSleeping, this.tickHook, this.ticksOver);
         }
 
         sampler.start();

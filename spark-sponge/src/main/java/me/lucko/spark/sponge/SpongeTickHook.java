@@ -18,36 +18,33 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler;
+package me.lucko.spark.sponge;
 
-import java.util.HashSet;
-import java.util.Set;
+import me.lucko.spark.common.sampler.tick.AbstractTickHook;
+import me.lucko.spark.common.sampler.tick.TickHook;
+import org.spongepowered.api.scheduler.Task;
 
-public abstract class AbstractTickCounter implements TickCounter {
+public class SpongeTickHook extends AbstractTickHook implements TickHook, Runnable {
+    private final SpongeSparkPlugin plugin;
+    private Task task;
 
-    private final Set<TickTask> tasks = new HashSet<>();
-    private int tick = 0;
-
-    protected void onTick() {
-        for (TickTask r : this.tasks) {
-            r.onTick(this);
-        }
-        this.tick++;
+    public SpongeTickHook(SpongeSparkPlugin plugin) {
+        this.plugin = plugin;
     }
 
     @Override
-    public int getCurrentTick() {
-        return this.tick;
+    public void run() {
+        onTick();
     }
 
     @Override
-    public void addTickTask(TickTask runnable) {
-        this.tasks.add(runnable);
+    public void start() {
+        this.task = Task.builder().intervalTicks(1).name("spark-ticker").execute(this).submit(this.plugin);
     }
 
     @Override
-    public void removeTickTask(TickTask runnable) {
-        this.tasks.remove(runnable);
+    public void close() {
+        this.task.cancel();
     }
 
 }

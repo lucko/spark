@@ -20,7 +20,9 @@
 
 package me.lucko.spark.common.monitor.tick;
 
-import me.lucko.spark.common.sampler.TickCounter;
+import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.sampler.tick.TickReporter;
+import me.lucko.spark.common.util.RollingAverage;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,28 +39,35 @@ import java.util.concurrent.TimeUnit;
  * rather avoid that. Secondly, it allows us to generate rolling averages over a shorter period of
  * time.</p>
  */
-public class TpsCalculator implements TickCounter.TickTask {
+public class TickStatistics implements TickHook.Callback, TickReporter.Callback {
 
     private static final long SEC_IN_NANO = TimeUnit.SECONDS.toNanos(1);
     private static final int TPS = 20;
-    private static final int SAMPLE_INTERVAL = 20;
-    private static final BigDecimal TPS_BASE = new BigDecimal(SEC_IN_NANO).multiply(new BigDecimal(SAMPLE_INTERVAL));
+    private static final int TPS_SAMPLE_INTERVAL = 20;
+    private static final BigDecimal TPS_BASE = new BigDecimal(SEC_IN_NANO).multiply(new BigDecimal(TPS_SAMPLE_INTERVAL));
 
-    private final TpsRollingAverage avg5Sec = new TpsRollingAverage(5);
-    private final TpsRollingAverage avg10Sec = new TpsRollingAverage(10);
-    private final TpsRollingAverage avg1Min = new TpsRollingAverage(60);
-    private final TpsRollingAverage avg5Min = new TpsRollingAverage(60 * 5);
-    private final TpsRollingAverage avg15Min = new TpsRollingAverage(60 * 15);
+    private final TpsRollingAverage tps5Sec = new TpsRollingAverage(5);
+    private final TpsRollingAverage tps10Sec = new TpsRollingAverage(10);
+    private final TpsRollingAverage tps1Min = new TpsRollingAverage(60);
+    private final TpsRollingAverage tps5Min = new TpsRollingAverage(60 * 5);
+    private final TpsRollingAverage tps15Min = new TpsRollingAverage(60 * 15);
+    private final TpsRollingAverage[] tpsAverages = {this.tps5Sec, this.tps10Sec, this.tps1Min, this.tps5Min, this.tps15Min};
 
-    private final TpsRollingAverage[] averages = new TpsRollingAverage[]{
-            this.avg5Sec, this.avg10Sec, this.avg1Min, this.avg5Min, this.avg15Min
-    };
+    private boolean durationSupported = false;
+    private final RollingAverage tickDuration5Sec = new RollingAverage(TPS * 5);
+    private final RollingAverage tickDuration10Sec = new RollingAverage(TPS * 10);
+    private final RollingAverage tickDuration1Min = new RollingAverage(TPS * 60);
+    private final RollingAverage[] tickDurationAverages = {this.tickDuration5Sec, this.tickDuration10Sec, this.tickDuration1Min};
 
     private long last = 0;
 
+    public boolean isDurationSupported() {
+        return this.durationSupported;
+    }
+
     @Override
-    public void onTick(TickCounter counter) {
-        if (counter.getCurrentTick() % SAMPLE_INTERVAL != 0) {
+    public void onTick(TickHook hook) {
+        if (hook.getCurrentTick() % TPS_SAMPLE_INTERVAL != 0) {
             return;
         }
 
@@ -73,33 +82,62 @@ public class TpsCalculator implements TickCounter.TickTask {
         BigDecimal currentTps = TPS_BASE.divide(new BigDecimal(diff), 30, RoundingMode.HALF_UP);
         BigDecimal total = currentTps.multiply(new BigDecimal(diff));
 
-        for (TpsRollingAverage rollingAverage : this.averages) {
+        for (TpsRollingAverage rollingAverage : this.tpsAverages) {
             rollingAverage.add(currentTps, diff, total);
         }
 
         this.last = now;
     }
 
-    public double avg5Sec() {
-        return this.avg5Sec.getAverage();
+    @Override
+    public void onTick(double duration) {
+        this.durationSupported = true;
+        BigDecimal decimal = BigDecimal.valueOf(duration);
+        for (RollingAverage rollingAverage : this.tickDurationAverages) {
+            rollingAverage.add(decimal);
+        }
     }
 
-    public double avg10Sec() {
-        return this.avg10Sec.getAverage();
+    public double tps5Sec() {
+        return this.tps5Sec.getAverage();
     }
 
-    public double avg1Min() {
-        return this.avg1Min.getAverage();
+    public double tps10Sec() {
+        return this.tps10Sec.getAverage();
     }
 
-    public double avg5Min() {
-        return this.avg5Min.getAverage();
+    public double tps1Min() {
+        return this.tps1Min.getAverage();
     }
 
-    public double avg15Min() {
-        return this.avg15Min.getAverage();
+    public double tps5Min() {
+        return this.tps5Min.getAverage();
     }
 
+    public double tps15Min() {
+        return this.tps15Min.getAverage();
+    }
+
+    public RollingAverage duration5Sec() {
+        if (!this.durationSupported) {
+            return null;
+        }
+        return this.tickDuration5Sec;
+    }
+
+    public RollingAverage duration10Sec() {
+        if (!this.durationSupported) {
+            return null;
+        }
+        return this.tickDuration10Sec;
+    }
+
+    public RollingAverage duration1Min() {
+        if (!this.durationSupported) {
+            return null;
+        }
+        return this.tickDuration1Min;
+    }
 
 
     /**
