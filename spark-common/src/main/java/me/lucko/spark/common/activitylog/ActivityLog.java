@@ -114,8 +114,9 @@ public class ActivityLog {
                     Activity activity = Activity.deserialize(element);
                     if (activity.shouldExpire()) {
                         save = true;
+                    } else {
+                        this.log.add(activity);
                     }
-                    this.log.add(activity);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
