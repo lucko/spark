@@ -23,6 +23,8 @@ package me.lucko.spark.common.util;
 public enum FormatUtil {
     ;
 
+    private static final String[] SIZE_UNITS = {"bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+
     public static String percent(double value, double max) {
         double percent = (value * 100d) / max;
         return (int) percent + "%";
@@ -32,8 +34,7 @@ public enum FormatUtil {
         if (bytes == 0) {
             return "0 bytes";
         }
-        String[] sizes = new String[]{"bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
         int sizeIndex = (int) (Math.log(bytes) / Math.log(1024));
-        return String.format("%.1f", bytes / Math.pow(1024, sizeIndex)) + " " + sizes[sizeIndex];
+        return String.format("%.1f", bytes / Math.pow(1024, sizeIndex)) + " " + SIZE_UNITS[sizeIndex];
     }
 }

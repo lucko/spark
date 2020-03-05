@@ -72,9 +72,9 @@ enum CommandMapUtil {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private static Map<String, Command> getKnownCommandMap() {
         try {
-            //noinspection unchecked
             return (Map<String, Command>) KNOWN_COMMANDS_FIELD.get(getCommandMap());
         } catch (Exception e) {
             throw new RuntimeException("Could not get known commands map", e);
@@ -87,10 +87,8 @@ enum CommandMapUtil {
      * @param plugin the plugin instance
      * @param command the command instance
      * @param aliases the command aliases
-     * @param <T> the command executor class type
-     * @return the command executor
      */
-    public static <T extends CommandExecutor> T registerCommand(Plugin plugin, T command, String... aliases) {
+    public static void registerCommand(Plugin plugin, CommandExecutor command, String... aliases) {
         Preconditions.checkArgument(aliases.length != 0, "No aliases");
         for (String alias : aliases) {
             try {
@@ -112,17 +110,14 @@ enum CommandMapUtil {
                 e.printStackTrace();
             }
         }
-        return command;
     }
 
     /**
      * Unregisters a CommandExecutor with the server
      *
      * @param command the command instance
-     * @param <T> the command executor class type
-     * @return the command executor
      */
-    public static <T extends CommandExecutor> T unregisterCommand(T command) {
+    public static void unregisterCommand(CommandExecutor command) {
         CommandMap map = getCommandMap();
         try {
             //noinspection unchecked
@@ -142,8 +137,6 @@ enum CommandMapUtil {
         } catch (Exception e) {
             throw new RuntimeException("Could not unregister command", e);
         }
-
-        return command;
     }
 
 }

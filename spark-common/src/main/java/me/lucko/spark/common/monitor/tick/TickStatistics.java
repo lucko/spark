@@ -141,7 +141,7 @@ public class TickStatistics implements TickHook.Callback, TickReporter.Callback 
 
 
     /**
-     * Rolling average calculator taken.
+     * Rolling average calculator.
      *
      * <p>This code is taken from PaperMC/Paper, licensed under MIT.</p>
      *
