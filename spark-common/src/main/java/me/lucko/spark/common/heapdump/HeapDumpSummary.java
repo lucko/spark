@@ -21,10 +21,10 @@
 package me.lucko.spark.common.heapdump;
 
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.util.TypeDescriptors;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.HeapData;
 import me.lucko.spark.proto.SparkProtos.HeapEntry;
+import org.objectweb.asm.Type;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -95,7 +95,7 @@ public final class HeapDumpSummary {
                                 Integer.parseInt(matcher.group(1)),
                                 Integer.parseInt(matcher.group(2)),
                                 Long.parseLong(matcher.group(3)),
-                                TypeDescriptors.getJavaType(matcher.group(4))
+                                Type.getType(matcher.group(4)).getClassName()
                         );
                     } catch (Exception e) {
                         new IllegalArgumentException("Exception parsing line: " + line, e).printStackTrace();
