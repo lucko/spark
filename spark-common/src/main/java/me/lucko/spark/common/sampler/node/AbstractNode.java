@@ -38,7 +38,7 @@ public abstract class AbstractNode {
     /**
      * A map of this nodes children
      */
-    private final Map<String, StackTraceNode> children = new ConcurrentHashMap<>();
+    private final Map<StackTraceNode.Description, StackTraceNode> children = new ConcurrentHashMap<>();
 
     /**
      * The accumulated sample time for this node, measured in microseconds
@@ -54,20 +54,31 @@ public abstract class AbstractNode {
         return this.totalTime.longValue() / 1000d;
     }
 
-    private AbstractNode resolveChild(String className, String methodName, int lineNumber) {
-        String key = StackTraceNode.generateKey(className, methodName, lineNumber);
-        StackTraceNode result = this.children.get(key); // fast path
+    /**
+     * Merge {@code other} into {@code this}.
+     *
+     * @param other the other node
+     */
+    public void merge(AbstractNode other) {
+        this.totalTime.add(other.totalTime.longValue());
+        for (Map.Entry<StackTraceNode.Description, StackTraceNode> child : other.children.entrySet()) {
+            resolveChild(child.getKey()).merge(child.getValue());
+        }
+    }
+
+    private AbstractNode resolveChild(StackTraceNode.Description description) {
+        StackTraceNode result = this.children.get(description); // fast path
         if (result != null) {
             return result;
         }
-        return this.children.computeIfAbsent(key, name -> new StackTraceNode(className, methodName, lineNumber));
+        return this.children.computeIfAbsent(description, name -> new StackTraceNode(description));
     }
 
-    public void log(StackTraceElement[] elements, long time, boolean includeLineNumbers) {
-        log(elements, 0, time, includeLineNumbers);
+    public void log(StackTraceElement[] elements, long time) {
+        log(elements, 0, time);
     }
     
-    private void log(StackTraceElement[] elements, int offset, long time, boolean includeLineNumbers) {
+    private void log(StackTraceElement[] elements, int offset, long time) {
         this.totalTime.add(time);
 
         if (offset >= MAX_STACK_DEPTH) {
@@ -91,20 +102,35 @@ public abstract class AbstractNode {
         StackTraceElement parent = offset == 0 ? null : elements[pointer + 1];
 
         // get the line number of the parent element - the line which called "us"
-        int lineNumber = parent == null || !includeLineNumbers ? StackTraceNode.NULL_LINE_NUMBER : parent.getLineNumber();
+        int parentLineNumber = parent == null ? StackTraceNode.NULL_LINE_NUMBER : parent.getLineNumber();
 
         // resolve a child element within the structure for the element at pointer
-        AbstractNode child = resolveChild(element.getClassName(), element.getMethodName(), lineNumber);
+        AbstractNode child = resolveChild(new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getLineNumber(), parentLineNumber));
         // call the log method on the found child, with an incremented offset.
-        child.log(elements, offset + 1, time, includeLineNumbers);
+        child.log(elements, offset + 1, time);
     }
 
-    protected List<StackTraceNode> getChildren() {
+    protected List<StackTraceNode> exportChildren(MergeMode mergeMode) {
         if (this.children.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<StackTraceNode> list = new ArrayList<>(this.children.values());
+        List<StackTraceNode> list = new ArrayList<>(this.children.size());
+
+        outer:
+        for (StackTraceNode child : this.children.values()) {
+            // attempt to find an existing node we can merge into
+            for (StackTraceNode other : list) {
+                if (mergeMode.shouldMerge(other, child)) {
+                    other.merge(child);
+                    continue outer;
+                }
+            }
+
+            // just add
+            list.add(child);
+        }
+
         list.sort(null);
         return list;
     }

@@ -21,7 +21,10 @@
 
 package me.lucko.spark.common.sampler.node;
 
+import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkProtos;
+
+import java.util.Objects;
 
 /**
  * Represents a stack trace element within the {@link AbstractNode node} structure.
@@ -33,60 +36,126 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
      */
     public static final int NULL_LINE_NUMBER = -1;
 
-    /**
-     * Forms a key to represent the given node.
-     *
-     * @param className the name of the class
-     * @param methodName the name of the method
-     * @param lineNumber the line number of the parent method call
-     * @return the key
-     */
-    static String generateKey(String className, String methodName, int lineNumber) {
-        return className + "." + methodName + "." + lineNumber;
+    /** A description of the element */
+    private final Description description;
+
+    public StackTraceNode(Description description) {
+        this.description = description;
     }
 
-    /** The name of the class */
-    private final String className;
-    /** The name of the method */
-    private final String methodName;
-    /** The line number of the invocation which created this node */
-    private final int lineNumber;
-
-    public StackTraceNode(String className, String methodName, int lineNumber) {
-        this.className = className;
-        this.methodName = methodName;
-        this.lineNumber = lineNumber;
+    public String getClassName() {
+        return this.description.className;
     }
 
-    public SparkProtos.StackTraceNode toProto() {
+    public String getMethodName() {
+        return this.description.methodName;
+    }
+
+    public int getLineNumber() {
+        return this.description.lineNumber;
+    }
+
+    public int getParentLineNumber() {
+        return this.description.parentLineNumber;
+    }
+
+    public SparkProtos.StackTraceNode toProto(MergeMode mergeMode) {
         SparkProtos.StackTraceNode.Builder proto = SparkProtos.StackTraceNode.newBuilder()
                 .setTime(getTotalTime())
-                .setClassName(this.className)
-                .setMethodName(this.methodName);
+                .setClassName(this.description.className)
+                .setMethodName(this.description.methodName);
 
-        if (this.lineNumber >= 0) {
-            proto.setLineNumber(this.lineNumber);
+        if (this.description.lineNumber >= 0) {
+            proto.setLineNumber(this.description.lineNumber);
         }
 
-        for (StackTraceNode child : getChildren()) {
-            proto.addChildren(child.toProto());
+        if (mergeMode.separateParentCalls() && this.description.parentLineNumber >= 0) {
+            proto.setParentLineNumber(this.description.parentLineNumber);
+        }
+
+        mergeMode.getMethodDisambiguator().disambiguate(this)
+                .map(MethodDisambiguator.MethodDescription::getDesc)
+                .ifPresent(proto::setMethodDesc);
+
+        for (StackTraceNode child : exportChildren(mergeMode)) {
+            proto.addChildren(child.toProto(mergeMode));
         }
 
         return proto.build();
     }
 
-    private String key() {
-        return generateKey(this.className, this.methodName, this.lineNumber);
-    }
-
     @Override
     public int compareTo(StackTraceNode that) {
+        if (this == that) {
+            return 0;
+        }
+
         int i = -Double.compare(this.getTotalTime(), that.getTotalTime());
         if (i != 0) {
             return i;
         }
 
-        return this.key().compareTo(that.key());
+        return this.description.compareTo(that.description);
+    }
+
+    /**
+     * Encapsulates the attributes of a {@link StackTraceNode}.
+     */
+    public static final class Description implements Comparable<Description> {
+        private final String className;
+        private final String methodName;
+        private final int lineNumber;
+        private final int parentLineNumber;
+
+        private final int hash;
+
+        public Description(String className, String methodName, int lineNumber, int parentLineNumber) {
+            this.className = className;
+            this.methodName = methodName;
+            this.lineNumber = lineNumber;
+            this.parentLineNumber = parentLineNumber;
+            this.hash = Objects.hash(this.className, this.methodName, this.lineNumber, this.parentLineNumber);
+        }
+
+        @Override
+        public int compareTo(Description that) {
+            if (this == that) {
+                return 0;
+            }
+
+            int i = this.className.compareTo(that.className);
+            if (i != 0) {
+                return i;
+            }
+
+            i = this.methodName.compareTo(that.methodName);
+            if (i != 0) {
+                return i;
+            }
+
+            i = Integer.compare(this.lineNumber, that.lineNumber);
+            if (i != 0) {
+                return i;
+            }
+
+            return Integer.compare(this.parentLineNumber, that.parentLineNumber);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Description description = (Description) o;
+            return this.lineNumber == description.lineNumber &&
+                    this.parentLineNumber == description.parentLineNumber &&
+                    this.className.equals(description.className) &&
+                    this.methodName.equals(description.methodName);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.hash;
+        }
     }
 
 }

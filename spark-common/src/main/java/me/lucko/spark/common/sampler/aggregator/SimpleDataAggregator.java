@@ -33,8 +33,8 @@ import java.util.concurrent.TimeUnit;
  * Basic implementation of {@link DataAggregator}.
  */
 public class SimpleDataAggregator extends AbstractDataAggregator {
-    public SimpleDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, boolean ignoreSleeping) {
-        super(workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping);
+    public SimpleDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping) {
+        super(workerPool, threadGrouper, interval, ignoreSleeping);
     }
 
     @Override

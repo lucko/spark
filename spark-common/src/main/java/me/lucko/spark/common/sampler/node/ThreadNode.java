@@ -36,13 +36,13 @@ public final class ThreadNode extends AbstractNode {
         this.threadName = threadName;
     }
 
-    public SparkProtos.ThreadNode toProto() {
+    public SparkProtos.ThreadNode toProto(MergeMode mergeMode) {
         SparkProtos.ThreadNode.Builder proto = SparkProtos.ThreadNode.newBuilder()
                 .setName(this.threadName)
                 .setTime(getTotalTime());
 
-        for (StackTraceNode child : getChildren()) {
-            proto.addChildren(child.toProto());
+        for (StackTraceNode child : exportChildren(mergeMode)) {
+            proto.addChildren(child.toProto(mergeMode));
         }
 
         return proto.build();

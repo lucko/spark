@@ -26,6 +26,7 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
 import me.lucko.spark.common.sampler.aggregator.TickedDataAggregator;
+import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.proto.SparkProtos.SamplerData;
@@ -80,16 +81,16 @@ public class Sampler implements Runnable {
     /** The unix timestamp (in millis) when this sampler should automatically complete.*/
     private final long endTime; // -1 for nothing
     
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers, boolean ignoreSleeping) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping);
+        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping);
         this.interval = interval;
         this.endTime = endTime;
     }
 
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean includeLineNumbers, boolean ignoreSleeping, TickHook tickHook, int tickLengthThreshold) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, TickHook tickHook, int tickLengthThreshold) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, includeLineNumbers, ignoreSleeping, tickHook, tickLengthThreshold);
+        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, tickHook, tickLengthThreshold);
         this.interval = interval;
         this.endTime = endTime;
     }
@@ -160,7 +161,7 @@ public class Sampler implements Runnable {
         }
     }
 
-    private SamplerData toProto(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder) {
+    private SamplerData toProto(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, MergeMode mergeMode) {
         SamplerData.Builder proto = SamplerData.newBuilder();
         proto.setMetadata(SamplerMetadata.newBuilder()
                 .setUser(creator.toData().toProto())
@@ -175,16 +176,18 @@ public class Sampler implements Runnable {
         data.sort(outputOrder);
 
         for (Map.Entry<String, ThreadNode> entry : data) {
-            proto.addThreads(entry.getValue().toProto());
+            proto.addThreads(entry.getValue().toProto(mergeMode));
         }
 
         return proto.build();
     }
 
-    public byte[] formCompressedDataPayload(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder) {
+    public byte[] formCompressedDataPayload(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, MergeMode mergeMode) {
+        SamplerData proto = toProto(creator, outputOrder, mergeMode);
+
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try (OutputStream out = new GZIPOutputStream(byteOut)) {
-            toProto(creator, outputOrder).writeTo(out);
+            proto.writeTo(out);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

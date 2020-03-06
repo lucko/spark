@@ -32,7 +32,9 @@ import me.lucko.spark.common.sampler.SamplerBuilder;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.ThreadNodeOrder;
+import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.util.MethodDisambiguator;
 import net.kyori.text.TextComponent;
 import net.kyori.text.event.ClickEvent;
 import net.kyori.text.format.TextColor;
@@ -76,9 +78,9 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("not-combined", null)
                 .argumentUsage("interval", "interval millis")
                 .argumentUsage("only-ticks-over", "tick length millis")
-                .argumentUsage("include-line-numbers", null)
                 .argumentUsage("ignore-sleeping", null)
                 .argumentUsage("order-by-time", null)
+                .argumentUsage("separate-parent-calls", null)
                 .executor((platform, sender, resp, arguments) -> {
                     if (arguments.boolFlag("info")) {
                         if (this.activeSampler == null) {
@@ -115,7 +117,9 @@ public class SamplerModule implements CommandModule {
                             this.activeSampler.cancel();
                             resp.broadcastPrefixed(TextComponent.of("The active sampling operation has been stopped! Uploading results..."));
                             ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
-                            handleUpload(platform, resp, this.activeSampler, threadOrder);
+                            MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
+                            MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
+                            handleUpload(platform, resp, this.activeSampler, threadOrder, mergeMode);
                             this.activeSampler = null;
                         }
                         return;
@@ -190,7 +194,6 @@ public class SamplerModule implements CommandModule {
                         builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
                     }
                     builder.samplingInterval(intervalMillis);
-                    builder.includeLineNumbers(includeLineNumbers);
                     builder.ignoreSleeping(ignoreSleeping);
                     if (ticksOver != -1) {
                         builder.ticksOver(ticksOver, tickHook);
@@ -224,9 +227,11 @@ public class SamplerModule implements CommandModule {
                     // await the result
                     if (timeoutSeconds != -1) {
                         ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
+                        MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
+                        MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
                         future.thenAcceptAsync(s -> {
                             resp.broadcastPrefixed(TextComponent.of("The active sampling operation has completed! Uploading results..."));
-                            handleUpload(platform, resp, s, threadOrder);
+                            handleUpload(platform, resp, s, threadOrder, mergeMode);
                         });
                     }
                 })
@@ -236,13 +241,12 @@ public class SamplerModule implements CommandModule {
                     }
 
                     if (arguments.contains("--stop") || arguments.contains("--upload")) {
-                        return TabCompleter.completeForOpts(arguments, "--order-by-time");
+                        return TabCompleter.completeForOpts(arguments, "--order-by-time", "--separate-parent-calls");
                     }
 
                     List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
                             "--timeout", "--regex", "--combine-all", "--not-combined", "--interval",
-                            "--only-ticks-over", "--include-line-numbers", "--ignore-sleeping",
-                            "--order-by-time"));
+                            "--only-ticks-over", "--ignore-sleeping", "--order-by-time", "--separate-parent-calls"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times
 
@@ -254,9 +258,9 @@ public class SamplerModule implements CommandModule {
         );
     }
 
-    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder) {
+    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, MergeMode mergeMode) {
         platform.getPlugin().executeAsync(() -> {
-            byte[] output = sampler.formCompressedDataPayload(resp.sender(), threadOrder);
+            byte[] output = sampler.formCompressedDataPayload(resp.sender(), threadOrder, mergeMode);
             try {
                 String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE, false).key();
                 String url = SparkPlatform.VIEWER_URL + key;

@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 public class SamplerBuilder {
 
     private double samplingInterval = 4; // milliseconds
-    private boolean includeLineNumbers = false;
     private boolean ignoreSleeping = false;
     private long timeout = -1;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
@@ -71,11 +70,6 @@ public class SamplerBuilder {
         return this;
     }
 
-    public SamplerBuilder includeLineNumbers(boolean includeLineNumbers) {
-        this.includeLineNumbers = includeLineNumbers;
-        return this;
-    }
-
     public SamplerBuilder ignoreSleeping(boolean ignoreSleeping) {
         this.ignoreSleeping = ignoreSleeping;
         return this;
@@ -86,9 +80,9 @@ public class SamplerBuilder {
 
         int intervalMicros = (int) (this.samplingInterval * 1000d);
         if (this.ticksOver == -1 || this.tickHook == null) {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.ignoreSleeping);
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping);
         } else {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.includeLineNumbers, this.ignoreSleeping, this.tickHook, this.ticksOver);
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.tickHook, this.ticksOver);
         }
 
         sampler.start();

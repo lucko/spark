@@ -42,17 +42,13 @@ public abstract class AbstractDataAggregator implements DataAggregator {
     /** The interval to wait between sampling, in microseconds */
     protected final int interval;
 
-    /** If line numbers should be included in the output */
-    private final boolean includeLineNumbers;
-
     /** If sleeping threads should be ignored */
     private final boolean ignoreSleeping;
 
-    public AbstractDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean includeLineNumbers, boolean ignoreSleeping) {
+    public AbstractDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping) {
         this.workerPool = workerPool;
         this.threadGrouper = threadGrouper;
         this.interval = interval;
-        this.includeLineNumbers = includeLineNumbers;
         this.ignoreSleeping = ignoreSleeping;
     }
 
@@ -71,7 +67,7 @@ public abstract class AbstractDataAggregator implements DataAggregator {
 
         try {
             ThreadNode node = getNode(this.threadGrouper.getGroup(threadInfo.getThreadId(), threadInfo.getThreadName()));
-            node.log(threadInfo.getStackTrace(), this.interval, this.includeLineNumbers);
+            node.log(threadInfo.getStackTrace(), this.interval);
         } catch (Exception e) {
             e.printStackTrace();
         }
