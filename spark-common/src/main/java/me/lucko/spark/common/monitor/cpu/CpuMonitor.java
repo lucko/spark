@@ -159,11 +159,16 @@ public enum CpuMonitor {
             BigDecimal systemCpuLoad = new BigDecimal(systemLoad());
             BigDecimal processCpuLoad = new BigDecimal(processLoad());
 
-            for (RollingAverage average : this.systemAverages) {
-                average.add(systemCpuLoad);
+            if (systemCpuLoad.signum() != -1) { // if value is not negative
+                for (RollingAverage average : this.systemAverages) {
+                    average.add(systemCpuLoad);
+                }
             }
-            for (RollingAverage average : this.processAverages) {
-                average.add(processCpuLoad);
+
+            if (processCpuLoad.signum() != -1) { // if value is not negative
+                for (RollingAverage average : this.processAverages) {
+                    average.add(processCpuLoad);
+                }
             }
         }
     }
