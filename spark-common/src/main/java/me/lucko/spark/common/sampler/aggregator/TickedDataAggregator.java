@@ -66,7 +66,7 @@ public class TickedDataAggregator extends AbstractDataAggregator {
     public SamplerMetadata.DataAggregator getMetadata() {
         return SamplerMetadata.DataAggregator.newBuilder()
                 .setType(SamplerMetadata.DataAggregator.Type.TICKED)
-                .setThreadGrouper(ThreadGrouper.asProto(this.threadGrouper))
+                .setThreadGrouper(this.threadGrouper.asProto())
                 .setTickLengthThreshold(this.tickLengthThreshold)
                 .build();
     }

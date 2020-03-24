@@ -30,17 +30,22 @@ import java.util.regex.Pattern;
 /**
  * Function for grouping threads together
  */
-public enum ThreadGrouper {
+public interface ThreadGrouper {
 
     /**
      * Implementation of {@link ThreadGrouper} that just groups by thread name.
      */
-    BY_NAME {
+    ThreadGrouper BY_NAME = new ThreadGrouper() {
         @Override
         public String getGroup(long threadId, String threadName) {
             return threadName;
         }
-    },
+
+        @Override
+        public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
+            return SamplerMetadata.DataAggregator.ThreadGrouper.BY_NAME;
+        }
+    };
 
     /**
      * Implementation of {@link ThreadGrouper} that attempts to group by the name of the pool
@@ -49,7 +54,7 @@ public enum ThreadGrouper {
      * <p>The regex pattern used to match pools expects a digit at the end of the thread name,
      * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
      */
-    BY_POOL {
+    ThreadGrouper BY_POOL = new ThreadGrouper() {
         private final Map<Long, String> cache = new ConcurrentHashMap<>();
         private final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
 
@@ -69,16 +74,26 @@ public enum ThreadGrouper {
             this.cache.put(threadId, group); // we don't care about race conditions here
             return group;
         }
-    },
+
+        @Override
+        public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
+            return SamplerMetadata.DataAggregator.ThreadGrouper.BY_POOL;
+        }
+    };
 
     /**
      * Implementation of {@link ThreadGrouper} which groups all threads as one, under
      * the name "All".
      */
-    AS_ONE {
+    ThreadGrouper AS_ONE = new ThreadGrouper() {
         @Override
         public String getGroup(long threadId, String threadName) {
             return "All";
+        }
+
+        @Override
+        public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
+            return SamplerMetadata.DataAggregator.ThreadGrouper.AS_ONE;
         }
     };
 
@@ -89,19 +104,8 @@ public enum ThreadGrouper {
      * @param threadName the name of the thread
      * @return the group
      */
-    public abstract String getGroup(long threadId, String threadName);
+    String getGroup(long threadId, String threadName);
 
-    public static SamplerMetadata.DataAggregator.ThreadGrouper asProto(ThreadGrouper threadGrouper) {
-        switch (threadGrouper) {
-            case BY_NAME:
-                return SamplerMetadata.DataAggregator.ThreadGrouper.BY_NAME;
-            case BY_POOL:
-                return SamplerMetadata.DataAggregator.ThreadGrouper.BY_POOL;
-            case AS_ONE:
-                return SamplerMetadata.DataAggregator.ThreadGrouper.AS_ONE;
-            default:
-                throw new AssertionError();
-        }
-    }
+    SamplerMetadata.DataAggregator.ThreadGrouper asProto();
 
 }

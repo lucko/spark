@@ -74,7 +74,7 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
     }
 
     @Override
-    public void onTick(TickHook hook) {
+    public void onTick(int currentTick) {
         double now = ((double) System.nanoTime()) / 1000000d;
 
         // init

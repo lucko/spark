@@ -66,8 +66,8 @@ public class TickStatistics implements TickHook.Callback, TickReporter.Callback 
     }
 
     @Override
-    public void onTick(TickHook hook) {
-        if (hook.getCurrentTick() % TPS_SAMPLE_INTERVAL != 0) {
+    public void onTick(int currentTick) {
+        if (currentTick % TPS_SAMPLE_INTERVAL != 0) {
             return;
         }
 
@@ -92,7 +92,7 @@ public class TickStatistics implements TickHook.Callback, TickReporter.Callback 
     @Override
     public void onTick(double duration) {
         this.durationSupported = true;
-        BigDecimal decimal = BigDecimal.valueOf(duration);
+        BigDecimal decimal = new BigDecimal(duration);
         for (RollingAverage rollingAverage : this.tickDurationAverages) {
             rollingAverage.add(decimal);
         }

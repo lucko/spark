@@ -30,7 +30,7 @@ public abstract class AbstractTickHook implements TickHook {
 
     protected void onTick() {
         for (Callback r : this.tasks) {
-            r.onTick(this);
+            r.onTick(this.tick);
         }
         this.tick++;
     }

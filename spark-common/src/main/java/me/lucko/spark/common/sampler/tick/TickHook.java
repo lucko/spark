@@ -58,7 +58,7 @@ public interface TickHook extends AutoCloseable {
     void removeCallback(Callback runnable);
 
     interface Callback {
-        void onTick(TickHook hook);
+        void onTick(int currentTick);
     }
 
 }
