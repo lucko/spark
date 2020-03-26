@@ -70,6 +70,20 @@ public final class HeapDumpSummary {
     }
 
     /**
+     * Converts type descriptors to their class name.
+     *
+     * @param type the type
+     * @return the class name
+     */
+    private static String typeToClassName(String type) {
+        try {
+            return Type.getType(type).getClassName();
+        } catch (IllegalArgumentException e) {
+            return type;
+        }
+    }
+
+    /**
      * Creates a new heap dump based on the current VM.
      *
      * @return the created heap dump
@@ -95,7 +109,7 @@ public final class HeapDumpSummary {
                                 Integer.parseInt(matcher.group(1)),
                                 Integer.parseInt(matcher.group(2)),
                                 Long.parseLong(matcher.group(3)),
-                                Type.getType(matcher.group(4)).getClassName()
+                                typeToClassName(matcher.group(4))
                         );
                     } catch (Exception e) {
                         new IllegalArgumentException("Exception parsing line: " + line, e).printStackTrace();
