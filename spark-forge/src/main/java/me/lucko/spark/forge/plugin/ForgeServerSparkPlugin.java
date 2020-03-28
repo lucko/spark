@@ -67,7 +67,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     private static String /* Nullable */[] processArgs(CommandContext<CommandSource> context) {
         String[] split = context.getInput().split(" ");
-        if (split.length == 0 || !split[0].equals("/spark")) {
+        if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
             return null;
         }
 
@@ -79,8 +79,8 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         String[] args = processArgs(context);
         if (args == null)
             return 0;
-
-        this.platform.executeCommand(new ForgeCommandSender(context.getSource().asPlayer(), this), args);
+        ICommandSource source = context.getSource().getEntity() instanceof ServerPlayerEntity ? context.getSource().asPlayer() : context.getSource().getServer();
+        this.platform.executeCommand(new ForgeCommandSender(source, this), args);
         return Command.SINGLE_SUCCESS;
     }
 
