@@ -24,182 +24,102 @@ ___
 
 spark is made up of a number of components, each detailed separately below.
 
-| CPU Profiler (process sampling)      | Memory Inspection (heap analysis & GC monitoring) | Server Health reporting              |
-|--------------------------------------|---------------------------------------------------|--------------------------------------|
-| ![](https://i.imgur.com/ggSGzRq.png) | ![](https://i.imgur.com/BsdTxqA.png)              | ![](https://i.imgur.com/SrKEmA6.png) |
+|                 CPU Profiler                  |            Memory Inspection             |          Server Health Reporting           |
+| :-------------------------------------------: | :--------------------------------------: | :----------------------------------------: |
+|     ![](https://i.imgur.com/ggSGzRq.png)      |   ![](https://i.imgur.com/BsdTxqA.png)   |    ![](https://i.imgur.com/SrKEmA6.png)    |
+| Diagnose performance issues with your server. | Diagnose memory issues with your server. | Keep track of your servers overall health. |
+
+### :zap: CPU Profiler
+
+spark's CPU profiler is an improved version of the popular WarmRoast profiler by sk89q. It can be used to diagnose performance issues ("lag", low tick rate, etc).
+
+It is:
+
+* **Lightweight** - can be ran on production servers with minimal impact.
+* **Easy to use** - no configuration or setup necessary, just install the plugin.
+* **Quick to produce results** - running for just ~30 seconds is enough to produce useful insights into problematic areas for performance.
+* **Customisable** - can be tuned to target specific threads, sample at a specific interval, record only "laggy" periods, etc
+* **Highly readable** - simple tree structure lends itself to easy analysis and interpretation. The viewer can also apply deobfuscation mappings.
+
+It works by sampling statictical data about the servers activity, and contructing a call graph based on this data. The call graph is then displayed in an online viewer for further analysis by the user.
+
+### :zap: Memory Inspection
+
+spark includes a number of tools which are useful for diagnosing memory issues with a server.
+
+* **Heap Summary** - take & analyse a basic snapshot of the servers memory
+  * A simple view of the JVM's heap, see memory usage and instance counts for each class
+  * Not intended to be a full replacement of proper memory analysis tools. (see below)
+* **Heap Dump tool** - take a full (HPROF) snapshot of the servers memory
+  * Dumps (& optionally compresses) a full snapshot of JVM's heap.
+  * This snapshot can then be inspected using conventional analysis tools.
+* **GC Monitoring** - monitor garbage collection activity on the server
+  * Allows the user to relate GC activity to game server hangs, and easily see how long they are taking & how much memory is being free'd.
+  * Observe frequency/duration of young/old generation garbage collections to inform which GC tuning flags to use
+
+### :zap: Server Health Reporting
+
+spark can report a number of metrics summarising the servers overall health.
+
+These metrics include:
+
+* **TPS** - ticks per second, to a more accurate degree indicated by the /tps command
+* **Tick Durations** - how long each tick is taking (min, max and average)
+* **CPU Usage** - how much of the CPU is being used by the server process, and by the overall system
+* **Memory Usage** - much much memory is being used by the process
+* **Disk Usage** - how much disk space is free/being used by the system
+
+As well as providing tick rate averages, spark can also **monitor individual ticks** - sending a report whenever a single tick's duration exceeds a certain threshold. This can be used to identify trends and the nature of performance issues, relative to other system or game events.
 
 
-### :zap: CPU Profiler (process sampling)
-This is the primary component of spark - a lightweight CPU sampler with corresponding web analysis view based on WarmRoast.
 
-The sampler records statistical data about which actions take up the most processing time. These statistics can then be used to diagnose potential performance issues with certain parts of the server or specific plugins.
+## spark's CPU Profiler vs others
 
-Once the data has been recorded, a "call graph" can be formed and displayed in a web browser for analysis.
+### WarmRoast
 
-A profiler like the one in spark will not magically fix "lag" - they are merely a tool to help diagnose the cause of poor performance.
+Whilst the CPU profiler in spark is based on WarmRoast, it has been improved over time and differs from upstream in the following ways:
 
-### :zap: Tick Monitor (server tick monitoring)
+* Installation and usage is significantly easier.
+  * Access to the underlying server machine is not needed.
+  * No need to expose/navigate to a temporary web server (open ports, disable firewall?, go to temp webpage)
+* Profiling output can be quickly viewed & shared with others.
+* Deobfuscation mappings can be applied without extra setup, and CraftBukkit and Fabric sources are supported in addition to MCP (Searge) names.
+* Sampler & viewer components have both been significantly optimized.
+  * Now able to sample at a higher rate & use less memory doing so
+* Additional customisation options added.
+  * Ability to filter output by "laggy ticks" only, group threads from thread pools together, etc
+  * Ability to filter output to parts of the call tree containing specific methods or classes
+* Sampling accuracy improved
+  * The profiler groups by distinct methods, and not just by method name
 
-This component monitors the speed at which the game server is processing "ticks". Can be used to spot trends and identify the nature of a performance issue, relative to other system events. (garbage collection, game actions, etc)
+### Minecraft Timings
 
-### :zap: Memory Inspection (heap analysis & GC monitoring)
+Aikar's [timings](https://github.com/aikar/timings) system (built into Spigot and Sponge) is similar to spark in the sense that it also records data about server performance and presents this for analysis.
 
-This component provides a function which can be used to take basic snapshots of system memory usage, including information about potentially problematic classes, estimated sizes and instance counts corresponding to objects in the JVM.
+Timings can do the following things that spark does not:
 
-Unlike the other "profiler"-like functionality in spark, this component is *not* intended to be a full replacement for proper memory analysis tools. It just shows a simplified view.
+* Count the number of times certain things (events, entity ticking, etc) occur within the recorded period
+* Display output in a way that is more easily understandable by server admins unfamiliar with reading profiler data
+* Break down server activity by "friendly" descriptions of the nature of the work being performed
 
-spark also includes functionality which allows "full" hprof snapshots to be taken. These can be then analysed with conventional memory analysis tools.
+If these things are important to you, then timings is likely a better option.
 
-### :zap: Server Health reporting
+However, if they are less important, then spark has a few advantages:
 
-Information about the servers current "health" can be viewed in-game using commands. The output contains information about:
+* Each area of analysis does not need to be manually defined - spark will record data for everything.
+  * For example, timings might identify that a certain listener in plugin x is taking up a lot of CPU time processing the PlayerMoveEvent, but it won't tell you which part of the processing is slow - spark will.
+* For programmers interested in optimizing plugins or the server software (or server admins wishing to report issues), the spark output is usually more useful.
+  * Timings is not detailed enough to give information about slow areas of code. 
 
-* Server TPS (ticks per second) information, to a much more accurate degree than indicated by the /tps command.
-* CPU usage of the server process, as well as the overall system
-* Memory usage
-* Disk usage
+### Other Java profilers
 
-### spark vs WarmRoast
+* spark (a sampling profiler) is typically less numerically accurate compared to other profiling methods (e.g. instrumentation), but allows the target program to run at near full speed.
+  * In practice, sampling profilers can often provide a more accurate picture of the target program's execution than other approaches, as they are not as intrusive to the target program, and thus don't have as many side effects.
+* With spark it is not necessary to inject a Java agent when starting the server.
+* Easy to apply deobfuscation mappings.
+* spark is more than good enough for the vast majority of performance issues likely to be encountered on Minecraft servers, but may fall short when analysing performance of code ahead of time (in other words before it becomes a bottleneck / issue).
 
-#### WarmRoast features
 
-These features are carried over from the upstream "WarmRoast" project.
-
-* The viewer is entirely web-based — no specialist software is required to view the output, just a web browser!
-* Output is arranged as a stack of nested method calls, making it easy to interpret the output
-* Nodes can be expanded and collapsed to reveal timing details and further child nodes.
-* The overall CPU usage and contribution of a particular method can be seen at a glance.
-* See the percentage of CPU time for each method relative to its parent methods.
-* Sampling frequency can be adjusted.
-* Virtually no overheads or side effects on the target program (the server)
-
-#### spark features
-
-WarmRoast is an amazing tool for server admins, but it has a few flaws.
-
-* It is not accessible to some users, because in order to use it, you need to have direct SSH (or equivalent) access to the server. (not possible on shared hosts)
-* It can be somewhat clunky to setup and start (typical steps: ssh into server machine, open up ports / disable firewall rules?, start process, identify target VM, allow profiler to run for a bit, open a web browser & navigate to the temporary web page hosted by the application. not ideal!)
-* It's not easy to share profiling data with other developers or admins.
-* Java Development Kit must be installed on the target machine.
-
-I've attempted to address these flaws in spark.
-
-* Profiling is managed entirely using in-game or console commands.
-* You don't need to have direct access to the server machine - just install the plugin as you would normally.
-* Data is uploaded to a "pastebin"-esque site to be viewed - a temporary web server is not needed, and you can easily share your analysis with others!
-* It is not necessary to install any special Java agents or provide a path to the Java Development Kit
-
-Other benefits of spark compared with other profilers:
-
-* MCP (Mod Coder Pack) deobfuscation mappings can be applied to method names directly in the viewer
-  * This works for both partially deobfuscated Bukkit mappings, as well as for Sponge/Forge (Searge) mappings
-* No specialist software is required to view the output, just a web browser.
-
-### spark vs "Real Profilers"
-The spark (WarmRoast) profiler operates using a technique known as [sampling](https://en.wikipedia.org/wiki/Profiling_(computer_programming)#Statistical_profilers). A sampling profiler works by probing the target programs call stack at regular intervals in order to determine how frequently certain actions are being performed. In practice, sampling profilers can often provide a more accurate picture of the target program's execution than other approaches, as they are not as intrusive to the target program, and thus don't have as many side effects.
-
-Sampling profiles are typically less numerically accurate and specific than other profiling methods (e.g. instrumentation), but allow the target program to run at near full speed.
-
-The resultant data is not exact, but a statistical approximation. The accuracy of the output improves as the sampler runs for longer durations, or as the sampling interval is made more frequent.
-
-### spark vs "Minecraft Timings"
-
-Aikar's [timings](https://github.com/aikar/timings) system (built into Spigot and Sponge) is similar to spark/WarmRoast, in the sense that it also analyses the CPU activity of the server.
-
-timings will generally be slightly more accurate than spark, but is (arguably?!) less useful, as each area of analysis has to be manually defined.
-
-For example, timings might identify that a certain listener in plugin x is taking up a lot of CPU time processing the PlayerMoveEvent, but it won't tell you which part of the processing is slow. spark/WarmRoast on the other hand *will* show this information, right down to the name of the method call causing the issue.
-
-## Installation
-
-To install, add the **spark.jar** file to your servers plugins/mods directory, and then restart your server.
-
-## Commands
-
-All commands require the `spark` permission.
-
-Note that `/sparkb`, `/sparkv`, and `/sparkc` must be used instead of `/spark` on BungeeCord, Velocity and Forge Client installs respectively. 
-
-___
-#### `/spark sampler`
-Starts a new CPU profiler operation.
-
-**Arguments**
-* `--info`
-	* Prints information about the active profiler, if present.
-* `--stop`
-	* Ends the current profiling operation, uploads the resultant data, and returns a link to the viewer.
-* `--cancel`
-	* Cancels the current profiling operation, and discards any recorded data without uploading it.
-* `--timeout <timeout>`
-	* Specifies how long the profiler should run before automatically stopping. Measured in seconds.
-	* If left unspecified, the profiler will run indefinitely, until it is stopped
-* `--thread <thread name>`
-	* Specifies the name of the thread to be profiled.
-	* If left unspecified, the profiler will only sample the main "server thread".
-	* The `*` character can be used in place of a name to mark that all threads should be profiled
-* `--regex`
-	* Specifies that the set of threads defined should be interpreted as regex patterns.
-* `--combine-all`
-	* Specifies that all threads should be combined into a single node.
-* `--not-combined`
-	* Specifies that threads from a pool should not be combined into a single node.
-* `--interval <interval>`
-	* Specifies the interval between samples. Measured in milliseconds.
-	* Lower values will improve the accuracy of the results, but may result in server lag.
-	* If left unspecified, a default interval of 10 milliseconds is used.
-* `--only-ticks-over <tick length millis>`
-	* Specifies that entries should only be included if they were part of a tick that took longer than the specified duration to execute.
-* `--include-line-numbers`
-	* Specifies that line numbers of method calls should be recorded and included in the sampler output.
-___
-#### `/spark tps`
-Prints information about the servers TPS (ticks per second) rate.
-
-___
-#### `/spark healthreport`
-Generates a health report for the server.
-
-**Arguments**
-* `--memory`
-	* Specifies that additional information about the JVMs memory usage should be included
-
-___
-#### `/spark tickmonitoring`
-Starts/stops the tick monitoring system.
-
-**Arguments**
-* `--threshold <percentage increase>`
-	* Specifies the report threshold, measured as a percentage increase from the average tick duration.
-* `--without-gc`
-	* Specifies that GC notifications should not be shown.
-
-___
-#### `/spark heapsummary`
-Creates a new memory (heap) dump summary, uploads the resultant data, and returns a link to the viewer.
-
-**Arguments**
-* `--run-gc-before`
-	* Specifies that before recording data, spark should *suggest* that the system performs garbage collection.
-
-___
-#### `/spark heapdump`
-Creates a new heapdump (.hprof snapshot) file and saves to the disk.
-
-**Arguments**
-* `--run-gc-before`
-	* Specifies that before recording data, spark should *suggest* that the system performs garbage collection.
-* `--include-non-live`
-	* Specifies that "non-live" objects should be included. (objects that are not reachable from others)
-* `--xz`
-	* Compress the heap dump with LZMA2 (`.xz`) compression. (slower than gzip but a better compression ratio)
-* `--lzma`
-	* Compress the heap dump with LZMA (`.lzma`) compression. (prefer xz compression over this)
-* `--gzip`
-	* Compress the heap dump with gzip (`.gz`) compression. (faster than LZMA2 but a worse compression ratio)
-___
-#### `/spark activity`
-Prints information about recent activity performed by the plugin.
 
 ## License
 
