@@ -22,6 +22,7 @@
 package me.lucko.spark.common.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.protobuf.ByteString;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
@@ -161,16 +162,20 @@ public class Sampler implements Runnable {
         }
     }
 
-    private SamplerData toProto(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, MergeMode mergeMode) {
-        SamplerData.Builder proto = SamplerData.newBuilder();
-        proto.setMetadata(SamplerMetadata.newBuilder()
+    private SamplerData toProto(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
+        final SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
                 .setUser(creator.toData().toProto())
                 .setStartTime(this.startTime)
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())
-                .setDataAggregator(this.dataAggregator.getMetadata())
-                .build()
-        );
+                .setDataAggregator(this.dataAggregator.getMetadata());
+
+        if (comment != null) {
+            metadata.setComment(comment);
+        }
+
+        SamplerData.Builder proto = SamplerData.newBuilder();
+        proto.setMetadata(metadata.build());
 
         List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
         data.sort(outputOrder);
@@ -182,8 +187,8 @@ public class Sampler implements Runnable {
         return proto.build();
     }
 
-    public byte[] formCompressedDataPayload(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, MergeMode mergeMode) {
-        SamplerData proto = toProto(creator, outputOrder, mergeMode);
+    public byte[] formCompressedDataPayload(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
+        SamplerData proto = toProto(creator, outputOrder, comment, mergeMode);
 
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try (OutputStream out = new GZIPOutputStream(byteOut)) {
