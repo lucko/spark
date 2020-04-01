@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 public class SparkPlatform {
 
     /** The URL of the viewer frontend */
-    public static final String VIEWER_URL = "https://sparkprofiler.github.io/#";
+    public static final String VIEWER_URL = "https://spark.lucko.me/#";
     /** The shared okhttp client */
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
     /** The bytebin instance used by the platform */
