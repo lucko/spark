@@ -6,7 +6,6 @@ dependencies {
     compile project(':spark-common')
     compile project(':spark-bukkit')
     compile project(':spark-bungeecord')
-    compile project(':spark-velocity')
     compile project(':spark-sponge')
 }
 
@@ -15,6 +14,7 @@ shadowJar {
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'net.kyori.text', 'me.lucko.spark.lib.text'
     relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
@@ -25,11 +25,3 @@ artifacts {
     shadow shadowJar
 }
 
-// Only used occasionally for deployment - not needed for normal builds.
-/*
-apply plugin: 'signing'
-signing {
-    useGpgCmd()
-    sign configurations.archives
-}
-*/

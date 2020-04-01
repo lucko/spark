@@ -1,5 +1,6 @@
 plugins {
     id 'net.kyori.blossom' version '1.1.0'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
 dependencies {
@@ -12,4 +13,19 @@ blossom {
     replaceTokenIn('src/main/java/me/lucko/spark/velocity/VelocitySparkPlugin.java')
     replaceToken '@version@', project.pluginVersion
     replaceToken '@desc@', project.pluginDescription
+}
+
+shadowJar {
+    archiveName = 'spark-velocity.jar'
+
+    relocate 'okio', 'me.lucko.spark.lib.okio'
+    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
 }
