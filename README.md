@@ -41,7 +41,7 @@ It is:
 * **Customisable** - can be tuned to target specific threads, sample at a specific interval, record only "laggy" periods, etc
 * **Highly readable** - simple tree structure lends itself to easy analysis and interpretation. The viewer can also apply deobfuscation mappings.
 
-It works by sampling statictical data about the servers activity, and contructing a call graph based on this data. The call graph is then displayed in an online viewer for further analysis by the user.
+It works by sampling statistical data about the servers activity, and constructing a call graph based on this data. The call graph is then displayed in an online viewer for further analysis by the user.
 
 ### :zap: Memory Inspection
 
@@ -50,7 +50,7 @@ spark includes a number of tools which are useful for diagnosing memory issues w
 * **Heap Summary** - take & analyse a basic snapshot of the servers memory
   * A simple view of the JVM's heap, see memory usage and instance counts for each class
   * Not intended to be a full replacement of proper memory analysis tools. (see below)
-* **Heap Dump tool** - take a full (HPROF) snapshot of the servers memory
+* **Heap Dump** - take a full (HPROF) snapshot of the servers memory
   * Dumps (& optionally compresses) a full snapshot of JVM's heap.
   * This snapshot can then be inspected using conventional analysis tools.
 * **GC Monitoring** - monitor garbage collection activity on the server
