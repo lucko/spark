@@ -68,7 +68,7 @@ public class SamplerModule implements CommandModule {
     @Override
     public void registerCommands(Consumer<Command> consumer) {
         consumer.accept(Command.builder()
-                .aliases("sampler")
+                .aliases("profiler", "sampler")
                 .argumentUsage("info", null)
                 .argumentUsage("stop", null)
                 .argumentUsage("cancel", null)
