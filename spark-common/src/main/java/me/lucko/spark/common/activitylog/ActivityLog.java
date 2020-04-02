@@ -178,7 +178,7 @@ public class ActivityLog {
 
         public boolean shouldExpire() {
             if (this.dataType.equals("url")) {
-                return (System.currentTimeMillis() - this.time) > TimeUnit.DAYS.toMillis(7);
+                return (System.currentTimeMillis() - this.time) > TimeUnit.DAYS.toMillis(60);
             } else {
                 return false;
             }
