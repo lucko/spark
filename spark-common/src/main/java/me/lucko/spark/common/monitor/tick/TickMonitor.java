@@ -38,7 +38,7 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
     private final TickHook tickHook;
     private final int zeroTick;
     private final GarbageCollectionMonitor garbageCollectionMonitor;
-    private final int percentageChangeThreshold;
+    private final ReportPredicate reportPredicate;
 
     // data
     private volatile double lastTickTime = 0;
@@ -46,11 +46,11 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
     private final DoubleSummaryStatistics averageTickTime = new DoubleSummaryStatistics();
     private double avg;
 
-    public TickMonitor(SparkPlatform platform, TickHook tickHook, int percentageChangeThreshold, boolean monitorGc) {
+    public TickMonitor(SparkPlatform platform, TickHook tickHook, ReportPredicate reportPredicate, boolean monitorGc) {
         this.platform = platform;
         this.tickHook = tickHook;
         this.zeroTick = tickHook.getCurrentTick();
-        this.percentageChangeThreshold = percentageChangeThreshold;
+        this.reportPredicate = reportPredicate;
 
         if (monitorGc) {
             this.garbageCollectionMonitor =  new GarbageCollectionMonitor();
@@ -88,17 +88,16 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
 
         // find the diff
         double last = this.lastTickTime;
-        double diff = now - last;
-        boolean ignore = last == 0;
+        double tickDuration = now - last;
         this.lastTickTime = now;
 
-        if (ignore) {
+        if (last == 0) {
             return;
         }
 
         // form averages
         if (this.state == State.SETUP) {
-            this.averageTickTime.accept(diff);
+            this.averageTickTime.accept(tickDuration);
 
             // move onto the next state
             if (this.averageTickTime.getCount() >= 120) {
@@ -123,13 +122,12 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
                     sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                             .append(TextComponent.of(">", TextColor.WHITE))
                             .append(TextComponent.space())
-                            .append(TextComponent.of("Avg: "))
+                            .append(TextComponent.of("Average: "))
                             .append(TextComponent.of(df.format(this.averageTickTime.getAverage())))
                             .append(TextComponent.of("ms"))
                             .build()
                     );
-                    sendMessage(TextComponent.of("Starting now, any ticks with >" + this.percentageChangeThreshold + "% increase in " +
-                            "duration compared to the average will be reported."));
+                    sendMessage(this.reportPredicate.monitoringStartMessage());
                 });
 
                 this.avg = this.averageTickTime.getAverage();
@@ -138,19 +136,15 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
         }
 
         if (this.state == State.MONITORING) {
-            double increase = diff - this.avg;
-            if (increase <= 0) {
-                return;
-            }
-
+            double increase = tickDuration - this.avg;
             double percentageChange = (increase * 100d) / this.avg;
-            if (percentageChange > this.percentageChangeThreshold) {
+            if (this.reportPredicate.shouldReport(tickDuration, increase, percentageChange)) {
                 this.platform.getPlugin().executeAsync(() -> {
                     sendMessage(TextComponent.builder("").color(TextColor.GRAY)
                             .append(TextComponent.of("Tick "))
                             .append(TextComponent.of("#" + getCurrentTick(), TextColor.DARK_GRAY))
                             .append(TextComponent.of(" lasted "))
-                            .append(TextComponent.of(df.format(diff), TextColor.GOLD))
+                            .append(TextComponent.of(df.format(tickDuration), TextColor.GOLD))
                             .append(TextComponent.of(" ms. "))
                             .append(TextComponent.of("("))
                             .append(TextComponent.of(df.format(percentageChange) + "%", TextColor.GOLD))
@@ -191,6 +185,73 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
                     .build()
             );
         });
+    }
+
+    /**
+     * A predicate to test whether a tick should be reported.
+     */
+    public interface ReportPredicate {
+
+        /**
+         * Tests whether a tick should be reported.
+         *
+         * @param duration the tick duration
+         * @param increaseFromAvg the difference between the ticks duration and the average
+         * @param percentageChange the percentage change between the ticks duration and the average
+         * @return true if the tick should be reported, false otherwise
+         */
+        boolean shouldReport(double duration, double increaseFromAvg, double percentageChange);
+
+        /**
+         * Gets a component to describe how the predicate will select ticks to report.
+         *
+         * @return the component
+         */
+        Component monitoringStartMessage();
+
+        final class PercentageChangeGt implements ReportPredicate {
+            private final double threshold;
+
+            public PercentageChangeGt(double threshold) {
+                this.threshold = threshold;
+            }
+
+            @Override
+            public boolean shouldReport(double duration, double increaseFromAvg, double percentageChange) {
+                if (increaseFromAvg <= 0) {
+                    return false;
+                }
+                return percentageChange > this.threshold;
+            }
+
+            @Override
+            public Component monitoringStartMessage() {
+                return TextComponent.of("Starting now, any ticks with >" + this.threshold + "% increase in " +
+                        "duration compared to the average will be reported.");
+            }
+        }
+
+        final class DurationGt implements ReportPredicate {
+            private final double threshold;
+
+            public DurationGt(double threshold) {
+                this.threshold = threshold;
+            }
+
+            @Override
+            public boolean shouldReport(double duration, double increaseFromAvg, double percentageChange) {
+                if (increaseFromAvg <= 0) {
+                    return false;
+                }
+                return duration > this.threshold;
+            }
+
+            @Override
+            public Component monitoringStartMessage() {
+                return TextComponent.of("Starting now, any ticks with duration >" + this.threshold + " will be reported.");
+            }
+        }
+
     }
 
     private enum State {

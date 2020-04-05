@@ -26,6 +26,7 @@ import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.tick.TickMonitor;
+import me.lucko.spark.common.monitor.tick.TickMonitor.ReportPredicate;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
@@ -53,6 +54,7 @@ public class TickMonitoringModule implements CommandModule {
         consumer.accept(Command.builder()
                 .aliases("tickmonitoring")
                 .argumentUsage("threshold", "percentage increase")
+                .argumentUsage("threshold-tick", "tick duration")
                 .argumentUsage("without-gc", null)
                 .executor((platform, sender, resp, arguments) -> {
                     if (this.tickHook == null) {
@@ -64,19 +66,25 @@ public class TickMonitoringModule implements CommandModule {
                     }
 
                     if (this.activeTickMonitor == null) {
-                        int threshold = arguments.intFlag("threshold");
-                        if (threshold == -1) {
-                            threshold = 100;
+                        ReportPredicate reportPredicate;
+
+                        int threshold;
+                        if ((threshold = arguments.intFlag("threshold")) != -1) {
+                            reportPredicate = new ReportPredicate.PercentageChangeGt(threshold);
+                        } else if ((threshold = arguments.intFlag("threshold-tick")) != -1) {
+                            reportPredicate = new ReportPredicate.DurationGt(threshold);
+                        } else {
+                            reportPredicate = new ReportPredicate.PercentageChangeGt(100);
                         }
 
-                        this.activeTickMonitor = new ReportingTickMonitor(platform, resp, this.tickHook, threshold, !arguments.boolFlag("without-gc"));
+                        this.activeTickMonitor = new ReportingTickMonitor(platform, resp, this.tickHook, reportPredicate, !arguments.boolFlag("without-gc"));
                         this.tickHook.addCallback(this.activeTickMonitor);
                     } else {
                         close();
                         resp.broadcastPrefixed(TextComponent.of("Tick monitor disabled."));
                     }
                 })
-                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--threshold", "--without-gc"))
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--threshold", "--threshold-tick", "--without-gc"))
                 .build()
         );
     }
@@ -84,8 +92,8 @@ public class TickMonitoringModule implements CommandModule {
     private static class ReportingTickMonitor extends TickMonitor {
         private final CommandResponseHandler resp;
 
-        ReportingTickMonitor(SparkPlatform platform, CommandResponseHandler resp, TickHook tickHook, int percentageChangeThreshold, boolean monitorGc) {
-            super(platform, tickHook, percentageChangeThreshold, monitorGc);
+        ReportingTickMonitor(SparkPlatform platform, CommandResponseHandler resp, TickHook tickHook, ReportPredicate reportPredicate, boolean monitorGc) {
+            super(platform, tickHook, reportPredicate, monitorGc);
             this.resp = resp;
         }
 
