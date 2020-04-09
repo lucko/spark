@@ -50,7 +50,7 @@ import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 import java.util.zip.GZIPOutputStream;
 
-public class MemoryModule implements CommandModule {
+public class HeapAnalysisModule implements CommandModule {
     private static final MediaType SPARK_HEAP_MEDIA_TYPE = MediaType.parse("application/x-spark-heap");
 
     @Override

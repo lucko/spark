@@ -166,9 +166,9 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
 
         String gcType;
         if (data.getGcAction().equals("end of minor GC")) {
-            gcType = "Young Gen GC";
+            gcType = "Young Gen";
         } else if (data.getGcAction().equals("end of major GC")) {
-            gcType = "Old Gen GC";
+            gcType = "Old Gen";
         } else {
             gcType = data.getGcAction();
         }

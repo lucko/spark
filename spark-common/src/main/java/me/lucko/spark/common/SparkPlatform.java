@@ -27,8 +27,9 @@ import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.modules.ActivityLogModule;
+import me.lucko.spark.common.command.modules.GcMonitoringModule;
 import me.lucko.spark.common.command.modules.HealthModule;
-import me.lucko.spark.common.command.modules.MemoryModule;
+import me.lucko.spark.common.command.modules.HeapAnalysisModule;
 import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.command.modules.TickMonitoringModule;
 import me.lucko.spark.common.command.sender.CommandSender;
@@ -78,7 +79,8 @@ public class SparkPlatform {
                 new SamplerModule(),
                 new HealthModule(),
                 new TickMonitoringModule(),
-                new MemoryModule(),
+                new GcMonitoringModule(),
+                new HeapAnalysisModule(),
                 new ActivityLogModule()
         );
 

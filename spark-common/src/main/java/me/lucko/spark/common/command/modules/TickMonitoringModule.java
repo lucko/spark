@@ -52,7 +52,7 @@ public class TickMonitoringModule implements CommandModule {
     @Override
     public void registerCommands(Consumer<Command> consumer) {
         consumer.accept(Command.builder()
-                .aliases("tickmonitoring")
+                .aliases("tickmonitor", "tickmonitoring")
                 .argumentUsage("threshold", "percentage increase")
                 .argumentUsage("threshold-tick", "tick duration")
                 .argumentUsage("without-gc", null)
