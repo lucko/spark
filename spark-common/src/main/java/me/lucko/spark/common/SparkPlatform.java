@@ -21,6 +21,7 @@
 package me.lucko.spark.common;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
@@ -36,6 +37,7 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
+import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
@@ -50,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +74,8 @@ public class SparkPlatform {
     private final TickHook tickHook;
     private final TickReporter tickReporter;
     private final TickStatistics tickStatistics;
+    private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
+    private long serverNormalOperationStartTime;
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
@@ -108,6 +113,12 @@ public class SparkPlatform {
             this.tickReporter.start();
         }
         CpuMonitor.ensureMonitoring();
+
+        // poll startup GC statistics after plugins & the world have loaded
+        this.plugin.executeAsync(() -> {
+            this.startupGcStatistics = GarbageCollectorStatistics.pollStats();
+            this.serverNormalOperationStartTime = System.currentTimeMillis();
+        });
     }
 
     public void disable() {
@@ -141,6 +152,14 @@ public class SparkPlatform {
 
     public TickStatistics getTickStatistics() {
         return this.tickStatistics;
+    }
+
+    public Map<String, GarbageCollectorStatistics> getStartupGcStatistics() {
+        return this.startupGcStatistics;
+    }
+
+    public long getServerNormalOperationStartTime() {
+        return this.serverNormalOperationStartTime;
     }
 
     public void executeCommand(CommandSender sender, String[] args) {

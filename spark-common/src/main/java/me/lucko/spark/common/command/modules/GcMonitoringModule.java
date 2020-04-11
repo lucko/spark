@@ -26,14 +26,13 @@ import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
+import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.util.FormatUtil;
 import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
 import net.kyori.text.format.TextDecoration;
 
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.text.DecimalFormat;
 import java.util.LinkedList;
@@ -60,26 +59,30 @@ public class GcMonitoringModule implements CommandModule {
         consumer.accept(Command.builder()
                 .aliases("gc")
                 .executor((platform, sender, resp, arguments) -> {
-                    resp.replyPrefixed(TextComponent.of("Calculating GC collection averages..."));
+                    resp.replyPrefixed(TextComponent.of("Calculating GC statistics..."));
 
                     List<Component> report = new LinkedList<>();
                     report.add(TextComponent.empty());
                     report.add(TextComponent.builder("")
                             .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                             .append(TextComponent.space())
-                            .append(TextComponent.of("GC collection averages", TextColor.GOLD))
+                            .append(TextComponent.of("Garbage Collector statistics", TextColor.GOLD))
                             .build()
                     );
 
-                    for (GarbageCollectorMXBean collector : ManagementFactory.getGarbageCollectorMXBeans()) {
-                        double collectionTime = collector.getCollectionTime();
-                        long collectionCount = collector.getCollectionCount();
+                    long serverUptime = System.currentTimeMillis() - platform.getServerNormalOperationStartTime();
+                    Map<String, GarbageCollectorStatistics> collectorStats = GarbageCollectorStatistics.pollStatsSubtractInitial(platform.getStartupGcStatistics());
+
+                    for (Map.Entry<String, GarbageCollectorStatistics> collector : collectorStats.entrySet()) {
+                        String collectorName = collector.getKey();
+                        double collectionTime = collector.getValue().getCollectionTime();
+                        long collectionCount = collector.getValue().getCollectionCount();
 
                         report.add(TextComponent.empty());
 
                         if (collectionCount == 0) {
                             report.add(TextComponent.builder("    ")
-                                    .append(TextComponent.of(collector.getName() + " collector:", TextColor.GRAY))
+                                    .append(TextComponent.of(collectorName + " collector:", TextColor.GRAY))
                                     .build()
                             );
                             report.add(TextComponent.builder("      ")
@@ -91,9 +94,10 @@ public class GcMonitoringModule implements CommandModule {
                         }
 
                         double averageCollectionTime = collectionTime / collectionCount;
+                        double averageFrequency = (serverUptime - collectionTime) / collectionCount;
 
                         report.add(TextComponent.builder("    ")
-                                .append(TextComponent.of(collector.getName() + " collector:", TextColor.GRAY))
+                                .append(TextComponent.of(collectorName + " collector:", TextColor.GRAY))
                                 .build()
                         );
                         report.add(TextComponent.builder("      ")
@@ -102,6 +106,11 @@ public class GcMonitoringModule implements CommandModule {
                                 .append(TextComponent.of(", ", TextColor.DARK_GRAY))
                                 .append(TextComponent.of(collectionCount, TextColor.WHITE))
                                 .append(TextComponent.of(" total collections", TextColor.GRAY))
+                                .build()
+                        );
+                        report.add(TextComponent.builder("      ")
+                                .append(TextComponent.of(formatTime((long) averageFrequency), TextColor.WHITE))
+                                .append(TextComponent.of(" avg frequency", TextColor.GRAY))
                                 .build()
                         );
                     }
@@ -128,6 +137,30 @@ public class GcMonitoringModule implements CommandModule {
                 })
                 .build()
         );
+    }
+
+    private static String formatTime(long millis) {
+        if (millis <= 0) {
+            return "0ms";
+        }
+
+        long second = millis / 1000;
+        millis = millis % 1000;
+        long minute = second / 60;
+        second = second % 60;
+
+        StringBuilder sb = new StringBuilder();
+        if (minute != 0) {
+            sb.append(minute).append("m ");
+        }
+        if (second != 0) {
+            sb.append(second).append("s ");
+        }
+        if (millis != 0) {
+            sb.append(millis).append("ms");
+        }
+
+        return sb.toString().trim();
     }
 
     private static class ReportingGcMonitor extends GarbageCollectionMonitor implements GarbageCollectionMonitor.Listener {
@@ -193,13 +226,13 @@ public class GcMonitoringModule implements CommandModule {
                                 .build()
                         );
                         report.add(TextComponent.builder("    ")
-                                .append(TextComponent.of(FormatUtil.formatBytes(before.getUsed()), TextColor.WHITE))
-                                .append(TextComponent.of(" → ", TextColor.GRAY))
-                                .append(TextComponent.of(FormatUtil.formatBytes(after.getUsed()), TextColor.WHITE))
+                                .append(TextComponent.of(FormatUtil.formatBytes(before.getUsed()), TextColor.GRAY))
+                                .append(TextComponent.of(" → ", TextColor.DARK_GRAY))
+                                .append(TextComponent.of(FormatUtil.formatBytes(after.getUsed()), TextColor.GRAY))
                                 .append(TextComponent.space())
-                                .append(TextComponent.of("(", TextColor.GRAY))
-                                .append(TextComponent.of(FormatUtil.percent(diff, before.getUsed()), TextColor.GREEN))
-                                .append(TextComponent.of(")", TextColor.GRAY))
+                                .append(TextComponent.of("(", TextColor.DARK_GRAY))
+                                .append(TextComponent.of(FormatUtil.percent(diff, before.getUsed()), TextColor.WHITE))
+                                .append(TextComponent.of(")", TextColor.DARK_GRAY))
                                 .build()
                         );
                     } else {
@@ -210,9 +243,9 @@ public class GcMonitoringModule implements CommandModule {
                                 .build()
                         );
                         report.add(TextComponent.builder("    ")
-                                .append(TextComponent.of(FormatUtil.formatBytes(before.getUsed()), TextColor.WHITE))
-                                .append(TextComponent.of(" → ", TextColor.GRAY))
-                                .append(TextComponent.of(FormatUtil.formatBytes(after.getUsed()), TextColor.WHITE))
+                                .append(TextComponent.of(FormatUtil.formatBytes(before.getUsed()), TextColor.GRAY))
+                                .append(TextComponent.of(" → ", TextColor.DARK_GRAY))
+                                .append(TextComponent.of(FormatUtil.formatBytes(after.getUsed()), TextColor.GRAY))
                                 .build()
                         );
                     }
