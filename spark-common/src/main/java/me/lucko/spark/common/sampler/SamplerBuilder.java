@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class SamplerBuilder {
 
-    private double samplingInterval = 3; // milliseconds
+    private double samplingInterval = 4; // milliseconds
     private boolean ignoreSleeping = false;
     private long timeout = -1;
     private ThreadDumper threadDumper = ThreadDumper.ALL;

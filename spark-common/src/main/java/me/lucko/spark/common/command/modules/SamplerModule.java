@@ -142,7 +142,7 @@ public class SamplerModule implements CommandModule {
 
                     double intervalMillis = arguments.doubleFlag("interval");
                     if (intervalMillis <= 0) {
-                        intervalMillis = 3;
+                        intervalMillis = 4;
                     }
 
                     boolean ignoreSleeping = arguments.boolFlag("ignore-sleeping");
