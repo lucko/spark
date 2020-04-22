@@ -145,7 +145,7 @@ public class GcMonitoringModule implements CommandModule {
         }
 
         long second = millis / 1000;
-        millis = millis % 1000;
+        //millis = millis % 1000;
         long minute = second / 60;
         second = second % 60;
 
@@ -156,9 +156,9 @@ public class GcMonitoringModule implements CommandModule {
         if (second != 0) {
             sb.append(second).append("s ");
         }
-        if (millis != 0) {
-            sb.append(millis).append("ms");
-        }
+        //if (millis != 0) {
+        //    sb.append(millis).append("ms");
+        //}
 
         return sb.toString().trim();
     }
