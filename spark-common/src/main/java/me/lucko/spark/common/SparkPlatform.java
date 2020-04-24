@@ -199,7 +199,6 @@ public class SparkPlatform {
                 try {
                     command.executor().execute(this, sender, resp, new Arguments(rawArgs));
                 } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
                     resp.replyPrefixed(TextComponent.of(e.getMessage(), TextColor.RED));
                 }
                 return;
