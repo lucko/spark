@@ -73,9 +73,9 @@ enum CommandMapUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static Map<String, Command> getKnownCommandMap() {
+    private static Map<String, Command> getKnownCommandMap(CommandMap commandMap) {
         try {
-            return (Map<String, Command>) KNOWN_COMMANDS_FIELD.get(getCommandMap());
+            return (Map<String, Command>) KNOWN_COMMANDS_FIELD.get(commandMap);
         } catch (Exception e) {
             throw new RuntimeException("Could not get known commands map", e);
         }
@@ -90,19 +90,21 @@ enum CommandMapUtil {
      */
     public static void registerCommand(Plugin plugin, CommandExecutor command, String... aliases) {
         Preconditions.checkArgument(aliases.length != 0, "No aliases");
+        CommandMap commandMap = getCommandMap();
+        Map<String, Command> knownCommandMap = getKnownCommandMap(commandMap);
+
         for (String alias : aliases) {
             try {
                 PluginCommand cmd = COMMAND_CONSTRUCTOR.newInstance(alias, plugin);
 
-                getCommandMap().register(plugin.getDescription().getName(), cmd);
-
-                Map<String, Command> knownCommandMap = getKnownCommandMap();
+                commandMap.register(plugin.getDescription().getName(), cmd);
                 knownCommandMap.put(plugin.getDescription().getName().toLowerCase() + ":" + alias.toLowerCase(), cmd);
                 knownCommandMap.put(alias.toLowerCase(), cmd);
 
                 cmd.setLabel(alias.toLowerCase());
 
                 cmd.setExecutor(command);
+
                 if (command instanceof TabCompleter) {
                     cmd.setTabCompleter((TabCompleter) command);
                 }
@@ -118,24 +120,19 @@ enum CommandMapUtil {
      * @param command the command instance
      */
     public static void unregisterCommand(CommandExecutor command) {
-        CommandMap map = getCommandMap();
-        try {
-            //noinspection unchecked
-            Map<String, Command> knownCommands = (Map<String, Command>) KNOWN_COMMANDS_FIELD.get(map);
+        CommandMap commandMap = getCommandMap();
+        Map<String, Command> knownCommandMap = getKnownCommandMap(commandMap);
 
-            Iterator<Command> iterator = knownCommands.values().iterator();
-            while (iterator.hasNext()) {
-                Command cmd = iterator.next();
-                if (cmd instanceof PluginCommand) {
-                    CommandExecutor executor = ((PluginCommand) cmd).getExecutor();
-                    if (command == executor) {
-                        cmd.unregister(map);
-                        iterator.remove();
-                    }
+        Iterator<Command> iterator = knownCommandMap.values().iterator();
+        while (iterator.hasNext()) {
+            Command cmd = iterator.next();
+            if (cmd instanceof PluginCommand) {
+                CommandExecutor executor = ((PluginCommand) cmd).getExecutor();
+                if (command == executor) {
+                    cmd.unregister(commandMap);
+                    iterator.remove();
                 }
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Could not unregister command", e);
         }
     }
 
