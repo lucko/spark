@@ -31,6 +31,7 @@ public class SamplerBuilder {
 
     private double samplingInterval = 4; // milliseconds
     private boolean ignoreSleeping = false;
+    private boolean ignoreNative = false;
     private long timeout = -1;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
     private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;
@@ -75,14 +76,19 @@ public class SamplerBuilder {
         return this;
     }
 
+    public SamplerBuilder ignoreNative(boolean ignoreNative) {
+        this.ignoreNative = ignoreNative;
+        return this;
+    }
+
     public Sampler start() {
         Sampler sampler;
 
         int intervalMicros = (int) (this.samplingInterval * 1000d);
         if (this.ticksOver == -1 || this.tickHook == null) {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping);
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
         } else {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.tickHook, this.ticksOver);
+            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
         }
 
         sampler.start();

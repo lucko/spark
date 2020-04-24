@@ -22,7 +22,6 @@
 package me.lucko.spark.common.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.protobuf.ByteString;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
@@ -82,16 +81,16 @@ public class Sampler implements Runnable {
     /** The unix timestamp (in millis) when this sampler should automatically complete.*/
     private final long endTime; // -1 for nothing
     
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping);
+        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
         this.interval = interval;
         this.endTime = endTime;
     }
 
-    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, TickHook tickHook, int tickLengthThreshold) {
+    public Sampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
         this.threadDumper = threadDumper;
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, tickHook, tickLengthThreshold);
+        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
         this.interval = interval;
         this.endTime = endTime;
     }

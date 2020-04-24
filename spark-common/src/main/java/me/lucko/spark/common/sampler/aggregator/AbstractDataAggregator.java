@@ -45,11 +45,15 @@ public abstract class AbstractDataAggregator implements DataAggregator {
     /** If sleeping threads should be ignored */
     private final boolean ignoreSleeping;
 
-    public AbstractDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping) {
+    /** If threads executing native code should be ignored */
+    private final boolean ignoreNative;
+
+    public AbstractDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, boolean ignoreNative) {
         this.workerPool = workerPool;
         this.threadGrouper = threadGrouper;
         this.interval = interval;
         this.ignoreSleeping = ignoreSleeping;
+        this.ignoreNative = ignoreNative;
     }
 
     protected ThreadNode getNode(String group) {
@@ -61,7 +65,10 @@ public abstract class AbstractDataAggregator implements DataAggregator {
     }
 
     protected void writeData(ThreadInfo threadInfo) {
-        if (this.ignoreSleeping && (threadInfo.getThreadState() == Thread.State.WAITING || threadInfo.getThreadState() == Thread.State.TIMED_WAITING)) {
+        if (this.ignoreSleeping && isSleeping(threadInfo)) {
+            return;
+        }
+        if (this.ignoreNative && threadInfo.isInNative()) {
             return;
         }
 
@@ -71,6 +78,28 @@ public abstract class AbstractDataAggregator implements DataAggregator {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static boolean isSleeping(ThreadInfo thread) {
+        if (thread.getThreadState() == Thread.State.WAITING || thread.getThreadState() == Thread.State.TIMED_WAITING) {
+            return true;
+        }
+
+        StackTraceElement[] stackTrace = thread.getStackTrace();
+        if (stackTrace.length == 0) {
+            return false;
+        }
+
+        StackTraceElement call = stackTrace[0];
+        String clazz = call.getClassName();
+        String method = call.getMethodName();
+
+        // java.lang.Thread.yield()
+        // jdk.internal.misc.Unsafe.park()
+        // sun.misc.Unsafe.park()
+        return (clazz.equals("java.lang.Thread") && method.equals("yield")) ||
+                (clazz.equals("jdk.internal.misc.Unsafe") && method.equals("park")) ||
+                (clazz.equals("sun.misc.Unsafe") && method.equals("park"));
     }
 
 }

@@ -81,6 +81,7 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("interval", "interval millis")
                 .argumentUsage("only-ticks-over", "tick length millis")
                 .argumentUsage("ignore-sleeping", null)
+                .argumentUsage("ignore-native", null)
                 .argumentUsage("order-by-time", null)
                 .argumentUsage("separate-parent-calls", null)
                 .executor((platform, sender, resp, arguments) -> {
@@ -146,6 +147,7 @@ public class SamplerModule implements CommandModule {
                     }
 
                     boolean ignoreSleeping = arguments.boolFlag("ignore-sleeping");
+                    boolean ignoreNative = arguments.boolFlag("ignore-native");
 
                     Set<String> threads = arguments.stringFlag("thread");
                     ThreadDumper threadDumper;
@@ -197,6 +199,7 @@ public class SamplerModule implements CommandModule {
                     }
                     builder.samplingInterval(intervalMillis);
                     builder.ignoreSleeping(ignoreSleeping);
+                    builder.ignoreNative(ignoreNative);
                     if (ticksOver != -1) {
                         builder.ticksOver(ticksOver, tickHook);
                     }
@@ -249,7 +252,8 @@ public class SamplerModule implements CommandModule {
 
                     List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
                             "--timeout", "--regex", "--combine-all", "--not-combined", "--interval",
-                            "--only-ticks-over", "--ignore-sleeping", "--order-by-time", "--separate-parent-calls", "--comment"));
+                            "--only-ticks-over", "--ignore-sleeping", "--ignore-native", "--order-by-time",
+                            "--separate-parent-calls", "--comment"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times
 

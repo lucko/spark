@@ -53,8 +53,8 @@ public class TickedDataAggregator extends AbstractDataAggregator {
     private int currentTick = -1;
     private TickList currentData = new TickList(0);
 
-    public TickedDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, TickHook tickHook, int tickLengthThreshold) {
-        super(workerPool, threadGrouper, interval, ignoreSleeping);
+    public TickedDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
+        super(workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
         this.tickHook = tickHook;
         this.tickLengthThreshold = TimeUnit.MILLISECONDS.toMicros(tickLengthThreshold);
         // 50 millis in a tick, plus 10 so we have a bit of room to go over
