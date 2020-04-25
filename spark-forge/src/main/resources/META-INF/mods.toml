@@ -11,6 +11,6 @@ description="${pluginDescription}"
 [[dependencies.spark]]
     modId="forge"
     mandatory=true
-    versionRange="[31,)"
+    versionRange="[28,)"
     ordering="NONE"
     side="BOTH"
