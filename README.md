@@ -66,7 +66,7 @@ These metrics include:
 * **TPS** - ticks per second, to a more accurate degree indicated by the /tps command
 * **Tick Durations** - how long each tick is taking (min, max and average)
 * **CPU Usage** - how much of the CPU is being used by the server process, and by the overall system
-* **Memory Usage** - much much memory is being used by the process
+* **Memory Usage** - how much memory is being used by the process
 * **Disk Usage** - how much disk space is free/being used by the system
 
 As well as providing tick rate averages, spark can also **monitor individual ticks** - sending a report whenever a single tick's duration exceeds a certain threshold. This can be used to identify trends and the nature of performance issues, relative to other system or game events.
