@@ -79,8 +79,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         String[] args = processArgs(context);
         if (args == null)
             return 0;
-        ICommandSource source = context.getSource().getEntity() instanceof ServerPlayerEntity ? context.getSource().asPlayer() : context.getSource().getServer();
-        this.platform.executeCommand(new ForgeCommandSender(source, this), args);
+        this.platform.executeCommand(new ForgeCommandSender(context.getSource().source, this), args);
         return Command.SINGLE_SUCCESS;
     }
 

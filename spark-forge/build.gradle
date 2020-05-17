@@ -15,6 +15,7 @@ apply plugin: 'net.minecraftforge.gradle'
 
 minecraft {
     mappings channel: 'snapshot', version: '20200125-1.15.1'
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 }
 
 processResources {
