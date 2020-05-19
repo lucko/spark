@@ -54,7 +54,7 @@ public final class MethodDisambiguator {
         if (computedClass == null) {
             try {
                 computedClass = compute(className);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 computedClass = ComputedClass.EMPTY;
             }
 
