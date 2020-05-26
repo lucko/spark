@@ -68,12 +68,9 @@ enum SparkPlaceholderProvider {
             switch (placeholder) {
                 case "tickduration":
                     return TextComponent.builder("")
-                            .append(HealthModule.formatTickDurations(tickStatistics.duration5Sec())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(", "))
+                            .append(HealthModule.formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(";  "))
                             .append(HealthModule.formatTickDurations(tickStatistics.duration1Min()))
                             .build();
-                case "tickduration_5s":
-                    return HealthModule.formatTickDurations(tickStatistics.duration5Sec());
                 case "tickduration_10s":
                     return HealthModule.formatTickDurations(tickStatistics.duration10Sec());
                 case "tickduration_1m":
