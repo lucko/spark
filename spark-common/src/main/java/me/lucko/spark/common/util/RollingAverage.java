@@ -20,8 +20,6 @@
 
 package me.lucko.spark.common.util;
 
-import com.google.common.collect.Iterables;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayDeque;
@@ -81,6 +79,10 @@ public class RollingAverage {
             }
             return min.doubleValue();
         }
+    }
+
+    public double getMedian() {
+        return getPercentile(50);
     }
 
     public double getPercentile(int percentile) {
