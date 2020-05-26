@@ -69,10 +69,9 @@ public class HealthModule implements CommandModule {
                         resp.replyPrefixed(TextComponent.empty());
 
                         if (tickStatistics.isDurationSupported()) {
-                            resp.replyPrefixed(TextComponent.of("Tick durations (min/med/95%ile/max ms) from last 5s, 10s, 1m:"));
+                            resp.replyPrefixed(TextComponent.of("Tick durations (min/med/95%ile/max ms) from last 10s, 1m:"));
                             resp.replyPrefixed(TextComponent.builder(" ")
-                                    .append(formatTickDurations(tickStatistics.duration5Sec())).append(TextComponent.of(", "))
-                                    .append(formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(", "))
+                                    .append(formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(";  "))
                                     .append(formatTickDurations(tickStatistics.duration1Min()))
                                     .build()
                             );
@@ -131,12 +130,11 @@ public class HealthModule implements CommandModule {
                                 report.add(TextComponent.builder("")
                                         .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
                                         .append(TextComponent.space())
-                                        .append(TextComponent.of("Tick durations (min/med/95%ile/max ms) from last 5s, 10s, 1m:", TextColor.GOLD))
+                                        .append(TextComponent.of("Tick durations (min/med/95%ile/max ms) from last 10s, 1m:", TextColor.GOLD))
                                         .build()
                                 );
                                 report.add(TextComponent.builder("    ")
-                                        .append(formatTickDurations(tickStatistics.duration5Sec())).append(TextComponent.of(", "))
-                                        .append(formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(", "))
+                                        .append(formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of("; "))
                                         .append(formatTickDurations(tickStatistics.duration1Min()))
                                         .build()
                                 );
