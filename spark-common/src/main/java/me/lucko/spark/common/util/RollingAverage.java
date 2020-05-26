@@ -20,9 +20,13 @@
 
 package me.lucko.spark.common.util;
 
+import com.google.common.collect.Iterables;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
 public class RollingAverage {
@@ -77,6 +81,24 @@ public class RollingAverage {
             }
             return min.doubleValue();
         }
+    }
+
+    public double getPercentile(int percentile) {
+        if (percentile < 0 || percentile > 100) {
+            throw new IllegalArgumentException("Invalid percentage " + percentile);
+        }
+
+        List<BigDecimal> sortedSamples;
+        synchronized (this) {
+            if (this.samples.isEmpty()) {
+                return 0;
+            }
+            sortedSamples = new ArrayList<>(this.samples);
+        }
+        sortedSamples.sort(null);
+
+        int rank = (int) Math.ceil((percentile / 100d) * sortedSamples.size());
+        return sortedSamples.get(rank).doubleValue();
     }
 
 }
