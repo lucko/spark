@@ -16,6 +16,19 @@ message CommandSenderData {
   }
 }
 
+message PlatformData {
+  Type type = 1;
+  string name = 2;
+  string version = 3;
+  string minecraft_version = 4; // optional
+
+  enum Type {
+    SERVER = 0;
+    CLIENT = 1;
+    PROXY = 2;
+  }
+}
+
 message HeapData {
   HeapMetadata metadata = 1;
   repeated HeapEntry entries = 2;
@@ -23,6 +36,7 @@ message HeapData {
 
 message HeapMetadata {
   CommandSenderData user = 1;
+  PlatformData platform = 2;
 }
 
 message HeapEntry {
@@ -44,6 +58,7 @@ message SamplerMetadata {
   ThreadDumper thread_dumper = 4;
   DataAggregator data_aggregator = 5;
   string comment = 6;
+  PlatformData platform = 7;
 
   message ThreadDumper {
     Type type = 1;

@@ -93,4 +93,5 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     public ThreadDumper getDefaultThreadDumper() {
         return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
     }
+
 }
