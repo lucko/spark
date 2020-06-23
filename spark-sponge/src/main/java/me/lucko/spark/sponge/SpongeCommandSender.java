@@ -48,7 +48,7 @@ public class SpongeCommandSender extends AbstractCommandSender<CommandSource> {
 
     @Override
     public void sendMessage(Component message) {
-        TextAdapter.sendComponent(super.delegate, message);
+        TextAdapter.sendMessage(super.delegate, message);
     }
 
     @Override
