@@ -21,7 +21,7 @@
 package me.lucko.spark.common.heapdump;
 
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.PlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.HeapData;
 import me.lucko.spark.proto.SparkProtos.HeapEntry;

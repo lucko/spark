@@ -32,7 +32,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.PlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 import org.checkerframework.checker.optional.qual.MaybePresent;
 
 import java.nio.file.Path;

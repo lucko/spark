@@ -20,11 +20,17 @@
 
 package me.lucko.spark.sponge;
 
-import me.lucko.spark.common.PlatformInfo;
+import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import org.spongepowered.api.Game;
 import org.spongepowered.api.Platform;
-import org.spongepowered.api.Sponge;
 
-public class SpongePlatformInfo implements PlatformInfo {
+public class SpongePlatformInfo extends AbstractPlatformInfo {
+    private final Game game;
+
+    public SpongePlatformInfo(Game game) {
+        this.game = game;
+    }
+
     @Override
     public Type getType() {
         return Type.SERVER;
@@ -37,11 +43,11 @@ public class SpongePlatformInfo implements PlatformInfo {
 
     @Override
     public String getVersion() {
-        return Sponge.getPlatform().getContainer(Platform.Component.IMPLEMENTATION).getVersion().orElse("unknown");
+        return this.game.getPlatform().getContainer(Platform.Component.IMPLEMENTATION).getVersion().orElse("unknown");
     }
 
     @Override
     public String getMinecraftVersion() {
-        return Sponge.getPlatform().getMinecraftVersion().getName();
+        return this.game.getPlatform().getMinecraftVersion().getName();
     }
 }

@@ -24,7 +24,7 @@ import me.lucko.spark.bukkit.placeholder.SparkMVdWPlaceholders;
 import me.lucko.spark.bukkit.placeholder.SparkPlaceholderApi;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.PlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
@@ -151,7 +151,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new BukkitPlatformInfo();
+        return new BukkitPlatformInfo(getServer());
     }
 
     private static boolean classExists(String className) {

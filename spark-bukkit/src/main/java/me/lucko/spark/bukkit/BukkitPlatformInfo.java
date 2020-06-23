@@ -20,10 +20,16 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.PlatformInfo;
-import org.bukkit.Bukkit;
+import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import org.bukkit.Server;
 
-public class BukkitPlatformInfo implements PlatformInfo {
+public class BukkitPlatformInfo extends AbstractPlatformInfo {
+    private final Server server;
+
+    public BukkitPlatformInfo(Server server) {
+        this.server = server;
+    }
+
     @Override
     public Type getType() {
         return Type.SERVER;
@@ -36,11 +42,11 @@ public class BukkitPlatformInfo implements PlatformInfo {
 
     @Override
     public String getVersion() {
-        return Bukkit.getVersion();
+        return this.server.getVersion();
     }
 
     @Override
     public String getMinecraftVersion() {
-        return Bukkit.getMinecraftVersion();
+        return this.server.getMinecraftVersion();
     }
 }

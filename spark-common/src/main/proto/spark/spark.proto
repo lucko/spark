@@ -16,11 +16,20 @@ message CommandSenderData {
   }
 }
 
+message MemoryData {
+  int64 used = 1;
+  int64 committed = 2;
+  int64 max = 3;
+}
+
 message PlatformData {
   Type type = 1;
   string name = 2;
   string version = 3;
   string minecraft_version = 4; // optional
+
+  int32 n_cpus = 5;
+  MemoryData heapUsage = 6;
 
   enum Type {
     SERVER = 0;

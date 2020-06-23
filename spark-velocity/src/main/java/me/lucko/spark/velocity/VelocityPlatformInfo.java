@@ -21,10 +21,9 @@
 package me.lucko.spark.velocity;
 
 import com.velocitypowered.api.proxy.ProxyServer;
-import me.lucko.spark.common.PlatformInfo;
+import me.lucko.spark.common.platform.AbstractPlatformInfo;
 
-public class VelocityPlatformInfo implements PlatformInfo {
-
+public class VelocityPlatformInfo extends AbstractPlatformInfo {
     private final ProxyServer proxy;
 
     public VelocityPlatformInfo(ProxyServer proxy) {

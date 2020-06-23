@@ -26,7 +26,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import me.lucko.spark.common.PlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.fabric.FabricCommandSender;
 import me.lucko.spark.fabric.FabricPlatformInfo;
