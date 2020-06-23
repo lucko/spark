@@ -76,7 +76,7 @@ public class HeapAnalysisModule implements CommandModule {
                             return;
                         }
 
-                        byte[] output = heapDump.formCompressedDataPayload(sender);
+                        byte[] output = heapDump.formCompressedDataPayload(platform.getPlugin().getPlatformInfo(), sender);
                         try {
                             String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_HEAP_MEDIA_TYPE, false).key();
                             String url = SparkPlatform.VIEWER_URL + key;

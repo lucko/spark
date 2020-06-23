@@ -26,8 +26,10 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import me.lucko.spark.common.PlatformInfo;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.fabric.FabricCommandSender;
+import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import net.fabricmc.fabric.api.registry.CommandRegistry;
@@ -113,6 +115,11 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public TickHook createTickHook() {
         return new FabricTickHook.Server();
+    }
+
+    @Override
+    public PlatformInfo getPlatformInfo() {
+        return new FabricPlatformInfo(PlatformInfo.Type.SERVER);
     }
 
     @Override

@@ -21,6 +21,7 @@
 package me.lucko.spark.common.heapdump;
 
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.PlatformInfo;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.HeapData;
 import me.lucko.spark.proto.SparkProtos.HeapEntry;
@@ -127,9 +128,10 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
-    private HeapData toProto(CommandSender creator) {
+    private HeapData toProto(PlatformInfo platformInfo, CommandSender creator) {
         HeapData.Builder proto = HeapData.newBuilder();
         proto.setMetadata(SparkProtos.HeapMetadata.newBuilder()
+                .setPlatform(platformInfo.toData().toProto())
                 .setUser(creator.toData().toProto())
                 .build()
         );
@@ -141,10 +143,10 @@ public final class HeapDumpSummary {
         return proto.build();
     }
 
-    public byte[] formCompressedDataPayload(CommandSender creator) {
+    public byte[] formCompressedDataPayload(PlatformInfo platformInfo, CommandSender creator) {
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try (OutputStream out = new GZIPOutputStream(byteOut)) {
-            toProto(creator).writeTo(out);
+            toProto(platformInfo, creator).writeTo(out);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

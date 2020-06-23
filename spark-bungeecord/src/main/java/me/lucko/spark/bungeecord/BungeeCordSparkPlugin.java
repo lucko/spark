@@ -22,6 +22,7 @@ package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.PlatformInfo;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -72,6 +73,11 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
     @Override
     public void executeAsync(Runnable task) {
         getProxy().getScheduler().runAsync(BungeeCordSparkPlugin.this, task);
+    }
+
+    @Override
+    public PlatformInfo getPlatformInfo() {
+        return new BungeeCordPlatformInfo();
     }
 
     private static final class SparkCommand extends Command implements TabExecutor {

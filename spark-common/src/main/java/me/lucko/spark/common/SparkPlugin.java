@@ -101,4 +101,11 @@ public interface SparkPlugin {
         return null;
     }
 
+    /**
+     * Gets information for the platform.
+     *
+     * @return information about the platform
+     */
+    PlatformInfo getPlatformInfo();
+
 }
