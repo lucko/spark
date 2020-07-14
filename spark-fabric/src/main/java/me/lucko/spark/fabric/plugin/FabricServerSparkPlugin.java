@@ -32,7 +32,7 @@ import me.lucko.spark.fabric.FabricCommandSender;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
-import net.fabricmc.fabric.api.registry.CommandRegistry;
+import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
@@ -48,7 +48,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     public static void register(FabricSparkMod mod, MinecraftServer server) {
         FabricServerSparkPlugin plugin = new FabricServerSparkPlugin(mod, server);
         registerCommands(server.getCommandManager().getDispatcher(), plugin, plugin, "spark");
-        CommandRegistry.INSTANCE.register(false, dispatcher -> registerCommands(dispatcher, plugin, plugin, "spark"));
+        CommandRegistrationCallback.EVENT.register((dispatcher, isDedicated) -> registerCommands(dispatcher, plugin, plugin, "spark"));
     }
 
     private final MinecraftServer server;
