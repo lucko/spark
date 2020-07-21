@@ -23,6 +23,9 @@ package me.lucko.spark.bukkit;
 import me.lucko.spark.common.platform.AbstractPlatformInfo;
 import org.bukkit.Server;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+
 public class BukkitPlatformInfo extends AbstractPlatformInfo {
     private final Server server;
 
@@ -47,6 +50,28 @@ public class BukkitPlatformInfo extends AbstractPlatformInfo {
 
     @Override
     public String getMinecraftVersion() {
-        return this.server.getMinecraftVersion();
+        try {
+            return this.server.getMinecraftVersion();
+        } catch (NoSuchMethodError e) {
+            // ignore
+        }
+
+        Class<? extends Server> serverClass = this.server.getClass();
+        try {
+            Field minecraftServerField = serverClass.getDeclaredField("console");
+            minecraftServerField.setAccessible(true);
+
+            Object minecraftServer = minecraftServerField.get(this.server);
+            Class<?> minecraftServerClass = minecraftServer.getClass();
+
+            Method getVersionMethod = minecraftServerClass.getDeclaredMethod("getVersion");
+            getVersionMethod.setAccessible(true);
+
+            return (String) getVersionMethod.invoke(minecraftServer);
+        } catch (Exception e) {
+            // ignore
+        }
+
+        return serverClass.getPackage().getName().split("\\.")[3];
     }
 }
