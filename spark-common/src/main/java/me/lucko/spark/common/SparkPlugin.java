@@ -21,6 +21,7 @@
 package me.lucko.spark.common;
 
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
@@ -100,5 +101,12 @@ public interface SparkPlugin {
     default TickReporter createTickReporter() {
         return null;
     }
+
+    /**
+     * Gets information for the platform.
+     *
+     * @return information about the platform
+     */
+    PlatformInfo getPlatformInfo();
 
 }

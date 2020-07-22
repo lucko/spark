@@ -23,6 +23,7 @@ package me.lucko.spark.common.sampler;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.aggregator.SimpleDataAggregator;
 import me.lucko.spark.common.sampler.aggregator.TickedDataAggregator;
@@ -161,8 +162,9 @@ public class Sampler implements Runnable {
         }
     }
 
-    private SamplerData toProto(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
+    private SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
         final SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
+                .setPlatform(platformInfo.toData().toProto())
                 .setUser(creator.toData().toProto())
                 .setStartTime(this.startTime)
                 .setInterval(this.interval)
@@ -186,8 +188,8 @@ public class Sampler implements Runnable {
         return proto.build();
     }
 
-    public byte[] formCompressedDataPayload(CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
-        SamplerData proto = toProto(creator, outputOrder, comment, mergeMode);
+    public byte[] formCompressedDataPayload(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
+        SamplerData proto = toProto(platformInfo, creator, outputOrder, comment, mergeMode);
 
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try (OutputStream out = new GZIPOutputStream(byteOut)) {

@@ -23,6 +23,7 @@ package me.lucko.spark.sponge;
 import com.google.inject.Inject;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import org.spongepowered.api.Game;
@@ -122,6 +123,11 @@ public class SpongeSparkPlugin implements SparkPlugin {
     @Override
     public TickHook createTickHook() {
         return new SpongeTickHook(this);
+    }
+
+    @Override
+    public PlatformInfo getPlatformInfo() {
+        return new SpongePlatformInfo(this.game);
     }
 
     private static final class SparkCommand implements CommandCallable {

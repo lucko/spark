@@ -1,7 +1,7 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '0.2.6-SNAPSHOT'
+    id 'fabric-loom' version '0.4-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
@@ -12,10 +12,10 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft "com.mojang:minecraft:1.15.2"
-    mappings "net.fabricmc:yarn:1.15.2+build.7:v2"
-    modCompile "net.fabricmc:fabric-loader:0.7.6+build.179"
-    modCompile "net.fabricmc.fabric-api:fabric-api:0.4.29+build.290-1.15"
+    minecraft "com.mojang:minecraft:1.16"
+    mappings "net.fabricmc:yarn:1.16+build.1:v2"
+    modCompile "net.fabricmc:fabric-loader:0.8.8+build.202"
+    modCompile "net.fabricmc.fabric-api:fabric-api:0.13.1+build.370-1.16"
 
     shade project(':spark-common')
 }

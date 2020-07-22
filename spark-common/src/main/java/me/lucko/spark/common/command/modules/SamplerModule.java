@@ -267,7 +267,7 @@ public class SamplerModule implements CommandModule {
 
     private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, String comment, MergeMode mergeMode) {
         platform.getPlugin().executeAsync(() -> {
-            byte[] output = sampler.formCompressedDataPayload(resp.sender(), threadOrder, comment, mergeMode);
+            byte[] output = sampler.formCompressedDataPayload(platform.getPlugin().getPlatformInfo(), resp.sender(), threadOrder, comment, mergeMode);
             try {
                 String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE, false).key();
                 String url = SparkPlatform.VIEWER_URL + key;

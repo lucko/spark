@@ -13,7 +13,7 @@ subprojects {
     apply plugin: 'idea'
 
     ext {
-        pluginVersion = '1.4.2'
+        pluginVersion = '1.4.3'
         pluginDescription = 'spark is a performance profiling plugin based on sk89q\'s WarmRoast profiler'
     }
 

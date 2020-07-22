@@ -49,7 +49,7 @@ public class BukkitCommandSender extends AbstractCommandSender<CommandSender> {
 
     @Override
     public void sendMessage(Component message) {
-        TextAdapter.sendComponent(super.delegate, message);
+        TextAdapter.sendMessage(super.delegate, message);
     }
 
     @Override

@@ -1,6 +1,6 @@
 dependencies {
     compile project(':spark-common')
-    compile('net.kyori:text-adapter-bukkit:3.0.2') {
+    compile('net.kyori:text-adapter-bukkit:3.0.5') {
         exclude(module: 'text-api')
         exclude(module: 'text-serializer-gson')
     }

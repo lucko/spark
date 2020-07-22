@@ -32,6 +32,7 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.platform.PlatformInfo;
 import org.checkerframework.checker.optional.qual.MaybePresent;
 
 import java.nio.file.Path;
@@ -106,5 +107,10 @@ public class VelocitySparkPlugin implements SparkPlugin, Command {
     @Override
     public void executeAsync(Runnable task) {
         this.proxy.getScheduler().buildTask(this, task).schedule();
+    }
+
+    @Override
+    public PlatformInfo getPlatformInfo() {
+        return new VelocityPlatformInfo(this.proxy);
     }
 }

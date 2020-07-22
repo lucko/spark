@@ -20,39 +20,34 @@
 
 package me.lucko.spark.sponge;
 
-import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import net.kyori.text.Component;
-import net.kyori.text.adapter.spongeapi.TextAdapter;
-import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.Player;
+import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import org.spongepowered.api.Game;
+import org.spongepowered.api.Platform;
 
-import java.util.UUID;
+public class SpongePlatformInfo extends AbstractPlatformInfo {
+    private final Game game;
 
-public class SpongeCommandSender extends AbstractCommandSender<CommandSource> {
-    public SpongeCommandSender(CommandSource source) {
-        super(source);
+    public SpongePlatformInfo(Game game) {
+        this.game = game;
+    }
+
+    @Override
+    public Type getType() {
+        return Type.SERVER;
     }
 
     @Override
     public String getName() {
-        return super.delegate.getName();
+        return "Sponge";
     }
 
     @Override
-    public UUID getUniqueId() {
-        if (super.delegate instanceof Player) {
-            return ((Player) super.delegate).getUniqueId();
-        }
-        return null;
+    public String getVersion() {
+        return this.game.getPlatform().getContainer(Platform.Component.IMPLEMENTATION).getVersion().orElse("unknown");
     }
 
     @Override
-    public void sendMessage(Component message) {
-        TextAdapter.sendMessage(super.delegate, message);
-    }
-
-    @Override
-    public boolean hasPermission(String permission) {
-        return super.delegate.hasPermission(permission);
+    public String getMinecraftVersion() {
+        return this.game.getPlatform().getMinecraftVersion().getName();
     }
 }
