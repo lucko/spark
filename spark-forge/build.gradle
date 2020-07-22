@@ -14,7 +14,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 
 minecraft {
-    mappings channel: 'snapshot', version: '20200125-1.15.1'
+    mappings channel: 'snapshot', version: '20200707-1.16.1'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 }
 
@@ -38,7 +38,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.15.2-31.0.1'
+    minecraft 'net.minecraftforge:forge:1.16.1-32.0.70'
     shade project(':spark-common')
 }
 

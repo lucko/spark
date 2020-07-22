@@ -23,6 +23,7 @@ package me.lucko.spark.forge;
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
@@ -66,7 +67,7 @@ public class ForgeSparkMod {
     }
 
     @SubscribeEvent
-    public void serverInit(FMLServerStartingEvent e) {
+    public void onRegisterCommand(RegisterCommandsEvent e) {
         ForgeServerSparkPlugin.register(this, e);
     }
 
