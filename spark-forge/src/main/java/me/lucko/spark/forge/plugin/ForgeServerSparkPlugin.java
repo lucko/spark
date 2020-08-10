@@ -32,7 +32,6 @@ import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgePlatformInfo;
-import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.command.CommandSource;
@@ -42,6 +41,7 @@ import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
@@ -53,8 +53,9 @@ import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSource>, SuggestionProvider<CommandSource> {
 
-    public static void register(ForgeSparkMod mod, RegisterCommandsEvent event) {
-        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, ServerLifecycleHooks::getCurrentServer);
+    @SubscribeEvent
+    public static void register(RegisterCommandsEvent event) {
+        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(ServerLifecycleHooks::getCurrentServer);
         CommandDispatcher<CommandSource> dispatcher = event.getDispatcher();
         registerCommands(dispatcher, plugin, plugin, "spark");
         PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
@@ -63,8 +64,8 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     private final Supplier<MinecraftServer> server;
 
-    public ForgeServerSparkPlugin(ForgeSparkMod mod, Supplier<MinecraftServer> server) {
-        super(mod);
+    public ForgeServerSparkPlugin(Supplier<MinecraftServer> server) {
+        super();
         this.server = server;
     }
 

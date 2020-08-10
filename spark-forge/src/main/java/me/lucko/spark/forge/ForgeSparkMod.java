@@ -23,7 +23,6 @@ package me.lucko.spark.forge;
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
@@ -31,7 +30,6 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
@@ -44,10 +42,12 @@ public class ForgeSparkMod {
 
     private ModContainer container;
     private Path configDirectory;
+    public static ForgeSparkMod mod = null;
 
     public ForgeSparkMod() {
+        mod = this;
         FMLJavaModLoadingContext.get().getModEventBus().register(this);
-        MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(ForgeServerSparkPlugin.class);
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
 
@@ -63,12 +63,7 @@ public class ForgeSparkMod {
 
     @SubscribeEvent
     public void clientInit(FMLClientSetupEvent e) {
-        ForgeClientSparkPlugin.register(this, e);
-    }
-
-    @SubscribeEvent
-    public void onRegisterCommand(RegisterCommandsEvent e) {
-        ForgeServerSparkPlugin.register(this, e);
+        ForgeClientSparkPlugin.register(e);
     }
 
     public Path getConfigDirectory() {
