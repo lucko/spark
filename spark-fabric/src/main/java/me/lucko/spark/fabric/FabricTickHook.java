@@ -22,8 +22,8 @@ package me.lucko.spark.fabric;
 
 import me.lucko.spark.common.sampler.tick.AbstractTickHook;
 import me.lucko.spark.common.sampler.tick.TickHook;
-import net.fabricmc.fabric.api.event.client.ClientTickCallback;
-import net.fabricmc.fabric.api.event.server.ServerTickCallback;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.MinecraftServer;
 
@@ -36,9 +36,9 @@ public abstract class FabricTickHook extends AbstractTickHook implements TickHoo
         this.closed = true;
     }
 
-    public static final class Server extends FabricTickHook implements ServerTickCallback {
+    public static final class Server extends FabricTickHook implements ServerTickEvents.EndTick {
         @Override
-        public void tick(MinecraftServer minecraftServer) {
+        public void onEndTick(MinecraftServer minecraftServer) {
             if (!this.closed) {
                 onTick();
             }
@@ -46,13 +46,13 @@ public abstract class FabricTickHook extends AbstractTickHook implements TickHoo
 
         @Override
         public void start() {
-            ServerTickCallback.EVENT.register(this);
+            ServerTickEvents.END_SERVER_TICK.register(this);
         }
     }
 
-    public static final class Client extends FabricTickHook implements ClientTickCallback {
+    public static final class Client extends FabricTickHook implements ClientTickEvents.EndTick {
         @Override
-        public void tick(MinecraftClient minecraftClient) {
+        public void onEndTick(MinecraftClient minecraftClient) {
             if (!this.closed) {
                 onTick();
             }
@@ -60,7 +60,7 @@ public abstract class FabricTickHook extends AbstractTickHook implements TickHoo
 
         @Override
         public void start() {
-            ClientTickCallback.EVENT.register(this);
+            ClientTickEvents.END_CLIENT_TICK.register(this);
         }
     }
 }
