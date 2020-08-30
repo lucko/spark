@@ -28,10 +28,12 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.sampler.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
+import me.lucko.spark.fabric.FabricTickReporter;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
@@ -115,6 +117,11 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public TickHook createTickHook() {
         return new FabricTickHook.Server();
+    }
+
+    @Override
+    public TickReporter createTickReporter() {
+        return new FabricTickReporter.Server();
     }
 
     @Override

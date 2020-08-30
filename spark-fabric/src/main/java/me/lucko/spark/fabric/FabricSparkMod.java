@@ -29,6 +29,7 @@ import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.MinecraftClient;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 public class FabricSparkMod implements ModInitializer {
     private static FabricSparkMod mod;
@@ -44,12 +45,14 @@ public class FabricSparkMod implements ModInitializer {
         this.container = loader.getModContainer("spark")
                 .orElseThrow(() -> new IllegalStateException("Unable to get container for spark"));
         this.configDirectory = loader.getConfigDir().resolve("spark");
+
         // load hooks
         ServerLifecycleEvents.SERVER_STARTING.register(server -> FabricServerSparkPlugin.register(this, server));
     }
 
     // called be entrypoint defined in fabric.mod.json
     public static void initializeClient() {
+        Objects.requireNonNull(FabricSparkMod.mod, "mod");
         FabricClientSparkPlugin.register(FabricSparkMod.mod, MinecraftClient.getInstance());
     }
 
