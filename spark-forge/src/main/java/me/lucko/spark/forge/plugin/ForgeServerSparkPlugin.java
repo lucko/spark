@@ -32,7 +32,6 @@ import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgePlatformInfo;
-import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.command.CommandSource;
@@ -40,30 +39,33 @@ import net.minecraft.command.ICommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.server.ServerLifecycleHooks;
 import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSource>, SuggestionProvider<CommandSource> {
 
-    public static void register(ForgeSparkMod mod, FMLServerStartingEvent event) {
-        MinecraftServer server = event.getServer();
-        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, server);
-
-        CommandDispatcher<CommandSource> dispatcher = event.getCommandDispatcher();
+    @SubscribeEvent
+    public static void register(RegisterCommandsEvent event) {
+        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(ServerLifecycleHooks::getCurrentServer);
+        CommandDispatcher<CommandSource> dispatcher = event.getDispatcher();
         registerCommands(dispatcher, plugin, plugin, "spark");
         PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
     }
 
-    private final MinecraftServer server;
 
-    public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
-        super(mod);
+    private final Supplier<MinecraftServer> server;
+
+    public ForgeServerSparkPlugin(Supplier<MinecraftServer> server) {
+        super();
         this.server = server;
     }
 
@@ -113,8 +115,8 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public Stream<ForgeCommandSender> getSendersWithPermission(String permission) {
         return Stream.concat(
-                this.server.getPlayerList().getPlayers().stream().filter(player -> hasPermission(player, permission)),
-                Stream.of(this.server)
+            this.server.get().getPlayerList().getPlayers().stream().filter(player -> hasPermission(player, permission)),
+            Stream.of(this.server.get())
         ).map(sender -> new ForgeCommandSender(sender, this));
     }
 
