@@ -8,8 +8,8 @@ dependencies {
         exclude(module: 'text-api')
         exclude(module: 'text-serializer-gson')
     }
-    compileOnly 'org.spongepowered:spongeapi:7.1.0'
-    annotationProcessor 'org.spongepowered:spongeapi:7.1.0'
+    compileOnly 'org.spongepowered:spongeapi:7.3.0'
+    annotationProcessor 'org.spongepowered:spongeapi:7.3.0'
 }
 
 blossom {

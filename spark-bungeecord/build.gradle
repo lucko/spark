@@ -4,7 +4,7 @@ dependencies {
         exclude(module: 'text-api')
         exclude(module: 'text-serializer-gson')
     }
-    compileOnly 'net.md-5:bungeecord-api:1.15-SNAPSHOT'
+    compileOnly 'net.md-5:bungeecord-api:1.16-R0.4-SNAPSHOT'
 }
 
 processResources {
