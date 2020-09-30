@@ -109,4 +109,10 @@ public interface SparkPlugin {
      */
     PlatformInfo getPlatformInfo();
 
+    /**
+     * Gets the API that third party plugins can use to add callbacks to the hooks and reporters
+     * <p>Returns {@code null} if the platform does not have API support yet</p>
+     * @return an API object
+     */
+    default SparkPlatformAPI getAPI() { return null; }
 }
