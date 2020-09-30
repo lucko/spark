@@ -23,6 +23,7 @@ package me.lucko.spark.bukkit;
 import me.lucko.spark.bukkit.placeholder.SparkMVdWPlaceholders;
 import me.lucko.spark.bukkit.placeholder.SparkPlaceholderApi;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.SparkPlatformAPI;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
@@ -42,11 +43,13 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     private CommandExecutor tpsCommand = null;
     private SparkPlatform platform;
+    private SparkPlatformAPI platformAPI;
 
     @Override
     public void onEnable() {
         this.platform = new SparkPlatform(this);
         this.platform.enable();
+        this.platformAPI = new SparkPlatformAPI(this.platform);
 
         // override Spigot's TPS command with our own.
         if (getConfig().getBoolean("override-tps-command", true)) {
@@ -152,6 +155,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     @Override
     public PlatformInfo getPlatformInfo() {
         return new BukkitPlatformInfo(getServer());
+    }
+
+    @Override
+    public SparkPlatformAPI getAPI() {
+        return this.platformAPI;
     }
 
     private static boolean classExists(String className) {
