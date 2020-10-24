@@ -32,7 +32,6 @@ import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgePlatformInfo;
-import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.client.Minecraft;
@@ -53,10 +52,10 @@ import java.util.stream.Stream;
 
 public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements SuggestionProvider<ISuggestionProvider> {
 
-    public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
+    public static void register(FMLClientSetupEvent event) {
         Minecraft minecraft = event.getMinecraftSupplier().get();
 
-        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, minecraft);
+        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(minecraft);
         MinecraftForge.EVENT_BUS.register(plugin);
 
         plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
@@ -65,8 +64,8 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     private final Minecraft minecraft;
     private CommandDispatcher<ISuggestionProvider> dispatcher;
 
-    public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
-        super(mod);
+    public ForgeClientSparkPlugin(Minecraft minecraft) {
+        super();
         this.minecraft = minecraft;
     }
 

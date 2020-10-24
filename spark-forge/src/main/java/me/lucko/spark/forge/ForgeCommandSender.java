@@ -62,7 +62,7 @@ public class ForgeCommandSender extends AbstractCommandSender<ICommandSource> {
 
     @Override
     public void sendMessage(Component message) {
-        IFormattableTextComponent component = ITextComponent.Serializer.func_240643_a_(GsonComponentSerializer.INSTANCE.serialize(message));
+        IFormattableTextComponent component = ITextComponent.Serializer.getComponentFromJson(GsonComponentSerializer.INSTANCE.serialize(message));
         super.delegate.sendMessage(component, Util.DUMMY_UUID);
     }
 

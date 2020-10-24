@@ -30,7 +30,6 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
@@ -43,10 +42,12 @@ public class ForgeSparkMod {
 
     private ModContainer container;
     private Path configDirectory;
+    public static ForgeSparkMod mod;
 
     public ForgeSparkMod() {
+        mod = this;
         FMLJavaModLoadingContext.get().getModEventBus().register(this);
-        MinecraftForge.EVENT_BUS.register(this);
+        MinecraftForge.EVENT_BUS.register(ForgeServerSparkPlugin.class);
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
 
@@ -61,13 +62,8 @@ public class ForgeSparkMod {
     }
 
     @SubscribeEvent
-    public void serverInit(FMLServerStartingEvent e) {
-        ForgeServerSparkPlugin.register(this, e);
-    }
-
-    @SubscribeEvent
     public void clientInit(FMLClientSetupEvent e) {
-        ForgeClientSparkPlugin.register(this, e);
+        ForgeClientSparkPlugin.register(e);
     }
 
     public Path getConfigDirectory() {
