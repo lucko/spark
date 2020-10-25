@@ -23,6 +23,7 @@ package me.lucko.spark.forge;
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
@@ -42,12 +43,12 @@ public class ForgeSparkMod {
 
     private ModContainer container;
     private Path configDirectory;
-    public static ForgeSparkMod mod;
 
     public ForgeSparkMod() {
-        mod = this;
-        FMLJavaModLoadingContext.get().getModEventBus().register(this);
-        MinecraftForge.EVENT_BUS.register(ForgeServerSparkPlugin.class);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientInit);
+        MinecraftForge.EVENT_BUS.register(this);
+
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
 
@@ -55,15 +56,18 @@ public class ForgeSparkMod {
         return this.container.getModInfo().getVersion().toString();
     }
 
-    @SubscribeEvent
     public void setup(FMLCommonSetupEvent e) {
         this.container = ModLoadingContext.get().getActiveContainer();
         this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
     }
 
     @SubscribeEvent
+    public void registerCommands(RegisterCommandsEvent e) {
+        ForgeServerSparkPlugin.register(this, e);
+    }
+
     public void clientInit(FMLClientSetupEvent e) {
-        ForgeClientSparkPlugin.register(e);
+        ForgeClientSparkPlugin.register(this, e);
     }
 
     public Path getConfigDirectory() {

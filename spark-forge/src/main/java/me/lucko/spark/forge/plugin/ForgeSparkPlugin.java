@@ -63,8 +63,8 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
 
-    protected ForgeSparkPlugin() {
-        this.mod = ForgeSparkMod.mod;
+    protected ForgeSparkPlugin(ForgeSparkMod mod) {
+        this.mod = mod;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
         );

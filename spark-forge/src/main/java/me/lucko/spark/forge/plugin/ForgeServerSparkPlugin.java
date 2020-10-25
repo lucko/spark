@@ -32,6 +32,7 @@ import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgePlatformInfo;
+import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.command.CommandSource;
@@ -39,6 +40,7 @@ import net.minecraft.command.ICommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -54,9 +56,10 @@ import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSource>, SuggestionProvider<CommandSource> {
 
-    @SubscribeEvent
-    public static void register(RegisterCommandsEvent event) {
-        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(ServerLifecycleHooks::getCurrentServer);
+    public static void register(ForgeSparkMod mod, RegisterCommandsEvent event) {
+        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, ServerLifecycleHooks::getCurrentServer);
+        MinecraftForge.EVENT_BUS.register(plugin);
+
         CommandDispatcher<CommandSource> dispatcher = event.getDispatcher();
         registerCommands(dispatcher, plugin, plugin, "spark");
         PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
@@ -69,8 +72,8 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     private final Supplier<MinecraftServer> server;
 
-    public ForgeServerSparkPlugin(Supplier<MinecraftServer> server) {
-        super();
+    public ForgeServerSparkPlugin(ForgeSparkMod mod, Supplier<MinecraftServer> server) {
+        super(mod);
         this.server = server;
     }
 
