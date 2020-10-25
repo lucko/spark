@@ -23,6 +23,7 @@ package me.lucko.spark.forge;
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
@@ -30,7 +31,6 @@ import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
@@ -45,8 +45,10 @@ public class ForgeSparkMod {
     private Path configDirectory;
 
     public ForgeSparkMod() {
-        FMLJavaModLoadingContext.get().getModEventBus().register(this);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientInit);
         MinecraftForge.EVENT_BUS.register(this);
+
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
 
@@ -54,18 +56,16 @@ public class ForgeSparkMod {
         return this.container.getModInfo().getVersion().toString();
     }
 
-    @SubscribeEvent
     public void setup(FMLCommonSetupEvent e) {
         this.container = ModLoadingContext.get().getActiveContainer();
         this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
     }
 
     @SubscribeEvent
-    public void serverInit(FMLServerStartingEvent e) {
+    public void registerCommands(RegisterCommandsEvent e) {
         ForgeServerSparkPlugin.register(this, e);
     }
 
-    @SubscribeEvent
     public void clientInit(FMLClientSetupEvent e) {
         ForgeClientSparkPlugin.register(this, e);
     }

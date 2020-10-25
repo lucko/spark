@@ -1,6 +1,7 @@
 modLoader="javafml"
-loaderVersion="[28,)"
+loaderVersion="[34,)"
 authors="Luck, sk89q"
+license="GPLv3"
 
 [[mods]]
 modId="spark"
@@ -11,6 +12,6 @@ description="${pluginDescription}"
 [[dependencies.spark]]
     modId="forge"
     mandatory=true
-    versionRange="[28,)"
+    versionRange="[34,)"
     ordering="NONE"
     side="BOTH"
