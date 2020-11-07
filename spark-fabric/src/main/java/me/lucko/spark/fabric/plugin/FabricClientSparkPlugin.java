@@ -38,8 +38,8 @@ import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.command.CommandSource;
 import net.minecraft.server.command.CommandOutput;
-import net.minecraft.server.command.CommandSource;
 
 import java.util.Arrays;
 import java.util.Optional;
