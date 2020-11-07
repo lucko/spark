@@ -18,6 +18,9 @@ dependencies {
     compile('net.kyori:adventure-text-serializer-legacy:4.1.1') {
         exclude(module: 'adventure-api')
     }
+    compile('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
+        exclude(module: 'adventure-api')
+    }
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
 }

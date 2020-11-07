@@ -24,12 +24,12 @@ import me.lucko.spark.common.activitylog.ActivityLog.Activity;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import me.lucko.spark.common.util.pagination.Pagination;
-import me.lucko.spark.common.util.pagination.Pagination.Renderer;
-import me.lucko.spark.common.util.pagination.Pagination.Renderer.RowRenderer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.feature.pagination.Pagination;
+import net.kyori.adventure.text.feature.pagination.Pagination.Renderer;
+import net.kyori.adventure.text.feature.pagination.Pagination.Renderer.RowRenderer;
 
 import java.util.ArrayList;
 import java.util.Collection;

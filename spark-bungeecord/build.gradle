@@ -1,6 +1,6 @@
 dependencies {
     compile project(':spark-common')
-    compile ('net.kyori:adventure-platform-bungeecord:4.0.0-SNAPSHOT') {
+    compile('net.kyori:adventure-platform-bungeecord:4.0.0-SNAPSHOT') {
         exclude(module: 'adventure-api')
         exclude(module: 'adventure-text-serializer-gson')
     }
