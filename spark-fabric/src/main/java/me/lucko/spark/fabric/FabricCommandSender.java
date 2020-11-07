@@ -22,8 +22,8 @@ package me.lucko.spark.fabric;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
-import net.kyori.text.Component;
-import net.kyori.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.dedicated.DedicatedServer;
@@ -62,7 +62,7 @@ public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
 
     @Override
     public void sendMessage(Component message) {
-        Text component = Text.Serializer.fromJson(GsonComponentSerializer.INSTANCE.serialize(message));
+        Text component = Text.Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
         super.delegate.sendSystemMessage(component, NIL_UUID);
     }
 

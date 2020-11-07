@@ -26,6 +26,7 @@ import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.tick.TickHook;
+import net.kyori.adventure.platform.spongeapi.SpongeAudiences;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
@@ -36,6 +37,7 @@ import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
 import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.scheduler.AsynchronousExecutor;
 import org.spongepowered.api.scheduler.SpongeExecutorService;
 import org.spongepowered.api.text.Text;
@@ -62,14 +64,17 @@ import javax.annotation.Nullable;
 )
 public class SpongeSparkPlugin implements SparkPlugin {
 
+    private final PluginContainer pluginContainer;
     private final Game game;
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
 
+    private SpongeAudiences audienceFactory;
     private SparkPlatform platform;
 
     @Inject
-    public SpongeSparkPlugin(Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
+    public SpongeSparkPlugin(PluginContainer pluginContainer, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
+        this.pluginContainer = pluginContainer;
         this.game = game;
         this.configDirectory = configDirectory;
         this.asyncExecutor = asyncExecutor;
@@ -77,6 +82,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
     @Listener
     public void onEnable(GameStartedServerEvent event) {
+        this.audienceFactory = SpongeAudiences.create(this.pluginContainer, this.game);
         this.platform = new SparkPlatform(this);
         this.platform.enable();
         this.game.getCommandManager().register(this, new SparkCommand(this), "spark");
@@ -107,7 +113,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
         return Stream.concat(
                 this.game.getServer().getOnlinePlayers().stream().filter(player -> player.hasPermission(permission)),
                 Stream.of(this.game.getServer().getConsole())
-        ).map(SpongeCommandSender::new);
+        ).map((CommandSource source) -> new SpongeCommandSender(source, this.audienceFactory));
     }
 
     @Override
@@ -139,13 +145,13 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
         @Override
         public CommandResult process(CommandSource source, String arguments) {
-            this.plugin.platform.executeCommand(new SpongeCommandSender(source), arguments.split(" "));
+            this.plugin.platform.executeCommand(new SpongeCommandSender(source, this.plugin.audienceFactory), arguments.split(" "));
             return CommandResult.empty();
         }
 
         @Override
         public List<String> getSuggestions(CommandSource source, String arguments, @Nullable Location<World> targetPosition) {
-            return this.plugin.platform.tabCompleteCommand(new SpongeCommandSender(source), arguments.split(" "));
+            return this.plugin.platform.tabCompleteCommand(new SpongeCommandSender(source, this.plugin.audienceFactory), arguments.split(" "));
         }
 
         @Override

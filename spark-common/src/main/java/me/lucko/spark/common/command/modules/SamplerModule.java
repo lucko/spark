@@ -36,9 +36,7 @@ import me.lucko.spark.common.sampler.ThreadNodeOrder;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.util.MethodDisambiguator;
-import net.kyori.text.TextComponent;
-import net.kyori.text.event.ClickEvent;
-import net.kyori.text.format.TextColor;
+import net.kyori.adventure.text.event.ClickEvent;
 import okhttp3.MediaType;
 
 import java.io.IOException;
@@ -50,6 +48,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class SamplerModule implements CommandModule {
     private static final MediaType SPARK_SAMPLER_MEDIA_TYPE = MediaType.parse("application/x-spark-sampler");
@@ -87,38 +88,38 @@ public class SamplerModule implements CommandModule {
                 .executor((platform, sender, resp, arguments) -> {
                     if (arguments.boolFlag("info")) {
                         if (this.activeSampler == null) {
-                            resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
+                            resp.replyPrefixed(text("There isn't an active sampling task running."));
                         } else {
                             long timeout = this.activeSampler.getEndTime();
                             if (timeout == -1) {
-                                resp.replyPrefixed(TextComponent.of("There is an active sampler currently running, with no defined timeout."));
+                                resp.replyPrefixed(text("There is an active sampler currently running, with no defined timeout."));
                             } else {
                                 long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
-                                resp.replyPrefixed(TextComponent.of("There is an active sampler currently running, due to timeout in " + timeoutDiff + " seconds."));
+                                resp.replyPrefixed(text("There is an active sampler currently running, due to timeout in " + timeoutDiff + " seconds."));
                             }
 
                             long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
-                            resp.replyPrefixed(TextComponent.of("It has been sampling for " + runningTime + " seconds so far."));
+                            resp.replyPrefixed(text("It has been sampling for " + runningTime + " seconds so far."));
                         }
                         return;
                     }
 
                     if (arguments.boolFlag("cancel")) {
                         if (this.activeSampler == null) {
-                            resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
+                            resp.replyPrefixed(text("There isn't an active sampling task running."));
                         } else {
                             close();
-                            resp.broadcastPrefixed(TextComponent.of("The active sampling task has been cancelled.", TextColor.GOLD));
+                            resp.broadcastPrefixed(text("The active sampling task has been cancelled.", GOLD));
                         }
                         return;
                     }
 
                     if (arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
                         if (this.activeSampler == null) {
-                            resp.replyPrefixed(TextComponent.of("There isn't an active sampling task running."));
+                            resp.replyPrefixed(text("There isn't an active sampling task running."));
                         } else {
                             this.activeSampler.cancel();
-                            resp.broadcastPrefixed(TextComponent.of("The active sampling operation has been stopped! Uploading results..."));
+                            resp.broadcastPrefixed(text("The active sampling operation has been stopped! Uploading results..."));
                             ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
                             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
                             MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
@@ -131,13 +132,13 @@ public class SamplerModule implements CommandModule {
 
                     int timeoutSeconds = arguments.intFlag("timeout");
                     if (timeoutSeconds != -1 && timeoutSeconds <= 10) {
-                        resp.replyPrefixed(TextComponent.of("The specified timeout is not long enough for accurate results to be formed. " +
-                                "Please choose a value greater than 10.", TextColor.RED));
+                        resp.replyPrefixed(text("The specified timeout is not long enough for accurate results to be formed. " +
+                                "Please choose a value greater than 10.", RED));
                         return;
                     }
 
                     if (timeoutSeconds != -1 && timeoutSeconds < 30) {
-                        resp.replyPrefixed(TextComponent.of("The accuracy of the output will significantly improve when sampling is able to run for longer periods. " +
+                        resp.replyPrefixed(text("The accuracy of the output will significantly improve when sampling is able to run for longer periods. " +
                                 "Consider setting a timeout value over 30 seconds."));
                     }
 
@@ -179,17 +180,17 @@ public class SamplerModule implements CommandModule {
                     if (ticksOver != -1) {
                         tickHook = platform.getTickHook();
                         if (tickHook == null) {
-                            resp.replyPrefixed(TextComponent.of("Tick counting is not supported!", TextColor.RED));
+                            resp.replyPrefixed(text("Tick counting is not supported!", RED));
                             return;
                         }
                     }
 
                     if (this.activeSampler != null) {
-                        resp.replyPrefixed(TextComponent.of("An active sampler is already running."));
+                        resp.replyPrefixed(text("An active sampler is already running."));
                         return;
                     }
 
-                    resp.broadcastPrefixed(TextComponent.of("Initializing a new profiler, please wait..."));
+                    resp.broadcastPrefixed(text("Initializing a new profiler, please wait..."));
 
                     SamplerBuilder builder = new SamplerBuilder();
                     builder.threadDumper(threadDumper);
@@ -205,11 +206,11 @@ public class SamplerModule implements CommandModule {
                     }
                     Sampler sampler = this.activeSampler = builder.start();
 
-                    resp.broadcastPrefixed(TextComponent.of("Profiler now active!", TextColor.GOLD));
+                    resp.broadcastPrefixed(text("Profiler now active!", GOLD));
                     if (timeoutSeconds == -1) {
-                        resp.broadcastPrefixed(TextComponent.of("Use '/" + platform.getPlugin().getCommandName() + " sampler --stop' to stop profiling and upload the results."));
+                        resp.broadcastPrefixed(text("Use '/" + platform.getPlugin().getCommandName() + " sampler --stop' to stop profiling and upload the results."));
                     } else {
-                        resp.broadcastPrefixed(TextComponent.of("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
+                        resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
                     }
 
                     CompletableFuture<Sampler> future = this.activeSampler.getFuture();
@@ -217,7 +218,7 @@ public class SamplerModule implements CommandModule {
                     // send message if profiling fails
                     future.whenCompleteAsync((s, throwable) -> {
                         if (throwable != null) {
-                            resp.broadcastPrefixed(TextComponent.of("Sampling operation failed unexpectedly. Error: " + throwable.toString(), TextColor.RED));
+                            resp.broadcastPrefixed(text("Sampling operation failed unexpectedly. Error: " + throwable.toString(), RED));
                             throwable.printStackTrace();
                         }
                     });
@@ -236,7 +237,7 @@ public class SamplerModule implements CommandModule {
                         MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
                         MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
                         future.thenAcceptAsync(s -> {
-                            resp.broadcastPrefixed(TextComponent.of("The active sampling operation has completed! Uploading results..."));
+                            resp.broadcastPrefixed(text("The active sampling operation has completed! Uploading results..."));
                             handleUpload(platform, resp, s, threadOrder, comment, mergeMode);
                         });
                     }
@@ -272,16 +273,17 @@ public class SamplerModule implements CommandModule {
                 String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE, false).key();
                 String url = SparkPlatform.VIEWER_URL + key;
 
-                resp.broadcastPrefixed(TextComponent.of("Sampling results:", TextColor.GOLD));
-                resp.broadcast(TextComponent.builder(url)
-                        .color(TextColor.GRAY)
+                resp.broadcastPrefixed(text("Sampling results:", GOLD));
+                resp.broadcast(text()
+                        .content(url)
+                        .color(GRAY)
                         .clickEvent(ClickEvent.openUrl(url))
                         .build()
                 );
 
                 platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Sampler", url));
             } catch (IOException e) {
-                resp.broadcastPrefixed(TextComponent.of("An error occurred whilst uploading the results.", TextColor.RED));
+                resp.broadcastPrefixed(text("An error occurred whilst uploading the results.", RED));
                 e.printStackTrace();
             }
         });

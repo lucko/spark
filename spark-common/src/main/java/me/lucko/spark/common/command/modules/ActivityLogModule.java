@@ -24,14 +24,12 @@ import me.lucko.spark.common.activitylog.ActivityLog.Activity;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.event.ClickEvent;
-import net.kyori.text.feature.pagination.Pagination;
-import net.kyori.text.feature.pagination.Pagination.Renderer;
-import net.kyori.text.feature.pagination.Pagination.Renderer.RowRenderer;
-import net.kyori.text.format.TextColor;
-import net.kyori.text.format.TextDecoration;
+import me.lucko.spark.common.util.pagination.Pagination;
+import me.lucko.spark.common.util.pagination.Pagination.Renderer;
+import me.lucko.spark.common.util.pagination.Pagination.Renderer.RowRenderer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.event.ClickEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,6 +37,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static me.lucko.spark.common.command.CommandResponseHandler.*;
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
 
@@ -46,12 +47,12 @@ public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
             .renderer(new Renderer() {
                 @Override
                 public Component renderEmpty() {
-                    return applyPrefix(TextComponent.of("There are no entries present in the log."));
+                    return applyPrefix(text("There are no entries present in the log."));
                 }
 
                 @Override
                 public Component renderUnknownPage(int page, int pages) {
-                    return applyPrefix(TextComponent.of("Unknown page selected. " + pages + " total pages."));
+                    return applyPrefix(text("Unknown page selected. " + pages + " total pages."));
                 }
             })
             .resultsPerPage(4);
@@ -59,33 +60,35 @@ public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
     @Override
     public Collection<Component> renderRow(Activity activity, int index) {
         List<Component> reply = new ArrayList<>(5);
-        reply.add(TextComponent.builder("")
-                .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
-                .append(TextComponent.space())
-                .append(TextComponent.of("#" + (index + 1), TextColor.WHITE))
-                .append(TextComponent.of(" - ", TextColor.DARK_GRAY))
-                .append(TextComponent.of(activity.getType(), TextColor.YELLOW))
-                .append(TextComponent.of(" - ", TextColor.DARK_GRAY))
-                .append(TextComponent.of(formatDateDiff(activity.getTime()), TextColor.GRAY))
+        reply.add(text()
+                .append(text(">", DARK_GRAY, BOLD))
+                .append(space())
+                .append(text("#" + (index + 1), WHITE))
+                .append(text(" - ", DARK_GRAY))
+                .append(text(activity.getType(), YELLOW))
+                .append(text(" - ", DARK_GRAY))
+                .append(text(formatDateDiff(activity.getTime()), GRAY))
                 .build()
         );
-        reply.add(TextComponent.builder("  ")
-                .append(TextComponent.of("Created by: ", TextColor.GRAY))
-                .append(TextComponent.of(activity.getUser().getName(), TextColor.WHITE))
+        reply.add(text()
+                .content("  ")
+                .append(text("Created by: ", GRAY))
+                .append(text(activity.getUser().getName(), WHITE))
                 .build()
         );
 
-        TextComponent.Builder valueComponent = TextComponent.builder(activity.getDataValue(), TextColor.WHITE);
+        TextComponent.Builder valueComponent = text().content(activity.getDataValue()).color(WHITE);
         if (activity.getDataType().equals("url")) {
             valueComponent.clickEvent(ClickEvent.openUrl(activity.getDataValue()));
         }
 
-        reply.add(TextComponent.builder("  ")
-                .append(TextComponent.of(Character.toUpperCase(activity.getDataType().charAt(0)) + activity.getDataType().substring(1) + ": ", TextColor.GRAY))
+        reply.add(text()
+                .content("  ")
+                .append(text(Character.toUpperCase(activity.getDataType().charAt(0)) + activity.getDataType().substring(1) + ": ", GRAY))
                 .append(valueComponent)
                 .build()
         );
-        reply.add(TextComponent.space());
+        reply.add(space());
         return reply;
     }
 
@@ -99,14 +102,14 @@ public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
                     log.removeIf(Activity::shouldExpire);
 
                     if (log.isEmpty()) {
-                        resp.replyPrefixed(TextComponent.of("There are no entries present in the log."));
+                        resp.replyPrefixed(text("There are no entries present in the log."));
                         return;
                     }
 
                     int page = Math.max(1, arguments.intFlag("page"));
 
                     Pagination<Activity> activityPagination = this.pagination.build(
-                            TextComponent.of("Recent spark activity", TextColor.GOLD),
+                            text("Recent spark activity", GOLD),
                             this,
                             value -> "/" + platform.getPlugin().getCommandName() + " activity --page " + value
                     );

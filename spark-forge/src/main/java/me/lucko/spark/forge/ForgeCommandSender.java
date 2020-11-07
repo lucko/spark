@@ -22,8 +22,8 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import me.lucko.spark.forge.plugin.ForgeSparkPlugin;
-import net.kyori.text.Component;
-import net.kyori.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.command.ICommandSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.rcon.IServer;
@@ -62,7 +62,7 @@ public class ForgeCommandSender extends AbstractCommandSender<ICommandSource> {
 
     @Override
     public void sendMessage(Component message) {
-        IFormattableTextComponent component = ITextComponent.Serializer.getComponentFromJson(GsonComponentSerializer.INSTANCE.serialize(message));
+        IFormattableTextComponent component = ITextComponent.Serializer.getComponentFromJson(GsonComponentSerializer.gson().serialize(message));
         super.delegate.sendMessage(component, Util.DUMMY_UUID);
     }
 

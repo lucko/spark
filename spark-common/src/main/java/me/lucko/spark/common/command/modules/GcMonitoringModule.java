@@ -28,10 +28,7 @@ import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.util.FormatUtil;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
-import net.kyori.text.format.TextDecoration;
+import net.kyori.adventure.text.Component;
 
 import java.lang.management.MemoryUsage;
 import java.text.DecimalFormat;
@@ -39,6 +36,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public class GcMonitoringModule implements CommandModule {
     private static final DecimalFormat df = new DecimalFormat("#.##");
@@ -59,14 +60,14 @@ public class GcMonitoringModule implements CommandModule {
         consumer.accept(Command.builder()
                 .aliases("gc")
                 .executor((platform, sender, resp, arguments) -> {
-                    resp.replyPrefixed(TextComponent.of("Calculating GC statistics..."));
+                    resp.replyPrefixed(text("Calculating GC statistics..."));
 
                     List<Component> report = new LinkedList<>();
-                    report.add(TextComponent.empty());
-                    report.add(TextComponent.builder("")
-                            .append(TextComponent.builder(">").color(TextColor.DARK_GRAY).decoration(TextDecoration.BOLD, true).build())
-                            .append(TextComponent.space())
-                            .append(TextComponent.of("Garbage Collector statistics", TextColor.GOLD))
+                    report.add(empty());
+                    report.add(text()
+                            .append(text(">", DARK_GRAY, BOLD))
+                            .append(space())
+                            .append(text("Garbage Collector statistics", GOLD))
                             .build()
                     );
 
@@ -78,16 +79,18 @@ public class GcMonitoringModule implements CommandModule {
                         double collectionTime = collector.getValue().getCollectionTime();
                         long collectionCount = collector.getValue().getCollectionCount();
 
-                        report.add(TextComponent.empty());
+                        report.add(empty());
 
                         if (collectionCount == 0) {
-                            report.add(TextComponent.builder("    ")
-                                    .append(TextComponent.of(collectorName + " collector:", TextColor.GRAY))
+                            report.add(text()
+                                    .content("    ")
+                                    .append(text(collectorName + " collector:", GRAY))
                                     .build()
                             );
-                            report.add(TextComponent.builder("      ")
-                                    .append(TextComponent.of(0, TextColor.WHITE))
-                                    .append(TextComponent.of(" collections", TextColor.GRAY))
+                            report.add(text()
+                                    .content("      ")
+                                    .append(text(0, WHITE))
+                                    .append(text(" collections", GRAY))
                                     .build()
                             );
                             continue;
@@ -96,27 +99,30 @@ public class GcMonitoringModule implements CommandModule {
                         double averageCollectionTime = collectionTime / collectionCount;
                         double averageFrequency = (serverUptime - collectionTime) / collectionCount;
 
-                        report.add(TextComponent.builder("    ")
-                                .append(TextComponent.of(collectorName + " collector:", TextColor.GRAY))
+                        report.add(text()
+                                .content("    ")
+                                .append(text(collectorName + " collector:", GRAY))
                                 .build()
                         );
-                        report.add(TextComponent.builder("      ")
-                                .append(TextComponent.of(df.format(averageCollectionTime), TextColor.GOLD))
-                                .append(TextComponent.of(" ms avg", TextColor.GRAY))
-                                .append(TextComponent.of(", ", TextColor.DARK_GRAY))
-                                .append(TextComponent.of(collectionCount, TextColor.WHITE))
-                                .append(TextComponent.of(" total collections", TextColor.GRAY))
+                        report.add(text()
+                                .content("      ")
+                                .append(text(df.format(averageCollectionTime), GOLD))
+                                .append(text(" ms avg", GRAY))
+                                .append(text(", ", DARK_GRAY))
+                                .append(text(collectionCount, WHITE))
+                                .append(text(" total collections", GRAY))
                                 .build()
                         );
-                        report.add(TextComponent.builder("      ")
-                                .append(TextComponent.of(formatTime((long) averageFrequency), TextColor.WHITE))
-                                .append(TextComponent.of(" avg frequency", TextColor.GRAY))
+                        report.add(text()
+                                .content("      ")
+                                .append(text(formatTime((long) averageFrequency), WHITE))
+                                .append(text(" avg frequency", GRAY))
                                 .build()
                         );
                     }
 
                     if (report.size() == 1) {
-                        resp.replyPrefixed(TextComponent.of("No garbage collectors are reporting data."));
+                        resp.replyPrefixed(text("No garbage collectors are reporting data."));
                     } else {
                         report.forEach(resp::reply);
                     }
@@ -129,10 +135,10 @@ public class GcMonitoringModule implements CommandModule {
                 .executor((platform, sender, resp, arguments) -> {
                     if (this.activeGcMonitor == null) {
                         this.activeGcMonitor = new ReportingGcMonitor(platform, resp);
-                        resp.broadcastPrefixed(TextComponent.of("GC monitor enabled."));
+                        resp.broadcastPrefixed(text("GC monitor enabled."));
                     } else {
                         close();
-                        resp.broadcastPrefixed(TextComponent.of("GC monitor disabled."));
+                        resp.broadcastPrefixed(text("GC monitor disabled."));
                     }
                 })
                 .build()
@@ -195,13 +201,15 @@ public class GcMonitoringModule implements CommandModule {
 
             this.platform.getPlugin().executeAsync(() -> {
                 List<Component> report = new LinkedList<>();
-                report.add(CommandResponseHandler.applyPrefix(TextComponent.builder("").color(TextColor.GRAY)
-                        .append(TextComponent.of(gcType + " "))
-                        .append(TextComponent.of("GC", TextColor.RED))
-                        .append(TextComponent.of(" lasting "))
-                        .append(TextComponent.of(df.format(data.getGcInfo().getDuration()), TextColor.GOLD))
-                        .append(TextComponent.of(" ms." + gcCause))
-                        .build()
+                report.add(CommandResponseHandler.applyPrefix(
+                        text()
+                                .color(GRAY)
+                                .append(text(gcType + " "))
+                                .append(text("GC", RED))
+                                .append(text(" lasting "))
+                                .append(text(df.format(data.getGcInfo().getDuration()), GOLD))
+                                .append(text(" ms." + gcCause))
+                                .build()
                 ));
 
                 for (Map.Entry<String, MemoryUsage> entry : afterUsages.entrySet()) {
@@ -219,33 +227,37 @@ public class GcMonitoringModule implements CommandModule {
                     }
 
                     if (diff > 0) {
-                        report.add(TextComponent.builder("  ")
-                                .append(TextComponent.of(FormatUtil.formatBytes(diff), TextColor.GOLD))
-                                .append(TextComponent.of(" freed from ", TextColor.DARK_GRAY))
-                                .append(TextComponent.of(type, TextColor.GRAY))
+                        report.add(text()
+                                .content("  ")
+                                .append(text(FormatUtil.formatBytes(diff), GOLD))
+                                .append(text(" freed from ", DARK_GRAY))
+                                .append(text(type, GRAY))
                                 .build()
                         );
-                        report.add(TextComponent.builder("    ")
-                                .append(TextComponent.of(FormatUtil.formatBytes(before.getUsed()), TextColor.GRAY))
-                                .append(TextComponent.of(" → ", TextColor.DARK_GRAY))
-                                .append(TextComponent.of(FormatUtil.formatBytes(after.getUsed()), TextColor.GRAY))
-                                .append(TextComponent.space())
-                                .append(TextComponent.of("(", TextColor.DARK_GRAY))
-                                .append(TextComponent.of(FormatUtil.percent(diff, before.getUsed()), TextColor.WHITE))
-                                .append(TextComponent.of(")", TextColor.DARK_GRAY))
+                        report.add(text()
+                                .content("    ")
+                                .append(text(FormatUtil.formatBytes(before.getUsed()), GRAY))
+                                .append(text(" → ", DARK_GRAY))
+                                .append(text(FormatUtil.formatBytes(after.getUsed()), GRAY))
+                                .append(space())
+                                .append(text("(", DARK_GRAY))
+                                .append(text(FormatUtil.percent(diff, before.getUsed()), WHITE))
+                                .append(text(")", DARK_GRAY))
                                 .build()
                         );
                     } else {
-                        report.add(TextComponent.builder("  ")
-                                .append(TextComponent.of(FormatUtil.formatBytes(-diff), TextColor.GOLD))
-                                .append(TextComponent.of(" moved to ", TextColor.DARK_GRAY))
-                                .append(TextComponent.of(type, TextColor.GRAY))
+                        report.add(text()
+                                .content("  ")
+                                .append(text(FormatUtil.formatBytes(-diff), GOLD))
+                                .append(text(" moved to ", DARK_GRAY))
+                                .append(text(type, GRAY))
                                 .build()
                         );
-                        report.add(TextComponent.builder("    ")
-                                .append(TextComponent.of(FormatUtil.formatBytes(before.getUsed()), TextColor.GRAY))
-                                .append(TextComponent.of(" → ", TextColor.DARK_GRAY))
-                                .append(TextComponent.of(FormatUtil.formatBytes(after.getUsed()), TextColor.GRAY))
+                        report.add(text()
+                                .content("    ")
+                                .append(text(FormatUtil.formatBytes(before.getUsed()), GRAY))
+                                .append(text(" → ", DARK_GRAY))
+                                .append(text(FormatUtil.formatBytes(after.getUsed()), GRAY))
                                 .build()
                         );
                     }

@@ -23,6 +23,7 @@ package me.lucko.spark.bungeecord;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
+import net.kyori.adventure.platform.bungeecord.BungeeAudiences;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
 import net.md_5.bungee.api.plugin.Plugin;
@@ -32,11 +33,12 @@ import java.nio.file.Path;
 import java.util.stream.Stream;
 
 public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
-
+    private BungeeAudiences audienceFactory;
     private SparkPlatform platform;
 
     @Override
     public void onEnable() {
+        this.audienceFactory = BungeeAudiences.create(this);
         this.platform = new SparkPlatform(this);
         this.platform.enable();
         getProxy().getPluginManager().registerCommand(this, new SparkCommand(this));
@@ -67,7 +69,7 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
         return Stream.concat(
                 getProxy().getPlayers().stream().filter(player -> player.hasPermission(permission)),
                 Stream.of(getProxy().getConsole())
-        ).map(BungeeCordCommandSender::new);
+        ).map(sender -> new BungeeCordCommandSender(sender, this.audienceFactory));
     }
 
     @Override
@@ -90,12 +92,12 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            this.plugin.platform.executeCommand(new BungeeCordCommandSender(sender), args);
+            this.plugin.platform.executeCommand(new BungeeCordCommandSender(sender, this.plugin.audienceFactory), args);
         }
 
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
-            return this.plugin.platform.tabCompleteCommand(new BungeeCordCommandSender(sender), args);
+            return this.plugin.platform.tabCompleteCommand(new BungeeCordCommandSender(sender, this.plugin.audienceFactory), args);
         }
     }
 }

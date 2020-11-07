@@ -1,8 +1,8 @@
 dependencies {
     compile project(':spark-common')
-    compile('net.kyori:text-adapter-bukkit:3.0.5') {
-        exclude(module: 'text-api')
-        exclude(module: 'text-serializer-gson')
+    compile ('net.kyori:adventure-platform-bukkit:4.0.0-SNAPSHOT') {
+        exclude(module: 'adventure-api')
+        exclude(module: 'adventure-text-serializer-gson')
     }
     compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
     

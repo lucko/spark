@@ -20,18 +20,21 @@
 
 package me.lucko.spark.bukkit;
 
-
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import net.kyori.text.Component;
-import net.kyori.text.adapter.bukkit.TextAdapter;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
 
 public class BukkitCommandSender extends AbstractCommandSender<CommandSender> {
-    public BukkitCommandSender(CommandSender sender) {
+    private final Audience audience;
+
+    public BukkitCommandSender(CommandSender sender, BukkitAudiences audienceFactory) {
         super(sender);
+        this.audience = audienceFactory.sender(sender);
     }
 
     @Override
@@ -49,7 +52,7 @@ public class BukkitCommandSender extends AbstractCommandSender<CommandSender> {
 
     @Override
     public void sendMessage(Component message) {
-        TextAdapter.sendMessage(super.delegate, message);
+        this.audience.sendMessage(message);
     }
 
     @Override

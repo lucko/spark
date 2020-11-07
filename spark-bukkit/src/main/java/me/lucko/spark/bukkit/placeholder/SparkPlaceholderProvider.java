@@ -24,8 +24,9 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.modules.HealthModule;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-import net.kyori.text.TextComponent;
-import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 enum SparkPlaceholderProvider {
     ;
@@ -39,11 +40,11 @@ enum SparkPlaceholderProvider {
 
             switch (placeholder) {
                 case "tps":
-                    return TextComponent.builder("")
-                            .append(HealthModule.formatTps(tickStatistics.tps5Sec())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatTps(tickStatistics.tps10Sec())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatTps(tickStatistics.tps1Min())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatTps(tickStatistics.tps5Min())).append(TextComponent.of(", "))
+                    return Component.text()
+                            .append(HealthModule.formatTps(tickStatistics.tps5Sec())).append(Component.text(", "))
+                            .append(HealthModule.formatTps(tickStatistics.tps10Sec())).append(Component.text(", "))
+                            .append(HealthModule.formatTps(tickStatistics.tps1Min())).append(Component.text(", "))
+                            .append(HealthModule.formatTps(tickStatistics.tps5Min())).append(Component.text(", "))
                             .append(HealthModule.formatTps(tickStatistics.tps15Min()))
                             .build();
                 case "tps_5s":
@@ -67,8 +68,8 @@ enum SparkPlaceholderProvider {
 
             switch (placeholder) {
                 case "tickduration":
-                    return TextComponent.builder("")
-                            .append(HealthModule.formatTickDurations(tickStatistics.duration10Sec())).append(TextComponent.of(";  "))
+                    return Component.text()
+                            .append(HealthModule.formatTickDurations(tickStatistics.duration10Sec())).append(Component.text(";  "))
                             .append(HealthModule.formatTickDurations(tickStatistics.duration1Min()))
                             .build();
                 case "tickduration_10s":
@@ -81,9 +82,9 @@ enum SparkPlaceholderProvider {
         if (placeholder.startsWith("cpu")) {
             switch (placeholder) {
                 case "cpu_system":
-                    return TextComponent.builder("")
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(TextComponent.of(", "))
+                    return Component.text()
+                            .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(Component.text(", "))
+                            .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(Component.text(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
                             .build();
                 case "cpu_system_10s":
@@ -93,9 +94,9 @@ enum SparkPlaceholderProvider {
                 case "cpu_system_15m":
                     return HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg());
                 case "cpu_process":
-                    return TextComponent.builder("")
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(TextComponent.of(", "))
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(TextComponent.of(", "))
+                    return Component.text()
+                            .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(Component.text(", "))
+                            .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(Component.text(", "))
                             .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
                             .build();
                 case "cpu_process_10s":
@@ -115,7 +116,7 @@ enum SparkPlaceholderProvider {
         if (result == null) {
             return null;
         }
-        return LegacyComponentSerializer.legacy().serialize(result);
+        return LegacyComponentSerializer.legacySection().serialize(result);
     }
     
 }

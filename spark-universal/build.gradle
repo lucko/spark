@@ -14,7 +14,7 @@ shadowJar {
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
-    relocate 'net.kyori.text', 'me.lucko.spark.lib.text'
+    relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'

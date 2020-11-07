@@ -28,6 +28,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
+import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -39,12 +40,15 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
+    private BukkitAudiences audienceFactory;
+    private SparkPlatform platform;
 
     private CommandExecutor tpsCommand = null;
-    private SparkPlatform platform;
 
     @Override
     public void onEnable() {
+        this.audienceFactory = BukkitAudiences.create(this);
+
         this.platform = new SparkPlatform(this);
         this.platform.enable();
 
@@ -56,7 +60,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
                     return true;
                 }
 
-                BukkitCommandSender s = new BukkitCommandSender(sender) {
+                BukkitCommandSender s = new BukkitCommandSender(sender, this.audienceFactory) {
                     @Override
                     public boolean hasPermission(String permission) {
                         return true;
@@ -88,13 +92,13 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        this.platform.executeCommand(new BukkitCommandSender(sender), args);
+        this.platform.executeCommand(new BukkitCommandSender(sender, this.audienceFactory), args);
         return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        return this.platform.tabCompleteCommand(new BukkitCommandSender(sender), args);
+        return this.platform.tabCompleteCommand(new BukkitCommandSender(sender, this.audienceFactory), args);
     }
 
     @Override
@@ -117,7 +121,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
         return Stream.concat(
                 getServer().getOnlinePlayers().stream().filter(player -> player.hasPermission(permission)),
                 Stream.of(getServer().getConsoleSender())
-        ).map(BukkitCommandSender::new);
+        ).map(sender -> new BukkitCommandSender(sender, this.audienceFactory));
     }
 
     @Override

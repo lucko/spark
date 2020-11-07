@@ -22,23 +22,26 @@ package me.lucko.spark.common.command;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
-import net.kyori.text.format.TextDecoration;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
+
 public class CommandResponseHandler {
 
     /** The prefix used in all messages "&8[&e&l⚡&8] &7" */
-    private static final TextComponent PREFIX = TextComponent.builder("").color(TextColor.GRAY)
-            .append(TextComponent.of("[", TextColor.DARK_GRAY))
-            .append(TextComponent.builder("⚡").color(TextColor.YELLOW).decoration(TextDecoration.BOLD, TextDecoration.State.TRUE).build())
-            .append(TextComponent.of("]", TextColor.DARK_GRAY))
-            .append(TextComponent.of(" "))
+    private static final TextComponent PREFIX = text()
+            .color(GRAY)
+            .append(text("[", DARK_GRAY))
+            .append(text("⚡", YELLOW, BOLD))
+            .append(text("]", DARK_GRAY))
+            .append(text(" "))
             .build();
 
     private final SparkPlatform platform;

@@ -20,18 +20,21 @@
 
 package me.lucko.spark.bungeecord;
 
-
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import net.kyori.text.Component;
-import net.kyori.text.adapter.bungeecord.TextAdapter;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.platform.bungeecord.BungeeAudiences;
+import net.kyori.adventure.text.Component;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 
 import java.util.UUID;
 
 public class BungeeCordCommandSender extends AbstractCommandSender<CommandSender> {
-    public BungeeCordCommandSender(CommandSender sender) {
+    private final Audience audience;
+
+    public BungeeCordCommandSender(CommandSender sender, BungeeAudiences audienceFactory) {
         super(sender);
+        this.audience = audienceFactory.sender(sender);
     }
 
     @Override
@@ -49,7 +52,7 @@ public class BungeeCordCommandSender extends AbstractCommandSender<CommandSender
 
     @Override
     public void sendMessage(Component message) {
-        TextAdapter.sendMessage(super.delegate, message);
+        this.audience.sendMessage(message);
     }
 
     @Override

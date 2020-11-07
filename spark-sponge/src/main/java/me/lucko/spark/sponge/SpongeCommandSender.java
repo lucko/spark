@@ -21,16 +21,20 @@
 package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import net.kyori.text.Component;
-import net.kyori.text.adapter.spongeapi.TextAdapter;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.platform.spongeapi.SpongeAudiences;
+import net.kyori.adventure.text.Component;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 
 import java.util.UUID;
 
 public class SpongeCommandSender extends AbstractCommandSender<CommandSource> {
-    public SpongeCommandSender(CommandSource source) {
+    private final Audience audience;
+
+    public SpongeCommandSender(CommandSource source, SpongeAudiences audienceFactory) {
         super(source);
+        this.audience = audienceFactory.receiver(source);
     }
 
     @Override
@@ -48,7 +52,7 @@ public class SpongeCommandSender extends AbstractCommandSender<CommandSource> {
 
     @Override
     public void sendMessage(Component message) {
-        TextAdapter.sendMessage(super.delegate, message);
+        this.audience.sendMessage(message);
     }
 
     @Override

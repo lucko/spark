@@ -1,8 +1,8 @@
 dependencies {
     compile project(':spark-common')
-    compile('net.kyori:text-adapter-bungeecord:3.0.5') {
-        exclude(module: 'text-api')
-        exclude(module: 'text-serializer-gson')
+    compile ('net.kyori:adventure-platform-bungeecord:4.0.0-SNAPSHOT') {
+        exclude(module: 'adventure-api')
+        exclude(module: 'adventure-text-serializer-gson')
     }
     compileOnly 'net.md-5:bungeecord-api:1.16-R0.4-SNAPSHOT'
 }

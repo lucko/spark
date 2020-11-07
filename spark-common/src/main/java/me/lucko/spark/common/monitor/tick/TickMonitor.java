@@ -24,9 +24,8 @@ import com.sun.management.GarbageCollectionNotificationInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.sampler.tick.TickHook;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.text.DecimalFormat;
 import java.util.DoubleSummaryStatistics;
@@ -81,7 +80,7 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
         if (this.state == null) {
             this.state = State.SETUP;
             this.lastTickTime = now;
-            sendMessage(TextComponent.of("Tick monitor started. Before the monitor becomes fully active, the server's " +
+            sendMessage(Component.text("Tick monitor started. Before the monitor becomes fully active, the server's " +
                     "average tick rate will be calculated over a period of 120 ticks (approx 6 seconds)."));
             return;
         }
@@ -102,29 +101,32 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
             // move onto the next state
             if (this.averageTickTime.getCount() >= 120) {
                 this.platform.getPlugin().executeAsync(() -> {
-                    sendMessage(TextComponent.of("Analysis is now complete.", TextColor.GOLD));
-                    sendMessage(TextComponent.builder("").color(TextColor.GRAY)
-                            .append(TextComponent.of(">", TextColor.WHITE))
-                            .append(TextComponent.space())
-                            .append(TextComponent.of("Max: "))
-                            .append(TextComponent.of(df.format(this.averageTickTime.getMax())))
-                            .append(TextComponent.of("ms"))
+                    sendMessage(Component.text("Analysis is now complete.", NamedTextColor.GOLD));
+                    sendMessage(Component.text()
+                            .color(NamedTextColor.GRAY)
+                            .append(Component.text(">", NamedTextColor.WHITE))
+                            .append(Component.space())
+                            .append(Component.text("Max: "))
+                            .append(Component.text(df.format(this.averageTickTime.getMax())))
+                            .append(Component.text("ms"))
                             .build()
                     );
-                    sendMessage(TextComponent.builder("").color(TextColor.GRAY)
-                            .append(TextComponent.of(">", TextColor.WHITE))
-                            .append(TextComponent.space())
-                            .append(TextComponent.of("Min: "))
-                            .append(TextComponent.of(df.format(this.averageTickTime.getMin())))
-                            .append(TextComponent.of("ms"))
+                    sendMessage(Component.text()
+                            .color(NamedTextColor.GRAY)
+                            .append(Component.text(">", NamedTextColor.WHITE))
+                            .append(Component.space())
+                            .append(Component.text("Min: "))
+                            .append(Component.text(df.format(this.averageTickTime.getMin())))
+                            .append(Component.text("ms"))
                             .build()
                     );
-                    sendMessage(TextComponent.builder("").color(TextColor.GRAY)
-                            .append(TextComponent.of(">", TextColor.WHITE))
-                            .append(TextComponent.space())
-                            .append(TextComponent.of("Average: "))
-                            .append(TextComponent.of(df.format(this.averageTickTime.getAverage())))
-                            .append(TextComponent.of("ms"))
+                    sendMessage(Component.text()
+                            .color(NamedTextColor.GRAY)
+                            .append(Component.text(">", NamedTextColor.WHITE))
+                            .append(Component.space())
+                            .append(Component.text("Average: "))
+                            .append(Component.text(df.format(this.averageTickTime.getAverage())))
+                            .append(Component.text("ms"))
                             .build()
                     );
                     sendMessage(this.reportPredicate.monitoringStartMessage());
@@ -140,15 +142,16 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
             double percentageChange = (increase * 100d) / this.avg;
             if (this.reportPredicate.shouldReport(tickDuration, increase, percentageChange)) {
                 this.platform.getPlugin().executeAsync(() -> {
-                    sendMessage(TextComponent.builder("").color(TextColor.GRAY)
-                            .append(TextComponent.of("Tick "))
-                            .append(TextComponent.of("#" + getCurrentTick(), TextColor.DARK_GRAY))
-                            .append(TextComponent.of(" lasted "))
-                            .append(TextComponent.of(df.format(tickDuration), TextColor.GOLD))
-                            .append(TextComponent.of(" ms. "))
-                            .append(TextComponent.of("("))
-                            .append(TextComponent.of(df.format(percentageChange) + "%", TextColor.GOLD))
-                            .append(TextComponent.of(" increase from avg)"))
+                    sendMessage(Component.text()
+                            .color(NamedTextColor.GRAY)
+                            .append(Component.text("Tick "))
+                            .append(Component.text("#" + getCurrentTick(), NamedTextColor.DARK_GRAY))
+                            .append(Component.text(" lasted "))
+                            .append(Component.text(df.format(tickDuration), NamedTextColor.GOLD))
+                            .append(Component.text(" ms. "))
+                            .append(Component.text("("))
+                            .append(Component.text(df.format(percentageChange) + "%", NamedTextColor.GOLD))
+                            .append(Component.text(" increase from avg)"))
                             .build()
                     );
                 });
@@ -174,14 +177,15 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
         }
 
         this.platform.getPlugin().executeAsync(() -> {
-            sendMessage(TextComponent.builder("").color(TextColor.GRAY)
-                    .append(TextComponent.of("Tick "))
-                    .append(TextComponent.of("#" + getCurrentTick(), TextColor.DARK_GRAY))
-                    .append(TextComponent.of(" included "))
-                    .append(TextComponent.of("GC", TextColor.RED))
-                    .append(TextComponent.of(" lasting "))
-                    .append(TextComponent.of(df.format(data.getGcInfo().getDuration()), TextColor.GOLD))
-                    .append(TextComponent.of(" ms. (type = " + gcType + ")"))
+            sendMessage(Component.text()
+                    .color(NamedTextColor.GRAY)
+                    .append(Component.text("Tick "))
+                    .append(Component.text("#" + getCurrentTick(), NamedTextColor.DARK_GRAY))
+                    .append(Component.text(" included "))
+                    .append(Component.text("GC", NamedTextColor.RED))
+                    .append(Component.text(" lasting "))
+                    .append(Component.text(df.format(data.getGcInfo().getDuration()), NamedTextColor.GOLD))
+                    .append(Component.text(" ms. (type = " + gcType + ")"))
                     .build()
             );
         });
@@ -226,7 +230,7 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
 
             @Override
             public Component monitoringStartMessage() {
-                return TextComponent.of("Starting now, any ticks with >" + this.threshold + "% increase in " +
+                return Component.text("Starting now, any ticks with >" + this.threshold + "% increase in " +
                         "duration compared to the average will be reported.");
             }
         }
@@ -248,7 +252,7 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
 
             @Override
             public Component monitoringStartMessage() {
-                return TextComponent.of("Starting now, any ticks with duration >" + this.threshold + " will be reported.");
+                return Component.text("Starting now, any ticks with duration >" + this.threshold + " will be reported.");
             }
         }
 

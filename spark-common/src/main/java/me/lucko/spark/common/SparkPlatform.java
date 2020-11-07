@@ -42,10 +42,7 @@ import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
-import net.kyori.text.TextComponent;
-import net.kyori.text.event.ClickEvent;
-import net.kyori.text.format.TextColor;
-import net.kyori.text.format.TextDecoration;
+import net.kyori.adventure.text.event.ClickEvent;
 import okhttp3.OkHttpClient;
 
 import java.util.ArrayList;
@@ -54,6 +51,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.format.TextDecoration.*;
 
 /**
  * Abstract spark implementation used by all platforms.
@@ -166,26 +167,28 @@ public class SparkPlatform {
         CommandResponseHandler resp = new CommandResponseHandler(this, sender);
 
         if (!sender.hasPermission("spark")) {
-            resp.replyPrefixed(TextComponent.of("You do not have permission to use this command.", TextColor.RED));
+            resp.replyPrefixed(text("You do not have permission to use this command.", RED));
             return;
         }
 
         if (args.length == 0) {
-            resp.replyPrefixed(TextComponent.builder("")
-                    .append(TextComponent.of("spark", TextColor.WHITE))
-                    .append(TextComponent.space())
-                    .append(TextComponent.of("v" + getPlugin().getVersion(), TextColor.GRAY))
+            resp.replyPrefixed(text()
+                    .append(text("spark", WHITE))
+                    .append(space())
+                    .append(text("v" + getPlugin().getVersion(), GRAY))
                     .build()
             );
-            resp.replyPrefixed(TextComponent.builder("").color(TextColor.GRAY)
-                    .append(TextComponent.of("Use "))
-                    .append(TextComponent.builder("/" + getPlugin().getCommandName() + " help")
-                            .color(TextColor.WHITE)
-                            .decoration(TextDecoration.UNDERLINED, true)
+            resp.replyPrefixed(text()
+                    .color(GRAY)
+                    .append(text("Use "))
+                    .append(text()
+                            .content("/" + getPlugin().getCommandName() + " help")
+                            .color(WHITE)
+                            .decoration(UNDERLINED, true)
                             .clickEvent(ClickEvent.runCommand("/" + getPlugin().getCommandName() + " help"))
                             .build()
                     )
-                    .append(TextComponent.of(" to view usage information."))
+                    .append(text(" to view usage information."))
                     .build()
             );
             return;
@@ -199,7 +202,7 @@ public class SparkPlatform {
                 try {
                     command.executor().execute(this, sender, resp, new Arguments(rawArgs));
                 } catch (IllegalArgumentException e) {
-                    resp.replyPrefixed(TextComponent.of(e.getMessage(), TextColor.RED));
+                    resp.replyPrefixed(text(e.getMessage(), RED));
                 }
                 return;
             }
@@ -233,36 +236,38 @@ public class SparkPlatform {
     }
 
     private void sendUsage(CommandResponseHandler sender) {
-        sender.replyPrefixed(TextComponent.builder("")
-                .append(TextComponent.of("spark", TextColor.WHITE))
-                .append(TextComponent.space())
-                .append(TextComponent.of("v" + getPlugin().getVersion(), TextColor.GRAY))
+        sender.replyPrefixed(text()
+                .append(text("spark", WHITE))
+                .append(space())
+                .append(text("v" + getPlugin().getVersion(), GRAY))
                 .build()
         );
         for (Command command : this.commands) {
             String usage = "/" + getPlugin().getCommandName() + " " + command.aliases().get(0);
             ClickEvent clickEvent = ClickEvent.suggestCommand(usage);
-            sender.reply(TextComponent.builder("")
-                    .append(TextComponent.builder(">").color(TextColor.GOLD).decoration(TextDecoration.BOLD, true).build())
-                    .append(TextComponent.space())
-                    .append(TextComponent.builder(usage).color(TextColor.GRAY).clickEvent(clickEvent).build())
+            sender.reply(text()
+                    .append(text(">", GOLD, BOLD))
+                    .append(space())
+                    .append(text().content(usage).color(GRAY).clickEvent(clickEvent).build())
                     .build()
             );
             for (Command.ArgumentInfo arg : command.arguments()) {
                 if (arg.requiresParameter()) {
-                    sender.reply(TextComponent.builder("       ")
-                            .append(TextComponent.of("[", TextColor.DARK_GRAY))
-                            .append(TextComponent.of("--" + arg.argumentName(), TextColor.GRAY))
-                            .append(TextComponent.space())
-                            .append(TextComponent.of("<" + arg.parameterDescription() + ">", TextColor.DARK_GRAY))
-                            .append(TextComponent.of("]", TextColor.DARK_GRAY))
+                    sender.reply(text()
+                            .content("       ")
+                            .append(text("[", DARK_GRAY))
+                            .append(text("--" + arg.argumentName(), GRAY))
+                            .append(space())
+                            .append(text("<" + arg.parameterDescription() + ">", DARK_GRAY))
+                            .append(text("]", DARK_GRAY))
                             .build()
                     );
                 } else {
-                    sender.reply(TextComponent.builder("       ")
-                            .append(TextComponent.of("[", TextColor.DARK_GRAY))
-                            .append(TextComponent.of("--" + arg.argumentName(), TextColor.GRAY))
-                            .append(TextComponent.of("]", TextColor.DARK_GRAY))
+                    sender.reply(text()
+                            .content("       ")
+                            .append(text("[", DARK_GRAY))
+                            .append(text("--" + arg.argumentName(), GRAY))
+                            .append(text("]", DARK_GRAY))
                             .build()
                     );
                 }

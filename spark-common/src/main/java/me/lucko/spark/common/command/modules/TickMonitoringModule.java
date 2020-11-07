@@ -28,11 +28,12 @@ import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.tick.TickMonitor;
 import me.lucko.spark.common.monitor.tick.TickMonitor.ReportPredicate;
 import me.lucko.spark.common.sampler.tick.TickHook;
-import net.kyori.text.Component;
-import net.kyori.text.TextComponent;
-import net.kyori.text.format.TextColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.function.Consumer;
+
+import static net.kyori.adventure.text.Component.*;
 
 public class TickMonitoringModule implements CommandModule {
 
@@ -61,7 +62,7 @@ public class TickMonitoringModule implements CommandModule {
                         this.tickHook = platform.getTickHook();
                     }
                     if (this.tickHook == null) {
-                        resp.replyPrefixed(TextComponent.of("Not supported!", TextColor.RED));
+                        resp.replyPrefixed(text("Not supported!", NamedTextColor.RED));
                         return;
                     }
 
@@ -81,7 +82,7 @@ public class TickMonitoringModule implements CommandModule {
                         this.tickHook.addCallback(this.activeTickMonitor);
                     } else {
                         close();
-                        resp.broadcastPrefixed(TextComponent.of("Tick monitor disabled."));
+                        resp.broadcastPrefixed(text("Tick monitor disabled."));
                     }
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--threshold", "--threshold-tick", "--without-gc"))

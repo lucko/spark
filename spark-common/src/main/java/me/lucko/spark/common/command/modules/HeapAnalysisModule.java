@@ -28,9 +28,7 @@ import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.heapdump.HeapDump;
 import me.lucko.spark.common.heapdump.HeapDumpSummary;
 import me.lucko.spark.common.util.FormatUtil;
-import net.kyori.text.TextComponent;
-import net.kyori.text.event.ClickEvent;
-import net.kyori.text.format.TextColor;
+import net.kyori.adventure.text.event.ClickEvent;
 import okhttp3.MediaType;
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.LZMAOutputStream;
@@ -50,6 +48,9 @@ import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 import java.util.zip.GZIPOutputStream;
 
+import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
+
 public class HeapAnalysisModule implements CommandModule {
     private static final MediaType SPARK_HEAP_MEDIA_TYPE = MediaType.parse("application/x-spark-heap");
 
@@ -61,17 +62,17 @@ public class HeapAnalysisModule implements CommandModule {
                 .executor((platform, sender, resp, arguments) -> {
                     platform.getPlugin().executeAsync(() -> {
                         if (arguments.boolFlag("run-gc-before")) {
-                            resp.broadcastPrefixed(TextComponent.of("Running garbage collector..."));
+                            resp.broadcastPrefixed(text("Running garbage collector..."));
                             System.gc();
                         }
 
-                        resp.broadcastPrefixed(TextComponent.of("Creating a new heap dump summary, please wait..."));
+                        resp.broadcastPrefixed(text("Creating a new heap dump summary, please wait..."));
 
                         HeapDumpSummary heapDump;
                         try {
                             heapDump = HeapDumpSummary.createNew();
                         } catch (Exception e) {
-                            resp.broadcastPrefixed(TextComponent.of("An error occurred whilst inspecting the heap.", TextColor.RED));
+                            resp.broadcastPrefixed(text("An error occurred whilst inspecting the heap.", RED));
                             e.printStackTrace();
                             return;
                         }
@@ -81,16 +82,17 @@ public class HeapAnalysisModule implements CommandModule {
                             String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_HEAP_MEDIA_TYPE, false).key();
                             String url = SparkPlatform.VIEWER_URL + key;
 
-                            resp.broadcastPrefixed(TextComponent.of("Heap dump summmary output:", TextColor.GOLD));
-                            resp.broadcast(TextComponent.builder(url)
-                                    .color(TextColor.GRAY)
+                            resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));
+                            resp.broadcast(text()
+                                    .content(url)
+                                    .color(GRAY)
                                     .clickEvent(ClickEvent.openUrl(url))
                                     .build()
                             );
 
                             platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
                         } catch (IOException e) {
-                            resp.broadcastPrefixed(TextComponent.of("An error occurred whilst uploading the data.", TextColor.RED));
+                            resp.broadcastPrefixed(text("An error occurred whilst uploading the data.", RED));
                             e.printStackTrace();
                         }
                     });
@@ -117,22 +119,24 @@ public class HeapAnalysisModule implements CommandModule {
                         boolean liveOnly = !arguments.boolFlag("include-non-live");
 
                         if (arguments.boolFlag("run-gc-before")) {
-                            resp.broadcastPrefixed(TextComponent.of("Running garbage collector..."));
+                            resp.broadcastPrefixed(text("Running garbage collector..."));
                             System.gc();
                         }
 
-                        resp.broadcastPrefixed(TextComponent.of("Creating a new heap dump, please wait..."));
+                        resp.broadcastPrefixed(text("Creating a new heap dump, please wait..."));
 
                         try {
                             HeapDump.dumpHeap(file, liveOnly);
                         } catch (Exception e) {
-                            resp.broadcastPrefixed(TextComponent.of("An error occurred whilst creating a heap dump.", TextColor.RED));
+                            resp.broadcastPrefixed(text("An error occurred whilst creating a heap dump.", RED));
                             e.printStackTrace();
                             return;
                         }
 
-                        resp.broadcastPrefixed(TextComponent.builder("Heap dump written to: ", TextColor.GOLD)
-                                .append(TextComponent.of(file.toString(), TextColor.GRAY))
+                        resp.broadcastPrefixed(text()
+                                .content("Heap dump written to: ")
+                                .color(GOLD)
+                                .append(text(file.toString(), GRAY))
                                 .build()
                         );
                         platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump", file.toString()));
@@ -149,7 +153,7 @@ public class HeapAnalysisModule implements CommandModule {
                         }
 
                         if (compress != null) {
-                            resp.broadcastPrefixed(TextComponent.of("Compressing heap dump, please wait..."));
+                            resp.broadcastPrefixed(text("Compressing heap dump, please wait..."));
                             try {
                                 long size = Files.size(file);
                                 AtomicLong lastReport = new AtomicLong(System.currentTimeMillis());
@@ -160,14 +164,15 @@ public class HeapAnalysisModule implements CommandModule {
                                         lastReport.set(System.currentTimeMillis());
 
                                         platform.getPlugin().executeAsync(() -> {
-                                            resp.broadcastPrefixed(TextComponent.builder("").color(TextColor.GRAY)
-                                                    .append(TextComponent.of("Compressed "))
-                                                    .append(TextComponent.of(FormatUtil.formatBytes(progress), TextColor.GOLD))
-                                                    .append(TextComponent.of(" / "))
-                                                    .append(TextComponent.of(FormatUtil.formatBytes(size), TextColor.GOLD))
-                                                    .append(TextComponent.of(" so far... ("))
-                                                    .append(TextComponent.of(FormatUtil.percent(progress, size), TextColor.GREEN))
-                                                    .append(TextComponent.of(")"))
+                                            resp.broadcastPrefixed(text()
+                                                    .color(GRAY)
+                                                    .append(text("Compressed "))
+                                                    .append(text(FormatUtil.formatBytes(progress), GOLD))
+                                                    .append(text(" / "))
+                                                    .append(text(FormatUtil.formatBytes(size), GOLD))
+                                                    .append(text(" so far... ("))
+                                                    .append(text(FormatUtil.percent(progress, size), GREEN))
+                                                    .append(text(")"))
                                                     .build()
                                             );
                                         });
@@ -177,19 +182,22 @@ public class HeapAnalysisModule implements CommandModule {
                                 Path compressedFile = compress.compress(file, progressHandler);
                                 long compressedSize = Files.size(compressedFile);
 
-                                resp.broadcastPrefixed(TextComponent.builder("").color(TextColor.GRAY)
-                                        .append(TextComponent.of("Compression complete: "))
-                                        .append(TextComponent.of(FormatUtil.formatBytes(size), TextColor.GOLD))
-                                        .append(TextComponent.of(" --> "))
-                                        .append(TextComponent.of(FormatUtil.formatBytes(compressedSize), TextColor.GOLD))
-                                        .append(TextComponent.of(" ("))
-                                        .append(TextComponent.of(FormatUtil.percent(compressedSize, size), TextColor.GREEN))
-                                        .append(TextComponent.of(")"))
+                                resp.broadcastPrefixed(text()
+                                        .color(GRAY)
+                                        .append(text("Compression complete: "))
+                                        .append(text(FormatUtil.formatBytes(size), GOLD))
+                                        .append(text(" --> "))
+                                        .append(text(FormatUtil.formatBytes(compressedSize), GOLD))
+                                        .append(text(" ("))
+                                        .append(text(FormatUtil.percent(compressedSize, size), GREEN))
+                                        .append(text(")"))
                                         .build()
                                 );
 
-                                resp.broadcastPrefixed(TextComponent.builder("Compressed heap dump written to: ", TextColor.GOLD)
-                                        .append(TextComponent.of(compressedFile.toString(), TextColor.GRAY))
+                                resp.broadcastPrefixed(text()
+                                        .content("Compressed heap dump written to: ")
+                                        .color(GOLD)
+                                        .append(text(compressedFile.toString(), GRAY))
                                         .build()
                                 );
                             } catch (IOException e) {
