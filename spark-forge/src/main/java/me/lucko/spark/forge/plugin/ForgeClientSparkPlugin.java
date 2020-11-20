@@ -54,11 +54,13 @@ import java.util.stream.Stream;
 public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements SuggestionProvider<ISuggestionProvider> {
 
     public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
-        Minecraft minecraft = event.getMinecraftSupplier().get();
+        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, event.getMinecraftSupplier().get());
+        plugin.enable();
 
-        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, minecraft);
+        // register listeners
         MinecraftForge.EVENT_BUS.register(plugin);
 
+        // ensure commands are registered
         plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
     }
 

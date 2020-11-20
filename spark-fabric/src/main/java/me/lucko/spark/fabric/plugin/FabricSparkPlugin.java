@@ -20,7 +20,6 @@
 
 package me.lucko.spark.fabric.plugin;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -46,11 +45,23 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
 
     protected FabricSparkPlugin(FabricSparkMod mod) {
         this.mod = mod;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("spark-fabric-async-worker").build()
-        );
+        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread thread = Executors.defaultThreadFactory().newThread(r);
+            thread.setName("spark-fabric-async-worker");
+            thread.setDaemon(true);
+            return thread;
+        });
         this.platform = new SparkPlatform(this);
         this.platform.enable();
+    }
+
+    public void enable() {
+        this.platform.enable();
+    }
+
+    public void disable() {
+        this.platform.disable();
+        this.scheduler.shutdown();
     }
 
     public abstract boolean hasPermission(CommandOutput sender, String permission);
@@ -75,7 +86,7 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
         return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
     }
 
-    public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
+    protected static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
         if (aliases.length == 0) {
             return;
         }

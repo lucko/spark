@@ -20,7 +20,6 @@
 
 package me.lucko.spark.forge.plugin;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -65,11 +64,23 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
 
     protected ForgeSparkPlugin(ForgeSparkMod mod) {
         this.mod = mod;
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("spark-forge-async-worker").build()
-        );
+        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread thread = Executors.defaultThreadFactory().newThread(r);
+            thread.setName("spark-forge-async-worker");
+            thread.setDaemon(true);
+            return thread;
+        });
         this.platform = new SparkPlatform(this);
         this.platform.enable();
+    }
+
+    public void enable() {
+        this.platform.enable();
+    }
+
+    public void disable() {
+        this.platform.disable();
+        this.scheduler.shutdown();
     }
 
     public abstract boolean hasPermission(ICommandSource sender, String permission);

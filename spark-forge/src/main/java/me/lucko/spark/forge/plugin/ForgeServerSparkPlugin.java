@@ -58,16 +58,15 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     public static void register(ForgeSparkMod mod, RegisterCommandsEvent event) {
         ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, ServerLifecycleHooks::getCurrentServer);
+        plugin.enable();
+
+        // register listeners
         MinecraftForge.EVENT_BUS.register(plugin);
 
+        // register commands & permissions
         CommandDispatcher<CommandSource> dispatcher = event.getDispatcher();
         registerCommands(dispatcher, plugin, plugin, "spark");
         PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
-    }
-
-    @SubscribeEvent
-    public void onDisable(FMLServerStoppingEvent event) {
-        this.platform.disable();
     }
 
     private final Supplier<MinecraftServer> server;
@@ -75,6 +74,11 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     public ForgeServerSparkPlugin(ForgeSparkMod mod, Supplier<MinecraftServer> server) {
         super(mod);
         this.server = server;
+    }
+
+    @SubscribeEvent
+    public void onDisable(FMLServerStoppingEvent event) {
+        disable();
     }
 
     @Override

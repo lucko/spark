@@ -36,6 +36,7 @@ import me.lucko.spark.fabric.FabricSparkGameHooks;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.command.CommandSource;
@@ -51,7 +52,17 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
 
     public static void register(FabricSparkMod mod, MinecraftClient client) {
         FabricClientSparkPlugin plugin = new FabricClientSparkPlugin(mod, client);
+        plugin.enable();
+
+        // ensure commands are registered
         plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
+
+        // register shutdown hook
+        ClientLifecycleEvents.CLIENT_STOPPING.register(stoppingClient -> {
+            if (stoppingClient == plugin.minecraft) {
+                plugin.disable();
+            }
+        });
     }
 
     private final MinecraftClient minecraft;
