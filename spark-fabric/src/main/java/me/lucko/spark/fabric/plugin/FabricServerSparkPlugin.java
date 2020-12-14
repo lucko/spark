@@ -73,7 +73,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
     private static String /*Nullable*/ [] processArgs(CommandContext<ServerCommandSource> context) {
         String[] split = context.getInput().split(" ");
-        if (split.length == 0 || !split[0].equals("/spark")) {
+        if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
             return null;
         }
 
@@ -87,7 +87,8 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
             return 0;
         }
 
-        this.platform.executeCommand(new FabricCommandSender(context.getSource().getPlayer(), this), args);
+        CommandOutput source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getMinecraftServer();
+        this.platform.executeCommand(new FabricCommandSender(source, this), args);
         return Command.SINGLE_SUCCESS;
     }
 
