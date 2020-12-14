@@ -25,8 +25,9 @@ import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
-import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.rcon.RconCommandOutput;
 import net.minecraft.text.Text;
 
 import java.util.UUID;
@@ -45,8 +46,10 @@ public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
     public String getName() {
         if (super.delegate instanceof PlayerEntity) {
             return ((PlayerEntity) super.delegate).getGameProfile().getName();
-        } else if (super.delegate instanceof DedicatedServer) {
+        } else if (super.delegate instanceof MinecraftServer) {
             return "Console";
+        } else if (super.delegate instanceof RconCommandOutput) {
+            return "RCON Console";
         } else {
             return "unknown:" + super.delegate.getClass().getSimpleName();
         }

@@ -26,7 +26,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.command.ICommandSource;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.rcon.IServer;
+import net.minecraft.network.rcon.RConConsoleSource;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
@@ -45,8 +46,10 @@ public class ForgeCommandSender extends AbstractCommandSender<ICommandSource> {
     public String getName() {
         if (super.delegate instanceof PlayerEntity) {
             return ((PlayerEntity) super.delegate).getGameProfile().getName();
-        } else if (super.delegate instanceof IServer) {
+        } else if (super.delegate instanceof MinecraftServer) {
             return "Console";
+        } else if (super.delegate instanceof RConConsoleSource) {
+            return "RCON Console";
         } else {
             return "unknown:" + super.delegate.getClass().getSimpleName();
         }
