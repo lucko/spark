@@ -23,6 +23,7 @@ package me.lucko.spark.velocity;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.event.PostOrder;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -37,6 +38,7 @@ import org.checkerframework.checker.optional.qual.MaybePresent;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 @Plugin(
@@ -46,7 +48,7 @@ import java.util.stream.Stream;
         description = "@desc@",
         authors = {"Luck", "sk89q"}
 )
-public class VelocitySparkPlugin implements SparkPlugin, Command {
+public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
 
     private final ProxyServer proxy;
     private final Path configDirectory;
@@ -63,7 +65,7 @@ public class VelocitySparkPlugin implements SparkPlugin, Command {
     public void onEnable(ProxyInitializeEvent e) {
         this.platform = new SparkPlatform(this);
         this.platform.enable();
-        this.proxy.getCommandManager().register(this, "sparkv", "sparkvelocity");
+        this.proxy.getCommandManager().register("sparkv", this, "sparkvelocity");
     }
 
     @Subscribe(order = PostOrder.LAST)
@@ -72,13 +74,13 @@ public class VelocitySparkPlugin implements SparkPlugin, Command {
     }
 
     @Override
-    public void execute(CommandSource sender, String[] args) {
-        this.platform.executeCommand(new VelocityCommandSender(sender), args);
+    public void execute(Invocation inv) {
+        this.platform.executeCommand(new VelocityCommandSender(inv.source()), inv.arguments());
     }
 
     @Override
-    public @MaybePresent List<String> suggest(CommandSource sender, String[] currentArgs) {
-        return this.platform.tabCompleteCommand(new VelocityCommandSender(sender), currentArgs);
+    public List<String> suggest(Invocation inv) {
+        return this.platform.tabCompleteCommand(new VelocityCommandSender(inv.source()), inv.arguments());
     }
 
     @Override

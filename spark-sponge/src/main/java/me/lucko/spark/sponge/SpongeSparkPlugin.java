@@ -113,7 +113,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
         return Stream.concat(
                 this.game.getServer().getOnlinePlayers().stream().filter(player -> player.hasPermission(permission)),
                 Stream.of(this.game.getServer().getConsole())
-        ).map((CommandSource source) -> new SpongeCommandSender(source, this.audienceFactory));
+        ).map(source -> new SpongeCommandSender(source, this.audienceFactory));
     }
 
     @Override
