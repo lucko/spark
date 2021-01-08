@@ -32,6 +32,8 @@ dependencies {
         modImplementation(fabricApi.module(it, '0.25.1+build.416-1.16'))
     }
 
+    include(modImplementation('me.lucko:fabric-permissions-api:0.1-SNAPSHOT'))
+
     shade project(':spark-common')
 }
 

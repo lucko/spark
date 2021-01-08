@@ -26,6 +26,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
@@ -111,7 +113,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public boolean hasPermission(CommandOutput sender, String permission) {
         if (sender instanceof PlayerEntity) {
-            return this.server.getPermissionLevel(((PlayerEntity) sender).getGameProfile()) >= 4;
+            return Permissions.check(((PlayerEntity) sender), permission, 4);
         } else {
             return true;
         }
