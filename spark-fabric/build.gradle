@@ -5,6 +5,11 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
+repositories {
+    maven { url 'https://maven.fabricmc.net/' }
+    mavenLocal()
+}
+
 configurations {
     shade
     compile.extendsFrom shade
@@ -14,7 +19,7 @@ dependencies {
     // https://modmuss50.me/fabric.html
     minecraft 'com.mojang:minecraft:1.16.4'
     mappings 'net.fabricmc:yarn:1.16.4+build.6:v2'
-    modCompile 'net.fabricmc:fabric-loader:0.10.6+build.214'
+    modImplementation 'net.fabricmc:fabric-loader:0.10.6+build.214'
 
     Set<String> apiModules = [
             "fabric-api-base",
@@ -53,6 +58,7 @@ shadowJar {
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
+    relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
     relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'

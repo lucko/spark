@@ -12,6 +12,10 @@ dependencies {
     annotationProcessor 'org.spongepowered:spongeapi:7.3.0'
 }
 
+repositories {
+    maven { url "https://repo.spongepowered.org/maven" }
+}
+
 blossom {
     replaceTokenIn('src/main/java/me/lucko/spark/sponge/SpongeSparkPlugin.java')
     replaceToken '@version@', project.pluginVersion

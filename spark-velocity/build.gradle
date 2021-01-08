@@ -9,6 +9,10 @@ dependencies {
     annotationProcessor 'com.velocitypowered:velocity-api:1.1.0'
 }
 
+repositories {
+    maven { url "https://repo.velocitypowered.com/releases/" }
+}
+
 blossom {
     replaceTokenIn('src/main/java/me/lucko/spark/velocity/VelocitySparkPlugin.java')
     replaceToken '@version@', project.pluginVersion

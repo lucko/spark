@@ -13,6 +13,10 @@ dependencies {
     }
 }
 
+repositories {
+    maven { url "https://papermc.io/repo/repository/maven-public/" }
+}
+
 processResources {
     from(sourceSets.main.resources.srcDirs) {
         expand (

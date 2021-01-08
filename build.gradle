@@ -26,12 +26,8 @@ subprojects {
 
     repositories {
         mavenCentral()
-
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://repo.lucko.me/" }
-        maven { url "https://papermc.io/repo/repository/maven-public/" }
-        maven { url "https://repo.spongepowered.org/maven" }
-        maven { url "https://repo.velocitypowered.com/releases/" }
     }
 
 }
