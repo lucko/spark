@@ -17,6 +17,7 @@ include (
         'spark-velocity',
         'spark-sponge',
         'spark-forge',
+        'spark-forge1122',
         'spark-fabric',
         'spark-universal'
 )

@@ -1,10 +1,10 @@
 plugins {
-    id 'com.google.protobuf' version '0.8.8'
+    id 'com.google.protobuf' version '0.8.14'
 }
 
 dependencies {
     compile 'org.ow2.asm:asm:7.1'
-    compile 'com.google.protobuf:protobuf-java:3.0.0'
+    compile 'com.google.protobuf:protobuf-java:3.14.0'
     compile 'com.squareup.okhttp3:okhttp:3.14.1'
     compile 'com.squareup.okio:okio:1.17.3'
     compile 'org.tukaani:xz:1.8'
@@ -27,6 +27,7 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.0.0'
+        artifact = 'com.google.protobuf:protoc:3.14.0'
+        path = '/opt/homebrew/bin/protoc' // required to support building on osx-aarch64
     }
 }
