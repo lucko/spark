@@ -20,7 +20,6 @@
 
 package me.lucko.spark.forge.plugin;
 
-
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.common.sampler.tick.TickReporter;
@@ -33,10 +32,7 @@ import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
@@ -45,16 +41,15 @@ import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
 
-    public static void register(ForgeSparkMod mod, FMLServerStartingEvent event) {
+    public static ForgeServerSparkPlugin register(ForgeSparkMod mod, FMLServerStartingEvent event) {
         ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
-
-        // register listeners
-        MinecraftForge.EVENT_BUS.register(plugin);
 
         // register commands & permissions
         event.registerServerCommand(plugin);
         PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
+
+        return plugin;
     }
 
     private final MinecraftServer server;
@@ -62,11 +57,6 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
     public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
-    }
-
-    @SubscribeEvent
-    public void onDisable(FMLServerStoppingEvent event) {
-        disable();
     }
 
     @Override

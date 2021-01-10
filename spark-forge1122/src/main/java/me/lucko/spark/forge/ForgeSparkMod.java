@@ -29,6 +29,7 @@ import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
 import java.nio.file.Path;
@@ -42,6 +43,7 @@ import java.nio.file.Path;
 public class ForgeSparkMod {
 
     private Path configDirectory;
+    private ForgeServerSparkPlugin activeServerPlugin;
 
     public String getVersion() {
         return ForgeSparkMod.class.getAnnotation(Mod.class).version();
@@ -53,7 +55,7 @@ public class ForgeSparkMod {
     }
 
     @EventHandler
-    public void init(FMLInitializationEvent e) {
+    public void clientInit(FMLInitializationEvent e) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             ForgeClientSparkPlugin.register(this);
         }
@@ -61,7 +63,15 @@ public class ForgeSparkMod {
 
     @EventHandler
     public void serverInit(FMLServerStartingEvent e) {
-        ForgeServerSparkPlugin.register(this, e);
+        this.activeServerPlugin = ForgeServerSparkPlugin.register(this, e);
+    }
+
+    @EventHandler
+    public void serverStop(FMLServerStoppingEvent e) {
+        if (this.activeServerPlugin != null) {
+            this.activeServerPlugin.disable();
+            this.activeServerPlugin = null;
+        }
     }
 
     public Path getConfigDirectory() {
