@@ -99,7 +99,7 @@ public class RollingAverage {
         }
         sortedSamples.sort(null);
 
-        int rank = (int) Math.ceil((percentile / 100d) * sortedSamples.size());
+        int rank = (int) Math.ceil((percentile / 100d) * (sortedSamples.size() - 1));
         return sortedSamples.get(rank).doubleValue();
     }
 
