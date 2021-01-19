@@ -83,7 +83,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public int run(CommandContext<CommandSource> context) throws CommandSyntaxException {
-        String[] args = processArgs(context);
+        String[] args = processArgs(context, false);
         if (args == null) {
             return 0;
         }
@@ -94,7 +94,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context);
+        String[] args = processArgs(context, true);
         if (args == null) {
             return Suggestions.empty();
         }
@@ -108,8 +108,8 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         });
     }
 
-    private static String /* Nullable */[] processArgs(CommandContext<CommandSource> context) {
-        String[] split = context.getInput().split(" ");
+    private static String [] processArgs(CommandContext<CommandSource> context, boolean tabComplete) {
+        String[] split = context.getInput().split(" ", tabComplete ? -1 : 0);
         if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
             return null;
         }

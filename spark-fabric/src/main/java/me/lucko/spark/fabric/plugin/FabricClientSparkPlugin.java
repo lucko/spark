@@ -41,6 +41,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.command.CommandSource;
 import net.minecraft.server.command.CommandOutput;
+import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -98,12 +99,11 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
     }
 
     public boolean onClientChat(String chat) {
-        String[] split = chat.split(" ");
-        if (split.length == 0 || (!split[0].equals("/sparkc") && !split[0].equals("/sparkclient"))) {
+        String[] args = processArgs(chat, false);
+        if (args == null) {
             return false;
         }
 
-        String[] args = Arrays.copyOfRange(split, 1, split.length);
         this.platform.executeCommand(new FabricCommandSender(this.minecraft.player, this), args);
         this.minecraft.inGameHud.getChatHud().addToMessageHistory(chat);
         return true;
@@ -111,12 +111,10 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] split = context.getInput().split(" ");
-        if (split.length == 0 || (!split[0].equals("/sparkc") && !split[0].equals("/sparkclient"))) {
+        String[] args = processArgs(context.getInput(), true);
+        if (args == null) {
             return Suggestions.empty();
         }
-
-        String[] args = Arrays.copyOfRange(split, 1, split.length);
 
         return CompletableFuture.supplyAsync(() -> {
             for (String suggestion : this.platform.tabCompleteCommand(new FabricCommandSender(this.minecraft.player, this), args)) {
@@ -124,6 +122,15 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
             }
             return builder.build();
         });
+    }
+
+    private static String[] processArgs(String input, boolean tabComplete) {
+        String[] split = input.split(" ", tabComplete ? -1 : 0);
+        if (split.length == 0 || !split[0].equals("/sparkc") && !split[0].equals("/sparkclient")) {
+            return null;
+        }
+
+        return Arrays.copyOfRange(split, 1, split.length);
     }
 
     @Override

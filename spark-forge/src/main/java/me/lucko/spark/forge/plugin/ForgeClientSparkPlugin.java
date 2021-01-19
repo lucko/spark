@@ -37,6 +37,7 @@ import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.play.ClientPlayNetHandler;
+import net.minecraft.command.CommandSource;
 import net.minecraft.command.ICommandSource;
 import net.minecraft.command.ISuggestionProvider;
 import net.minecraftforge.client.event.ClientChatEvent;
@@ -97,27 +98,22 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
 
     @SubscribeEvent
     public void onClientChat(ClientChatEvent event) {
-        String chat = event.getMessage();
-        String[] split = chat.split(" ");
-        if (split.length == 0 || (!split[0].equals("/sparkc") && !split[0].equals("/sparkclient"))) {
+        String[] args = processArgs(event.getMessage(), false);
+        if (args == null) {
             return;
         }
 
-        String[] args = Arrays.copyOfRange(split, 1, split.length);
         this.platform.executeCommand(new ForgeCommandSender(this.minecraft.player, this), args);
-        this.minecraft.ingameGUI.getChatGUI().addToSentMessages(chat);
+        this.minecraft.ingameGUI.getChatGUI().addToSentMessages(event.getMessage());
         event.setCanceled(true);
     }
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ISuggestionProvider> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String chat = context.getInput();
-        String[] split = chat.split(" ");
-        if (split.length == 0 || (!split[0].equals("/sparkc") && !split[0].equals("/sparkclient"))) {
+        String[] args = processArgs(context.getInput(), true);
+        if (args == null) {
             return Suggestions.empty();
         }
-
-        String[] args = Arrays.copyOfRange(split, 1, split.length);
 
         return CompletableFuture.supplyAsync(() -> {
             for (String suggestion : this.platform.tabCompleteCommand(new ForgeCommandSender(this.minecraft.player, this), args)) {
@@ -125,6 +121,15 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
             }
             return builder.build();
         });
+    }
+
+    private static String[] processArgs(String input, boolean tabComplete) {
+        String[] split = input.split(" ", tabComplete ? -1 : 0);
+        if (split.length == 0 || !split[0].equals("/sparkc") && !split[0].equals("/sparkclient")) {
+            return null;
+        }
+
+        return Arrays.copyOfRange(split, 1, split.length);
     }
 
     @Override

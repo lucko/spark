@@ -73,18 +73,9 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
         this.server = server;
     }
 
-    private static String /*Nullable*/ [] processArgs(CommandContext<ServerCommandSource> context) {
-        String[] split = context.getInput().split(" ");
-        if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
-            return null;
-        }
-
-        return Arrays.copyOfRange(split, 1, split.length);
-    }
-
     @Override
     public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        String[] args = processArgs(context);
+        String[] args = processArgs(context, false);
         if (args == null) {
             return 0;
         }
@@ -96,18 +87,27 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context);
+        String[] args = processArgs(context, true);
         if (args == null) {
             return Suggestions.empty();
         }
-        ServerPlayerEntity player = context.getSource().getPlayer();
 
+        ServerPlayerEntity player = context.getSource().getPlayer();
         return CompletableFuture.supplyAsync(() -> {
             for (String suggestion : this.platform.tabCompleteCommand(new FabricCommandSender(player, this), args)) {
                 builder.suggest(suggestion);
             }
             return builder.build();
         });
+    }
+
+    private static String[] processArgs(CommandContext<ServerCommandSource> context, boolean tabComplete) {
+        String[] split = context.getInput().split(" ", tabComplete ? -1 : 0);
+        if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
+            return null;
+        }
+
+        return Arrays.copyOfRange(split, 1, split.length);
     }
 
     @Override
