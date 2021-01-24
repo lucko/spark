@@ -23,11 +23,11 @@ public class NukkitPlatformInfo extends AbstractPlatformInfo {
 
     @Override
     public String getVersion() {
-        return this.server.getVersion();
+        return this.server.getNukkitVersion();
     }
 
     @Override
     public String getMinecraftVersion() {
-        return ProtocolInfo.MINECRAFT_VERSION;
+        return this.server.getVersion();
     }
 }
