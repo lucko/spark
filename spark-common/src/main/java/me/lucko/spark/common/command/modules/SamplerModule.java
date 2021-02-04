@@ -208,7 +208,7 @@ public class SamplerModule implements CommandModule {
 
                     resp.broadcastPrefixed(text("Profiler now active!", GOLD));
                     if (timeoutSeconds == -1) {
-                        resp.broadcastPrefixed(text("Use '/" + platform.getPlugin().getCommandName() + " sampler --stop' to stop profiling and upload the results."));
+                        resp.broadcastPrefixed(text("Use '/" + platform.getPlugin().getCommandName() + " profiler --stop' to stop profiling and upload the results."));
                     } else {
                         resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
                     }
