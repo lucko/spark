@@ -1,0 +1,9 @@
+name: spark
+version: ${pluginVersion}
+description: ${pluginDescription}
+authors: [Luck, sk89q]
+main: me.lucko.spark.nukkit.NukkitSparkPlugin
+api: [1.0.5]
+commands:
+  spark:
+    description: Main plugin command

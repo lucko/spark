@@ -19,5 +19,6 @@ include (
         'spark-forge',
         'spark-forge1122',
         'spark-fabric',
+        'spark-nukkit',
         'spark-universal'
 )
