@@ -163,10 +163,20 @@ public class SparkPlatform {
         return this.serverNormalOperationStartTime;
     }
 
+    private List<Command> getAvailableCommands(CommandSender sender) {
+        if (sender.hasPermission("spark")) {
+            return this.commands;
+        }
+        return this.commands.stream()
+                .filter(c -> sender.hasPermission("spark." + c.primaryAlias()))
+                .collect(Collectors.toList());
+    }
+
     public void executeCommand(CommandSender sender, String[] args) {
         CommandResponseHandler resp = new CommandResponseHandler(this, sender);
+        List<Command> commands = getAvailableCommands(sender);
 
-        if (!sender.hasPermission("spark")) {
+        if (commands.isEmpty()) {
             resp.replyPrefixed(text("You do not have permission to use this command.", RED));
             return;
         }
@@ -197,7 +207,7 @@ public class SparkPlatform {
         ArrayList<String> rawArgs = new ArrayList<>(Arrays.asList(args));
         String alias = rawArgs.remove(0).toLowerCase();
 
-        for (Command command : this.commands) {
+        for (Command command : commands) {
             if (command.aliases().contains(alias)) {
                 try {
                     command.executor().execute(this, sender, resp, new Arguments(rawArgs));
@@ -208,25 +218,29 @@ public class SparkPlatform {
             }
         }
 
-        sendUsage(resp);
+        sendUsage(commands, resp);
     }
 
     public List<String> tabCompleteCommand(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("spark")) {
+        List<Command> commands = getAvailableCommands(sender);
+        if (commands.isEmpty()) {
             return Collections.emptyList();
         }
 
         List<String> arguments = new ArrayList<>(Arrays.asList(args));
 
         if (args.length <= 1) {
-            List<String> mainCommands = this.commands.stream().map(c -> c.aliases().get(0)).collect(Collectors.toList());
+            List<String> mainCommands = commands.stream()
+                    .map(Command::primaryAlias)
+                    .collect(Collectors.toList());
+
             return TabCompleter.create()
                     .at(0, CompletionSupplier.startsWith(mainCommands))
                     .complete(arguments);
         }
 
         String alias = arguments.remove(0);
-        for (Command command : this.commands) {
+        for (Command command : commands) {
             if (command.aliases().contains(alias)) {
                 return command.tabCompleter().completions(this, sender, arguments);
             }
@@ -235,15 +249,15 @@ public class SparkPlatform {
         return Collections.emptyList();
     }
 
-    private void sendUsage(CommandResponseHandler sender) {
+    private void sendUsage(List<Command> commands, CommandResponseHandler sender) {
         sender.replyPrefixed(text()
                 .append(text("spark", WHITE))
                 .append(space())
                 .append(text("v" + getPlugin().getVersion(), GRAY))
                 .build()
         );
-        for (Command command : this.commands) {
-            String usage = "/" + getPlugin().getCommandName() + " " + command.aliases().get(0);
+        for (Command command : commands) {
+            String usage = "/" + getPlugin().getCommandName() + " " + command.primaryAlias();
             ClickEvent clickEvent = ClickEvent.suggestCommand(usage);
             sender.reply(text()
                     .append(text(">", GOLD, BOLD))

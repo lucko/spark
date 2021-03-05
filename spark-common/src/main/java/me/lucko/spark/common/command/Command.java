@@ -62,6 +62,10 @@ public class Command {
         return this.tabCompleter;
     }
 
+    public String primaryAlias() {
+        return this.aliases.get(0);
+    }
+
     public static final class Builder {
         private final ImmutableList.Builder<String> aliases = ImmutableList.builder();
         private final ImmutableList.Builder<ArgumentInfo> arguments = ImmutableList.builder();
