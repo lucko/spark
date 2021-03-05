@@ -4,7 +4,11 @@ dependencies {
         exclude(module: 'adventure-api')
         exclude(module: 'adventure-text-serializer-gson')
     }
-    compileOnly 'net.md-5:bungeecord-api:1.16-R0.4-SNAPSHOT'
+    compileOnly 'io.github.waterfallmc:waterfall-api:1.16-R0.5-SNAPSHOT'
+}
+
+repositories {
+    maven { url "https://papermc.io/repo/repository/maven-public/" }
 }
 
 processResources {
