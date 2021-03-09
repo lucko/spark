@@ -20,6 +20,9 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.common.sampler.async.AsyncProfilerAccess;
+import me.lucko.spark.common.sampler.async.AsyncSampler;
+import me.lucko.spark.common.sampler.java.JavaSampler;
 import me.lucko.spark.common.sampler.tick.TickHook;
 
 import java.util.concurrent.TimeUnit;
@@ -86,9 +89,13 @@ public class SamplerBuilder {
 
         int intervalMicros = (int) (this.samplingInterval * 1000d);
         if (this.ticksOver == -1 || this.tickHook == null) {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
+            if (this.timeout == -1 && !(this.threadDumper instanceof ThreadDumper.Regex) && AsyncProfilerAccess.INSTANCE.isSupported()) {
+                sampler = new AsyncSampler(intervalMicros, this.threadDumper, this.threadGrouper);
+            } else {
+                sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
+            }
         } else {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
+            sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
         }
 
         sampler.start();

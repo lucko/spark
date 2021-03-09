@@ -55,13 +55,13 @@ import static net.kyori.adventure.text.format.NamedTextColor.*;
 public class SamplerModule implements CommandModule {
     private static final MediaType SPARK_SAMPLER_MEDIA_TYPE = MediaType.parse("application/x-spark-sampler");
 
-    /** The WarmRoast instance currently running, if any */
+    /** The sampler instance currently running, if any */
     private Sampler activeSampler = null;
 
     @Override
     public void close() {
         if (this.activeSampler != null) {
-            this.activeSampler.cancel();
+            this.activeSampler.stop();
             this.activeSampler = null;
         }
     }
@@ -118,7 +118,7 @@ public class SamplerModule implements CommandModule {
                         if (this.activeSampler == null) {
                             resp.replyPrefixed(text("There isn't an active sampling task running."));
                         } else {
-                            this.activeSampler.cancel();
+                            this.activeSampler.stop();
                             resp.broadcastPrefixed(text("The active sampling operation has been stopped! Uploading results..."));
                             ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
                             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
@@ -213,7 +213,7 @@ public class SamplerModule implements CommandModule {
                         resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
                     }
 
-                    CompletableFuture<Sampler> future = this.activeSampler.getFuture();
+                    CompletableFuture<? extends Sampler> future = this.activeSampler.getFuture();
 
                     // send message if profiling fails
                     future.whenCompleteAsync((s, throwable) -> {

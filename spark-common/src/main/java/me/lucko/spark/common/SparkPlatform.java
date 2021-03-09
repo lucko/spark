@@ -211,7 +211,7 @@ public class SparkPlatform {
             if (command.aliases().contains(alias)) {
                 try {
                     command.executor().execute(this, sender, resp, new Arguments(rawArgs));
-                } catch (IllegalArgumentException e) {
+                } catch (Arguments.ParseException e) {
                     resp.replyPrefixed(text(e.getMessage(), RED));
                 }
                 return;

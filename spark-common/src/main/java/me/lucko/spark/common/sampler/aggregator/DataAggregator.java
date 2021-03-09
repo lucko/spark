@@ -39,13 +39,6 @@ public interface DataAggregator {
     Map<String, ThreadNode> getData();
 
     /**
-     * Inserts sampling data into this aggregator
-     *
-     * @param threadInfo the thread info
-     */
-    void insertData(ThreadInfo threadInfo);
-
-    /**
      * Gets metadata about the data aggregator instance.
      */
     SamplerMetadata.DataAggregator getMetadata();

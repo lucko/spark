@@ -3,19 +3,20 @@ plugins {
 }
 
 dependencies {
+    compile 'com.github.jvm-profiling-tools:async-profiler:v2.0-rc'
     compile 'org.ow2.asm:asm:7.1'
     compile 'com.google.protobuf:protobuf-java:3.14.0'
     compile 'com.squareup.okhttp3:okhttp:3.14.1'
     compile 'com.squareup.okio:okio:1.17.3'
     compile 'org.tukaani:xz:1.8'
-    compile('net.kyori:adventure-api:4.1.1') {
+    compile('net.kyori:adventure-api:4.7.0') {
         exclude(module: 'checker-qual')
     }
-    compile('net.kyori:adventure-text-serializer-gson:4.1.1') {
+    compile('net.kyori:adventure-text-serializer-gson:4.7.0') {
         exclude(module: 'adventure-api')
         exclude(module: 'gson')
     }
-    compile('net.kyori:adventure-text-serializer-legacy:4.1.1') {
+    compile('net.kyori:adventure-text-serializer-legacy:4.7.0') {
         exclude(module: 'adventure-api')
     }
     compile('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
@@ -23,6 +24,12 @@ dependencies {
     }
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        include 'libasyncProfiler.so'
+    }
 }
 
 protobuf {
