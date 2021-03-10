@@ -62,7 +62,7 @@ import static net.kyori.adventure.text.format.TextDecoration.*;
 public class SparkPlatform {
 
     /** The URL of the viewer frontend */
-    public static final String VIEWER_URL = "https://spark.lucko.me/#";
+    public static final String VIEWER_URL = "https://spark.lucko.me/";
     /** The shared okhttp client */
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
     /** The bytebin instance used by the platform */
