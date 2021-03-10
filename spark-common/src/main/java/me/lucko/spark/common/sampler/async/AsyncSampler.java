@@ -20,16 +20,16 @@
 
 package me.lucko.spark.common.sampler.async;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.PeekingIterator;
-
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.async.jfr.ClassRef;
+import me.lucko.spark.common.sampler.async.jfr.JfrReader;
+import me.lucko.spark.common.sampler.async.jfr.MethodRef;
+import me.lucko.spark.common.sampler.async.jfr.Sample;
+import me.lucko.spark.common.sampler.async.jfr.StackTrace;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkProtos;
@@ -37,15 +37,16 @@ import me.lucko.spark.proto.SparkProtos;
 import one.profiler.AsyncProfiler;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.function.Predicate;
 
 /**
  * A sampler implementation using async-profiler.
@@ -59,6 +60,8 @@ public class AsyncSampler implements Sampler {
     private final AsyncDataAggregator dataAggregator;
     /** Flag to mark if the output has been completed */
     private boolean outputComplete = false;
+    /** The temporary output file */
+    private Path outputFile;
 
     /** The interval to wait between sampling, in microseconds */
     private final int interval;
@@ -111,7 +114,14 @@ public class AsyncSampler implements Sampler {
     public void start() {
         this.startTime = System.currentTimeMillis();
 
-        String command = "start,event=cpu,interval=" + this.interval + "us,threads";
+        try {
+            this.outputFile = Files.createTempFile("spark-profile-", ".jfr.tmp");
+            this.outputFile.toFile().deleteOnExit();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create temporary output file", e);
+        }
+
+        String command = "start,event=cpu,interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
         if (this.threadDumper instanceof ThreadDumper.Specific) {
             command += ",filter";
         }
@@ -172,16 +182,6 @@ public class AsyncSampler implements Sampler {
         }
         this.outputComplete = true;
 
-        String response = execute("traces,sig,ann");
-        Splitter splitter = Splitter.on('\n');
-        PeekingIterator<String> iterator = Iterators.peekingIterator(splitter.split(response).iterator());
-
-        // skip over execution profile header
-        expectLine(iterator, s -> s.contains("Execution profile"));
-        while (!iterator.peek().startsWith("---")) {
-            iterator.next();
-        }
-
         Predicate<String> threadFilter;
         if (this.threadDumper instanceof ThreadDumper.Specific) {
             ThreadDumper.Specific threadDumper = (ThreadDumper.Specific) this.threadDumper;
@@ -190,114 +190,90 @@ public class AsyncSampler implements Sampler {
             threadFilter = n -> true;
         }
 
-        // Read elements from the iterator until EOF
-        while (iterator.hasNext() && !iterator.peek().trim().isEmpty()) {
-            ProfileSegment elem = parseSegment(iterator);
-            if (elem != null && threadFilter.apply(elem.getThreadName())) {
-                this.dataAggregator.insertData(elem);
-            }
+        // read the jfr file produced by async-profiler
+        try (JfrReader reader = new JfrReader(this.outputFile)) {
+            readSegments(reader, threadFilter);
+        } catch (IOException e) {
+            throw new RuntimeException("Read error", e);
+        }
 
-            if (iterator.hasNext()) {
-                iterator.next();
-            }
+        // delete the output file after reading
+        try {
+            Files.deleteIfExists(this.outputFile);
+        } catch (IOException e) {
+            // ignore
         }
     }
 
-    // Matches the segment header
-    // e.g. '--- 13127066990 ns (11.47%), 3220 samples'
-    private static final Pattern SEGMENT_HEADER = Pattern.compile("^--- (\\d+) ns \\(.+%\\), \\d+ samples?$");
+    private void readSegments(JfrReader reader, Predicate<String> threadFilter) {
+        List<Sample> samples = reader.samples;
+        for (int i = 0; i < samples.size(); i++) {
+            Sample sample = samples.get(i);
 
-    // Matches a stack entry enclosed under an segment
-    // e.g. '  [ 1] jdk.internal.misc.Unsafe.park(ZJ)V_[j]'
-    private static final Pattern SEGMENT_STACK_ENTRY = Pattern.compile("^ {2}\\[ *\\d+] (.+)$");
-
-    // Matches a thread label footer (the last stack element in a segment)
-    // e.g. '  [10] [Server thread tid=2504]'
-    private static final Pattern SEGMENT_THREAD_LABEL = Pattern.compile("^ {2}\\[ *\\d+] \\[(.+) tid=(\\d+)]$");
-
-    // Naively matches a Java stack element
-    // e.g. 'jdk.internal.misc.Unsafe.park(ZJ)V_[j]'
-    private static final Pattern NAIVE_JAVA_STACK_ELEMENT = Pattern.compile("^(.*)\\.(.*)(\\(.*)_\\[j]$");
-
-    /**
-     * Parse a single profiled segment from the iterator
-     *
-     * @param iterator the iterator to read from
-     * @return the parsed element
-     */
-    private static ProfileSegment parseSegment(PeekingIterator<String> iterator) {
-        // read & parse the header line
-        String header = iterator.next();
-        Matcher matcher = SEGMENT_HEADER.matcher(header);
-        if (!matcher.matches()) {
-            throw new IllegalStateException("Unable to read header: " + header);
-        }
-        long time = TimeUnit.NANOSECONDS.toMicros(Long.parseLong(matcher.group(1)));
-
-        // parse the element entries.
-        // elements from 0 to n-1 are part of thr stack
-        // the element at n (the end) is a footer to denote the id/name of the thread
-        List<AsyncStackTraceElement> stack = new ArrayList<>();
-        String threadName;
-        int threadId;
-
-        while (true) {
-            // attempt to parse the thread id/name footer
-            // if found, break from the loop
-            Matcher footerMatcher = SEGMENT_THREAD_LABEL.matcher(iterator.peek());
-            if (footerMatcher.matches()) {
-                threadName = footerMatcher.group(1);
-                threadId = Integer.parseInt(footerMatcher.group(2));
-                iterator.next();
-                break;
+            long duration;
+            if (i == 0) {
+                // we don't really know the duration of the first sample, so just use the sampling
+                // interval
+                duration = this.interval;
+            } else {
+                // calculate the duration of the sample by calculating the time elapsed since the
+                // previous sample
+                duration = TimeUnit.NANOSECONDS.toMicros(sample.time - samples.get(i - 1).time);
             }
 
-            // otherwise, try to parse a stack entry
-            Matcher stackEntryMatcher = SEGMENT_STACK_ENTRY.matcher(iterator.peek());
-            if (!stackEntryMatcher.matches()) {
-                if (iterator.peek().trim().isEmpty()) {
-                    return null;
-                }
-                throw new IllegalStateException("Unable to read stack entry: " + iterator.peek());
+            String threadName = reader.threads.get(sample.tid);
+            if (!threadFilter.test(threadName)) {
+                continue;
             }
-            stack.add(readStackElement(stackEntryMatcher.group(1)));
-            iterator.next();
-        }
 
-        return new ProfileSegment(
-                threadId,
-                threadName,
-                stack.toArray(new AsyncStackTraceElement[0]),
-                time
-        );
+            // parse the segment and give it to the data aggregator
+            ProfileSegment segment = parseSegment(reader, sample, threadName, duration);
+            this.dataAggregator.insertData(segment);
+        }
     }
 
-    /**
-     * Parse a stack trace element from the given string
-     *
-     * @param element the string
-     * @return the parsed stack track element
-     */
-    private static AsyncStackTraceElement readStackElement(String element) {
-        Matcher matcher = NAIVE_JAVA_STACK_ELEMENT.matcher(element);
-        if (matcher.matches()) {
-            return new AsyncStackTraceElement(
-                    matcher.group(1),
-                    matcher.group(2),
-                    matcher.group(3)
+    private static ProfileSegment parseSegment(JfrReader reader, Sample sample, String threadName, long duration) {
+        StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
+        int len = stackTrace.methods.length;
+
+        AsyncStackTraceElement[] stack = new AsyncStackTraceElement[len];
+        for (int i = 0; i < len; i++) {
+            stack[i] = parseStackFrame(reader, stackTrace.methods[i]);
+        }
+
+        return new ProfileSegment(sample.tid, threadName, stack, duration);
+    }
+
+    private static AsyncStackTraceElement parseStackFrame(JfrReader reader, long methodId) {
+        AsyncStackTraceElement result = reader.stackFrames.get(methodId);
+        if (result != null) {
+            return result;
+        }
+
+        MethodRef methodRef = reader.methods.get(methodId);
+        ClassRef classRef = reader.classes.get(methodRef.cls);
+
+        byte[] className = reader.symbols.get(classRef.name);
+        byte[] methodName = reader.symbols.get(methodRef.name);
+
+        if (className == null || className.length == 0) {
+            // native call
+            result = new AsyncStackTraceElement(
+                    "native",
+                    new String(methodName, StandardCharsets.UTF_8),
+                    null
             );
         } else {
-            return new AsyncStackTraceElement("native", element, null);
+            // java method
+            byte[] methodDesc = reader.symbols.get(methodRef.sig);
+            result = new AsyncStackTraceElement(
+                    new String(className, StandardCharsets.UTF_8).replace('/', '.'),
+                    new String(methodName, StandardCharsets.UTF_8),
+                    new String(methodDesc, StandardCharsets.UTF_8)
+            );
         }
-    }
 
-    private static void expectLine(Iterator<String> it, Predicate<String> test) {
-        if (!it.hasNext()) {
-            throw new IllegalStateException("Unexpected EOF");
-        }
-        String line = it.next();
-        if (!test.apply(line)) {
-            throw new IllegalStateException("Unexpected line");
-        }
+        reader.stackFrames.put(methodId, result);
+        return result;
     }
 }
