@@ -76,17 +76,38 @@ public interface ThreadDumper {
      */
     final class Specific implements ThreadDumper {
         private final long[] ids;
+        private Set<Thread> threads;
+        private Set<String> threadNamesLowerCase;
 
         public Specific(long[] ids) {
             this.ids = ids;
         }
 
         public Specific(Set<String> names) {
-            Set<String> namesLower = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
+            this.threadNamesLowerCase = names.stream().map(String::toLowerCase).collect(Collectors.toSet());
             this.ids = new ThreadFinder().getThreads()
-                    .filter(t -> namesLower.contains(t.getName().toLowerCase()))
+                    .filter(t -> this.threadNamesLowerCase.contains(t.getName().toLowerCase()))
                     .mapToLong(Thread::getId)
                     .toArray();
+            Arrays.sort(this.ids);
+        }
+
+        public Set<Thread> getThreads() {
+            if (this.threads == null) {
+                this.threads = new ThreadFinder().getThreads()
+                        .filter(t -> Arrays.binarySearch(this.ids, t.getId()) >= 0)
+                        .collect(Collectors.toSet());
+            }
+            return this.threads;
+        }
+
+        public Set<String> getThreadNames() {
+            if (this.threadNamesLowerCase == null) {
+                this.threadNamesLowerCase = getThreads().stream()
+                        .map(t -> t.getName().toLowerCase())
+                        .collect(Collectors.toSet());
+            }
+            return this.threadNamesLowerCase;
         }
 
         @Override

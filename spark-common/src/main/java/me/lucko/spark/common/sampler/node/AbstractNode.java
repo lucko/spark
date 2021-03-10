@@ -21,6 +21,8 @@
 
 package me.lucko.spark.common.sampler.node;
 
+import me.lucko.spark.common.sampler.async.AsyncStackTraceElement;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -106,6 +108,34 @@ public abstract class AbstractNode {
 
         // resolve a child element within the structure for the element at pointer
         AbstractNode child = resolveChild(new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getLineNumber(), parentLineNumber));
+        // call the log method on the found child, with an incremented offset.
+        child.log(elements, offset + 1, time);
+    }
+
+    public void log(AsyncStackTraceElement[] elements, long time) {
+        log(elements, 0, time);
+    }
+
+    private void log(AsyncStackTraceElement[] elements, int offset, long time) {
+        this.totalTime.add(time);
+
+        if (offset >= MAX_STACK_DEPTH) {
+            return;
+        }
+
+        if (elements.length - offset == 0) {
+            return;
+        }
+
+        // the first element in the array is the top of the call stack, and the last is the root
+        // offset starts at 0.
+
+        // pointer is determined by subtracting the offset from the index of the last element
+        int pointer = (elements.length - 1) - offset;
+        AsyncStackTraceElement element = elements[pointer];
+
+        // resolve a child element within the structure for the element at pointer
+        AbstractNode child = resolveChild(new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getMethodDescription()));
         // call the log method on the found child, with an incremented offset.
         child.log(elements, offset + 1, time);
     }

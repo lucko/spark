@@ -18,9 +18,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler.aggregator;
+package me.lucko.spark.common.sampler.java;
 
 import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.sampler.tick.TickHook;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
@@ -36,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * Implementation of {@link DataAggregator} which supports only including sampling data from "ticks"
  * which exceed a certain threshold in duration.
  */
-public class TickedDataAggregator extends AbstractDataAggregator {
+public class TickedDataAggregator extends JavaDataAggregator {
 
     /** Used to monitor the current "tick" of the server */
     private final TickHook tickHook;
@@ -107,15 +108,7 @@ public class TickedDataAggregator extends AbstractDataAggregator {
             pushCurrentTick();
         }
 
-        // wait for all pending data to be inserted
-        this.workerPool.shutdown();
-        try {
-            this.workerPool.awaitTermination(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return this.threadData;
+        return super.getData();
     }
 
     private final class TickList implements Runnable {

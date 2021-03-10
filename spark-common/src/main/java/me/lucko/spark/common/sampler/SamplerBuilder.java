@@ -20,6 +20,9 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.common.sampler.async.AsyncProfilerAccess;
+import me.lucko.spark.common.sampler.async.AsyncSampler;
+import me.lucko.spark.common.sampler.java.JavaSampler;
 import me.lucko.spark.common.sampler.tick.TickHook;
 
 import java.util.concurrent.TimeUnit;
@@ -32,6 +35,7 @@ public class SamplerBuilder {
     private double samplingInterval = 4; // milliseconds
     private boolean ignoreSleeping = false;
     private boolean ignoreNative = false;
+    private boolean useAsyncProfiler = true;
     private long timeout = -1;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
     private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;
@@ -81,14 +85,23 @@ public class SamplerBuilder {
         return this;
     }
 
+    public SamplerBuilder forceJavaSampler(boolean forceJavaSampler) {
+        this.useAsyncProfiler = !forceJavaSampler;
+        return this;
+    }
+
     public Sampler start() {
         Sampler sampler;
 
         int intervalMicros = (int) (this.samplingInterval * 1000d);
         if (this.ticksOver == -1 || this.tickHook == null) {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
+            if (this.useAsyncProfiler && this.timeout == -1 && !(this.threadDumper instanceof ThreadDumper.Regex) && AsyncProfilerAccess.INSTANCE.isSupported()) {
+                sampler = new AsyncSampler(intervalMicros, this.threadDumper, this.threadGrouper);
+            } else {
+                sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
+            }
         } else {
-            sampler = new Sampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
+            sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
         }
 
         sampler.start();

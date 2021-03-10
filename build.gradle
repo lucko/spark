@@ -1,6 +1,6 @@
 allprojects {
     group = 'me.lucko'
-    version = '1.4-SNAPSHOT'
+    version = '1.5-SNAPSHOT'
 
     configurations {
         compileClasspath // Fabric-loom needs this for remap jar for some reason
@@ -13,7 +13,7 @@ subprojects {
     apply plugin: 'idea'
 
     ext {
-        pluginVersion = '1.4.3'
+        pluginVersion = '1.5.0'
         pluginDescription = 'spark is a performance profiling plugin based on sk89q\'s WarmRoast profiler'
     }
 
@@ -28,6 +28,7 @@ subprojects {
         mavenCentral()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
         maven { url "https://repo.lucko.me/" }
+        maven { url "https://jitpack.io" }
     }
 
 }

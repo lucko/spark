@@ -51,7 +51,7 @@ public class Arguments {
 
             if (flag == null || matches) {
                 if (!matches) {
-                    throw new IllegalArgumentException("Expected flag at position " + i + " but got '" + arg + "' instead!");
+                    throw new ParseException("Expected flag at position " + i + " but got '" + arg + "' instead!");
                 }
 
                 // store existing value, if present
@@ -83,7 +83,7 @@ public class Arguments {
             try {
                 return Math.abs(Integer.parseInt(it.next()));
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid input for '" + key + "' argument. Please specify a number!");
+                throw new ParseException("Invalid input for '" + key + "' argument. Please specify a number!");
             }
         }
         return -1; // undefined
@@ -95,7 +95,7 @@ public class Arguments {
             try {
                 return Math.abs(Double.parseDouble(it.next()));
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid input for '" + key + "' argument. Please specify a number!");
+                throw new ParseException("Invalid input for '" + key + "' argument. Please specify a number!");
             }
         }
         return -1; // undefined
@@ -107,5 +107,22 @@ public class Arguments {
 
     public boolean boolFlag(String key) {
         return this.parsedArgs.containsKey(key);
+    }
+
+    public static final class ParseException extends IllegalArgumentException {
+        public ParseException() {
+        }
+
+        public ParseException(String s) {
+            super(s);
+        }
+
+        public ParseException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public ParseException(Throwable cause) {
+            super(cause);
+        }
     }
 }

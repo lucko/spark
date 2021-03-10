@@ -18,23 +18,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler.aggregator;
+package me.lucko.spark.common.sampler.async;
 
 import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.aggregator.AbstractDataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
-import java.lang.management.ThreadInfo;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-
 /**
- * Basic implementation of {@link DataAggregator}.
+ * Data aggregator for {@link AsyncSampler}.
  */
-public class SimpleDataAggregator extends AbstractDataAggregator {
-    public SimpleDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, boolean ignoreNative) {
-        super(workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
+public class AsyncDataAggregator extends AbstractDataAggregator {
+    protected AsyncDataAggregator(ThreadGrouper threadGrouper) {
+        super(threadGrouper);
     }
 
     @Override
@@ -45,21 +41,13 @@ public class SimpleDataAggregator extends AbstractDataAggregator {
                 .build();
     }
 
-    @Override
-    public void insertData(ThreadInfo threadInfo) {
-        writeData(threadInfo);
-    }
-
-    @Override
-    public Map<String, ThreadNode> getData() {
-        // wait for all pending data to be inserted
-        this.workerPool.shutdown();
+    public void insertData(ProfileSegment element) {
         try {
-            this.workerPool.awaitTermination(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
+            ThreadNode node = getNode(this.threadGrouper.getGroup(element.getNativeThreadId(), element.getThreadName()));
+            node.log(element.getStackTrace(), element.getTime());
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return this.threadData;
     }
+
 }

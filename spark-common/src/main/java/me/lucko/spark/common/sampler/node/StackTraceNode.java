@@ -24,6 +24,7 @@ package me.lucko.spark.common.sampler.node;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkProtos;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 /**
@@ -73,9 +74,13 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
             proto.setParentLineNumber(this.description.parentLineNumber);
         }
 
-        mergeMode.getMethodDisambiguator().disambiguate(this)
-                .map(MethodDisambiguator.MethodDescription::getDesc)
-                .ifPresent(proto::setMethodDesc);
+        if (this.description.methodDescription != null) {
+            proto.setMethodDesc(this.description.methodDescription);
+        } else {
+            mergeMode.getMethodDisambiguator().disambiguate(this)
+                    .map(MethodDisambiguator.MethodDescription::getDesc)
+                    .ifPresent(proto::setMethodDesc);
+        }
 
         for (StackTraceNode child : exportChildren(mergeMode)) {
             proto.addChildren(child.toProto(mergeMode));
@@ -104,17 +109,46 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
     public static final class Description implements Comparable<Description> {
         private final String className;
         private final String methodName;
+
+        // async-profiler
+        private final String methodDescription;
+
+        // Java
         private final int lineNumber;
         private final int parentLineNumber;
 
         private final int hash;
 
+        // Constructor used by the Java sampler
         public Description(String className, String methodName, int lineNumber, int parentLineNumber) {
             this.className = className;
             this.methodName = methodName;
+            this.methodDescription = null;
             this.lineNumber = lineNumber;
             this.parentLineNumber = parentLineNumber;
             this.hash = Objects.hash(this.className, this.methodName, this.lineNumber, this.parentLineNumber);
+        }
+
+        // Constructor used by the async-profiler sampler
+        public Description(String className, String methodName, String methodDescription) {
+            this.className = className;
+            this.methodName = methodName;
+            this.methodDescription = methodDescription;
+            this.lineNumber = StackTraceNode.NULL_LINE_NUMBER;
+            this.parentLineNumber = StackTraceNode.NULL_LINE_NUMBER;
+            this.hash = Objects.hash(this.className, this.methodName, this.methodDescription);
+        }
+
+        private static <T extends Comparable<T>> int nullCompare(T a, T b) {
+            if (a == null && b == null) {
+                return 0;
+            } else if (a == null) {
+                return -1;
+            } else if (b == null) {
+                return 1;
+            } else {
+                return a.compareTo(b);
+            }
         }
 
         @Override
@@ -133,6 +167,18 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
                 return i;
             }
 
+            i = nullCompare(this.methodDescription, that.methodDescription);
+            if (i != 0) {
+                return i;
+            }
+
+            if (this.methodDescription != null && that.methodDescription != null) {
+                i = this.methodDescription.compareTo(that.methodDescription);
+                if (i != 0) {
+                    return i;
+                }
+            }
+
             i = Integer.compare(this.lineNumber, that.lineNumber);
             if (i != 0) {
                 return i;
@@ -146,10 +192,12 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Description description = (Description) o;
-            return this.lineNumber == description.lineNumber &&
+            return this.hash == description.hash &&
+                    this.lineNumber == description.lineNumber &&
                     this.parentLineNumber == description.parentLineNumber &&
                     this.className.equals(description.className) &&
-                    this.methodName.equals(description.methodName);
+                    this.methodName.equals(description.methodName) &&
+                    Objects.equals(this.methodDescription, description.methodDescription);
         }
 
         @Override
