@@ -35,6 +35,6 @@ processResources {
 protobuf {
     protoc {
         artifact = 'com.google.protobuf:protoc:3.14.0'
-        path = '/opt/homebrew/bin/protoc' // required to support building on osx-aarch64
+        //path = '/opt/homebrew/bin/protoc' // required to support building on osx-aarch64
     }
 }
