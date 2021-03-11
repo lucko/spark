@@ -56,13 +56,11 @@ public interface SparkPlugin {
     String getCommandName();
 
     /**
-     * Gets a {@link Stream} of the {@link CommandSender}s on the platform with the given
-     * permission.
+     * Gets a {@link Stream} of the {@link CommandSender}s on the platform.
      *
-     * @param permission the permission
      * @return the stream of command senders
      */
-    Stream<? extends CommandSender> getSendersWithPermission(String permission);
+    Stream<? extends CommandSender> getCommandSenders();
 
     /**
      * Executes the given {@link Runnable} asynchronously using the plugins scheduler.

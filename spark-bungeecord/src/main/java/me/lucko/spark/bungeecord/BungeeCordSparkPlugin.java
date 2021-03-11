@@ -65,9 +65,9 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
     }
 
     @Override
-    public Stream<BungeeCordCommandSender> getSendersWithPermission(String permission) {
+    public Stream<BungeeCordCommandSender> getCommandSenders() {
         return Stream.concat(
-                getProxy().getPlayers().stream().filter(player -> player.hasPermission(permission)),
+                getProxy().getPlayers().stream(),
                 Stream.of(getProxy().getConsole())
         ).map(sender -> new BungeeCordCommandSender(sender, this.audienceFactory));
     }

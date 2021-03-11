@@ -46,10 +46,15 @@ public class CommandResponseHandler {
 
     private final SparkPlatform platform;
     private final CommandSender sender;
+    private String commandPrimaryAlias;
 
     public CommandResponseHandler(SparkPlatform platform, CommandSender sender) {
         this.platform = platform;
         this.sender = sender;
+    }
+
+    public void setCommandPrimaryAlias(String commandPrimaryAlias) {
+        this.commandPrimaryAlias = commandPrimaryAlias;
     }
 
     public CommandSender sender() {
@@ -57,7 +62,14 @@ public class CommandResponseHandler {
     }
 
     public void allSenders(Consumer<? super CommandSender> action) {
-        Set<CommandSender> senders = this.platform.getPlugin().getSendersWithPermission("spark").collect(Collectors.toSet());
+        if (this.commandPrimaryAlias == null) {
+            throw new IllegalStateException("Command alias has not been set!");
+        }
+
+        Set<CommandSender> senders = this.platform.getPlugin().getCommandSenders()
+                .filter(s -> s.hasPermission("spark") || s.hasPermission("spark." + this.commandPrimaryAlias))
+                .collect(Collectors.toSet());
+
         senders.add(this.sender);
         senders.forEach(action);
     }

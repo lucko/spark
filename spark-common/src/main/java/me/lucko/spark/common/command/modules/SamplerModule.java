@@ -74,54 +74,51 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("info", null)
                 .argumentUsage("stop", null)
                 .argumentUsage("cancel", null)
-                .argumentUsage("timeout", "timeout seconds")
-                .argumentUsage("comment", "comment")
+                .argumentUsage("interval", "interval millis")
                 .argumentUsage("thread", "thread name")
-                .argumentUsage("regex", null)
+                .argumentUsage("only-ticks-over", "tick length millis")
+                .argumentUsage("timeout", "timeout seconds")
+                .argumentUsage("regex --thread", "thread regex")
                 .argumentUsage("combine-all", null)
                 .argumentUsage("not-combined", null)
-                .argumentUsage("interval", "interval millis")
-                .argumentUsage("only-ticks-over", "tick length millis")
-                .argumentUsage("ignore-sleeping", null)
-                .argumentUsage("ignore-native", null)
                 .argumentUsage("force-java-sampler", null)
-                .argumentUsage("order-by-time", null)
-                .argumentUsage("separate-parent-calls", null)
+                .argumentUsage("stop --comment", "comment")
+                .argumentUsage("stop --order-by-time", null)
                 .executor((platform, sender, resp, arguments) -> {
                     if (arguments.boolFlag("info")) {
                         if (this.activeSampler == null) {
-                            resp.replyPrefixed(text("There isn't an active sampling task running."));
+                            resp.replyPrefixed(text("There isn't an active profiler running."));
                         } else {
                             long timeout = this.activeSampler.getEndTime();
                             if (timeout == -1) {
-                                resp.replyPrefixed(text("There is an active sampler currently running, with no defined timeout."));
+                                resp.replyPrefixed(text("There is an active profiler currently running, with no defined timeout."));
                             } else {
                                 long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
-                                resp.replyPrefixed(text("There is an active sampler currently running, due to timeout in " + timeoutDiff + " seconds."));
+                                resp.replyPrefixed(text("There is an active profiler currently running, due to timeout in " + timeoutDiff + " seconds."));
                             }
 
                             long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
-                            resp.replyPrefixed(text("It has been sampling for " + runningTime + " seconds so far."));
+                            resp.replyPrefixed(text("It has been profiling for " + runningTime + " seconds so far."));
                         }
                         return;
                     }
 
                     if (arguments.boolFlag("cancel")) {
                         if (this.activeSampler == null) {
-                            resp.replyPrefixed(text("There isn't an active sampling task running."));
+                            resp.replyPrefixed(text("There isn't an active profiler running."));
                         } else {
                             close();
-                            resp.broadcastPrefixed(text("The active sampling task has been cancelled.", GOLD));
+                            resp.broadcastPrefixed(text("The active profiler has been cancelled.", GOLD));
                         }
                         return;
                     }
 
                     if (arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
                         if (this.activeSampler == null) {
-                            resp.replyPrefixed(text("There isn't an active sampling task running."));
+                            resp.replyPrefixed(text("There isn't an active profiler running."));
                         } else {
                             this.activeSampler.stop();
-                            resp.broadcastPrefixed(text("The active sampling operation has been stopped! Uploading results..."));
+                            resp.broadcastPrefixed(text("The active profiler has been stopped! Uploading results..."));
                             ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
                             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
                             MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
@@ -140,7 +137,7 @@ public class SamplerModule implements CommandModule {
                     }
 
                     if (timeoutSeconds != -1 && timeoutSeconds < 30) {
-                        resp.replyPrefixed(text("The accuracy of the output will significantly improve when sampling is able to run for longer periods. " +
+                        resp.replyPrefixed(text("The accuracy of the output will significantly improve when the profiler is able to run for longer periods. " +
                                 "Consider setting a timeout value over 30 seconds."));
                     }
 
@@ -189,7 +186,7 @@ public class SamplerModule implements CommandModule {
                     }
 
                     if (this.activeSampler != null) {
-                        resp.replyPrefixed(text("An active sampler is already running."));
+                        resp.replyPrefixed(text("An active profiler is already running."));
                         return;
                     }
 
@@ -227,7 +224,7 @@ public class SamplerModule implements CommandModule {
                     // send message if profiling fails
                     future.whenCompleteAsync((s, throwable) -> {
                         if (throwable != null) {
-                            resp.broadcastPrefixed(text("Sampling operation failed unexpectedly. Error: " + throwable.toString(), RED));
+                            resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable.toString(), RED));
                             throwable.printStackTrace();
                         }
                     });
@@ -246,7 +243,7 @@ public class SamplerModule implements CommandModule {
                         MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
                         MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
                         future.thenAcceptAsync(s -> {
-                            resp.broadcastPrefixed(text("The active sampling operation has completed! Uploading results..."));
+                            resp.broadcastPrefixed(text("The active profiler has completed! Uploading results..."));
                             handleUpload(platform, resp, s, threadOrder, comment, mergeMode);
                         });
                     }
@@ -257,13 +254,12 @@ public class SamplerModule implements CommandModule {
                     }
 
                     if (arguments.contains("--stop") || arguments.contains("--upload")) {
-                        return TabCompleter.completeForOpts(arguments, "--order-by-time", "--separate-parent-calls", "--comment");
+                        return TabCompleter.completeForOpts(arguments, "--order-by-time", "--comment");
                     }
 
                     List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
                             "--timeout", "--regex", "--combine-all", "--not-combined", "--interval",
-                            "--only-ticks-over", "--ignore-sleeping", "--ignore-native", "--force-java-sampler",
-                            "--order-by-time", "--separate-parent-calls", "--comment"));
+                            "--only-ticks-over", "--force-java-sampler"));
                     opts.removeAll(arguments);
                     opts.add("--thread"); // allowed multiple times
 
@@ -282,7 +278,7 @@ public class SamplerModule implements CommandModule {
                 String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE, false).key();
                 String url = SparkPlatform.VIEWER_URL + key;
 
-                resp.broadcastPrefixed(text("Sampling results:", GOLD));
+                resp.broadcastPrefixed(text("Profiler results:", GOLD));
                 resp.broadcast(text()
                         .content(url)
                         .color(GRAY)
@@ -290,7 +286,7 @@ public class SamplerModule implements CommandModule {
                         .build()
                 );
 
-                platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Sampler", url));
+                platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
             } catch (IOException e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the results.", RED));
                 e.printStackTrace();

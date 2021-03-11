@@ -127,9 +127,9 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
-    public Stream<ForgeCommandSender> getSendersWithPermission(String permission) {
+    public Stream<ForgeCommandSender> getCommandSenders() {
         return Stream.concat(
-            this.server.get().getPlayerList().getPlayers().stream().filter(player -> hasPermission(player, permission)),
+            this.server.get().getPlayerList().getPlayers().stream(),
             Stream.of(this.server.get())
         ).map(sender -> new ForgeCommandSender(sender, this));
     }

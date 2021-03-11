@@ -117,7 +117,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public boolean checkPermission(MinecraftServer minecraftServer, ICommandSender sender) {
-        return hasPermission(sender, "spark");
+        return this.platform.hasPermissionForAnyCommand(new ForgeCommandSender(sender, this));
     }
 
     @Override

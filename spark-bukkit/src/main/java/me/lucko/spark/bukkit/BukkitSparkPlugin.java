@@ -117,9 +117,9 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
-    public Stream<BukkitCommandSender> getSendersWithPermission(String permission) {
+    public Stream<BukkitCommandSender> getCommandSenders() {
         return Stream.concat(
-                getServer().getOnlinePlayers().stream().filter(player -> player.hasPermission(permission)),
+                getServer().getOnlinePlayers().stream(),
                 Stream.of(getServer().getConsoleSender())
         ).map(sender -> new BukkitCommandSender(sender, this.audienceFactory));
     }

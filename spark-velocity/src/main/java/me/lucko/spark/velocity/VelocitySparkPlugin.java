@@ -99,9 +99,9 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
     }
 
     @Override
-    public Stream<VelocityCommandSender> getSendersWithPermission(String permission) {
+    public Stream<VelocityCommandSender> getCommandSenders() {
         return Stream.concat(
-                this.proxy.getAllPlayers().stream().filter(player -> player.hasPermission(permission)),
+                this.proxy.getAllPlayers().stream(),
                 Stream.of(this.proxy.getConsoleCommandSource())
         ).map(VelocityCommandSender::new);
     }

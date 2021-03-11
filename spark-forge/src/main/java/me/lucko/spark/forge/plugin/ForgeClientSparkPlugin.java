@@ -138,7 +138,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     }
 
     @Override
-    public Stream<ForgeCommandSender> getSendersWithPermission(String permission) {
+    public Stream<ForgeCommandSender> getCommandSenders() {
         return Stream.of(new ForgeCommandSender(this.minecraft.player, this));
     }
 

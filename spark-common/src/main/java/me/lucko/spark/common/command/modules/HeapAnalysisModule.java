@@ -104,8 +104,6 @@ public class HeapAnalysisModule implements CommandModule {
         consumer.accept(Command.builder()
                 .aliases("heapdump")
                 .argumentUsage("compress", "type")
-                .argumentUsage("run-gc-before", null)
-                .argumentUsage("include-non-live", null)
                 .executor((platform, sender, resp, arguments) -> {
                     platform.getPlugin().executeAsync(() -> {
                         Path pluginFolder = platform.getPlugin().getPluginDirectory();

@@ -172,6 +172,10 @@ public class SparkPlatform {
                 .collect(Collectors.toList());
     }
 
+    public boolean hasPermissionForAnyCommand(CommandSender sender) {
+        return !getAvailableCommands(sender).isEmpty();
+    }
+
     public void executeCommand(CommandSender sender, String[] args) {
         CommandResponseHandler resp = new CommandResponseHandler(this, sender);
         List<Command> commands = getAvailableCommands(sender);
@@ -209,6 +213,7 @@ public class SparkPlatform {
 
         for (Command command : commands) {
             if (command.aliases().contains(alias)) {
+                resp.setCommandPrimaryAlias(command.primaryAlias());
                 try {
                     command.executor().execute(this, sender, resp, new Arguments(rawArgs));
                 } catch (Arguments.ParseException e) {

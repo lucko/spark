@@ -139,7 +139,7 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
     }
 
     @Override
-    public Stream<FabricCommandSender> getSendersWithPermission(String permission) {
+    public Stream<FabricCommandSender> getCommandSenders() {
         return Stream.of(new FabricCommandSender(this.minecraft.player, this));
     }
 

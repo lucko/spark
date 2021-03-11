@@ -67,9 +67,9 @@ public class NukkitSparkPlugin extends PluginBase implements SparkPlugin {
     }
 
     @Override
-    public Stream<NukkitCommandSender> getSendersWithPermission(String permission) {
+    public Stream<NukkitCommandSender> getCommandSenders() {
         return Stream.concat(
-                getServer().getOnlinePlayers().values().stream().filter(player -> player.hasPermission(permission)),
+                getServer().getOnlinePlayers().values().stream(),
                 Stream.of(getServer().getConsoleSender())
         ).map(NukkitCommandSender::new);
     }

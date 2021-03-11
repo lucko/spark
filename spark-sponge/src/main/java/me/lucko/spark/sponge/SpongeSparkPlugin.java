@@ -109,9 +109,9 @@ public class SpongeSparkPlugin implements SparkPlugin {
     }
 
     @Override
-    public Stream<SpongeCommandSender> getSendersWithPermission(String permission) {
+    public Stream<SpongeCommandSender> getCommandSenders() {
         return Stream.concat(
-                this.game.getServer().getOnlinePlayers().stream().filter(player -> player.hasPermission(permission)),
+                this.game.getServer().getOnlinePlayers().stream(),
                 Stream.of(this.game.getServer().getConsole())
         ).map(source -> new SpongeCommandSender(source, this.audienceFactory));
     }
@@ -156,7 +156,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
         @Override
         public boolean testPermission(CommandSource source) {
-            return source.hasPermission("spark");
+            return this.plugin.platform.hasPermissionForAnyCommand(new SpongeCommandSender(source, this.plugin.audienceFactory));
         }
 
         @Override

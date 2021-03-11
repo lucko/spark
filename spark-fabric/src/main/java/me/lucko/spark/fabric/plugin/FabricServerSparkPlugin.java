@@ -120,10 +120,9 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     }
 
     @Override
-    public Stream<FabricCommandSender> getSendersWithPermission(String permission) {
+    public Stream<FabricCommandSender> getCommandSenders() {
         return Stream.concat(
-                this.server.getPlayerManager().getPlayerList().stream()
-                        .filter(player -> hasPermission(player, permission)),
+                this.server.getPlayerManager().getPlayerList().stream(),
                 Stream.of(this.server)
         ).map(sender -> new FabricCommandSender(sender, this));
     }
