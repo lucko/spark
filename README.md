@@ -1,47 +1,45 @@
 <h1 align="center">
 	<img
 		alt="spark"
-		src="https://i.imgur.com/pkZ1k3R.png">
+		src="https://i.imgur.com/cJ4sYV5.png">
 </h1>
 
 <h3 align="center">
-	spark is a performance profiling plugin based on sk89q's <a href="https://github.com/sk89q/WarmRoast">WarmRoast profiler</a>
+  spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.
 </h3>
 
-<p align="center">
-	<strong>
-		<a href="https://ci.lucko.me/job/spark/">Downloads</a>
-		•
-		<a href="https://github.com/lucko/spark/wiki">Wiki</a>
-		•
-		<a href="https://github.com/lucko/spark/issues">Issues</a>
-	</strong>
-</p>
+#### Useful Links
+* [**Website**](https://spark.lucko.me/) - browse the project homepage
+* [**Documentation**](https://spark.lucko.me/docs) - read documentation and usage guides
+* [**Downloads**](https://ci.lucko.me/job/spark/) - latest plugin/mod downloads
 
-___
 
-## What does it do?
+## What does spark do?
 
-spark is made up of a number of components, each detailed separately below.
+spark is made up of three separate components:
 
 |                 CPU Profiler                  |            Memory Inspection             |          Server Health Reporting           |
 | :-------------------------------------------: | :--------------------------------------: | :----------------------------------------: |
-|     ![](https://i.imgur.com/ggSGzRq.png)      |   ![](https://i.imgur.com/BsdTxqA.png)   |    ![](https://i.imgur.com/SrKEmA6.png)    |
-| Diagnose performance issues with your server. | Diagnose memory issues with your server. | Keep track of your servers overall health. |
+| [![](https://i.imgur.com/ggSGzRq.png)](#zap-cpu-profiler) | [![](https://i.imgur.com/BsdTxqA.png)](#zap-memory-inspection) | [![](https://i.imgur.com/SrKEmA6.png)](#zap-server-health-reporting) |
+| Diagnose performance issues. | Diagnose memory issues. | Keep track of overall server health. |
 
 ### :zap: CPU Profiler
 
-spark's CPU profiler is an improved version of the popular WarmRoast profiler by sk89q. It can be used to diagnose performance issues ("lag", low tick rate, etc).
+spark's profiler can be used to diagnose performance issues: "lag", low tick rate, high CPU usage, etc.
 
 It is:
 
-* **Lightweight** - can be ran on production servers with minimal impact.
-* **Easy to use** - no configuration or setup necessary, just install the plugin.
+* **Lightweight** - can be ran in production with minimal impact.
+* **Easy to use** - no configuration or setup necessary, just install the plugin/mod.
 * **Quick to produce results** - running for just ~30 seconds is enough to produce useful insights into problematic areas for performance.
 * **Customisable** - can be tuned to target specific threads, sample at a specific interval, record only "laggy" periods, etc
 * **Highly readable** - simple tree structure lends itself to easy analysis and interpretation. The viewer can also apply deobfuscation mappings.
 
-It works by sampling statistical data about the servers activity, and constructing a call graph based on this data. The call graph is then displayed in an online viewer for further analysis by the user.
+It works by sampling statistical data about the systems activity, and constructing a call graph based on this data. The call graph is then displayed in an online viewer for further analysis by the user.
+
+There are two different profiler engines:
+* Native `AsyncGetCallTrace` + `perf_events` - uses [async-profiler](https://github.com/jvm-profiling-tools/async-profiler) (*only available on Linux x86_64 systems*)
+* Built-in Java `ThreadMXBean` - an improved version of the popular [WarmRoast profiler](https://github.com/sk89q/WarmRoast) by sk89q.
 
 ### :zap: Memory Inspection
 
@@ -49,7 +47,7 @@ spark includes a number of tools which are useful for diagnosing memory issues w
 
 * **Heap Summary** - take & analyse a basic snapshot of the servers memory
   * A simple view of the JVM's heap, see memory usage and instance counts for each class
-  * Not intended to be a full replacement of proper memory analysis tools. (see below)
+  * Not intended to be a full replacement of proper memory analysis tools. (see next item)
 * **Heap Dump** - take a full (HPROF) snapshot of the servers memory
   * Dumps (& optionally compresses) a full snapshot of JVM's heap.
   * This snapshot can then be inspected using conventional analysis tools.
@@ -65,16 +63,16 @@ These metrics include:
 
 * **TPS** - ticks per second, to a more accurate degree indicated by the /tps command
 * **Tick Durations** - how long each tick is taking (min, max and average)
-* **CPU Usage** - how much of the CPU is being used by the server process, and by the overall system
+* **CPU Usage** - how much of the CPU is being used by the process, and by the overall system
 * **Memory Usage** - how much memory is being used by the process
 * **Disk Usage** - how much disk space is free/being used by the system
 
 As well as providing tick rate averages, spark can also **monitor individual ticks** - sending a report whenever a single tick's duration exceeds a certain threshold. This can be used to identify trends and the nature of performance issues, relative to other system or game events.
 
-For a comparison between spark, WarmRoast, Minecraft timings and other profiles, see this [page](https://github.com/lucko/spark/wiki/spark-vs-WarmRoast-timings-etc) on the spark wiki.
+For a comparison between spark, WarmRoast, Minecraft timings and other profiles, see this [page](https://spark.lucko.me/docs/misc/spark-vs-others) in the spark docs.
 
 ## License
 
-spark is a fork of [WarmRoast](https://github.com/sk89q/WarmRoast), which is [licensed under the GNU General Public License](https://github.com/sk89q/WarmRoast/blob/3fe5e5517b1c529d95cf9f43fd8420c66db0092a/src/main/java/com/sk89q/warmroast/WarmRoast.java#L1-L17).
+spark was originally a fork of [WarmRoast](https://github.com/sk89q/WarmRoast), which is [licensed under the GNU General Public License](https://github.com/sk89q/WarmRoast/blob/3fe5e5517b1c529d95cf9f43fd8420c66db0092a/src/main/java/com/sk89q/warmroast/WarmRoast.java#L1-L17).
 
-Therefore, spark is also licensed under the GNU General Public License.
+spark itself is also licensed under the GNU General Public License.
