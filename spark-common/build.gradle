@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    compile 'com.github.jvm-profiling-tools:async-profiler:v2.0-rc'
+    compile 'com.github.jvm-profiling-tools:async-profiler:v2.0'
     compile 'org.ow2.asm:asm:7.1'
     compile 'com.google.protobuf:protobuf-java:3.14.0'
     compile 'com.squareup.okhttp3:okhttp:3.14.1'
