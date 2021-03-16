@@ -3,5 +3,5 @@
   "name": "spark",
   "description": "${pluginDescription}",
   "version": "${pluginVersion}",
-  "authors": ["Luck", "sk89q"]
+  "authors": ["Luck"]
 }]

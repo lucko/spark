@@ -13,8 +13,8 @@ subprojects {
     apply plugin: 'idea'
 
     ext {
-        pluginVersion = '1.5.1'
-        pluginDescription = 'spark is a performance profiling plugin based on sk89q\'s WarmRoast profiler'
+        pluginVersion = '1.5.2'
+        pluginDescription = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
     }
 
     sourceCompatibility = 1.8

@@ -5,11 +5,11 @@
     "version": "${pluginVersion}",
     "description": "${pluginDescription}",
     "authors": [
-        "Luck", "sk89q"
+        "Luck"
     ],
     "icon": "assets/spark/icon.png",
     "contact": {
-        "homepage": "https://sparkprofiler.github.io/",
+        "homepage": "https://spark.lucko.me/",
         "sources": "https://github.com/lucko/spark",
         "issues": "https://github.com/lucko/spark/issues"
     },

@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
         name = "spark",
         version = "@version@",
         description = "@desc@",
-        authors = {"Luck", "sk89q"},
+        authors = {"Luck"},
         dependencies = {
                 // explicit dependency on spongeapi with no defined API version
                 @Dependency(id = "spongeapi")

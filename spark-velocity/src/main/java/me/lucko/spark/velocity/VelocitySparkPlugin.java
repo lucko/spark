@@ -46,7 +46,7 @@ import java.util.stream.Stream;
         name = "spark",
         version = "@version@",
         description = "@desc@",
-        authors = {"Luck", "sk89q"}
+        authors = {"Luck"}
 )
 public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
 
