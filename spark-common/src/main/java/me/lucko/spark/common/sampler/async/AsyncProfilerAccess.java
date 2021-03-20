@@ -114,6 +114,7 @@ public final class AsyncProfilerAccess {
     public boolean isSupported() {
         if (this.setupException != null) {
             System.out.println("[spark] async-profiler engine is not supported on your system: " + this.setupException.getMessage());
+            System.out.println("[spark] Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler");
         }
         return this.profiler != null;
     }
