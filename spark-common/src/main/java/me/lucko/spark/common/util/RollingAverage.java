@@ -24,25 +24,26 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
 
 public class RollingAverage {
 
     private final Queue<BigDecimal> samples;
-    private final int size;
+    private final int windowSize;
     private BigDecimal total = BigDecimal.ZERO;
 
-    public RollingAverage(int size) {
-        this.size = size;
-        this.samples = new ArrayDeque<>(this.size);
+    public RollingAverage(int windowSize) {
+        this.windowSize = windowSize;
+        this.samples = new ArrayDeque<>(this.windowSize + 1);
     }
 
     public void add(BigDecimal num) {
         synchronized (this) {
             this.total = this.total.add(num);
             this.samples.add(num);
-            if (this.samples.size() > this.size) {
+            if (this.samples.size() > this.windowSize) {
                 this.total = this.total.subtract(this.samples.remove());
             }
         }
@@ -53,54 +54,55 @@ public class RollingAverage {
             if (this.samples.isEmpty()) {
                 return 0;
             }
-            return this.total.divide(BigDecimal.valueOf(this.samples.size()), 30, RoundingMode.HALF_UP).doubleValue();
+            BigDecimal divisor = BigDecimal.valueOf(this.samples.size());
+            return this.total.divide(divisor, 30, RoundingMode.HALF_UP).doubleValue();
         }
     }
 
     public double getMax() {
         synchronized (this) {
-            BigDecimal max = BigDecimal.ZERO;
+            BigDecimal max = null;
             for (BigDecimal sample : this.samples) {
-                if (sample.compareTo(max) > 0) {
+                if (max == null || sample.compareTo(max) > 0) {
                     max = sample;
                 }
             }
-            return max.doubleValue();
+            return max == null ? 0 : max.doubleValue();
         }
     }
 
     public double getMin() {
         synchronized (this) {
-            BigDecimal min = BigDecimal.ZERO;
+            BigDecimal min = null;
             for (BigDecimal sample : this.samples) {
-                if (min == BigDecimal.ZERO || sample.compareTo(min) < 0) {
+                if (min == null || sample.compareTo(min) < 0) {
                     min = sample;
                 }
             }
-            return min.doubleValue();
+            return min == null ? 0 : min.doubleValue();
         }
     }
 
     public double getMedian() {
-        return getPercentile(50);
+        return getPercentile(0.50d);
     }
 
-    public double getPercentile(int percentile) {
-        if (percentile < 0 || percentile > 100) {
-            throw new IllegalArgumentException("Invalid percentage " + percentile);
+    public double getPercentile(double percentile) {
+        if (percentile < 0 || percentile > 1) {
+            throw new IllegalArgumentException("Invalid percentile " + percentile);
         }
 
-        List<BigDecimal> sortedSamples;
+        BigDecimal[] sortedSamples;
         synchronized (this) {
             if (this.samples.isEmpty()) {
                 return 0;
             }
-            sortedSamples = new ArrayList<>(this.samples);
+            sortedSamples = this.samples.toArray(new BigDecimal[0]);
         }
-        sortedSamples.sort(null);
+        Arrays.sort(sortedSamples);
 
-        int rank = (int) Math.ceil((percentile / 100d) * (sortedSamples.size() - 1));
-        return sortedSamples.get(rank).doubleValue();
+        int rank = (int) Math.ceil(percentile * (sortedSamples.length - 1));
+        return sortedSamples[rank].doubleValue();
     }
 
 }

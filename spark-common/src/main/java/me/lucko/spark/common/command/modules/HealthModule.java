@@ -51,7 +51,7 @@ import static net.kyori.adventure.text.format.TextDecoration.*;
 
 public class HealthModule implements CommandModule {
 
-    private static final int MSPT_95_PERCENTILE = 95;
+    private static final double MSPT_95_PERCENTILE = 0.95d;
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
