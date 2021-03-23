@@ -22,6 +22,7 @@ package me.lucko.spark.common;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+
 import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
@@ -39,10 +40,12 @@ import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-import me.lucko.spark.common.sampler.tick.TickHook;
-import me.lucko.spark.common.sampler.tick.TickReporter;
+import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
+
 import net.kyori.adventure.text.event.ClickEvent;
+
 import okhttp3.OkHttpClient;
 
 import java.util.ArrayList;
@@ -52,9 +55,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static net.kyori.adventure.text.Component.*;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
-import static net.kyori.adventure.text.format.TextDecoration.*;
+import static net.kyori.adventure.text.Component.space;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
+import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.RED;
+import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
+import static net.kyori.adventure.text.format.TextDecoration.BOLD;
+import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
 /**
  * Abstract spark implementation used by all platforms.

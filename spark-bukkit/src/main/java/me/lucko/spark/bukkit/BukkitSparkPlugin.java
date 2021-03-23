@@ -26,9 +26,11 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.tick.TickHook;
-import me.lucko.spark.common.sampler.tick.TickReporter;
+import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.tick.TickReporter;
+
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

@@ -23,8 +23,8 @@ package me.lucko.spark.common;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.tick.TickHook;
-import me.lucko.spark.common.sampler.tick.TickReporter;
+import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.tick.TickReporter;
 
 import java.nio.file.Path;
 import java.util.stream.Stream;

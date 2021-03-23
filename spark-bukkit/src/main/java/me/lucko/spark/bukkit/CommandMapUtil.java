@@ -26,6 +26,7 @@
 package me.lucko.spark.bukkit;
 
 import com.google.common.base.Preconditions;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

@@ -33,21 +33,28 @@ import javax.management.NotificationEmitter;
 import javax.management.NotificationListener;
 import javax.management.openmbean.CompositeData;
 
+/**
+ * Monitoring process for garbage collections.
+ */
 public class GarbageCollectionMonitor implements NotificationListener, AutoCloseable {
 
+    /** The registered listeners */
     private final List<Listener> listeners = new ArrayList<>();
+    /** A list of the NotificationEmitters that feed information to this monitor. */
     private final List<NotificationEmitter> emitters = new ArrayList<>();
 
     public GarbageCollectionMonitor() {
-        List<GarbageCollectorMXBean> beans = ManagementFactory.getGarbageCollectorMXBeans();
-        for (GarbageCollectorMXBean bean : beans) {
-            if (!(bean instanceof NotificationEmitter)) {
-                continue;
-            }
+        // Add ourselves as a notification listener for all GarbageCollectorMXBean that
+        // support notifications.
+        for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            if (bean instanceof NotificationEmitter) {
+                NotificationEmitter notificationEmitter = (NotificationEmitter) bean;
+                notificationEmitter.addNotificationListener(this, null, null);
 
-            NotificationEmitter notificationEmitter = (NotificationEmitter) bean;
-            notificationEmitter.addNotificationListener(this, null, null);
-            this.emitters.add(notificationEmitter);
+                // Keep track of the notification emitters we subscribe to so
+                // the listeners can be removed on #close
+                this.emitters.add(notificationEmitter);
+            }
         }
     }
 
@@ -61,6 +68,7 @@ public class GarbageCollectionMonitor implements NotificationListener, AutoClose
 
     @Override
     public void handleNotification(Notification notification, Object handback) {
+        // we're only interested in GC notifications
         if (!notification.getType().equals(GarbageCollectionNotificationInfo.GARBAGE_COLLECTION_NOTIFICATION)) {
             return;
         }
@@ -84,8 +92,27 @@ public class GarbageCollectionMonitor implements NotificationListener, AutoClose
         this.listeners.clear();
     }
 
+    /**
+     * A simple listener object for garbage collections.
+     */
     public interface Listener {
         void onGc(GarbageCollectionNotificationInfo data);
+    }
+
+    /**
+     * Gets a human-friendly description for the type of the given GC notification.
+     *
+     * @param info the notification object
+     * @return the name of the GC type
+     */
+    public static String getGcType(GarbageCollectionNotificationInfo info) {
+        if (info.getGcAction().equals("end of minor GC")) {
+            return "Young Gen";
+        } else if (info.getGcAction().equals("end of major GC")) {
+            return "Old Gen";
+        } else {
+            return info.getGcAction();
+        }
     }
 
 }

@@ -21,7 +21,6 @@
 package me.lucko.spark.common.util;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -56,7 +55,7 @@ public final class ThreadFinder {
             threads = new Thread[threads.length * 2];
         }
         this.approxActiveCount = len;
-        return Arrays.stream(threads).filter(Objects::nonNull);
+        return Arrays.stream(threads, 0, len);
     }
 
 }

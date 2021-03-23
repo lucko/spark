@@ -21,6 +21,7 @@
 package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.platform.AbstractPlatformInfo;
+
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Platform;
 

@@ -21,6 +21,7 @@
 package me.lucko.spark.common.command.modules;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
+
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -28,6 +29,7 @@ import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.util.FormatUtil;
+
 import net.kyori.adventure.text.Component;
 
 import java.lang.management.MemoryUsage;
@@ -37,12 +39,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static net.kyori.adventure.text.Component.*;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
-import static net.kyori.adventure.text.format.TextDecoration.*;
+import static net.kyori.adventure.text.Component.empty;
+import static net.kyori.adventure.text.Component.space;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
+import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.RED;
+import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
+import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 
 public class GcMonitoringModule implements CommandModule {
-    private static final DecimalFormat df = new DecimalFormat("#.##");
+    private static final DecimalFormat DF = new DecimalFormat("#.##");
 
     /** The gc monitoring instance currently running, if any */
     private ReportingGcMonitor activeGcMonitor = null;
@@ -106,7 +114,7 @@ public class GcMonitoringModule implements CommandModule {
                         );
                         report.add(text()
                                 .content("      ")
-                                .append(text(df.format(averageCollectionTime), GOLD))
+                                .append(text(DF.format(averageCollectionTime), GOLD))
                                 .append(text(" ms avg", GRAY))
                                 .append(text(", ", DARK_GRAY))
                                 .append(text(collectionCount, WHITE))
@@ -147,11 +155,10 @@ public class GcMonitoringModule implements CommandModule {
 
     private static String formatTime(long millis) {
         if (millis <= 0) {
-            return "0ms";
+            return "0s";
         }
 
         long second = millis / 1000;
-        //millis = millis % 1000;
         long minute = second / 60;
         second = second % 60;
 
@@ -162,9 +169,6 @@ public class GcMonitoringModule implements CommandModule {
         if (second != 0) {
             sb.append(second).append("s ");
         }
-        //if (millis != 0) {
-        //    sb.append(millis).append("ms");
-        //}
 
         return sb.toString().trim();
     }
@@ -185,15 +189,7 @@ public class GcMonitoringModule implements CommandModule {
 
         @Override
         public void onGc(GarbageCollectionNotificationInfo data) {
-            String gcType;
-            if (data.getGcAction().equals("end of minor GC")) {
-                gcType = "Young Gen";
-            } else if (data.getGcAction().equals("end of major GC")) {
-                gcType = "Old Gen";
-            } else {
-                gcType = data.getGcAction();
-            }
-
+            String gcType = GarbageCollectionMonitor.getGcType(data);
             String gcCause = data.getGcCause() != null ? " (cause = " + data.getGcCause() + ")" : "";
 
             Map<String, MemoryUsage> beforeUsages = data.getGcInfo().getMemoryUsageBeforeGc();
@@ -207,7 +203,7 @@ public class GcMonitoringModule implements CommandModule {
                                 .append(text(gcType + " "))
                                 .append(text("GC", RED))
                                 .append(text(" lasting "))
-                                .append(text(df.format(data.getGcInfo().getDuration()), GOLD))
+                                .append(text(DF.format(data.getGcInfo().getDuration()), GOLD))
                                 .append(text(" ms." + gcCause))
                                 .build()
                 ));

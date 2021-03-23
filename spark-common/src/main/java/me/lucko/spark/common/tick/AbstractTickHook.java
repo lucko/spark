@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler.tick;
+package me.lucko.spark.common.tick;
 
 import java.util.HashSet;
 import java.util.Set;

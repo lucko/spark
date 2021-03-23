@@ -49,16 +49,24 @@ public enum HeapDump {
         String outputPathString = outputPath.toAbsolutePath().normalize().toString();
 
         if (isOpenJ9()) {
-            Class<?> dumpClass = Class.forName("com.ibm.jvm.Dump");
-            Method heapDumpMethod = dumpClass.getMethod("heapDumpToFile", String.class);
-            heapDumpMethod.invoke(null, outputPathString);
+            dumpOpenJ9(outputPathString);
         } else {
-            MBeanServer beanServer = ManagementFactory.getPlatformMBeanServer();
-            ObjectName diagnosticBeanName = ObjectName.getInstance(DIAGNOSTIC_BEAN);
-
-            HotSpotDiagnosticMXBean proxy = JMX.newMXBeanProxy(beanServer, diagnosticBeanName, HotSpotDiagnosticMXBean.class);
-            proxy.dumpHeap(outputPathString, live);
+            dumpHotspot(outputPathString, live);
         }
+    }
+
+    private static void dumpOpenJ9(String outputPathString) throws Exception {
+        Class<?> dumpClass = Class.forName("com.ibm.jvm.Dump");
+        Method heapDumpMethod = dumpClass.getMethod("heapDumpToFile", String.class);
+        heapDumpMethod.invoke(null, outputPathString);
+    }
+
+    private static void dumpHotspot(String outputPathString, boolean live) throws Exception {
+        MBeanServer beanServer = ManagementFactory.getPlatformMBeanServer();
+        ObjectName diagnosticBeanName = ObjectName.getInstance(DIAGNOSTIC_BEAN);
+
+        HotSpotDiagnosticMXBean proxy = JMX.newMXBeanProxy(beanServer, diagnosticBeanName, HotSpotDiagnosticMXBean.class);
+        proxy.dumpHeap(outputPathString, live);
     }
 
     public static boolean isOpenJ9() {

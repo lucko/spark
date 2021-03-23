@@ -22,6 +22,7 @@
 package me.lucko.spark.common.sampler.java;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.Sampler;
@@ -29,7 +30,7 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
-import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.proto.SparkProtos.SamplerData;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 

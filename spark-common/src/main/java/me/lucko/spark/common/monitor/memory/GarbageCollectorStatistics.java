@@ -32,6 +32,11 @@ import java.util.Map;
 public class GarbageCollectorStatistics {
     public static final GarbageCollectorStatistics ZERO = new GarbageCollectorStatistics(0, 0);
 
+    /**
+     * Polls a set of statistics from the {@link GarbageCollectorMXBean}.
+     *
+     * @return the polled statistics
+     */
     public static Map<String, GarbageCollectorStatistics> pollStats() {
         ImmutableMap.Builder<String, GarbageCollectorStatistics> stats = ImmutableMap.builder();
         for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
@@ -40,6 +45,15 @@ public class GarbageCollectorStatistics {
         return stats.build();
     }
 
+    /**
+     * Polls a set of statistics from the {@link GarbageCollectorMXBean}, then subtracts
+     * {@code initial} from them.
+     *
+     * <p>The reason for subtracting the initial statistics is to ignore GC activity
+     * that took place before the server/client fully started.</p>
+     *
+     * @return the polled statistics
+     */
     public static Map<String, GarbageCollectorStatistics> pollStatsSubtractInitial(Map<String, GarbageCollectorStatistics> initial) {
         ImmutableMap.Builder<String, GarbageCollectorStatistics> stats = ImmutableMap.builder();
         for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {

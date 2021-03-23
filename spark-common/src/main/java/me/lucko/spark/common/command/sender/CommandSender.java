@@ -23,7 +23,9 @@ package me.lucko.spark.common.command.sender;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+
 import me.lucko.spark.proto.SparkProtos.CommandSenderData;
+
 import net.kyori.adventure.text.Component;
 
 import java.util.UUID;

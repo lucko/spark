@@ -23,9 +23,7 @@ package me.lucko.spark.common.util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Queue;
 
 public class RollingAverage {

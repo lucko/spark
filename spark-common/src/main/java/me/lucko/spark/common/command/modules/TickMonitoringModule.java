@@ -25,26 +25,25 @@ import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
+import me.lucko.spark.common.monitor.tick.ReportPredicate;
 import me.lucko.spark.common.monitor.tick.TickMonitor;
-import me.lucko.spark.common.monitor.tick.TickMonitor.ReportPredicate;
-import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.tick.TickHook;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.util.function.Consumer;
 
-import static net.kyori.adventure.text.Component.*;
+import static net.kyori.adventure.text.Component.text;
 
 public class TickMonitoringModule implements CommandModule {
 
     /** The tick hook instance currently running, if any */
-    private TickHook tickHook = null;
-    private ReportingTickMonitor activeTickMonitor = null;
+    private TickMonitor activeTickMonitor = null;
 
     @Override
     public void close() {
         if (this.activeTickMonitor != null) {
-            this.tickHook.removeCallback(this.activeTickMonitor);
             this.activeTickMonitor.close();
             this.activeTickMonitor = null;
         }
@@ -58,10 +57,8 @@ public class TickMonitoringModule implements CommandModule {
                 .argumentUsage("threshold-tick", "tick duration")
                 .argumentUsage("without-gc", null)
                 .executor((platform, sender, resp, arguments) -> {
-                    if (this.tickHook == null) {
-                        this.tickHook = platform.getTickHook();
-                    }
-                    if (this.tickHook == null) {
+                    TickHook tickHook = platform.getTickHook();
+                    if (tickHook == null) {
                         resp.replyPrefixed(text("Not supported!", NamedTextColor.RED));
                         return;
                     }
@@ -78,8 +75,8 @@ public class TickMonitoringModule implements CommandModule {
                             reportPredicate = new ReportPredicate.PercentageChangeGt(100);
                         }
 
-                        this.activeTickMonitor = new ReportingTickMonitor(platform, resp, this.tickHook, reportPredicate, !arguments.boolFlag("without-gc"));
-                        this.tickHook.addCallback(this.activeTickMonitor);
+                        this.activeTickMonitor = new ReportingTickMonitor(platform, resp, tickHook, reportPredicate, !arguments.boolFlag("without-gc"));
+                        this.activeTickMonitor.start();
                     } else {
                         close();
                         resp.broadcastPrefixed(text("Tick monitor disabled."));

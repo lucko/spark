@@ -20,8 +20,9 @@
 
 package me.lucko.spark.sponge;
 
-import me.lucko.spark.common.sampler.tick.AbstractTickHook;
-import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.tick.AbstractTickHook;
+import me.lucko.spark.common.tick.TickHook;
+
 import org.spongepowered.api.scheduler.Task;
 
 public class SpongeTickHook extends AbstractTickHook implements TickHook, Runnable {

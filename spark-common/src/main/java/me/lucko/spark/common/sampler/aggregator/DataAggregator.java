@@ -23,7 +23,6 @@ package me.lucko.spark.common.sampler.aggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
-import java.lang.management.ThreadInfo;
 import java.util.Map;
 
 /**

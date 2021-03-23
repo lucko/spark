@@ -20,13 +20,14 @@
 
 package me.lucko.spark.nukkit;
 
+import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.platform.PlatformInfo;
+
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.scheduler.AsyncTask;
-import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.platform.PlatformInfo;
 
 import java.nio.file.Path;
 import java.util.stream.Stream;

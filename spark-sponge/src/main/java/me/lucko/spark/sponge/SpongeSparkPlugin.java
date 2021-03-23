@@ -21,12 +21,15 @@
 package me.lucko.spark.sponge;
 
 import com.google.inject.Inject;
+
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.tick.TickHook;
+
 import net.kyori.adventure.platform.spongeapi.SpongeAudiences;
+
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;

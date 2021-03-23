@@ -20,8 +20,9 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.sampler.tick.AbstractTickHook;
-import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.tick.AbstractTickHook;
+import me.lucko.spark.common.tick.TickHook;
+
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitTask;
 

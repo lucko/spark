@@ -23,6 +23,7 @@ package me.lucko.spark.bukkit.placeholder;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.lucko.spark.bukkit.BukkitSparkPlugin;
 import me.lucko.spark.common.SparkPlatform;
+
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 

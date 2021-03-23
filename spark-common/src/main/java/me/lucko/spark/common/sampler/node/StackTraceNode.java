@@ -24,7 +24,6 @@ package me.lucko.spark.common.sampler.node;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkProtos;
 
-import java.util.Comparator;
 import java.util.Objects;
 
 /**

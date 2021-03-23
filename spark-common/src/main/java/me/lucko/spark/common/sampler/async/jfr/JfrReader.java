@@ -24,7 +24,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -385,5 +384,101 @@ public class JfrReader implements Closeable {
         byte[] bytes = new byte[getVarint()];
         buf.get(bytes);
         return bytes;
+    }
+
+    public static class ClassRef {
+        public final long name;
+
+        public ClassRef(long name) {
+            this.name = name;
+        }
+    }
+
+    static class Element {
+
+        void addChild(Element e) {
+        }
+    }
+
+    static class JfrClass extends Element {
+        final int id;
+        final String name;
+        final List<JfrField> fields;
+
+        JfrClass(Map<String, String> attributes) {
+            this.id = Integer.parseInt(attributes.get("id"));
+            this.name = attributes.get("name");
+            this.fields = new ArrayList<>(2);
+        }
+
+        @Override
+        void addChild(Element e) {
+            if (e instanceof JfrField) {
+                fields.add((JfrField) e);
+            }
+        }
+
+        JfrField field(String name) {
+            for (JfrField field : fields) {
+                if (field.name.equals(name)) {
+                    return field;
+                }
+            }
+            return null;
+        }
+    }
+
+    static class JfrField extends Element {
+        final String name;
+        final int type;
+        final boolean constantPool;
+
+        JfrField(Map<String, String> attributes) {
+            this.name = attributes.get("name");
+            this.type = Integer.parseInt(attributes.get("class"));
+            this.constantPool = "true".equals(attributes.get("constantPool"));
+        }
+    }
+
+    public static class MethodRef {
+        public final long cls;
+        public final long name;
+        public final long sig;
+
+        public MethodRef(long cls, long name, long sig) {
+            this.cls = cls;
+            this.name = name;
+            this.sig = sig;
+        }
+    }
+
+    public static class Sample implements Comparable<Sample> {
+        public final long time;
+        public final int tid;
+        public final int stackTraceId;
+        public final int threadState;
+
+        public Sample(long time, int tid, int stackTraceId, int threadState) {
+            this.time = time;
+            this.tid = tid;
+            this.stackTraceId = stackTraceId;
+            this.threadState = threadState;
+        }
+
+        @Override
+        public int compareTo(Sample o) {
+            return Long.compare(time, o.time);
+        }
+    }
+
+    public static class StackTrace {
+        public final long[] methods;
+        public final byte[] types;
+        public long samples;
+
+        public StackTrace(long[] methods, byte[] types) {
+            this.methods = methods;
+            this.types = types;
+        }
     }
 }

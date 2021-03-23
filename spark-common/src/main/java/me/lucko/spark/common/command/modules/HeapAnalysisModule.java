@@ -21,18 +21,24 @@
 package me.lucko.spark.common.command.modules;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.activitylog.ActivityLog.Activity;
+import me.lucko.spark.common.activitylog.Activity;
+import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
+import me.lucko.spark.common.command.CommandResponseHandler;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.heapdump.HeapDump;
 import me.lucko.spark.common.heapdump.HeapDumpSummary;
 import me.lucko.spark.common.util.FormatUtil;
+
 import net.kyori.adventure.text.event.ClickEvent;
-import okhttp3.MediaType;
+
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.LZMAOutputStream;
 import org.tukaani.xz.XZOutputStream;
+
+import okhttp3.MediaType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,8 +54,11 @@ import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 import java.util.zip.GZIPOutputStream;
 
-import static net.kyori.adventure.text.Component.*;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
+import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.GREEN;
+import static net.kyori.adventure.text.format.NamedTextColor.RED;
 
 public class HeapAnalysisModule implements CommandModule {
     private static final MediaType SPARK_HEAP_MEDIA_TYPE = MediaType.parse("application/x-spark-heap");
@@ -59,44 +68,7 @@ public class HeapAnalysisModule implements CommandModule {
         consumer.accept(Command.builder()
                 .aliases("heapsummary")
                 .argumentUsage("run-gc-before", null)
-                .executor((platform, sender, resp, arguments) -> {
-                    platform.getPlugin().executeAsync(() -> {
-                        if (arguments.boolFlag("run-gc-before")) {
-                            resp.broadcastPrefixed(text("Running garbage collector..."));
-                            System.gc();
-                        }
-
-                        resp.broadcastPrefixed(text("Creating a new heap dump summary, please wait..."));
-
-                        HeapDumpSummary heapDump;
-                        try {
-                            heapDump = HeapDumpSummary.createNew();
-                        } catch (Exception e) {
-                            resp.broadcastPrefixed(text("An error occurred whilst inspecting the heap.", RED));
-                            e.printStackTrace();
-                            return;
-                        }
-
-                        byte[] output = heapDump.formCompressedDataPayload(platform.getPlugin().getPlatformInfo(), sender);
-                        try {
-                            String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_HEAP_MEDIA_TYPE, false).key();
-                            String url = SparkPlatform.VIEWER_URL + key;
-
-                            resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));
-                            resp.broadcast(text()
-                                    .content(url)
-                                    .color(GRAY)
-                                    .clickEvent(ClickEvent.openUrl(url))
-                                    .build()
-                            );
-
-                            platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
-                        } catch (IOException e) {
-                            resp.broadcastPrefixed(text("An error occurred whilst uploading the data.", RED));
-                            e.printStackTrace();
-                        }
-                    });
-                })
+                .executor(HeapAnalysisModule::heapSummary)
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--run-gc-before"))
                 .build()
         );
@@ -104,107 +76,153 @@ public class HeapAnalysisModule implements CommandModule {
         consumer.accept(Command.builder()
                 .aliases("heapdump")
                 .argumentUsage("compress", "type")
-                .executor((platform, sender, resp, arguments) -> {
-                    platform.getPlugin().executeAsync(() -> {
-                        Path pluginFolder = platform.getPlugin().getPluginDirectory();
-                        try {
-                            Files.createDirectories(pluginFolder);
-                        } catch (IOException e) {
-                            // ignore
-                        }
-
-                        Path file = pluginFolder.resolve("heap-" + DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now()) + (HeapDump.isOpenJ9() ? ".phd" : ".hprof"));
-                        boolean liveOnly = !arguments.boolFlag("include-non-live");
-
-                        if (arguments.boolFlag("run-gc-before")) {
-                            resp.broadcastPrefixed(text("Running garbage collector..."));
-                            System.gc();
-                        }
-
-                        resp.broadcastPrefixed(text("Creating a new heap dump, please wait..."));
-
-                        try {
-                            HeapDump.dumpHeap(file, liveOnly);
-                        } catch (Exception e) {
-                            resp.broadcastPrefixed(text("An error occurred whilst creating a heap dump.", RED));
-                            e.printStackTrace();
-                            return;
-                        }
-
-                        resp.broadcastPrefixed(text()
-                                .content("Heap dump written to: ")
-                                .color(GOLD)
-                                .append(text(file.toString(), GRAY))
-                                .build()
-                        );
-                        platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump", file.toString()));
-
-
-                        CompressionMethod compress = null;
-                        Iterator<String> compressArgs = arguments.stringFlag("compress").iterator();
-                        if (compressArgs.hasNext()) {
-                            try {
-                                compress = CompressionMethod.valueOf(compressArgs.next().toUpperCase());
-                            } catch (IllegalArgumentException e) {
-                                // ignore
-                            }
-                        }
-
-                        if (compress != null) {
-                            resp.broadcastPrefixed(text("Compressing heap dump, please wait..."));
-                            try {
-                                long size = Files.size(file);
-                                AtomicLong lastReport = new AtomicLong(System.currentTimeMillis());
-
-                                LongConsumer progressHandler = progress -> {
-                                    long timeSinceLastReport = System.currentTimeMillis() - lastReport.get();
-                                    if (timeSinceLastReport > TimeUnit.SECONDS.toMillis(5)) {
-                                        lastReport.set(System.currentTimeMillis());
-
-                                        platform.getPlugin().executeAsync(() -> {
-                                            resp.broadcastPrefixed(text()
-                                                    .color(GRAY)
-                                                    .append(text("Compressed "))
-                                                    .append(text(FormatUtil.formatBytes(progress), GOLD))
-                                                    .append(text(" / "))
-                                                    .append(text(FormatUtil.formatBytes(size), GOLD))
-                                                    .append(text(" so far... ("))
-                                                    .append(text(FormatUtil.percent(progress, size), GREEN))
-                                                    .append(text(")"))
-                                                    .build()
-                                            );
-                                        });
-                                    }
-                                };
-
-                                Path compressedFile = compress.compress(file, progressHandler);
-                                long compressedSize = Files.size(compressedFile);
-
-                                resp.broadcastPrefixed(text()
-                                        .color(GRAY)
-                                        .append(text("Compression complete: "))
-                                        .append(text(FormatUtil.formatBytes(size), GOLD))
-                                        .append(text(" --> "))
-                                        .append(text(FormatUtil.formatBytes(compressedSize), GOLD))
-                                        .append(text(" ("))
-                                        .append(text(FormatUtil.percent(compressedSize, size), GREEN))
-                                        .append(text(")"))
-                                        .build()
-                                );
-
-                                resp.broadcastPrefixed(text()
-                                        .content("Compressed heap dump written to: ")
-                                        .color(GOLD)
-                                        .append(text(compressedFile.toString(), GRAY))
-                                        .build()
-                                );
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-                })
+                .executor(HeapAnalysisModule::heapDump)
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--compress", "--run-gc-before", "--include-non-live"))
+                .build()
+        );
+    }
+
+    private static void heapSummary(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+        platform.getPlugin().executeAsync(() -> {
+            if (arguments.boolFlag("run-gc-before")) {
+                resp.broadcastPrefixed(text("Running garbage collector..."));
+                System.gc();
+            }
+
+            resp.broadcastPrefixed(text("Creating a new heap dump summary, please wait..."));
+
+            HeapDumpSummary heapDump;
+            try {
+                heapDump = HeapDumpSummary.createNew();
+            } catch (Exception e) {
+                resp.broadcastPrefixed(text("An error occurred whilst inspecting the heap.", RED));
+                e.printStackTrace();
+                return;
+            }
+
+            byte[] output = heapDump.formCompressedDataPayload(platform.getPlugin().getPlatformInfo(), sender);
+            try {
+                String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
+                String url = SparkPlatform.VIEWER_URL + key;
+
+                resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));
+                resp.broadcast(text()
+                        .content(url)
+                        .color(GRAY)
+                        .clickEvent(ClickEvent.openUrl(url))
+                        .build()
+                );
+
+                platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
+            } catch (IOException e) {
+                resp.broadcastPrefixed(text("An error occurred whilst uploading the data.", RED));
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private static void heapDump(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+        platform.getPlugin().executeAsync(() -> {
+            Path pluginFolder = platform.getPlugin().getPluginDirectory();
+            try {
+                Files.createDirectories(pluginFolder);
+            } catch (IOException e) {
+                // ignore
+            }
+
+            Path file = pluginFolder.resolve("heap-" + DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now()) + (HeapDump.isOpenJ9() ? ".phd" : ".hprof"));
+            boolean liveOnly = !arguments.boolFlag("include-non-live");
+
+            if (arguments.boolFlag("run-gc-before")) {
+                resp.broadcastPrefixed(text("Running garbage collector..."));
+                System.gc();
+            }
+
+            resp.broadcastPrefixed(text("Creating a new heap dump, please wait..."));
+
+            try {
+                HeapDump.dumpHeap(file, liveOnly);
+            } catch (Exception e) {
+                resp.broadcastPrefixed(text("An error occurred whilst creating a heap dump.", RED));
+                e.printStackTrace();
+                return;
+            }
+
+            resp.broadcastPrefixed(text()
+                    .content("Heap dump written to: ")
+                    .color(GOLD)
+                    .append(text(file.toString(), GRAY))
+                    .build()
+            );
+            platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump", file.toString()));
+
+
+            CompressionMethod compressionMethod = null;
+            Iterator<String> compressArgs = arguments.stringFlag("compress").iterator();
+            if (compressArgs.hasNext()) {
+                try {
+                    compressionMethod = CompressionMethod.valueOf(compressArgs.next().toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // ignore
+                }
+            }
+
+            if (compressionMethod != null) {
+                try {
+                    heapDumpCompress(platform, resp, file, compressionMethod);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private static void heapDumpCompress(SparkPlatform platform, CommandResponseHandler resp, Path file, CompressionMethod method) throws IOException {
+        resp.broadcastPrefixed(text("Compressing heap dump, please wait..."));
+
+        long size = Files.size(file);
+        AtomicLong lastReport = new AtomicLong(System.currentTimeMillis());
+
+        LongConsumer progressHandler = progress -> {
+            long timeSinceLastReport = System.currentTimeMillis() - lastReport.get();
+            if (timeSinceLastReport > TimeUnit.SECONDS.toMillis(5)) {
+                lastReport.set(System.currentTimeMillis());
+
+                platform.getPlugin().executeAsync(() -> {
+                    resp.broadcastPrefixed(text()
+                            .color(GRAY)
+                            .append(text("Compressed "))
+                            .append(text(FormatUtil.formatBytes(progress), GOLD))
+                            .append(text(" / "))
+                            .append(text(FormatUtil.formatBytes(size), GOLD))
+                            .append(text(" so far... ("))
+                            .append(text(FormatUtil.percent(progress, size), GREEN))
+                            .append(text(")"))
+                            .build()
+                    );
+                });
+            }
+        };
+
+        Path compressedFile = method.compress(file, progressHandler);
+        long compressedSize = Files.size(compressedFile);
+
+        resp.broadcastPrefixed(text()
+                .color(GRAY)
+                .append(text("Compression complete: "))
+                .append(text(FormatUtil.formatBytes(size), GOLD))
+                .append(text(" --> "))
+                .append(text(FormatUtil.formatBytes(compressedSize), GOLD))
+                .append(text(" ("))
+                .append(text(FormatUtil.percent(compressedSize, size), GREEN))
+                .append(text(")"))
+                .build()
+        );
+
+        resp.broadcastPrefixed(text()
+                .content("Compressed heap dump written to: ")
+                .color(GOLD)
+                .append(text(compressedFile.toString(), GRAY))
                 .build()
         );
     }

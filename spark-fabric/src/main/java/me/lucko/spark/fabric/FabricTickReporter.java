@@ -20,8 +20,9 @@
 
 package me.lucko.spark.fabric;
 
-import me.lucko.spark.common.sampler.tick.AbstractTickReporter;
-import me.lucko.spark.common.sampler.tick.TickReporter;
+import me.lucko.spark.common.tick.AbstractTickReporter;
+import me.lucko.spark.common.tick.TickReporter;
+
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.client.MinecraftClient;

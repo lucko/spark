@@ -23,7 +23,7 @@ package me.lucko.spark.common.sampler;
 import me.lucko.spark.common.sampler.async.AsyncProfilerAccess;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.java.JavaSampler;
-import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.tick.TickHook;
 
 import java.util.concurrent.TimeUnit;
 

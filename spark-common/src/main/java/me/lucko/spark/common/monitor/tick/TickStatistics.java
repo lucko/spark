@@ -20,8 +20,8 @@
 
 package me.lucko.spark.common.monitor.tick;
 
-import me.lucko.spark.common.sampler.tick.TickHook;
-import me.lucko.spark.common.sampler.tick.TickReporter;
+import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.RollingAverage;
 
 import java.math.BigDecimal;

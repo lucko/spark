@@ -21,9 +21,11 @@
 package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
+
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.platform.spongeapi.SpongeAudiences;
 import net.kyori.adventure.text.Component;
+
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 

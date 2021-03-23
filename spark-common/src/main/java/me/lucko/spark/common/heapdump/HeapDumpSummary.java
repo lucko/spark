@@ -25,6 +25,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.HeapData;
 import me.lucko.spark.proto.SparkProtos.HeapEntry;
+
 import org.objectweb.asm.Type;
 
 import java.io.ByteArrayOutputStream;

@@ -20,10 +20,11 @@
 
 package me.lucko.spark.common.command.modules;
 
-import me.lucko.spark.common.activitylog.ActivityLog.Activity;
+import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -36,10 +37,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static me.lucko.spark.common.command.CommandResponseHandler.*;
-import static net.kyori.adventure.text.Component.*;
-import static net.kyori.adventure.text.format.NamedTextColor.*;
-import static net.kyori.adventure.text.format.TextDecoration.*;
+import static me.lucko.spark.common.command.CommandResponseHandler.applyPrefix;
+import static net.kyori.adventure.text.Component.space;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
+import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
+import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
+import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 
 public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
 

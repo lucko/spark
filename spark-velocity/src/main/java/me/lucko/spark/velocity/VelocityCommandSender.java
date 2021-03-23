@@ -23,7 +23,9 @@ package me.lucko.spark.velocity;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
+
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
+
 import net.kyori.adventure.text.Component;
 
 import java.util.UUID;

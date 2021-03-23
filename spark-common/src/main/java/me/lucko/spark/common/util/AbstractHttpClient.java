@@ -38,6 +38,7 @@ public class AbstractHttpClient {
     protected Response makeHttpRequest(Request request) throws IOException {
         Response response = this.okHttp.newCall(request).execute();
         if (!response.isSuccessful()) {
+            response.close();
             throw new RuntimeException("Request was unsuccessful: " + response.code() + " - " + response.message());
         }
         return response;

@@ -30,6 +30,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Utility for parsing command-flag like arguments from raw space split strings.
+ */
 public class Arguments {
     private static final Pattern FLAG_REGEX = Pattern.compile("^--(.+)$");
 
@@ -110,19 +113,8 @@ public class Arguments {
     }
 
     public static final class ParseException extends IllegalArgumentException {
-        public ParseException() {
-        }
-
         public ParseException(String s) {
             super(s);
-        }
-
-        public ParseException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public ParseException(Throwable cause) {
-            super(cause);
         }
     }
 }

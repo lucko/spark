@@ -21,6 +21,7 @@
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.platform.AbstractPlatformInfo;
+
 import net.minecraftforge.versions.forge.ForgeVersion;
 import net.minecraftforge.versions.mcp.MCPVersion;
 

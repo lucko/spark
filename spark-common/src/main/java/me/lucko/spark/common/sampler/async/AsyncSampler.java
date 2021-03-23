@@ -25,11 +25,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.async.jfr.ClassRef;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
-import me.lucko.spark.common.sampler.async.jfr.MethodRef;
-import me.lucko.spark.common.sampler.async.jfr.Sample;
-import me.lucko.spark.common.sampler.async.jfr.StackTrace;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkProtos;
@@ -206,9 +202,9 @@ public class AsyncSampler implements Sampler {
     }
 
     private void readSegments(JfrReader reader, Predicate<String> threadFilter) {
-        List<Sample> samples = reader.samples;
+        List<JfrReader.Sample> samples = reader.samples;
         for (int i = 0; i < samples.size(); i++) {
-            Sample sample = samples.get(i);
+            JfrReader.Sample sample = samples.get(i);
 
             long duration;
             if (i == 0) {
@@ -232,8 +228,8 @@ public class AsyncSampler implements Sampler {
         }
     }
 
-    private static ProfileSegment parseSegment(JfrReader reader, Sample sample, String threadName, long duration) {
-        StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
+    private static ProfileSegment parseSegment(JfrReader reader, JfrReader.Sample sample, String threadName, long duration) {
+        JfrReader.StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
         int len = stackTrace.methods.length;
 
         AsyncStackTraceElement[] stack = new AsyncStackTraceElement[len];
@@ -250,8 +246,8 @@ public class AsyncSampler implements Sampler {
             return result;
         }
 
-        MethodRef methodRef = reader.methods.get(methodId);
-        ClassRef classRef = reader.classes.get(methodRef.cls);
+        JfrReader.MethodRef methodRef = reader.methods.get(methodId);
+        JfrReader.ClassRef classRef = reader.classes.get(methodRef.cls);
 
         byte[] className = reader.symbols.get(classRef.name);
         byte[] methodName = reader.symbols.get(methodRef.name);

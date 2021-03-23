@@ -18,47 +18,40 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler.tick;
+package me.lucko.spark.common.tick;
 
 /**
- * A hook with the game's "tick loop".
+ * A reporting callback for the game's "tick loop".
  */
-public interface TickHook extends AutoCloseable {
+public interface TickReporter extends AutoCloseable {
 
     /**
-     * Starts the hook
+     * Starts the reporter
      */
     void start();
 
     /**
-     * Stops the hook
+     * Stops the reporter
      */
     @Override
     void close();
 
     /**
-     * Gets the current tick number
-     *
-     * @return the current tick
-     */
-    int getCurrentTick();
-
-    /**
      * Adds a callback to be called each time the tick increments
      *
-     * @param runnable the task
+     * @param runnable the callback
      */
     void addCallback(Callback runnable);
 
     /**
      * Removes a callback
      *
-     * @param runnable the callback
+     * @param runnable callback
      */
     void removeCallback(Callback runnable);
 
     interface Callback {
-        void onTick(int currentTick);
+        void onTick(double duration);
     }
 
 }

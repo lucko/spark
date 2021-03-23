@@ -22,6 +22,7 @@ package me.lucko.spark.fabric;
 
 import me.lucko.spark.fabric.plugin.FabricClientSparkPlugin;
 import me.lucko.spark.fabric.plugin.FabricServerSparkPlugin;
+
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;

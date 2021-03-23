@@ -21,6 +21,7 @@
 package me.lucko.spark.fabric;
 
 import me.lucko.spark.common.platform.AbstractPlatformInfo;
+
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.util.Optional;

@@ -20,8 +20,9 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.sampler.tick.AbstractTickReporter;
-import me.lucko.spark.common.sampler.tick.TickReporter;
+import me.lucko.spark.common.tick.AbstractTickReporter;
+import me.lucko.spark.common.tick.TickReporter;
+
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

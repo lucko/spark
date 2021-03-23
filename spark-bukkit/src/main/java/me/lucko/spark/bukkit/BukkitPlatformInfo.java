@@ -21,6 +21,7 @@
 package me.lucko.spark.bukkit;
 
 import me.lucko.spark.common.platform.AbstractPlatformInfo;
+
 import org.bukkit.Server;
 
 import java.lang.reflect.Field;

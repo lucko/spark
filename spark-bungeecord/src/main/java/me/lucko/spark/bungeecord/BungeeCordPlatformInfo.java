@@ -21,6 +21,7 @@
 package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.platform.AbstractPlatformInfo;
+
 import net.md_5.bungee.api.ProxyServer;
 
 public class BungeeCordPlatformInfo extends AbstractPlatformInfo {

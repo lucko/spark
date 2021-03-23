@@ -21,29 +21,59 @@
 package me.lucko.spark.common.monitor.tick;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
+
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
-import me.lucko.spark.common.sampler.tick.TickHook;
+import me.lucko.spark.common.tick.TickHook;
+
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 import java.text.DecimalFormat;
 import java.util.DoubleSummaryStatistics;
 
-public abstract class TickMonitor implements TickHook.Callback, GarbageCollectionMonitor.Listener, AutoCloseable {
-    private static final DecimalFormat df = new DecimalFormat("#.##");
+import static net.kyori.adventure.text.Component.space;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
+import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.RED;
+import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
 
+/**
+ * Monitoring process for the server/client tick rate.
+ */
+public abstract class TickMonitor implements TickHook.Callback, GarbageCollectionMonitor.Listener, AutoCloseable {
+    private static final DecimalFormat DF = new DecimalFormat("#.##");
+
+    /** The spark platform */
     private final SparkPlatform platform;
+    /** The tick hook being used as the source for tick information. */
     private final TickHook tickHook;
+    /** The index of the tick when the monitor first started */
     private final int zeroTick;
+    /** The active garbage collection monitor, if enabled */
     private final GarbageCollectionMonitor garbageCollectionMonitor;
+    /** The predicate used to decide if a tick should be reported. */
     private final ReportPredicate reportPredicate;
 
-    // data
+    /**
+     * Enum representing the various phases in a tick monitors lifetime.
+     */
+    private enum Phase {
+        /** Tick monitor is in the setup phase where it determines the average tick rate. */
+        SETUP,
+        /** Tick monitor is in the monitoring phase where it listens for ticks that exceed the threshold. */
+        MONITORING
+    }
+
+    /** The phase the monitor is in */
+    private Phase phase = null;
+    /** Gets the system timestamp of the last recorded tick */
     private volatile double lastTickTime = 0;
-    private State state = null;
-    private final DoubleSummaryStatistics averageTickTime = new DoubleSummaryStatistics();
-    private double avg;
+    /** Used to calculate the average tick time during the SETUP phase. */
+    private final DoubleSummaryStatistics averageTickTimeCalc = new DoubleSummaryStatistics();
+    /** The average tick time, defined at the end of the SETUP phase. */
+    private double averageTickTime;
 
     public TickMonitor(SparkPlatform platform, TickHook tickHook, ReportPredicate reportPredicate, boolean monitorGc) {
         this.platform = platform;
@@ -65,8 +95,14 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
 
     protected abstract void sendMessage(Component message);
 
+    public void start() {
+        this.tickHook.addCallback(this);
+    }
+
     @Override
     public void close() {
+        this.tickHook.removeCallback(this);
+
         if (this.garbageCollectionMonitor != null) {
             this.garbageCollectionMonitor.close();
         }
@@ -77,10 +113,10 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
         double now = ((double) System.nanoTime()) / 1000000d;
 
         // init
-        if (this.state == null) {
-            this.state = State.SETUP;
+        if (this.phase == null) {
+            this.phase = Phase.SETUP;
             this.lastTickTime = now;
-            sendMessage(Component.text("Tick monitor started. Before the monitor becomes fully active, the server's " +
+            sendMessage(text("Tick monitor started. Before the monitor becomes fully active, the server's " +
                     "average tick rate will be calculated over a period of 120 ticks (approx 6 seconds)."));
             return;
         }
@@ -95,63 +131,63 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
         }
 
         // form averages
-        if (this.state == State.SETUP) {
-            this.averageTickTime.accept(tickDuration);
+        if (this.phase == Phase.SETUP) {
+            this.averageTickTimeCalc.accept(tickDuration);
 
             // move onto the next state
-            if (this.averageTickTime.getCount() >= 120) {
+            if (this.averageTickTimeCalc.getCount() >= 120) {
                 this.platform.getPlugin().executeAsync(() -> {
-                    sendMessage(Component.text("Analysis is now complete.", NamedTextColor.GOLD));
-                    sendMessage(Component.text()
-                            .color(NamedTextColor.GRAY)
-                            .append(Component.text(">", NamedTextColor.WHITE))
-                            .append(Component.space())
-                            .append(Component.text("Max: "))
-                            .append(Component.text(df.format(this.averageTickTime.getMax())))
-                            .append(Component.text("ms"))
+                    sendMessage(text("Analysis is now complete.", GOLD));
+                    sendMessage(text()
+                            .color(GRAY)
+                            .append(text(">", WHITE))
+                            .append(space())
+                            .append(text("Max: "))
+                            .append(text(DF.format(this.averageTickTimeCalc.getMax())))
+                            .append(text("ms"))
                             .build()
                     );
-                    sendMessage(Component.text()
-                            .color(NamedTextColor.GRAY)
-                            .append(Component.text(">", NamedTextColor.WHITE))
-                            .append(Component.space())
-                            .append(Component.text("Min: "))
-                            .append(Component.text(df.format(this.averageTickTime.getMin())))
-                            .append(Component.text("ms"))
+                    sendMessage(text()
+                            .color(GRAY)
+                            .append(text(">", WHITE))
+                            .append(space())
+                            .append(text("Min: "))
+                            .append(text(DF.format(this.averageTickTimeCalc.getMin())))
+                            .append(text("ms"))
                             .build()
                     );
-                    sendMessage(Component.text()
-                            .color(NamedTextColor.GRAY)
-                            .append(Component.text(">", NamedTextColor.WHITE))
-                            .append(Component.space())
-                            .append(Component.text("Average: "))
-                            .append(Component.text(df.format(this.averageTickTime.getAverage())))
-                            .append(Component.text("ms"))
+                    sendMessage(text()
+                            .color(GRAY)
+                            .append(text(">", WHITE))
+                            .append(space())
+                            .append(text("Average: "))
+                            .append(text(DF.format(this.averageTickTimeCalc.getAverage())))
+                            .append(text("ms"))
                             .build()
                     );
                     sendMessage(this.reportPredicate.monitoringStartMessage());
                 });
 
-                this.avg = this.averageTickTime.getAverage();
-                this.state = State.MONITORING;
+                this.averageTickTime = this.averageTickTimeCalc.getAverage();
+                this.phase = Phase.MONITORING;
             }
         }
 
-        if (this.state == State.MONITORING) {
-            double increase = tickDuration - this.avg;
-            double percentageChange = (increase * 100d) / this.avg;
+        if (this.phase == Phase.MONITORING) {
+            double increase = tickDuration - this.averageTickTime;
+            double percentageChange = (increase * 100d) / this.averageTickTime;
             if (this.reportPredicate.shouldReport(tickDuration, increase, percentageChange)) {
                 this.platform.getPlugin().executeAsync(() -> {
-                    sendMessage(Component.text()
-                            .color(NamedTextColor.GRAY)
-                            .append(Component.text("Tick "))
-                            .append(Component.text("#" + getCurrentTick(), NamedTextColor.DARK_GRAY))
-                            .append(Component.text(" lasted "))
-                            .append(Component.text(df.format(tickDuration), NamedTextColor.GOLD))
-                            .append(Component.text(" ms. "))
-                            .append(Component.text("("))
-                            .append(Component.text(df.format(percentageChange) + "%", NamedTextColor.GOLD))
-                            .append(Component.text(" increase from avg)"))
+                    sendMessage(text()
+                            .color(GRAY)
+                            .append(text("Tick "))
+                            .append(text("#" + getCurrentTick(), DARK_GRAY))
+                            .append(text(" lasted "))
+                            .append(text(DF.format(tickDuration), GOLD))
+                            .append(text(" ms. "))
+                            .append(text("("))
+                            .append(text(DF.format(percentageChange) + "%", GOLD))
+                            .append(text(" increase from avg)"))
                             .build()
                     );
                 });
@@ -161,105 +197,25 @@ public abstract class TickMonitor implements TickHook.Callback, GarbageCollectio
 
     @Override
     public void onGc(GarbageCollectionNotificationInfo data) {
-        if (this.state == State.SETUP) {
+        if (this.phase == Phase.SETUP) {
             // set lastTickTime to zero so this tick won't be counted in the average
             this.lastTickTime = 0;
             return;
         }
 
-        String gcType;
-        if (data.getGcAction().equals("end of minor GC")) {
-            gcType = "Young Gen";
-        } else if (data.getGcAction().equals("end of major GC")) {
-            gcType = "Old Gen";
-        } else {
-            gcType = data.getGcAction();
-        }
-
         this.platform.getPlugin().executeAsync(() -> {
-            sendMessage(Component.text()
-                    .color(NamedTextColor.GRAY)
-                    .append(Component.text("Tick "))
-                    .append(Component.text("#" + getCurrentTick(), NamedTextColor.DARK_GRAY))
-                    .append(Component.text(" included "))
-                    .append(Component.text("GC", NamedTextColor.RED))
-                    .append(Component.text(" lasting "))
-                    .append(Component.text(df.format(data.getGcInfo().getDuration()), NamedTextColor.GOLD))
-                    .append(Component.text(" ms. (type = " + gcType + ")"))
+            sendMessage(text()
+                    .color(GRAY)
+                    .append(text("Tick "))
+                    .append(text("#" + getCurrentTick(), DARK_GRAY))
+                    .append(text(" included "))
+                    .append(text("GC", RED))
+                    .append(text(" lasting "))
+                    .append(text(DF.format(data.getGcInfo().getDuration()), GOLD))
+                    .append(text(" ms. (type = " + GarbageCollectionMonitor.getGcType(data) + ")"))
                     .build()
             );
         });
     }
 
-    /**
-     * A predicate to test whether a tick should be reported.
-     */
-    public interface ReportPredicate {
-
-        /**
-         * Tests whether a tick should be reported.
-         *
-         * @param duration the tick duration
-         * @param increaseFromAvg the difference between the ticks duration and the average
-         * @param percentageChange the percentage change between the ticks duration and the average
-         * @return true if the tick should be reported, false otherwise
-         */
-        boolean shouldReport(double duration, double increaseFromAvg, double percentageChange);
-
-        /**
-         * Gets a component to describe how the predicate will select ticks to report.
-         *
-         * @return the component
-         */
-        Component monitoringStartMessage();
-
-        final class PercentageChangeGt implements ReportPredicate {
-            private final double threshold;
-
-            public PercentageChangeGt(double threshold) {
-                this.threshold = threshold;
-            }
-
-            @Override
-            public boolean shouldReport(double duration, double increaseFromAvg, double percentageChange) {
-                if (increaseFromAvg <= 0) {
-                    return false;
-                }
-                return percentageChange > this.threshold;
-            }
-
-            @Override
-            public Component monitoringStartMessage() {
-                return Component.text("Starting now, any ticks with >" + this.threshold + "% increase in " +
-                        "duration compared to the average will be reported.");
-            }
-        }
-
-        final class DurationGt implements ReportPredicate {
-            private final double threshold;
-
-            public DurationGt(double threshold) {
-                this.threshold = threshold;
-            }
-
-            @Override
-            public boolean shouldReport(double duration, double increaseFromAvg, double percentageChange) {
-                if (increaseFromAvg <= 0) {
-                    return false;
-                }
-                return duration > this.threshold;
-            }
-
-            @Override
-            public Component monitoringStartMessage() {
-                return Component.text("Starting now, any ticks with duration >" + this.threshold + " will be reported.");
-            }
-        }
-
-    }
-
-    private enum State {
-        SETUP,
-        MONITORING
-    }
 }
