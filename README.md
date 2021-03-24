@@ -11,7 +11,7 @@
 #### Useful Links
 * [**Website**](https://spark.lucko.me/) - browse the project homepage
 * [**Documentation**](https://spark.lucko.me/docs) - read documentation and usage guides
-* [**Downloads**](https://ci.lucko.me/job/spark/) - latest plugin/mod downloads
+* [**Downloads**](https://spark.lucko.me/download) - latest plugin/mod downloads
 
 
 ## What does spark do?
