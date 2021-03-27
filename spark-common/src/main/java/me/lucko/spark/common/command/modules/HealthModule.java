@@ -133,32 +133,30 @@ public class HealthModule implements CommandModule {
 
     private static void healthReport(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         resp.replyPrefixed(text("Generating server health report..."));
-        platform.getPlugin().executeAsync(() -> {
-            List<Component> report = new LinkedList<>();
-            report.add(empty());
+        List<Component> report = new LinkedList<>();
+        report.add(empty());
 
-            TickStatistics tickStatistics = platform.getTickStatistics();
-            if (tickStatistics != null) {
-                addTickStats(report, tickStatistics);
-            }
+        TickStatistics tickStatistics = platform.getTickStatistics();
+        if (tickStatistics != null) {
+            addTickStats(report, tickStatistics);
+        }
 
-            addCpuStats(report);
+        addCpuStats(report);
 
-            MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
-            addBasicMemoryStats(report, memoryMXBean);
+        MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+        addBasicMemoryStats(report, memoryMXBean);
 
-            if (arguments.boolFlag("memory")) {
-                addDetailedMemoryStats(report, memoryMXBean);
-            }
+        if (arguments.boolFlag("memory")) {
+            addDetailedMemoryStats(report, memoryMXBean);
+        }
 
-            try {
-                addDiskStats(report);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        try {
+            addDiskStats(report);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-            report.forEach(resp::reply);
-        });
+        report.forEach(resp::reply);
     }
 
     private static void addTickStats(List<Component> report, TickStatistics tickStatistics) {

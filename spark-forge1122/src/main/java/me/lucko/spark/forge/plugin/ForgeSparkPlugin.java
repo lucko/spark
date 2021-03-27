@@ -44,6 +44,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
     private final ForgeSparkMod mod;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
+    protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected ForgeSparkPlugin(ForgeSparkMod mod) {
         this.mod = mod;
@@ -85,7 +86,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+        return this.threadDumper.get();
     }
 
     // implement ICommand
@@ -107,6 +108,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
+        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new ForgeCommandSender(sender, this), args);
     }
 

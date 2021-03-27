@@ -63,6 +63,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     private final ForgeSparkMod mod;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
+    protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected ForgeSparkPlugin(ForgeSparkMod mod) {
         this.mod = mod;
@@ -104,7 +105,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+        return this.threadDumper.get();
     }
 
 }

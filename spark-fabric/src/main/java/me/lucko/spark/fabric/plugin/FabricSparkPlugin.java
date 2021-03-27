@@ -44,6 +44,7 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
     private final FabricSparkMod mod;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
+    protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected FabricSparkPlugin(FabricSparkMod mod) {
         this.mod = mod;
@@ -85,7 +86,7 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+        return this.threadDumper.get();
     }
 
     protected static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {

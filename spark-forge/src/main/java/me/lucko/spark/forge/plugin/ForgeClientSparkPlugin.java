@@ -104,6 +104,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
             return;
         }
 
+        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new ForgeCommandSender(this.minecraft.player, this), args);
         this.minecraft.ingameGUI.getChatGUI().addToSentMessages(event.getMessage());
         event.setCanceled(true);

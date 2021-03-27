@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -70,6 +71,25 @@ public interface ThreadDumper {
                     .build();
         }
     };
+
+    /**
+     * Utility to cache the creation of a {@link ThreadDumper} targeting
+     * the game (server/client) thread.
+     */
+    final class GameThread implements Supplier<ThreadDumper> {
+        private Specific dumper = null;
+
+        @Override
+        public ThreadDumper get() {
+            return Objects.requireNonNull(this.dumper, "dumper");
+        }
+
+        public void ensureSetup() {
+            if (this.dumper == null) {
+                this.dumper = new Specific(new long[]{Thread.currentThread().getId()});
+            }
+        }
+    }
 
     /**
      * Implementation of {@link ThreadDumper} that generates data for a specific set of threads.

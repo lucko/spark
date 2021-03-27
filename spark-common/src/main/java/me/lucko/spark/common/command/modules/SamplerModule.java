@@ -299,25 +299,23 @@ public class SamplerModule implements CommandModule {
     }
 
     private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, String comment, MergeMode mergeMode) {
-        platform.getPlugin().executeAsync(() -> {
-            byte[] output = sampler.formCompressedDataPayload(platform.getPlugin().getPlatformInfo(), resp.sender(), threadOrder, comment, mergeMode);
-            try {
-                String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
-                String url = SparkPlatform.VIEWER_URL + key;
+        byte[] output = sampler.formCompressedDataPayload(platform.getPlugin().getPlatformInfo(), resp.sender(), threadOrder, comment, mergeMode);
+        try {
+            String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
+            String url = SparkPlatform.VIEWER_URL + key;
 
-                resp.broadcastPrefixed(text("Profiler results:", GOLD));
-                resp.broadcast(text()
-                        .content(url)
-                        .color(GRAY)
-                        .clickEvent(ClickEvent.openUrl(url))
-                        .build()
-                );
+            resp.broadcastPrefixed(text("Profiler results:", GOLD));
+            resp.broadcast(text()
+                    .content(url)
+                    .color(GRAY)
+                    .clickEvent(ClickEvent.openUrl(url))
+                    .build()
+            );
 
-                platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
-            } catch (IOException e) {
-                resp.broadcastPrefixed(text("An error occurred whilst uploading the results.", RED));
-                e.printStackTrace();
-            }
-        });
+            platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
+        } catch (IOException e) {
+            resp.broadcastPrefixed(text("An error occurred whilst uploading the results.", RED));
+            e.printStackTrace();
+        }
     }
 }

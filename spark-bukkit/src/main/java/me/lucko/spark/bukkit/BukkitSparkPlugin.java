@@ -46,6 +46,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     private SparkPlatform platform;
 
     private CommandExecutor tpsCommand = null;
+    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Override
     public void onEnable() {
@@ -94,6 +95,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new BukkitCommandSender(sender, this.audienceFactory), args);
         return true;
     }
@@ -133,7 +135,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+        return this.threadDumper.get();
     }
 
     @Override

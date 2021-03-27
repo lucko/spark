@@ -90,6 +90,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             return 0;
         }
 
+        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new ForgeCommandSender(context.getSource().source, this), args);
         return Command.SINGLE_SUCCESS;
     }

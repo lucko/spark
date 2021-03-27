@@ -53,6 +53,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static net.kyori.adventure.text.Component.space;
@@ -80,6 +81,7 @@ public class SparkPlatform {
     private final SparkPlugin plugin;
     private final List<CommandModule> commandModules;
     private final List<Command> commands;
+    private final ReentrantLock commandExecuteLock = new ReentrantLock(true);
     private final ActivityLog activityLog;
     private final TickHook tickHook;
     private final TickReporter tickReporter;
@@ -186,6 +188,17 @@ public class SparkPlatform {
     }
 
     public void executeCommand(CommandSender sender, String[] args) {
+        this.plugin.executeAsync(() -> {
+            this.commandExecuteLock.lock();
+            try {
+                executeCommand0(sender, args);
+            } finally {
+                this.commandExecuteLock.unlock();
+            }
+        });
+    }
+
+    private void executeCommand0(CommandSender sender, String[] args) {
         CommandResponseHandler resp = new CommandResponseHandler(this, sender);
         List<Command> commands = getAvailableCommands(sender);
 

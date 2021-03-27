@@ -74,6 +74,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
     private SpongeAudiences audienceFactory;
     private SparkPlatform platform;
+    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
     public SpongeSparkPlugin(PluginContainer pluginContainer, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
@@ -126,7 +127,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return new ThreadDumper.Specific(new long[]{Thread.currentThread().getId()});
+        return this.threadDumper.get();
     }
 
     @Override
@@ -148,6 +149,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
         @Override
         public CommandResult process(CommandSource source, String arguments) {
+            this.plugin.threadDumper.ensureSetup();
             this.plugin.platform.executeCommand(new SpongeCommandSender(source, this.plugin.audienceFactory), arguments.split(" "));
             return CommandResult.empty();
         }

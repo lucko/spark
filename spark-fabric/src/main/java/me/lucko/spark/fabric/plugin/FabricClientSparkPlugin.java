@@ -105,6 +105,7 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
             return false;
         }
 
+        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new FabricCommandSender(this.minecraft.player, this), args);
         this.minecraft.inGameHud.getChatHud().addToMessageHistory(chat);
         return true;
