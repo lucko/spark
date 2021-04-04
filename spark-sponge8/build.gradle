@@ -1,0 +1,37 @@
+plugins {
+    id("java-library")
+    id('com.github.johnrengelman.shadow') version '4.0.1'
+}
+
+dependencies {
+    compile project(':spark-common')
+    compileOnly "org.spongepowered:spongeapi:8.0.0-SNAPSHOT"
+}
+
+repositories {
+    maven {
+        url "https://repo.spongepowered.org/repository/maven-public/"
+        name "sponge"
+    }
+}
+
+shadowJar {
+    archiveFileName = 'spark-sponge8.jar'
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        include 'META-INF/plugins.json'
+
+        expand (
+            version: project.version,
+            description: project.pluginDescription
+        )
+    }
+}
+
