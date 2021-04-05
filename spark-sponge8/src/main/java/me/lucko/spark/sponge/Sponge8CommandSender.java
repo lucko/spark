@@ -22,43 +22,61 @@ package me.lucko.spark.sponge;
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
-import org.spongepowered.api.service.permission.Subject;
 
+import org.spongepowered.api.command.CommandCause;
+import org.spongepowered.api.service.permission.Subject;
+import org.spongepowered.api.util.Identifiable;
 
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class Sponge8CommandSender extends AbstractCommandSender<Audience> {
-    private final Subject subject;
+public class Sponge8CommandSender extends AbstractCommandSender<Subject> {
+    private final CommandCause cause;
+    private final Audience audience;
 
-    public Sponge8CommandSender(Subject subject, Audience audience) {
-        super(audience);
-        this.subject = subject;
+    public Sponge8CommandSender(CommandCause cause) {
+        super(cause);
+        this.cause = cause;
+        this.audience = cause.audience();
+    }
+
+    public <T extends Subject & Audience> Sponge8CommandSender(T cause) {
+        super(cause);
+        this.cause = null;
+        this.audience = cause;
     }
 
     @Override
     public String getName() {
-        return subject.friendlyIdentifier().orElse(subject.identifier());
+        return super.delegate.friendlyIdentifier().orElse(super.delegate.identifier());
     }
 
     @Override
     public UUID getUniqueId() {
+        if (this.cause != null) {
+            Identifiable identifiable = this.cause.first(Identifiable.class).orElse(null);
+            if (identifiable != null) {
+                return identifiable.uniqueId();
+            }
+        }
+
         try {
-            return UUID.fromString(subject.identifier());
+            return UUID.fromString(super.delegate.identifier());
         } catch (Exception e) {
-            return UUID.nameUUIDFromBytes(subject.identifier().getBytes(UTF_8));
+            return UUID.nameUUIDFromBytes(super.delegate.identifier().getBytes(UTF_8));
         }
     }
 
     @Override
     public void sendMessage(Component message) {
-        delegate.sendMessage(message);
+        this.audience.sendMessage(Identity.nil(), message);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return subject.hasPermission(permission);
+        return super.delegate.hasPermission(permission);
     }
 }

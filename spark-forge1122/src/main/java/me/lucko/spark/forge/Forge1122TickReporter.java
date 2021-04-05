@@ -27,12 +27,12 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public class ForgeTickReporter extends AbstractTickReporter implements TickReporter {
+public class Forge1122TickReporter extends AbstractTickReporter implements TickReporter {
     private final TickEvent.Type type;
 
     private long start = 0;
 
-    public ForgeTickReporter(TickEvent.Type type) {
+    public Forge1122TickReporter(TickEvent.Type type) {
         this.type = type;
     }
 

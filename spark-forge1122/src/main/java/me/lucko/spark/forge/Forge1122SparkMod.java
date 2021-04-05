@@ -20,8 +20,8 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
-import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
+import me.lucko.spark.forge.plugin.Forge1122ClientSparkPlugin;
+import me.lucko.spark.forge.plugin.Forge1122ServerSparkPlugin;
 
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
@@ -40,13 +40,13 @@ import java.nio.file.Path;
         version = "@version@",
         acceptableRemoteVersions = "*"
 )
-public class ForgeSparkMod {
+public class Forge1122SparkMod {
 
     private Path configDirectory;
-    private ForgeServerSparkPlugin activeServerPlugin;
+    private Forge1122ServerSparkPlugin activeServerPlugin;
 
     public String getVersion() {
-        return ForgeSparkMod.class.getAnnotation(Mod.class).version();
+        return Forge1122SparkMod.class.getAnnotation(Mod.class).version();
     }
 
     @EventHandler
@@ -57,13 +57,13 @@ public class ForgeSparkMod {
     @EventHandler
     public void clientInit(FMLInitializationEvent e) {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
-            ForgeClientSparkPlugin.register(this);
+            Forge1122ClientSparkPlugin.register(this);
         }
     }
 
     @EventHandler
     public void serverInit(FMLServerStartingEvent e) {
-        this.activeServerPlugin = ForgeServerSparkPlugin.register(this, e);
+        this.activeServerPlugin = Forge1122ServerSparkPlugin.register(this, e);
     }
 
     @EventHandler

@@ -24,16 +24,16 @@ import me.lucko.spark.common.platform.AbstractPlatformInfo;
 
 import net.minecraftforge.common.ForgeVersion;
 
-public class ForgePlatformInfo extends AbstractPlatformInfo {
+public class Forge1122PlatformInfo extends AbstractPlatformInfo {
     private final Type type;
 
-    public ForgePlatformInfo(Type type) {
+    public Forge1122PlatformInfo(Type type) {
         this.type = type;
     }
 
     @Override
     public Type getType() {
-        return type;
+        return this.type;
     }
 
     @Override

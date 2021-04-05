@@ -27,10 +27,10 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public class ForgeTickHook extends AbstractTickHook implements TickHook {
+public class Forge1122TickHook extends AbstractTickHook implements TickHook {
     private final TickEvent.Type type;
 
-    public ForgeTickHook(TickEvent.Type type) {
+    public Forge1122TickHook(TickEvent.Type type) {
         this.type = type;
     }
 

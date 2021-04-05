@@ -46,7 +46,7 @@ processResources {
 }
 
 blossom {
-    replaceTokenIn('src/main/java/me/lucko/spark/forge/ForgeSparkMod.java')
+    replaceTokenIn('src/main/java/me/lucko/spark/forge/Forge1122SparkMod.java')
     replaceToken '@version@', project.pluginVersion
 }
 

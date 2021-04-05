@@ -1,6 +1,5 @@
 plugins {
-    id("java-library")
-    id('com.github.johnrengelman.shadow') version '4.0.1'
+    id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
 dependencies {
@@ -9,29 +8,35 @@ dependencies {
 }
 
 repositories {
-    maven {
-        url "https://repo.spongepowered.org/repository/maven-public/"
-        name "sponge"
+    maven { 'https://repo.spongepowered.org/repository/maven-public/' }
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        include 'META-INF/plugins.json'
+        expand (
+                version: project.version,
+                description: project.pluginDescription
+        )
     }
 }
 
 shadowJar {
     archiveFileName = 'spark-sponge8.jar'
+
+    relocate 'okio', 'me.lucko.spark.lib.okio'
+    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+    relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
+
+    exclude 'module-info.class'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/proguard/**'
 }
 
 artifacts {
     archives shadowJar
     shadow shadowJar
 }
-
-processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        include 'META-INF/plugins.json'
-
-        expand (
-            version: project.version,
-            description: project.pluginDescription
-        )
-    }
-}
-

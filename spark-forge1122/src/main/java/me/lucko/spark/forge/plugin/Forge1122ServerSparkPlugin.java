@@ -23,11 +23,11 @@ package me.lucko.spark.forge.plugin;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.forge.ForgeCommandSender;
-import me.lucko.spark.forge.ForgePlatformInfo;
-import me.lucko.spark.forge.ForgeSparkMod;
-import me.lucko.spark.forge.ForgeTickHook;
-import me.lucko.spark.forge.ForgeTickReporter;
+import me.lucko.spark.forge.Forge1122CommandSender;
+import me.lucko.spark.forge.Forge1122PlatformInfo;
+import me.lucko.spark.forge.Forge1122SparkMod;
+import me.lucko.spark.forge.Forge1122TickHook;
+import me.lucko.spark.forge.Forge1122TickReporter;
 
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -39,10 +39,10 @@ import net.minecraftforge.server.permission.PermissionAPI;
 
 import java.util.stream.Stream;
 
-public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
+public class Forge1122ServerSparkPlugin extends Forge1122SparkPlugin {
 
-    public static ForgeServerSparkPlugin register(ForgeSparkMod mod, FMLServerStartingEvent event) {
-        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
+    public static Forge1122ServerSparkPlugin register(Forge1122SparkMod mod, FMLServerStartingEvent event) {
+        Forge1122ServerSparkPlugin plugin = new Forge1122ServerSparkPlugin(mod, event.getServer());
         plugin.enable();
 
         // register commands & permissions
@@ -54,7 +54,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
 
     private final MinecraftServer server;
 
-    public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
+    public Forge1122ServerSparkPlugin(Forge1122SparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
     }
@@ -69,26 +69,26 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public Stream<ForgeCommandSender> getCommandSenders() {
+    public Stream<Forge1122CommandSender> getCommandSenders() {
         return Stream.concat(
             this.server.getPlayerList().getPlayers().stream(),
             Stream.of(this.server)
-        ).map(sender -> new ForgeCommandSender(sender, this));
+        ).map(sender -> new Forge1122CommandSender(sender, this));
     }
 
     @Override
     public TickHook createTickHook() {
-        return new ForgeTickHook(TickEvent.Type.SERVER);
+        return new Forge1122TickHook(TickEvent.Type.SERVER);
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new ForgeTickReporter(TickEvent.Type.SERVER);
+        return new Forge1122TickReporter(TickEvent.Type.SERVER);
     }
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new ForgePlatformInfo(PlatformInfo.Type.SERVER);
+        return new Forge1122PlatformInfo(PlatformInfo.Type.SERVER);
     }
 
     @Override

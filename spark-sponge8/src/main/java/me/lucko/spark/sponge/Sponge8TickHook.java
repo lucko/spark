@@ -49,10 +49,10 @@ public class Sponge8TickHook extends AbstractTickHook implements TickHook, Runna
         Task task = Task.builder()
                 .interval(Ticks.of(1))
                 .name("spark-ticker")
-                .plugin(plugin)
+                .plugin(this.plugin)
                 .execute(this)
                 .build();
-        this.task = game.server().scheduler().submit(task);
+        this.task = this.game.server().scheduler().submit(task);
     }
 
     @Override

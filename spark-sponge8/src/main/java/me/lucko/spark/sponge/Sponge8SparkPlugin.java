@@ -30,13 +30,13 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 
 import net.kyori.adventure.text.Component;
+
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.command.Command;
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.command.CommandResult;
-import org.spongepowered.api.command.exception.CommandException;
 import org.spongepowered.api.command.parameter.ArgumentReader;
 import org.spongepowered.api.command.registrar.tree.CommandTreeNode;
 import org.spongepowered.api.config.ConfigDir;
@@ -66,7 +66,6 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Inject
     public Sponge8SparkPlugin(PluginContainer pluginContainer, Game game, @ConfigDir(sharedRoot = false) Path configDirectory) {
-
         this.pluginContainer = pluginContainer;
         this.game = game;
         this.configDirectory = configDirectory;
@@ -76,7 +75,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Listener
     public void onRegisterCommands(final RegisterCommandEvent<Command.Raw> event) {
-        event.register(this.pluginContainer, new SparkCommand(this), pluginContainer.getMetadata().getId());
+        event.register(this.pluginContainer, new SparkCommand(this), this.pluginContainer.getMetadata().getId());
     }
 
     @Listener
@@ -110,7 +109,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         return Stream.concat(
                 this.game.server().onlinePlayers().stream(),
                 Stream.of(this.game.systemSubject())
-        ).map(s -> new Sponge8CommandSender(s, s));
+        ).map(Sponge8CommandSender::new);
     }
 
     @Override
@@ -134,8 +133,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     }
 
     private static final class SparkCommand implements Command.Raw {
-
-        private Sponge8SparkPlugin plugin;
+        private final Sponge8SparkPlugin plugin;
 
         public SparkCommand(Sponge8SparkPlugin plugin) {
             this.plugin = plugin;
@@ -144,22 +142,18 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         @Override
         public CommandResult process(CommandCause cause, ArgumentReader.Mutable arguments) {
             this.plugin.threadDumper.ensureSetup();
-            this.plugin.platform.executeCommand(getSenderFromCause(cause), arguments.input().split(" "));
+            this.plugin.platform.executeCommand(new Sponge8CommandSender(cause), arguments.input().split(" "));
             return CommandResult.empty();
         }
 
         @Override
         public List<String> suggestions(CommandCause cause, ArgumentReader.Mutable arguments) {
-            return this.plugin.platform.tabCompleteCommand(getSenderFromCause(cause), arguments.input().split(" "));
-        }
-
-        private static CommandSender getSenderFromCause(CommandCause cause) {
-            return new Sponge8CommandSender(cause.subject(), cause.audience());
+            return this.plugin.platform.tabCompleteCommand(new Sponge8CommandSender(cause), arguments.input().split(" "));
         }
 
         @Override
         public boolean canExecute(CommandCause cause) {
-            return this.plugin.platform.hasPermissionForAnyCommand(getSenderFromCause(cause));
+            return this.plugin.platform.hasPermissionForAnyCommand(new Sponge8CommandSender(cause));
         }
 
         @Override

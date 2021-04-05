@@ -23,8 +23,8 @@ package me.lucko.spark.forge.plugin;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.forge.ForgeCommandSender;
-import me.lucko.spark.forge.ForgeSparkMod;
+import me.lucko.spark.forge.Forge1122CommandSender;
+import me.lucko.spark.forge.Forge1122SparkMod;
 
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
@@ -39,14 +39,14 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import javax.annotation.Nullable;
 
-public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
+public abstract class Forge1122SparkPlugin implements SparkPlugin, ICommand {
 
-    private final ForgeSparkMod mod;
+    private final Forge1122SparkMod mod;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
     protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
-    protected ForgeSparkPlugin(ForgeSparkMod mod) {
+    protected Forge1122SparkPlugin(Forge1122SparkMod mod) {
         this.mod = mod;
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread thread = Executors.defaultThreadFactory().newThread(r);
@@ -109,17 +109,17 @@ public abstract class ForgeSparkPlugin implements SparkPlugin, ICommand {
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
         this.threadDumper.ensureSetup();
-        this.platform.executeCommand(new ForgeCommandSender(sender, this), args);
+        this.platform.executeCommand(new Forge1122CommandSender(sender, this), args);
     }
 
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos blockPos) {
-        return this.platform.tabCompleteCommand(new ForgeCommandSender(sender, this), args);
+        return this.platform.tabCompleteCommand(new Forge1122CommandSender(sender, this), args);
     }
 
     @Override
     public boolean checkPermission(MinecraftServer minecraftServer, ICommandSender sender) {
-        return this.platform.hasPermissionForAnyCommand(new ForgeCommandSender(sender, this));
+        return this.platform.hasPermissionForAnyCommand(new Forge1122CommandSender(sender, this));
     }
 
     @Override

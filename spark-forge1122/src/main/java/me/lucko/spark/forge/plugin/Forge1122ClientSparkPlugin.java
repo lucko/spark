@@ -23,11 +23,11 @@ package me.lucko.spark.forge.plugin;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.forge.ForgeCommandSender;
-import me.lucko.spark.forge.ForgePlatformInfo;
-import me.lucko.spark.forge.ForgeSparkMod;
-import me.lucko.spark.forge.ForgeTickHook;
-import me.lucko.spark.forge.ForgeTickReporter;
+import me.lucko.spark.forge.Forge1122CommandSender;
+import me.lucko.spark.forge.Forge1122PlatformInfo;
+import me.lucko.spark.forge.Forge1122SparkMod;
+import me.lucko.spark.forge.Forge1122TickHook;
+import me.lucko.spark.forge.Forge1122TickReporter;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.ICommandSender;
@@ -37,10 +37,10 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 import java.util.stream.Stream;
 
-public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
+public class Forge1122ClientSparkPlugin extends Forge1122SparkPlugin {
 
-    public static void register(ForgeSparkMod mod) {
-        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, Minecraft.getMinecraft());
+    public static void register(Forge1122SparkMod mod) {
+        Forge1122ClientSparkPlugin plugin = new Forge1122ClientSparkPlugin(mod, Minecraft.getMinecraft());
         plugin.enable();
 
         // register listeners
@@ -52,7 +52,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
 
     private final Minecraft minecraft;
 
-    public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
+    public Forge1122ClientSparkPlugin(Forge1122SparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
     }
@@ -63,23 +63,23 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin {
     }
 
     @Override
-    public Stream<ForgeCommandSender> getCommandSenders() {
-        return Stream.of(new ForgeCommandSender(this.minecraft.player, this));
+    public Stream<Forge1122CommandSender> getCommandSenders() {
+        return Stream.of(new Forge1122CommandSender(this.minecraft.player, this));
     }
 
     @Override
     public TickHook createTickHook() {
-        return new ForgeTickHook(TickEvent.Type.CLIENT);
+        return new Forge1122TickHook(TickEvent.Type.CLIENT);
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new ForgeTickReporter(TickEvent.Type.CLIENT);
+        return new Forge1122TickReporter(TickEvent.Type.CLIENT);
     }
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new ForgePlatformInfo(PlatformInfo.Type.CLIENT);
+        return new Forge1122PlatformInfo(PlatformInfo.Type.CLIENT);
     }
 
     @Override
