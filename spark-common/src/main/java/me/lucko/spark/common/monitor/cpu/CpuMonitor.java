@@ -97,15 +97,15 @@ public enum CpuMonitor {
     }
 
     public static double systemLoad10SecAvg() {
-        return SYSTEM_AVERAGE_10_SEC.getAverage();
+        return SYSTEM_AVERAGE_10_SEC.mean();
     }
 
     public static double systemLoad1MinAvg() {
-        return SYSTEM_AVERAGE_1_MIN.getAverage();
+        return SYSTEM_AVERAGE_1_MIN.mean();
     }
 
     public static double systemLoad15MinAvg() {
-        return SYSTEM_AVERAGE_15_MIN.getAverage();
+        return SYSTEM_AVERAGE_15_MIN.mean();
     }
 
     /**
@@ -128,15 +128,15 @@ public enum CpuMonitor {
     }
 
     public static double processLoad10SecAvg() {
-        return PROCESS_AVERAGE_10_SEC.getAverage();
+        return PROCESS_AVERAGE_10_SEC.mean();
     }
 
     public static double processLoad1MinAvg() {
-        return PROCESS_AVERAGE_1_MIN.getAverage();
+        return PROCESS_AVERAGE_1_MIN.mean();
     }
 
     public static double processLoad15MinAvg() {
-        return PROCESS_AVERAGE_15_MIN.getAverage();
+        return PROCESS_AVERAGE_15_MIN.mean();
     }
 
     /**

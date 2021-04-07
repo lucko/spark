@@ -3,6 +3,7 @@ plugins {
 }
 
 dependencies {
+    compile project(':spark-api')
     compile 'com.github.jvm-profiling-tools:async-profiler:v2.0'
     compile 'org.ow2.asm:asm:7.1'
     compile 'com.google.protobuf:protobuf-javalite:3.15.6'
@@ -25,6 +26,7 @@ dependencies {
     }
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
+    compileOnly 'org.checkerframework:checker-qual:3.8.0'
 }
 
 processResources {

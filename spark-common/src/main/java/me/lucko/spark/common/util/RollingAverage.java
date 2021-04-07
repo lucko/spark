@@ -20,13 +20,15 @@
 
 package me.lucko.spark.common.util;
 
+import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Queue;
 
-public class RollingAverage {
+public class RollingAverage implements DoubleAverageInfo {
 
     private final Queue<BigDecimal> samples;
     private final int windowSize;
@@ -47,7 +49,8 @@ public class RollingAverage {
         }
     }
 
-    public double getAverage() {
+    @Override
+    public double mean() {
         synchronized (this) {
             if (this.samples.isEmpty()) {
                 return 0;
@@ -57,7 +60,8 @@ public class RollingAverage {
         }
     }
 
-    public double getMax() {
+    @Override
+    public double max() {
         synchronized (this) {
             BigDecimal max = null;
             for (BigDecimal sample : this.samples) {
@@ -69,7 +73,8 @@ public class RollingAverage {
         }
     }
 
-    public double getMin() {
+    @Override
+    public double min() {
         synchronized (this) {
             BigDecimal min = null;
             for (BigDecimal sample : this.samples) {
@@ -81,11 +86,8 @@ public class RollingAverage {
         }
     }
 
-    public double getMedian() {
-        return getPercentile(0.50d);
-    }
-
-    public double getPercentile(double percentile) {
+    @Override
+    public double percentile(double percentile) {
         if (percentile < 0 || percentile > 1) {
             throw new IllegalArgumentException("Invalid percentile " + percentile);
         }

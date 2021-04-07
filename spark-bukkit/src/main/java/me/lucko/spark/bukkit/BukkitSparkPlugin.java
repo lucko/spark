@@ -20,6 +20,7 @@
 
 package me.lucko.spark.bukkit;
 
+import me.lucko.spark.api.Spark;
 import me.lucko.spark.bukkit.placeholder.SparkMVdWPlaceholders;
 import me.lucko.spark.bukkit.placeholder.SparkPlaceholderApi;
 import me.lucko.spark.common.SparkPlatform;
@@ -35,6 +36,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
@@ -160,6 +162,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     @Override
     public PlatformInfo getPlatformInfo() {
         return new BukkitPlatformInfo(getServer());
+    }
+
+    @Override
+    public void registerApi(Spark api) {
+        getServer().getServicesManager().register(Spark.class, api, this, ServicePriority.Normal);
     }
 
     private static boolean classExists(String className) {

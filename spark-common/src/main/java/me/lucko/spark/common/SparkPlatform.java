@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import me.lucko.spark.common.activitylog.ActivityLog;
+import me.lucko.spark.common.api.SparkApi;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -89,6 +90,8 @@ public class SparkPlatform {
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
     private long serverNormalOperationStartTime;
 
+    private SparkApi api;
+
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
 
@@ -131,6 +134,10 @@ public class SparkPlatform {
             this.startupGcStatistics = GarbageCollectorStatistics.pollStats();
             this.serverNormalOperationStartTime = System.currentTimeMillis();
         });
+
+        this.api = new SparkApi(this);
+        this.plugin.registerApi(this.api);
+        SparkApi.register(this.api);
     }
 
     public void disable() {
@@ -144,6 +151,8 @@ public class SparkPlatform {
         for (CommandModule module : this.commandModules) {
             module.close();
         }
+
+        SparkApi.unregister();
     }
 
     public SparkPlugin getPlugin() {

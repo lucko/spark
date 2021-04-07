@@ -20,6 +20,7 @@
 
 package me.lucko.spark.nukkit;
 
+import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
@@ -27,6 +28,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
 import cn.nukkit.plugin.PluginBase;
+import cn.nukkit.plugin.service.ServicePriority;
 import cn.nukkit.scheduler.AsyncTask;
 
 import java.nio.file.Path;
@@ -88,5 +90,10 @@ public class NukkitSparkPlugin extends PluginBase implements SparkPlugin {
     @Override
     public PlatformInfo getPlatformInfo() {
         return new NukkitPlatformInfo(getServer());
+    }
+
+    @Override
+    public void registerApi(Spark api) {
+        getServer().getServiceManager().register(Spark.class, api, this, ServicePriority.NORMAL);
     }
 }

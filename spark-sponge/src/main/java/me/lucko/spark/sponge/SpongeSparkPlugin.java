@@ -22,6 +22,7 @@ package me.lucko.spark.sponge;
 
 import com.google.inject.Inject;
 
+import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
@@ -138,6 +139,11 @@ public class SpongeSparkPlugin implements SparkPlugin {
     @Override
     public PlatformInfo getPlatformInfo() {
         return new SpongePlatformInfo(this.game);
+    }
+
+    @Override
+    public void registerApi(Spark api) {
+        this.game.getServiceManager().setProvider(this, Spark.class, api);
     }
 
     private static final class SparkCommand implements CommandCallable {

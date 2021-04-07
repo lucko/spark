@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common;
 
+import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
@@ -106,5 +107,9 @@ public interface SparkPlugin {
      * @return information about the platform
      */
     PlatformInfo getPlatformInfo();
+
+    default void registerApi(Spark api) {
+
+    }
 
 }

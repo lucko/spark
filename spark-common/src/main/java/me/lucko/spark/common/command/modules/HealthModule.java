@@ -351,13 +351,13 @@ public class HealthModule implements CommandModule {
 
     public static TextComponent formatTickDurations(RollingAverage average) {
         return text()
-                .append(formatTickDuration(average.getMin()))
+                .append(formatTickDuration(average.min()))
                 .append(text('/', GRAY))
-                .append(formatTickDuration(average.getMedian()))
+                .append(formatTickDuration(average.median()))
                 .append(text('/', GRAY))
-                .append(formatTickDuration(average.getPercentile(MSPT_95_PERCENTILE)))
+                .append(formatTickDuration(average.percentile(MSPT_95_PERCENTILE)))
                 .append(text('/', GRAY))
-                .append(formatTickDuration(average.getMax()))
+                .append(formatTickDuration(average.max()))
                 .build();
     }
 
