@@ -24,7 +24,6 @@ import me.lucko.spark.common.platform.AbstractPlatformInfo;
 
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Platform;
-import org.spongepowered.plugin.metadata.PluginMetadata;
 
 public class Sponge8PlatformInfo extends AbstractPlatformInfo {
     private final Game game;
@@ -40,16 +39,12 @@ public class Sponge8PlatformInfo extends AbstractPlatformInfo {
 
     @Override
     public String getName() {
-        return getMetadata().getName().orElse(getMetadata().getId());
+        return "Sponge";
     }
 
     @Override
     public String getVersion() {
-        return getMetadata().getVersion();
-    }
-
-    private PluginMetadata getMetadata() {
-        return this.game.platform().container(Platform.Component.IMPLEMENTATION).getMetadata();
+        return this.game.platform().container(Platform.Component.IMPLEMENTATION).getMetadata().getVersion();
     }
 
     @Override
