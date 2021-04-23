@@ -22,21 +22,18 @@ package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 
-import net.kyori.adventure.audience.Audience;
-import net.kyori.adventure.platform.spongeapi.SpongeAudiences;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.util.UUID;
 
 public class SpongeCommandSender extends AbstractCommandSender<CommandSource> {
-    private final Audience audience;
-
-    public SpongeCommandSender(CommandSource source, SpongeAudiences audienceFactory) {
+    public SpongeCommandSender(CommandSource source) {
         super(source);
-        this.audience = audienceFactory.receiver(source);
     }
 
     @Override
@@ -54,7 +51,7 @@ public class SpongeCommandSender extends AbstractCommandSender<CommandSource> {
 
     @Override
     public void sendMessage(Component message) {
-        this.audience.sendMessage(message);
+        super.delegate.sendMessage(TextSerializers.JSON.deserialize(GsonComponentSerializer.gson().serialize(message)));
     }
 
     @Override

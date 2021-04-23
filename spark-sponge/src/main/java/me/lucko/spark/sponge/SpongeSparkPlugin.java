@@ -29,8 +29,6 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 
-import net.kyori.adventure.platform.spongeapi.SpongeAudiences;
-
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
@@ -73,7 +71,6 @@ public class SpongeSparkPlugin implements SparkPlugin {
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
 
-    private SpongeAudiences audienceFactory;
     private SparkPlatform platform;
     private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
@@ -87,7 +84,6 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
     @Listener
     public void onEnable(GameStartedServerEvent event) {
-        this.audienceFactory = SpongeAudiences.create(this.pluginContainer, this.game);
         this.platform = new SparkPlatform(this);
         this.platform.enable();
         this.game.getCommandManager().register(this, new SparkCommand(this), "spark");
@@ -118,7 +114,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
         return Stream.concat(
                 this.game.getServer().getOnlinePlayers().stream(),
                 Stream.of(this.game.getServer().getConsole())
-        ).map(source -> new SpongeCommandSender(source, this.audienceFactory));
+        ).map(SpongeCommandSender::new);
     }
 
     @Override
@@ -156,18 +152,18 @@ public class SpongeSparkPlugin implements SparkPlugin {
         @Override
         public CommandResult process(CommandSource source, String arguments) {
             this.plugin.threadDumper.ensureSetup();
-            this.plugin.platform.executeCommand(new SpongeCommandSender(source, this.plugin.audienceFactory), arguments.split(" "));
+            this.plugin.platform.executeCommand(new SpongeCommandSender(source), arguments.split(" "));
             return CommandResult.empty();
         }
 
         @Override
         public List<String> getSuggestions(CommandSource source, String arguments, @Nullable Location<World> targetPosition) {
-            return this.plugin.platform.tabCompleteCommand(new SpongeCommandSender(source, this.plugin.audienceFactory), arguments.split(" "));
+            return this.plugin.platform.tabCompleteCommand(new SpongeCommandSender(source), arguments.split(" "));
         }
 
         @Override
         public boolean testPermission(CommandSource source) {
-            return this.plugin.platform.hasPermissionForAnyCommand(new SpongeCommandSender(source, this.plugin.audienceFactory));
+            return this.plugin.platform.hasPermissionForAnyCommand(new SpongeCommandSender(source));
         }
 
         @Override

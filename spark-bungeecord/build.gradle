@@ -1,8 +1,10 @@
 dependencies {
     compile project(':spark-common')
-    compile('net.kyori:adventure-platform-bungeecord:4.0.0-SNAPSHOT') {
+    compile('me.lucko:adventure-platform-bungeecord:4.7.0') {
         exclude(module: 'adventure-api')
+        exclude(module: 'adventure-nbt')
         exclude(module: 'adventure-text-serializer-gson')
+        exclude(module: 'adventure-text-serializer-legacy')
     }
     compileOnly 'net.md-5:bungeecord-api:1.16-R0.4'
 }
