@@ -2,7 +2,8 @@ dependencies {
     compile project(':spark-common')
     compile('me.lucko:adventure-platform-bungeecord:4.7.0') {
         exclude(module: 'adventure-api')
-        exclude(module: 'adventure-nbt')
+        exclude(module: 'checker-qual')
+        exclude(module: 'annotations')
         exclude(module: 'adventure-text-serializer-gson')
         exclude(module: 'adventure-text-serializer-legacy')
     }
