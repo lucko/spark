@@ -75,7 +75,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Listener
     public void onRegisterCommands(final RegisterCommandEvent<Command.Raw> event) {
-        event.register(this.pluginContainer, new SparkCommand(this), this.pluginContainer.getMetadata().getId());
+        event.register(this.pluginContainer, new SparkCommand(this), this.pluginContainer.metadata().id());
     }
 
     @Listener
@@ -91,7 +91,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Override
     public String getVersion() {
-        return this.pluginContainer.getMetadata().getVersion();
+        return this.pluginContainer.metadata().version();
     }
 
     @Override
