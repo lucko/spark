@@ -5,7 +5,7 @@ package spark;
 option java_package = "me.lucko.spark.proto";
 option java_outer_classname = "SparkProtos";
 
-message CommandSenderData {
+message CommandSenderMetadata {
   Type type = 1;
   string name = 2;
   string unique_id = 3;
@@ -16,20 +16,20 @@ message CommandSenderData {
   }
 }
 
-message MemoryData {
+message MemoryUsage {
   int64 used = 1;
   int64 committed = 2;
   int64 max = 3;
 }
 
-message PlatformData {
+message PlatformMetadata {
   Type type = 1;
   string name = 2;
   string version = 3;
   string minecraft_version = 4; // optional
 
   int32 n_cpus = 5;
-  MemoryData heapUsage = 6;
+  MemoryUsage heapUsage = 6;
 
   enum Type {
     SERVER = 0;
@@ -44,8 +44,8 @@ message HeapData {
 }
 
 message HeapMetadata {
-  CommandSenderData user = 1;
-  PlatformData platform = 2;
+  CommandSenderMetadata creator = 1;
+  PlatformMetadata platformMetadata = 2;
 }
 
 message HeapEntry {
@@ -61,13 +61,13 @@ message SamplerData {
 }
 
 message SamplerMetadata {
-  CommandSenderData user = 1;
+  CommandSenderMetadata creator = 1;
   int64 start_time = 2;
   int32 interval = 3;
   ThreadDumper thread_dumper = 4;
   DataAggregator data_aggregator = 5;
   string comment = 6;
-  PlatformData platform = 7;
+  PlatformMetadata platformMetadata = 7;
 
   message ThreadDumper {
     Type type = 1;

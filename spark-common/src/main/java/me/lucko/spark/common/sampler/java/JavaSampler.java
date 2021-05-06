@@ -163,8 +163,8 @@ public class JavaSampler implements Sampler, Runnable {
     @Override
     public SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
         final SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
-                .setPlatform(platformInfo.toData().toProto())
-                .setUser(creator.toData().toProto())
+                .setPlatformMetadata(platformInfo.toData().toProto())
+                .setCreator(creator.toData().toProto())
                 .setStartTime(this.startTime)
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())

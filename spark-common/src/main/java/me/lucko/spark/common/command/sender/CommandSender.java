@@ -24,7 +24,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import me.lucko.spark.proto.SparkProtos.CommandSenderData;
+import me.lucko.spark.proto.SparkProtos.CommandSenderMetadata;
 
 import net.kyori.adventure.text.Component;
 
@@ -75,9 +75,9 @@ public interface CommandSender {
             return user;
         }
 
-        public CommandSenderData toProto() {
-            CommandSenderData.Builder proto = CommandSenderData.newBuilder()
-                    .setType(isPlayer() ? CommandSenderData.Type.PLAYER : CommandSenderData.Type.OTHER)
+        public CommandSenderMetadata toProto() {
+            CommandSenderMetadata.Builder proto = CommandSenderMetadata.newBuilder()
+                    .setType(isPlayer() ? CommandSenderMetadata.Type.PLAYER : CommandSenderMetadata.Type.OTHER)
                     .setName(this.name);
 
             if (this.uniqueId != null) {

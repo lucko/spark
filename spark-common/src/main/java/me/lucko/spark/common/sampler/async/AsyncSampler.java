@@ -146,8 +146,8 @@ public class AsyncSampler implements Sampler {
     @Override
     public SparkProtos.SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
         final SparkProtos.SamplerMetadata.Builder metadata = SparkProtos.SamplerMetadata.newBuilder()
-                .setPlatform(platformInfo.toData().toProto())
-                .setUser(creator.toData().toProto())
+                .setPlatformMetadata(platformInfo.toData().toProto())
+                .setCreator(creator.toData().toProto())
                 .setStartTime(this.startTime)
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())

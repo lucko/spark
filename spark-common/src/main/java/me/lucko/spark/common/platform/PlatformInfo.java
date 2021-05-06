@@ -20,8 +20,8 @@
 
 package me.lucko.spark.common.platform;
 
-import me.lucko.spark.proto.SparkProtos.MemoryData;
-import me.lucko.spark.proto.SparkProtos.PlatformData;
+import me.lucko.spark.proto.SparkProtos;
+import me.lucko.spark.proto.SparkProtos.PlatformMetadata;
 
 import java.lang.management.MemoryUsage;
 
@@ -44,17 +44,17 @@ public interface PlatformInfo {
     }
 
     enum Type {
-        SERVER(PlatformData.Type.SERVER),
-        CLIENT(PlatformData.Type.CLIENT),
-        PROXY(PlatformData.Type.PROXY);
+        SERVER(PlatformMetadata.Type.SERVER),
+        CLIENT(PlatformMetadata.Type.CLIENT),
+        PROXY(PlatformMetadata.Type.PROXY);
 
-        private final PlatformData.Type type;
+        private final PlatformMetadata.Type type;
 
-        Type(PlatformData.Type type) {
+        Type(PlatformMetadata.Type type) {
             this.type = type;
         }
 
-        public PlatformData.Type toProto() {
+        public PlatformMetadata.Type toProto() {
             return this.type;
         }
     }
@@ -100,21 +100,21 @@ public interface PlatformInfo {
             return this.heapUsage;
         }
 
-        private static MemoryData toProto(MemoryUsage usage) {
-            return MemoryData.newBuilder()
-                    .setUsed(usage.getUsed())
-                    .setCommitted(usage.getCommitted())
-                    .setMax(usage.getMax())
+        public SparkProtos.MemoryUsage getHeapUsageProto() {
+            return SparkProtos.MemoryUsage.newBuilder()
+                    .setUsed(this.heapUsage.getUsed())
+                    .setCommitted(this.heapUsage.getCommitted())
+                    .setMax(this.heapUsage.getMax())
                     .build();
         }
 
-        public PlatformData toProto() {
-            PlatformData.Builder proto = PlatformData.newBuilder()
+        public PlatformMetadata toProto() {
+            PlatformMetadata.Builder proto = PlatformMetadata.newBuilder()
                     .setType(this.type.toProto())
                     .setName(this.name)
                     .setVersion(this.version)
                     .setNCpus(this.nCpus)
-                    .setHeapUsage(toProto(this.heapUsage));
+                    .setHeapUsage(getHeapUsageProto());
 
             if (this.minecraftVersion != null) {
                 proto.setMinecraftVersion(this.minecraftVersion);

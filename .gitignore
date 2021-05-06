@@ -4,3 +4,4 @@ build/
 out/
 run/
 *.iml
+.DS_Store

@@ -132,8 +132,8 @@ public final class HeapDumpSummary {
     private HeapData toProto(PlatformInfo platformInfo, CommandSender creator) {
         HeapData.Builder proto = HeapData.newBuilder();
         proto.setMetadata(SparkProtos.HeapMetadata.newBuilder()
-                .setPlatform(platformInfo.toData().toProto())
-                .setUser(creator.toData().toProto())
+                .setPlatformMetadata(platformInfo.toData().toProto())
+                .setCreator(creator.toData().toProto())
                 .build()
         );
 
