@@ -36,6 +36,7 @@ import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.command.Command;
 import org.spongepowered.api.command.CommandCause;
+import org.spongepowered.api.command.CommandCompletion;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.parameter.ArgumentReader;
 import org.spongepowered.api.command.registrar.tree.CommandTreeNode;
@@ -51,6 +52,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Plugin("spark")
@@ -147,8 +149,11 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         }
 
         @Override
-        public List<String> suggestions(CommandCause cause, ArgumentReader.Mutable arguments) {
-            return this.plugin.platform.tabCompleteCommand(new Sponge8CommandSender(cause), arguments.input().split(" "));
+        public List<CommandCompletion> complete(CommandCause cause, ArgumentReader.Mutable arguments) {
+            return this.plugin.platform.tabCompleteCommand(new Sponge8CommandSender(cause), arguments.input().split(" "))
+                    .stream()
+                    .map(CommandCompletion::of)
+                    .collect(Collectors.toList());
         }
 
         @Override
