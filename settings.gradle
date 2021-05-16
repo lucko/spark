@@ -16,6 +16,7 @@ include (
         'spark-bukkit',
         'spark-bungeecord',
         'spark-velocity',
+        'spark-velocity2',
         'spark-sponge',
         'spark-sponge8',
         'spark-forge',

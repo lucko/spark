@@ -3,14 +3,17 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
+sourceCompatibility = 11
+targetCompatibility = 11
+
 dependencies {
     compile project(':spark-common')
-    compileOnly 'com.velocitypowered:velocity-api:1.1.5'
-    annotationProcessor 'com.velocitypowered:velocity-api:1.1.5'
+    compileOnly 'com.velocitypowered:velocity-api:2.0.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-annotation-processor:2.0.0-SNAPSHOT'
 }
 
 repositories {
-    maven { url "https://repo.velocitypowered.com/releases/" }
+    maven { url "https://repo.velocitypowered.com/snapshots/" }
 }
 
 blossom {
@@ -20,7 +23,7 @@ blossom {
 }
 
 shadowJar {
-    archiveName = 'spark-velocity.jar'
+    archiveName = 'spark-velocity2.jar'
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
