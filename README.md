@@ -73,6 +73,8 @@ For a comparison between spark, WarmRoast, Minecraft timings and other profiles,
 
 ## License
 
-spark was originally a fork of [WarmRoast](https://github.com/sk89q/WarmRoast), which is [licensed under the GNU General Public License](https://github.com/sk89q/WarmRoast/blob/3fe5e5517b1c529d95cf9f43fd8420c66db0092a/src/main/java/com/sk89q/warmroast/WarmRoast.java#L1-L17).
+spark is free & open source. It is released under the terms of the GNU GPLv3 license. Please see [`LICENSE.txt`](LICENSE.txt) for more information. 
 
-spark itself is also licensed under the GNU General Public License.
+The spark API submodule is released under the terms of the more permissive MIT license. Please see [`spark-api/LICENSE.txt`](spark-api/LICENSE.txt) for more information.
+
+spark is a fork of [WarmRoast](https://github.com/sk89q/WarmRoast), which was also [licensed using the GPLv3](https://github.com/sk89q/WarmRoast/blob/3fe5e5517b1c529d95cf9f43fd8420c66db0092a/src/main/java/com/sk89q/warmroast/WarmRoast.java#L1-L17).
