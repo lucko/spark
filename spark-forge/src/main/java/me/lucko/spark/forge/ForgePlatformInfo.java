@@ -34,7 +34,7 @@ public class ForgePlatformInfo extends AbstractPlatformInfo {
 
     @Override
     public Type getType() {
-        return type;
+        return this.type;
     }
 
     @Override

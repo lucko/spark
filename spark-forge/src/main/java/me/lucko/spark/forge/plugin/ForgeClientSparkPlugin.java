@@ -77,7 +77,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     private CommandDispatcher<ISuggestionProvider> getPlayerCommandDispatcher() {
         return Optional.ofNullable(this.minecraft.player)
                 .map(player -> player.connection)
-                .map(ClientPlayNetHandler::getCommandDispatcher)
+                .map(ClientPlayNetHandler::getCommands)
                 .orElse(null);
     }
 
@@ -106,7 +106,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
 
         this.threadDumper.ensureSetup();
         this.platform.executeCommand(new ForgeCommandSender(this.minecraft.player, this), args);
-        this.minecraft.ingameGUI.getChatGUI().addToSentMessages(event.getMessage());
+        this.minecraft.gui.getChat().addRecentChat(event.getMessage());
         event.setCanceled(true);
     }
 

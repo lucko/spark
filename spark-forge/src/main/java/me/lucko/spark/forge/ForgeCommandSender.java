@@ -59,15 +59,15 @@ public class ForgeCommandSender extends AbstractCommandSender<ICommandSource> {
     @Override
     public UUID getUniqueId() {
         if (super.delegate instanceof PlayerEntity) {
-            return ((PlayerEntity) super.delegate).getUniqueID();
+            return ((PlayerEntity) super.delegate).getUUID();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        IFormattableTextComponent component = ITextComponent.Serializer.getComponentFromJson(GsonComponentSerializer.gson().serialize(message));
-        super.delegate.sendMessage(component, Util.DUMMY_UUID);
+        IFormattableTextComponent component = ITextComponent.Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
+        super.delegate.sendMessage(component, Util.NIL_UUID);
     }
 
     @Override

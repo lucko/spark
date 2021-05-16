@@ -1,9 +1,10 @@
 buildscript {
     repositories {
         maven { url = "http://files.minecraftforge.net/maven" }
+        mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
     }
 }
 
@@ -14,7 +15,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 
 minecraft {
-    mappings channel: 'snapshot', version: '20200916-1.16.2'
+    mappings channel: 'official', version: '1.16.5'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 }
 
@@ -24,7 +25,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.16.4-35.0.3'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.1.0'
     shade project(':spark-common')
 }
 

@@ -102,7 +102,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             return Suggestions.empty();
         }
 
-        ServerPlayerEntity player = context.getSource().asPlayer();
+        ServerPlayerEntity player = context.getSource().getPlayerOrException();
         return CompletableFuture.supplyAsync(() -> {
             for (String suggestion : this.platform.tabCompleteCommand(new ForgeCommandSender(player, this), args)) {
                 builder.suggest(suggestion);
