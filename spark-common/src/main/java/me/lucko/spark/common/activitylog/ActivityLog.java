@@ -96,7 +96,7 @@ public class ActivityLog {
         JsonArray array;
         try (BufferedReader reader = Files.newBufferedReader(this.file, StandardCharsets.UTF_8)) {
             array = PARSER.parse(reader).getAsJsonArray();
-        } catch (IOException e) {
+        } catch (IOException | IllegalStateException e) {
             e.printStackTrace();
             return;
         }
