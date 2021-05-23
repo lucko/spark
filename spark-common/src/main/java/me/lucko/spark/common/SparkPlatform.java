@@ -119,7 +119,7 @@ public class SparkPlatform {
     }
 
     public void enable() {
-        if (this.enabled.compareAndSet(false, true)) {
+        if (!this.enabled.compareAndSet(false, true)) {
             throw new RuntimeException("Platform has already been enabled!");
         }
 
