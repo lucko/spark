@@ -55,7 +55,6 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
             return thread;
         });
         this.platform = new SparkPlatform(this);
-        this.platform.enable();
     }
 
     public void enable() {

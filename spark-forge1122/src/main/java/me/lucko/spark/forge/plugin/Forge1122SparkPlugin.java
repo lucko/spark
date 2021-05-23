@@ -55,7 +55,6 @@ public abstract class Forge1122SparkPlugin implements SparkPlugin, ICommand {
             return thread;
         });
         this.platform = new SparkPlatform(this);
-        this.platform.enable();
     }
 
     public void enable() {

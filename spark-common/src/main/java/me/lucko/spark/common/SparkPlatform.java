@@ -54,6 +54,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -89,8 +90,7 @@ public class SparkPlatform {
     private final TickStatistics tickStatistics;
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
     private long serverNormalOperationStartTime;
-
-    private SparkApi api;
+    private final AtomicBoolean enabled = new AtomicBoolean(false);
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
@@ -119,6 +119,10 @@ public class SparkPlatform {
     }
 
     public void enable() {
+        if (this.enabled.compareAndSet(false, true)) {
+            throw new RuntimeException("Platform has already been enabled!");
+        }
+
         if (this.tickHook != null) {
             this.tickHook.addCallback(this.tickStatistics);
             this.tickHook.start();
@@ -135,9 +139,9 @@ public class SparkPlatform {
             this.serverNormalOperationStartTime = System.currentTimeMillis();
         });
 
-        this.api = new SparkApi(this);
-        this.plugin.registerApi(this.api);
-        SparkApi.register(this.api);
+        SparkApi api = new SparkApi(this);
+        this.plugin.registerApi(api);
+        SparkApi.register(api);
     }
 
     public void disable() {
