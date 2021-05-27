@@ -30,8 +30,8 @@ import net.kyori.adventure.text.Component;
 
 import java.util.UUID;
 
-public class VelocityCommandSender extends AbstractCommandSender<CommandSource> {
-    public VelocityCommandSender(CommandSource source) {
+public class Velocity2CommandSender extends AbstractCommandSender<CommandSource> {
+    public Velocity2CommandSender(CommandSource source) {
         super(source);
     }
 

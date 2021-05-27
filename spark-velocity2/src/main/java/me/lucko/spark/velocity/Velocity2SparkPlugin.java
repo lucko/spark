@@ -33,6 +33,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.util.ClassSourceLookup;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -45,7 +46,7 @@ import java.util.stream.Stream;
         description = "@desc@",
         authors = {"Luck"}
 )
-public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
+public class Velocity2SparkPlugin implements SparkPlugin, SimpleCommand {
 
     private final ProxyServer proxy;
     private final Path configDirectory;
@@ -53,7 +54,7 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
     private SparkPlatform platform;
 
     @Inject
-    public VelocitySparkPlugin(ProxyServer proxy, @DataDirectory Path configDirectory) {
+    public Velocity2SparkPlugin(ProxyServer proxy, @DataDirectory Path configDirectory) {
         this.proxy = proxy;
         this.configDirectory = configDirectory;
     }
@@ -72,17 +73,17 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
 
     @Override
     public void execute(Invocation inv) {
-        this.platform.executeCommand(new VelocityCommandSender(inv.source()), inv.arguments());
+        this.platform.executeCommand(new Velocity2CommandSender(inv.source()), inv.arguments());
     }
 
     @Override
     public List<String> suggest(Invocation inv) {
-        return this.platform.tabCompleteCommand(new VelocityCommandSender(inv.source()), inv.arguments());
+        return this.platform.tabCompleteCommand(new Velocity2CommandSender(inv.source()), inv.arguments());
     }
 
     @Override
     public String getVersion() {
-        return VelocitySparkPlugin.class.getAnnotation(Plugin.class).version();
+        return Velocity2SparkPlugin.class.getAnnotation(Plugin.class).version();
     }
 
     @Override
@@ -96,11 +97,11 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
     }
 
     @Override
-    public Stream<VelocityCommandSender> getCommandSenders() {
+    public Stream<Velocity2CommandSender> getCommandSenders() {
         return Stream.concat(
                 this.proxy.connectedPlayers().stream(),
                 Stream.of(this.proxy.consoleCommandSource())
-        ).map(VelocityCommandSender::new);
+        ).map(Velocity2CommandSender::new);
     }
 
     @Override
@@ -110,6 +111,6 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new VelocityPlatformInfo(this.proxy);
+        return new Velocity2PlatformInfo(this.proxy);
     }
 }

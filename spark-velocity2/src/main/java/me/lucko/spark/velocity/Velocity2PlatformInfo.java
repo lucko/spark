@@ -24,10 +24,10 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import me.lucko.spark.common.platform.AbstractPlatformInfo;
 
-public class VelocityPlatformInfo extends AbstractPlatformInfo {
+public class Velocity2PlatformInfo extends AbstractPlatformInfo {
     private final ProxyServer proxy;
 
-    public VelocityPlatformInfo(ProxyServer proxy) {
+    public Velocity2PlatformInfo(ProxyServer proxy) {
         this.proxy = proxy;
     }
 
