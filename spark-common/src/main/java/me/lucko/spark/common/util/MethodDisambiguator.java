@@ -48,6 +48,11 @@ public final class MethodDisambiguator {
     private final Map<String, ComputedClass> cache = new ConcurrentHashMap<>();
 
     public Optional<MethodDescription> disambiguate(StackTraceNode element) {
+        String desc = element.getMethodDescription();
+        if (desc != null) {
+            return Optional.of(new MethodDescription(element.getMethodName(), desc));
+        }
+
         return disambiguate(element.getClassName(), element.getMethodName(), element.getLineNumber());
     }
 

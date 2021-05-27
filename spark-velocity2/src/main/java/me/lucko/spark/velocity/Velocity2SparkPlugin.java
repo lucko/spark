@@ -110,6 +110,11 @@ public class Velocity2SparkPlugin implements SparkPlugin, SimpleCommand {
     }
 
     @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new Velocity2ClassSourceLookup(this.proxy.pluginManager());
+    }
+
+    @Override
     public PlatformInfo getPlatformInfo() {
         return new Velocity2PlatformInfo(this.proxy);
     }

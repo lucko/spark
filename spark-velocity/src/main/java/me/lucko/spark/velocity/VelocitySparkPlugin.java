@@ -33,6 +33,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.util.ClassSourceLookup;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -106,6 +107,11 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
     @Override
     public void executeAsync(Runnable task) {
         this.proxy.getScheduler().buildTask(this, task).schedule();
+    }
+
+    @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new VelocityClassSourceLookup(this.proxy.getPluginManager());
     }
 
     @Override

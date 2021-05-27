@@ -45,7 +45,7 @@ message HeapData {
 
 message HeapMetadata {
   CommandSenderMetadata creator = 1;
-  PlatformMetadata platformMetadata = 2;
+  PlatformMetadata platform_metadata = 2;
 }
 
 message HeapEntry {
@@ -58,6 +58,7 @@ message HeapEntry {
 message SamplerData {
   SamplerMetadata metadata = 1;
   repeated ThreadNode threads = 2;
+  map<string, string> class_sources = 3; // optional
 }
 
 message SamplerMetadata {
@@ -67,7 +68,7 @@ message SamplerMetadata {
   ThreadDumper thread_dumper = 4;
   DataAggregator data_aggregator = 5;
   string comment = 6;
-  PlatformMetadata platformMetadata = 7;
+  PlatformMetadata platform_metadata = 7;
 
   message ThreadDumper {
     Type type = 1;

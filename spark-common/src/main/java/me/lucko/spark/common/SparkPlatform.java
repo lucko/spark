@@ -44,6 +44,7 @@ import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
+import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -87,6 +88,7 @@ public class SparkPlatform {
     private final ActivityLog activityLog;
     private final TickHook tickHook;
     private final TickReporter tickReporter;
+    private final ClassSourceLookup classSourceLookup;
     private final TickStatistics tickStatistics;
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
     private long serverNormalOperationStartTime;
@@ -115,6 +117,7 @@ public class SparkPlatform {
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
+        this.classSourceLookup = plugin.createClassSourceLookup();
         this.tickStatistics = this.tickHook != null ? new TickStatistics() : null;
     }
 
@@ -173,6 +176,10 @@ public class SparkPlatform {
 
     public TickReporter getTickReporter() {
         return this.tickReporter;
+    }
+
+    public ClassSourceLookup getClassSourceLookup() {
+        return this.classSourceLookup;
     }
 
     public TickStatistics getTickStatistics() {

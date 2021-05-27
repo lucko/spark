@@ -51,6 +51,10 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
         return this.description.methodName;
     }
 
+    public String getMethodDescription() {
+        return this.description.methodDescription;
+    }
+
     public int getLineNumber() {
         return this.description.lineNumber;
     }

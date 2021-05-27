@@ -26,6 +26,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
+import me.lucko.spark.common.util.ClassSourceLookup;
 
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -99,6 +100,15 @@ public interface SparkPlugin {
      */
     default TickReporter createTickReporter() {
         return null;
+    }
+
+    /**
+     * Creates a class source lookup function.
+     *
+     * @return the class source lookup function
+     */
+    default ClassSourceLookup createClassSourceLookup() {
+        return ClassSourceLookup.NO_OP;
     }
 
     /**

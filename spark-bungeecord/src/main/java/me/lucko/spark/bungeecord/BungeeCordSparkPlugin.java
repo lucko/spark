@@ -23,6 +23,7 @@ package me.lucko.spark.bungeecord;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences;
 import net.md_5.bungee.api.CommandSender;
@@ -76,6 +77,11 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
     @Override
     public void executeAsync(Runnable task) {
         getProxy().getScheduler().runAsync(BungeeCordSparkPlugin.this, task);
+    }
+
+    @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new BungeeCordClassSourceLookup();
     }
 
     @Override

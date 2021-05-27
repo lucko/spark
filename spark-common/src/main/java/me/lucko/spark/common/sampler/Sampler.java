@@ -24,6 +24,7 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkProtos.SamplerData;
 
 import java.io.ByteArrayOutputStream;
@@ -71,16 +72,10 @@ public interface Sampler {
     CompletableFuture<? extends Sampler> getFuture();
 
     // Methods used to export the sampler data to the web viewer.
-    SamplerData toProto(
-            PlatformInfo platformInfo,
-            CommandSender creator,
-            Comparator<? super Map.Entry<String, ThreadNode>> outputOrder,
-            String comment,
-            MergeMode mergeMode
-    );
+    SamplerData toProto(ExportProps props);
 
-    default byte[] formCompressedDataPayload(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
-        SamplerData proto = toProto(platformInfo, creator, outputOrder, comment, mergeMode);
+    default byte[] formCompressedDataPayload(ExportProps props) {
+        SamplerData proto = toProto(props);
 
         ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
         try (OutputStream out = new GZIPOutputStream(byteOut)) {
@@ -89,6 +84,24 @@ public interface Sampler {
             throw new RuntimeException(e);
         }
         return byteOut.toByteArray();
+    }
+
+    class ExportProps {
+        public final PlatformInfo platformInfo;
+        public final CommandSender creator;
+        public final Comparator<? super Map.Entry<String, ThreadNode>> outputOrder;
+        public final String comment;
+        public final MergeMode mergeMode;
+        public final ClassSourceLookup classSourceLookup;
+
+        public ExportProps(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+            this.platformInfo = platformInfo;
+            this.creator = creator;
+            this.outputOrder = outputOrder;
+            this.comment = comment;
+            this.mergeMode = mergeMode;
+            this.classSourceLookup = classSourceLookup;
+        }
     }
 
 }

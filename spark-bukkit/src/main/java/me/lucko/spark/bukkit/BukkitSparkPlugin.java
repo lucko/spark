@@ -29,6 +29,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
+import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 
@@ -157,6 +158,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
             return new PaperTickReporter(this);
         }
         return null;
+    }
+
+    @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new BukkitClassSourceLookup();
     }
 
     @Override

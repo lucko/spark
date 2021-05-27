@@ -24,6 +24,7 @@ package me.lucko.spark.common.sampler.node;
 import me.lucko.spark.common.sampler.async.AsyncStackTraceElement;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,10 @@ public abstract class AbstractNode {
      */
     public double getTotalTime() {
         return this.totalTime.longValue() / 1000d;
+    }
+
+    public Collection<StackTraceNode> getChildren() {
+        return this.children.values();
     }
 
     /**

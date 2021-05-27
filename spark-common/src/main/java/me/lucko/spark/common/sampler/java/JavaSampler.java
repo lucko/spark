@@ -23,14 +23,12 @@ package me.lucko.spark.common.sampler.java;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkProtos.SamplerData;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
@@ -38,7 +36,6 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -161,27 +158,34 @@ public class JavaSampler implements Sampler, Runnable {
     }
 
     @Override
-    public SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode) {
+    public SamplerData toProto(ExportProps props) {
         final SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
-                .setPlatformMetadata(platformInfo.toData().toProto())
-                .setCreator(creator.toData().toProto())
+                .setPlatformMetadata(props.platformInfo.toData().toProto())
+                .setCreator(props.creator.toData().toProto())
                 .setStartTime(this.startTime)
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())
                 .setDataAggregator(this.dataAggregator.getMetadata());
 
-        if (comment != null) {
-            metadata.setComment(comment);
+        if (props.comment != null) {
+            metadata.setComment(props.comment);
         }
 
         SamplerData.Builder proto = SamplerData.newBuilder();
         proto.setMetadata(metadata.build());
 
         List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
-        data.sort(outputOrder);
+        data.sort(props.outputOrder);
+
+        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(props.classSourceLookup);
 
         for (Map.Entry<String, ThreadNode> entry : data) {
-            proto.addThreads(entry.getValue().toProto(mergeMode));
+            proto.addThreads(entry.getValue().toProto(props.mergeMode));
+            classSourceVisitor.visit(entry.getValue());
+        }
+
+        if (classSourceVisitor.hasMappings()) {
+            proto.putAllClassSources(classSourceVisitor.getMapping());
         }
 
         return proto.build();
