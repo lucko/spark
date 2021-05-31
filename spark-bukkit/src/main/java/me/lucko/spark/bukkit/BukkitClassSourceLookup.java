@@ -24,17 +24,17 @@ import me.lucko.spark.common.util.ClassSourceLookup;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 
 public class BukkitClassSourceLookup extends ClassSourceLookup.ByClassLoader {
     private static final Class<?> PLUGIN_CLASS_LOADER;
-    private static final Method GET_PLUGIN_METHOD;
+    private static final Field PLUGIN_FIELD;
 
     static {
         try {
             PLUGIN_CLASS_LOADER = Class.forName("org.bukkit.plugin.java.PluginClassLoader");
-            GET_PLUGIN_METHOD = PLUGIN_CLASS_LOADER.getDeclaredMethod("getPlugin");
-            GET_PLUGIN_METHOD.setAccessible(true);
+            PLUGIN_FIELD = PLUGIN_CLASS_LOADER.getDeclaredField("plugin");
+            PLUGIN_FIELD.setAccessible(true);
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -43,7 +43,7 @@ public class BukkitClassSourceLookup extends ClassSourceLookup.ByClassLoader {
     @Override
     public String identify(ClassLoader loader) throws ReflectiveOperationException {
         if (PLUGIN_CLASS_LOADER.isInstance(loader)) {
-            JavaPlugin plugin = (JavaPlugin) GET_PLUGIN_METHOD.invoke(loader);
+            JavaPlugin plugin = (JavaPlugin) PLUGIN_FIELD.get(loader);
             return plugin.getName();
         }
         return null;
