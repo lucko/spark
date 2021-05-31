@@ -3,8 +3,11 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '4.0.1'
 }
 
-sourceCompatibility = 11
-targetCompatibility = 11
+compileJava {
+    // override, compile targeting J11
+    options.compilerArgs.clear()
+    options.compilerArgs.addAll(['--release', '11'])
+}
 
 dependencies {
     compile project(':spark-common')
