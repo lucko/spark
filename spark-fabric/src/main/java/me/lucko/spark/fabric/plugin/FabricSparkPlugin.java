@@ -31,6 +31,8 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.fabric.FabricClassSourceLookup;
 import me.lucko.spark.fabric.FabricSparkMod;
 
 import net.minecraft.server.command.CommandOutput;
@@ -86,6 +88,11 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
     @Override
     public ThreadDumper getDefaultThreadDumper() {
         return this.threadDumper.get();
+    }
+
+    @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new FabricClassSourceLookup();
     }
 
     protected static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
@@ -97,6 +98,18 @@ public interface ClassSourceLookup {
             }
             return null;
         }
+
+        protected String identifyUrl(URL url) throws URISyntaxException {
+            return url.getProtocol().equals("file") ? identifyFile(Paths.get(url.toURI())) : null;
+        }
+
+        protected String identifyFile(Path path) {
+            return identifyFileName(path.getFileName().toString());
+        }
+
+        protected String identifyFileName(String fileName) {
+            return fileName.endsWith(".jar") ? fileName.substring(0, fileName.length() - 4) : null;
+        }
     }
 
     /**
@@ -117,24 +130,20 @@ public interface ClassSourceLookup {
             URL url = codeSource.getLocation();
             return url == null ? null : identifyUrl(url);
         }
+
+        protected String identifyUrl(URL url) throws URISyntaxException {
+            return url.getProtocol().equals("file") ? identifyFile(Paths.get(url.toURI())) : null;
+        }
+
+        protected String identifyFile(Path path) {
+            return identifyFileName(path.getFileName().toString());
+        }
+
+        protected String identifyFileName(String fileName) {
+            return fileName.endsWith(".jar") ? fileName.substring(0, fileName.length() - 4) : null;
+        }
     }
 
-    /**
-     * Attempts to identify a jar file from a URL.
-     *
-     * @param url the url
-     * @return the name of the file
-     * @throws URISyntaxException thrown by {@link URL#toURI()}
-     */
-    static String identifyUrl(URL url) throws URISyntaxException {
-        if (url.getProtocol().equals("file")) {
-            String jarName = Paths.get(url.toURI()).getFileName().toString();
-            if (jarName.endsWith(".jar")) {
-                return jarName.substring(0, jarName.length() - 4);
-            }
-        }
-        return null;
-    }
     interface Visitor {
         void visit(ThreadNode node);
 

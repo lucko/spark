@@ -31,6 +31,8 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
 
 import net.minecraft.command.ICommandSource;
@@ -107,4 +109,8 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
         return this.threadDumper.get();
     }
 
+    @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new ForgeClassSourceLookup();
+    }
 }
