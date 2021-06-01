@@ -160,6 +160,11 @@ public class SparkPlatform {
         }
 
         SparkApi.unregister();
+
+        // shutdown okhttp
+        // see: https://github.com/square/okhttp/issues/4029
+        OK_HTTP_CLIENT.dispatcher().executorService().shutdown();
+        OK_HTTP_CLIENT.connectionPool().evictAll();
     }
 
     public SparkPlugin getPlugin() {
