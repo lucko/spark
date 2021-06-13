@@ -1,28 +1,28 @@
 plugins {
-    id 'com.google.protobuf' version '0.8.14'
+    id 'com.google.protobuf' version '0.8.16'
 }
 
 dependencies {
-    compile project(':spark-api')
-    compile 'com.github.jvm-profiling-tools:async-profiler:v2.0'
-    compile 'org.ow2.asm:asm:7.1'
-    compile 'com.google.protobuf:protobuf-javalite:3.15.6'
-    compile 'com.squareup.okhttp3:okhttp:3.14.1'
-    compile 'com.squareup.okio:okio:1.17.3'
-    compile 'net.bytebuddy:byte-buddy-agent:1.11.0'
-    compile 'org.tukaani:xz:1.8'
-    compile('net.kyori:adventure-api:4.7.0') {
+    api project(':spark-api')
+    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.0'
+    implementation 'org.ow2.asm:asm:7.1'
+    implementation 'com.google.protobuf:protobuf-javalite:3.15.6'
+    implementation 'com.squareup.okhttp3:okhttp:3.14.1'
+    implementation 'com.squareup.okio:okio:1.17.3'
+    implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
+    implementation 'org.tukaani:xz:1.8'
+    api('net.kyori:adventure-api:4.7.0') {
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')
     }
-    compile('net.kyori:adventure-text-serializer-gson:4.7.0') {
+    api('net.kyori:adventure-text-serializer-gson:4.7.0') {
         exclude(module: 'adventure-api')
         exclude(module: 'gson')
     }
-    compile('net.kyori:adventure-text-serializer-legacy:4.7.0') {
+    api('net.kyori:adventure-text-serializer-legacy:4.7.0') {
         exclude(module: 'adventure-api')
     }
-    compile('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
+    implementation('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
         exclude(module: 'adventure-api')
     }
     compileOnly 'com.google.code.gson:gson:2.7'

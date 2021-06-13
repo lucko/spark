@@ -1,9 +1,9 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '4.0.1'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 dependencies {
-    compile project(':spark-common')
+    implementation project(':spark-common')
     compileOnly "org.spongepowered:spongeapi:8.0.0-SNAPSHOT"
 }
 

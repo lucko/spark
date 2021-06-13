@@ -1,6 +1,6 @@
 dependencies {
-    compile project(':spark-common')
-    compile('me.lucko:adventure-platform-bungeecord:4.7.0') {
+    implementation project(':spark-common')
+    implementation('me.lucko:adventure-platform-bungeecord:4.7.0') {
         exclude(module: 'adventure-api')
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')

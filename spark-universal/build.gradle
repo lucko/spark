@@ -1,12 +1,12 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '4.0.1'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 dependencies {
-    compile project(':spark-common')
-    compile project(':spark-bukkit')
-    compile project(':spark-bungeecord')
-    compile project(':spark-sponge')
+    implementation project(':spark-common')
+    implementation project(':spark-bukkit')
+    implementation project(':spark-bungeecord')
+    implementation project(':spark-sponge')
 }
 
 shadowJar {

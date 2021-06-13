@@ -1,8 +1,14 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '0.5-SNAPSHOT'
-    id 'com.github.johnrengelman.shadow' version '4.0.1'
+    id 'fabric-loom' version '0.8-SNAPSHOT'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+compileJava {
+    // override, compile targeting J11
+    options.compilerArgs.clear()
+    options.compilerArgs.addAll(['--release', '11'])
 }
 
 repositories {
@@ -12,14 +18,14 @@ repositories {
 
 configurations {
     shade
-    compile.extendsFrom shade
+    implementation.extendsFrom shade
 }
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.16.4'
-    mappings 'net.fabricmc:yarn:1.16.4+build.6:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.10.6+build.214'
+    minecraft 'com.mojang:minecraft:1.17'
+    mappings 'net.fabricmc:yarn:1.17+build.10:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.11.3'
 
     Set<String> apiModules = [
             "fabric-api-base",
@@ -29,7 +35,7 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.25.1+build.416-1.16'))
+        modImplementation(fabricApi.module(it, '0.35.1+1.17'))
     }
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.1-SNAPSHOT'))

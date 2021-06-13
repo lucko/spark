@@ -9,8 +9,8 @@ allprojects {
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'maven'
     apply plugin: 'idea'
+    apply plugin: 'java-library'
 
     ext {
         pluginVersion = '1.6.0'
@@ -23,6 +23,10 @@ subprojects {
 
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
+    }
+
+    processResources {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
 
     repositories {
