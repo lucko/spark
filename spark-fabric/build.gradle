@@ -6,9 +6,9 @@ plugins {
 }
 
 compileJava {
-    // override, compile targeting J11
+    // override, compile targeting J16
     options.compilerArgs.clear()
-    options.compilerArgs.addAll(['--release', '11'])
+    options.compilerArgs.addAll(['--release', '16'])
 }
 
 repositories {
