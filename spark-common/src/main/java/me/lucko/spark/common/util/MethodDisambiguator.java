@@ -46,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class MethodDisambiguator {
     private final Map<String, ComputedClass> cache = new ConcurrentHashMap<>();
+    private final ClassFinder classFinder = new ClassFinder();
 
     public Optional<MethodDescription> disambiguate(StackTraceNode element) {
         String desc = element.getMethodDescription();
@@ -80,7 +81,7 @@ public final class MethodDisambiguator {
         }
     }
 
-    private static ClassReader getClassReader(String className) throws IOException {
+    private ClassReader getClassReader(String className) throws IOException {
         String resource = className.replace('.', '/') + ".class";
 
         try (InputStream is = ClassLoader.getSystemResourceAsStream(resource)) {
@@ -89,15 +90,13 @@ public final class MethodDisambiguator {
             }
         }
 
-        try {
-            Class<?> clazz = Class.forName(className);
+        Class<?> clazz = this.classFinder.findClass(className);
+        if (clazz != null) {
             try (InputStream is = clazz.getClassLoader().getResourceAsStream(resource)) {
                 if (is != null) {
                     return new ClassReader(is);
                 }
             }
-        } catch (ClassNotFoundException e) {
-            // ignore
         }
 
         throw new IOException("Unable to get resource: " + className);
