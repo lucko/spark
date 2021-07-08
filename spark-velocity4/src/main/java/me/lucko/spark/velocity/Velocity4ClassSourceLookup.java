@@ -27,7 +27,7 @@ import me.lucko.spark.common.util.ClassSourceLookup;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public class Velocity2ClassSourceLookup extends ClassSourceLookup.ByClassLoader {
+public class Velocity4ClassSourceLookup extends ClassSourceLookup.ByClassLoader {
     private static final Class<?> PLUGIN_CLASS_LOADER;
 
     static {
@@ -40,7 +40,7 @@ public class Velocity2ClassSourceLookup extends ClassSourceLookup.ByClassLoader 
 
     private final PluginManager pluginManager;
 
-    public Velocity2ClassSourceLookup(PluginManager pluginManager) {
+    public Velocity4ClassSourceLookup(PluginManager pluginManager) {
         this.pluginManager = pluginManager;
     }
 

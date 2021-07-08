@@ -46,7 +46,7 @@ import java.util.stream.Stream;
         description = "@desc@",
         authors = {"Luck"}
 )
-public class Velocity2SparkPlugin implements SparkPlugin, SimpleCommand {
+public class Velocity4SparkPlugin implements SparkPlugin, SimpleCommand {
 
     private final ProxyServer proxy;
     private final Path configDirectory;
@@ -54,7 +54,7 @@ public class Velocity2SparkPlugin implements SparkPlugin, SimpleCommand {
     private SparkPlatform platform;
 
     @Inject
-    public Velocity2SparkPlugin(ProxyServer proxy, @DataDirectory Path configDirectory) {
+    public Velocity4SparkPlugin(ProxyServer proxy, @DataDirectory Path configDirectory) {
         this.proxy = proxy;
         this.configDirectory = configDirectory;
     }
@@ -73,17 +73,17 @@ public class Velocity2SparkPlugin implements SparkPlugin, SimpleCommand {
 
     @Override
     public void execute(Invocation inv) {
-        this.platform.executeCommand(new Velocity2CommandSender(inv.source()), inv.arguments());
+        this.platform.executeCommand(new Velocity4CommandSender(inv.source()), inv.arguments());
     }
 
     @Override
     public List<String> suggest(Invocation inv) {
-        return this.platform.tabCompleteCommand(new Velocity2CommandSender(inv.source()), inv.arguments());
+        return this.platform.tabCompleteCommand(new Velocity4CommandSender(inv.source()), inv.arguments());
     }
 
     @Override
     public String getVersion() {
-        return Velocity2SparkPlugin.class.getAnnotation(Plugin.class).version();
+        return Velocity4SparkPlugin.class.getAnnotation(Plugin.class).version();
     }
 
     @Override
@@ -97,11 +97,11 @@ public class Velocity2SparkPlugin implements SparkPlugin, SimpleCommand {
     }
 
     @Override
-    public Stream<Velocity2CommandSender> getCommandSenders() {
+    public Stream<Velocity4CommandSender> getCommandSenders() {
         return Stream.concat(
                 this.proxy.connectedPlayers().stream(),
                 Stream.of(this.proxy.consoleCommandSource())
-        ).map(Velocity2CommandSender::new);
+        ).map(Velocity4CommandSender::new);
     }
 
     @Override
@@ -111,11 +111,11 @@ public class Velocity2SparkPlugin implements SparkPlugin, SimpleCommand {
 
     @Override
     public ClassSourceLookup createClassSourceLookup() {
-        return new Velocity2ClassSourceLookup(this.proxy.pluginManager());
+        return new Velocity4ClassSourceLookup(this.proxy.pluginManager());
     }
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new Velocity2PlatformInfo(this.proxy);
+        return new Velocity4PlatformInfo(this.proxy);
     }
 }

@@ -11,8 +11,8 @@ compileJava {
 
 dependencies {
     implementation project(':spark-common')
-    compileOnly 'com.velocitypowered:velocity-api:2.0.0-SNAPSHOT'
-    annotationProcessor 'com.velocitypowered:velocity-annotation-processor:2.0.0-SNAPSHOT'
+    compileOnly 'com.velocitypowered:velocity-api:4.0.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-annotation-processor:4.0.0-SNAPSHOT'
 }
 
 repositories {
@@ -26,7 +26,7 @@ blossom {
 }
 
 shadowJar {
-    archiveName = 'spark-velocity2.jar'
+    archiveName = 'spark-velocity4.jar'
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
