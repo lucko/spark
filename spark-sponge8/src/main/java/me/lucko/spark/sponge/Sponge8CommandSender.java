@@ -79,4 +79,17 @@ public class Sponge8CommandSender extends AbstractCommandSender<Subject> {
     public boolean hasPermission(String permission) {
         return super.delegate.hasPermission(permission);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Sponge8CommandSender that = (Sponge8CommandSender) o;
+        return this.getUniqueId().equals(that.getUniqueId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getUniqueId().hashCode();
+    }
 }
