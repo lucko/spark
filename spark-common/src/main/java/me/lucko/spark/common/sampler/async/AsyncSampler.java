@@ -20,10 +20,13 @@
 
 package me.lucko.spark.common.sampler.async;
 
+import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
+import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkProtos;
@@ -35,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -141,17 +145,17 @@ public class AsyncSampler implements Sampler {
     }
 
     @Override
-    public SparkProtos.SamplerData toProto(ExportProps props) {
+    public SparkProtos.SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
         final SparkProtos.SamplerMetadata.Builder metadata = SparkProtos.SamplerMetadata.newBuilder()
-                .setPlatformMetadata(props.platformInfo.toData().toProto())
-                .setCreator(props.creator.toData().toProto())
+                .setPlatformMetadata(platformInfo.toData().toProto())
+                .setCreator(creator.toData().toProto())
                 .setStartTime(this.startTime)
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())
                 .setDataAggregator(this.dataAggregator.getMetadata());
 
-        if (props.comment != null) {
-            metadata.setComment(props.comment);
+        if (comment != null) {
+            metadata.setComment(comment);
         }
 
         SparkProtos.SamplerData.Builder proto = SparkProtos.SamplerData.newBuilder();
@@ -160,12 +164,12 @@ public class AsyncSampler implements Sampler {
         aggregateOutput();
 
         List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
-        data.sort(props.outputOrder);
+        data.sort(outputOrder);
 
-        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(props.classSourceLookup);
+        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
 
         for (Map.Entry<String, ThreadNode> entry : data) {
-            proto.addThreads(entry.getValue().toProto(props.mergeMode));
+            proto.addThreads(entry.getValue().toProto(mergeMode));
             classSourceVisitor.visit(entry.getValue());
         }
 

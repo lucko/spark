@@ -27,13 +27,9 @@ import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkProtos.SamplerData;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Abstract superinterface for all sampler implementations.
@@ -72,36 +68,6 @@ public interface Sampler {
     CompletableFuture<? extends Sampler> getFuture();
 
     // Methods used to export the sampler data to the web viewer.
-    SamplerData toProto(ExportProps props);
-
-    default byte[] formCompressedDataPayload(ExportProps props) {
-        SamplerData proto = toProto(props);
-
-        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        try (OutputStream out = new GZIPOutputStream(byteOut)) {
-            proto.writeTo(out);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return byteOut.toByteArray();
-    }
-
-    class ExportProps {
-        public final PlatformInfo platformInfo;
-        public final CommandSender creator;
-        public final Comparator<? super Map.Entry<String, ThreadNode>> outputOrder;
-        public final String comment;
-        public final MergeMode mergeMode;
-        public final ClassSourceLookup classSourceLookup;
-
-        public ExportProps(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
-            this.platformInfo = platformInfo;
-            this.creator = creator;
-            this.outputOrder = outputOrder;
-            this.comment = comment;
-            this.mergeMode = mergeMode;
-            this.classSourceLookup = classSourceLookup;
-        }
-    }
+    SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
 
 }

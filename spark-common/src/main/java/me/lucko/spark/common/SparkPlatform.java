@@ -50,6 +50,11 @@ import net.kyori.adventure.text.event.ClickEvent;
 
 import okhttp3.OkHttpClient;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -80,6 +85,8 @@ public class SparkPlatform {
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
     /** The bytebin instance used by the platform */
     public static final BytebinClient BYTEBIN_CLIENT = new BytebinClient(OK_HTTP_CLIENT, "https://bytebin.lucko.me/", "spark-plugin");
+    /** The date time formatter instance used by the platform */
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
 
     private final SparkPlugin plugin;
     private final List<CommandModule> commandModules;
@@ -197,6 +204,17 @@ public class SparkPlatform {
 
     public long getServerNormalOperationStartTime() {
         return this.serverNormalOperationStartTime;
+    }
+
+    public Path resolveSaveFile(String prefix, String extension) {
+        Path pluginFolder = this.plugin.getPluginDirectory();
+        try {
+            Files.createDirectories(pluginFolder);
+        } catch (IOException e) {
+            // ignore
+        }
+
+        return pluginFolder.resolve(prefix + "-" + DATE_TIME_FORMATTER.format(LocalDateTime.now()) + "." + extension);
     }
 
     private List<Command> getAvailableCommands(CommandSender sender) {

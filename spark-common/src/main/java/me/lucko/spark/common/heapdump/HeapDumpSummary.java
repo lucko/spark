@@ -28,9 +28,6 @@ import me.lucko.spark.proto.SparkProtos.HeapEntry;
 
 import org.objectweb.asm.Type;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +35,6 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPOutputStream;
 
 import javax.management.JMX;
 import javax.management.MBeanServer;
@@ -129,7 +125,7 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
-    private HeapData toProto(PlatformInfo platformInfo, CommandSender creator) {
+    public HeapData toProto(PlatformInfo platformInfo, CommandSender creator) {
         HeapData.Builder proto = HeapData.newBuilder();
         proto.setMetadata(SparkProtos.HeapMetadata.newBuilder()
                 .setPlatformMetadata(platformInfo.toData().toProto())
@@ -142,16 +138,6 @@ public final class HeapDumpSummary {
         }
 
         return proto.build();
-    }
-
-    public byte[] formCompressedDataPayload(PlatformInfo platformInfo, CommandSender creator) {
-        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        try (OutputStream out = new GZIPOutputStream(byteOut)) {
-            toProto(platformInfo, creator).writeTo(out);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return byteOut.toByteArray();
     }
 
     public static final class Entry {

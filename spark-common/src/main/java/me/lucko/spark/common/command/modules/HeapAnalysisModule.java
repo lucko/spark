@@ -31,6 +31,7 @@ import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.heapdump.HeapDump;
 import me.lucko.spark.common.heapdump.HeapDumpSummary;
 import me.lucko.spark.common.util.FormatUtil;
+import me.lucko.spark.proto.SparkProtos;
 
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -45,8 +46,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -67,9 +66,9 @@ public class HeapAnalysisModule implements CommandModule {
     public void registerCommands(Consumer<Command> consumer) {
         consumer.accept(Command.builder()
                 .aliases("heapsummary")
-                .argumentUsage("run-gc-before", null)
+                .argumentUsage("save-to-file", null)
                 .executor(HeapAnalysisModule::heapSummary)
-                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--run-gc-before"))
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--save-to-file", "--run-gc-before"))
                 .build()
         );
 
@@ -99,35 +98,57 @@ public class HeapAnalysisModule implements CommandModule {
             return;
         }
 
-        byte[] output = heapDump.formCompressedDataPayload(platform.getPlugin().getPlatformInfo(), sender);
-        try {
-            String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
-            String url = SparkPlatform.VIEWER_URL + key;
+        SparkProtos.HeapData output = heapDump.toProto(platform.getPlugin().getPlatformInfo(), sender);
 
-            resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));
-            resp.broadcast(text()
-                    .content(url)
-                    .color(GRAY)
-                    .clickEvent(ClickEvent.openUrl(url))
-                    .build()
-            );
+        boolean saveToFile = false;
+        if (arguments.boolFlag("save-to-file")) {
+            saveToFile = true;
+        } else {
+            try {
+                String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
+                String url = SparkPlatform.VIEWER_URL + key;
 
-            platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
-        } catch (IOException e) {
-            resp.broadcastPrefixed(text("An error occurred whilst uploading the data.", RED));
-            e.printStackTrace();
+                resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));
+                resp.broadcast(text()
+                        .content(url)
+                        .color(GRAY)
+                        .clickEvent(ClickEvent.openUrl(url))
+                        .build()
+                );
+
+                platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
+            } catch (IOException e) {
+                resp.broadcastPrefixed(text("An error occurred whilst uploading the data. Attempting to save to disk instead.", RED));
+                e.printStackTrace();
+                saveToFile = true;
+            }
         }
+
+        if (saveToFile) {
+            Path file = platform.resolveSaveFile("heapsummary", "sparkheap");
+            try {
+                Files.write(file, output.toByteArray());
+
+                resp.broadcastPrefixed(text()
+                        .content("Heap dump summary written to: ")
+                        .color(GOLD)
+                        .append(text(file.toString(), GRAY))
+                        .build()
+                );
+                resp.broadcastPrefixed(text("You can read the heap dump summary file using the viewer web-app - " + SparkPlatform.VIEWER_URL, GRAY));
+
+                platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump summary", file.toString()));
+            } catch (IOException e) {
+                resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
+                e.printStackTrace();
+            }
+        }
+
     }
 
     private static void heapDump(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
-        Path pluginFolder = platform.getPlugin().getPluginDirectory();
-        try {
-            Files.createDirectories(pluginFolder);
-        } catch (IOException e) {
-            // ignore
-        }
+        Path file = platform.resolveSaveFile("heap", HeapDump.isOpenJ9() ? "phd" : "hprof");
 
-        Path file = pluginFolder.resolve("heap-" + DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss").format(LocalDateTime.now()) + (HeapDump.isOpenJ9() ? ".phd" : ".hprof"));
         boolean liveOnly = !arguments.boolFlag("include-non-live");
 
         if (arguments.boolFlag("run-gc-before")) {

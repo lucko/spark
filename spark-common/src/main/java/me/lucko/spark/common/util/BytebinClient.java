@@ -25,13 +25,18 @@
 
 package me.lucko.spark.common.util;
 
+import com.google.protobuf.AbstractMessageLite;
+
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Utility for posting content to bytebin.
@@ -79,6 +84,16 @@ public class BytebinClient extends AbstractHttpClient {
             }
             return new Content(key);
         }
+    }
+
+    public Content postContent(AbstractMessageLite<?, ?> proto, MediaType contentType) throws IOException {
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        try (OutputStream out = new GZIPOutputStream(byteOut)) {
+            proto.writeTo(out);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return postContent(byteOut.toByteArray(), contentType);
     }
 
     public static final class Content {

@@ -40,12 +40,15 @@ import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.MethodDisambiguator;
+import me.lucko.spark.proto.SparkProtos;
 
 import net.kyori.adventure.text.event.ClickEvent;
 
 import okhttp3.MediaType;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -93,6 +96,7 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("force-java-sampler", null)
                 .argumentUsage("stop --comment", "comment")
                 .argumentUsage("stop --order-by-time", null)
+                .argumentUsage("stop --save-to-file", null)
                 .executor(this::profiler)
                 .tabCompleter((platform, sender, arguments) -> {
                     if (arguments.contains("--info") || arguments.contains("--cancel")) {
@@ -100,7 +104,7 @@ public class SamplerModule implements CommandModule {
                     }
 
                     if (arguments.contains("--stop") || arguments.contains("--upload")) {
-                        return TabCompleter.completeForOpts(arguments, "--order-by-time", "--comment");
+                        return TabCompleter.completeForOpts(arguments, "--order-by-time", "--comment", "--save-to-file");
                     }
 
                     List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
@@ -250,9 +254,10 @@ public class SamplerModule implements CommandModule {
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
             MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
             MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
+            boolean saveToFile = arguments.boolFlag("save-to-file");
             future.thenAcceptAsync(s -> {
                 resp.broadcastPrefixed(text("The active profiler has completed! Uploading results..."));
-                handleUpload(platform, resp, s, threadOrder, comment, mergeMode);
+                handleUpload(platform, resp, s, threadOrder, comment, mergeMode, saveToFile);
             });
         }
     }
@@ -293,29 +298,57 @@ public class SamplerModule implements CommandModule {
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
             MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
             MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
-            handleUpload(platform, resp, this.activeSampler, threadOrder, comment, mergeMode);
+            boolean saveToFile = arguments.boolFlag("save-to-file");
+            handleUpload(platform, resp, this.activeSampler, threadOrder, comment, mergeMode, saveToFile);
             this.activeSampler = null;
         }
     }
 
-    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, String comment, MergeMode mergeMode) {
-        byte[] output = sampler.formCompressedDataPayload(new Sampler.ExportProps(platform.getPlugin().getPlatformInfo(), resp.sender(), threadOrder, comment, mergeMode, platform.getClassSourceLookup()));
-        try {
-            String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
-            String url = SparkPlatform.VIEWER_URL + key;
+    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, String comment, MergeMode mergeMode, boolean saveToFileFlag) {
+        SparkProtos.SamplerData output = sampler.toProto(platform.getPlugin().getPlatformInfo(), resp.sender(), threadOrder, comment, mergeMode, platform.getClassSourceLookup());
 
-            resp.broadcastPrefixed(text("Profiler results:", GOLD));
-            resp.broadcast(text()
-                    .content(url)
-                    .color(GRAY)
-                    .clickEvent(ClickEvent.openUrl(url))
-                    .build()
-            );
+        boolean saveToFile = false;
+        if (saveToFileFlag) {
+            saveToFile = true;
+        } else {
+            try {
+                String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
+                String url = SparkPlatform.VIEWER_URL + key;
 
-            platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
-        } catch (IOException e) {
-            resp.broadcastPrefixed(text("An error occurred whilst uploading the results.", RED));
-            e.printStackTrace();
+                resp.broadcastPrefixed(text("Profiler results:", GOLD));
+                resp.broadcast(text()
+                        .content(url)
+                        .color(GRAY)
+                        .clickEvent(ClickEvent.openUrl(url))
+                        .build()
+                );
+
+                platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
+            } catch (IOException e) {
+                resp.broadcastPrefixed(text("An error occurred whilst uploading the results. Attempting to save to disk instead.", RED));
+                e.printStackTrace();
+                saveToFile = true;
+            }
+        }
+
+        if (saveToFile) {
+            Path file = platform.resolveSaveFile("profile", "sparkprofile");
+            try {
+                Files.write(file, output.toByteArray());
+
+                resp.broadcastPrefixed(text()
+                        .content("Profile written to: ")
+                        .color(GOLD)
+                        .append(text(file.toString(), GRAY))
+                        .build()
+                );
+                resp.broadcastPrefixed(text("You can read the profile file using the viewer web-app - " + SparkPlatform.VIEWER_URL, GRAY));
+
+                platform.getActivityLog().addToLog(Activity.fileActivity(resp.sender(), System.currentTimeMillis(), "Profiler", file.toString()));
+            } catch (IOException e) {
+                resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
+                e.printStackTrace();
+            }
         }
     }
 }
