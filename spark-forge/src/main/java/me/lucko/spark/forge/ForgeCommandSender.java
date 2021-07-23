@@ -25,31 +25,31 @@ import me.lucko.spark.forge.plugin.ForgeSparkPlugin;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.command.ICommandSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.rcon.RConConsoleSource;
+import net.minecraft.Util;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Util;
-import net.minecraft.util.text.IFormattableTextComponent;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.server.rcon.RconConsoleSource;
+import net.minecraft.world.entity.player.Player;
 
 import java.util.UUID;
 
-public class ForgeCommandSender extends AbstractCommandSender<ICommandSource> {
+public class ForgeCommandSender extends AbstractCommandSender<CommandSource> {
     private final ForgeSparkPlugin plugin;
 
-    public ForgeCommandSender(ICommandSource source, ForgeSparkPlugin plugin) {
+    public ForgeCommandSender(CommandSource source, ForgeSparkPlugin plugin) {
         super(source);
         this.plugin = plugin;
     }
 
     @Override
     public String getName() {
-        if (super.delegate instanceof PlayerEntity) {
-            return ((PlayerEntity) super.delegate).getGameProfile().getName();
+        if (super.delegate instanceof Player) {
+            return ((Player) super.delegate).getGameProfile().getName();
         } else if (super.delegate instanceof MinecraftServer) {
             return "Console";
-        } else if (super.delegate instanceof RConConsoleSource) {
+        } else if (super.delegate instanceof RconConsoleSource) {
             return "RCON Console";
         } else {
             return "unknown:" + super.delegate.getClass().getSimpleName();
@@ -58,15 +58,15 @@ public class ForgeCommandSender extends AbstractCommandSender<ICommandSource> {
 
     @Override
     public UUID getUniqueId() {
-        if (super.delegate instanceof PlayerEntity) {
-            return ((PlayerEntity) super.delegate).getUUID();
+        if (super.delegate instanceof Player) {
+            return ((Player) super.delegate).getUUID();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        IFormattableTextComponent component = ITextComponent.Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
+        MutableComponent component = TextComponent.Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
         super.delegate.sendMessage(component, Util.NIL_UUID);
     }
 

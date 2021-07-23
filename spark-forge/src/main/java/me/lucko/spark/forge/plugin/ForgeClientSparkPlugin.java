@@ -38,9 +38,9 @@ import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.network.play.ClientPlayNetHandler;
-import net.minecraft.command.ICommandSource;
-import net.minecraft.command.ISuggestionProvider;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -53,10 +53,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements SuggestionProvider<ISuggestionProvider> {
+public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements SuggestionProvider<SharedSuggestionProvider> {
 
     public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
-        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, event.getMinecraftSupplier().get());
+        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, Minecraft.getInstance());
         plugin.enable();
 
         // register listeners
@@ -67,22 +67,22 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     }
 
     private final Minecraft minecraft;
-    private CommandDispatcher<ISuggestionProvider> dispatcher;
+    private CommandDispatcher<SharedSuggestionProvider> dispatcher;
 
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
     }
 
-    private CommandDispatcher<ISuggestionProvider> getPlayerCommandDispatcher() {
+    private CommandDispatcher<SharedSuggestionProvider> getPlayerCommandDispatcher() {
         return Optional.ofNullable(this.minecraft.player)
                 .map(player -> player.connection)
-                .map(ClientPlayNetHandler::getCommands)
+                .map(ClientPacketListener::getCommands)
                 .orElse(null);
     }
 
     private void checkCommandRegistered() {
-        CommandDispatcher<ISuggestionProvider> dispatcher = getPlayerCommandDispatcher();
+        CommandDispatcher<SharedSuggestionProvider> dispatcher = getPlayerCommandDispatcher();
         if (dispatcher == null) {
             return;
         }
@@ -111,7 +111,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ISuggestionProvider> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<SharedSuggestionProvider> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String[] args = processArgs(context.getInput(), true);
         if (args == null) {
             return Suggestions.empty();
@@ -135,7 +135,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     }
 
     @Override
-    public boolean hasPermission(ICommandSource sender, String permission) {
+    public boolean hasPermission(CommandSource sender, String permission) {
         return true;
     }
 

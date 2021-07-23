@@ -35,7 +35,7 @@ import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
 
-import net.minecraft.command.ICommandSource;
+import net.minecraft.commands.CommandSource;
 
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
@@ -87,7 +87,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
         this.scheduler.shutdown();
     }
 
-    public abstract boolean hasPermission(ICommandSource sender, String permission);
+    public abstract boolean hasPermission(CommandSource sender, String permission);
 
     @Override
     public String getVersion() {
