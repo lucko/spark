@@ -66,7 +66,11 @@ public final class AsyncProfilerAccess {
         }
 
         // get an instance of async-profiler
-        return AsyncProfiler.getInstance(extractPath.toAbsolutePath().toString());
+        try {
+            return AsyncProfiler.getInstance(extractPath.toAbsolutePath().toString());
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("A runtime error occurred whilst loading the native library", e);
+        }
     }
 
     /** An instance of the async-profiler Java API. */
