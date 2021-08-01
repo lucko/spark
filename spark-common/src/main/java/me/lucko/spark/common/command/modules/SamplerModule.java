@@ -312,8 +312,8 @@ public class SamplerModule implements CommandModule {
             saveToFile = true;
         } else {
             try {
-                String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
-                String url = SparkPlatform.VIEWER_URL + key;
+                String key = platform.getBytebinClient().postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
+                String url = platform.getViewerUrl() + key;
 
                 resp.broadcastPrefixed(text("Profiler results:", GOLD));
                 resp.broadcast(text()
@@ -342,7 +342,7 @@ public class SamplerModule implements CommandModule {
                         .append(text(file.toString(), GRAY))
                         .build()
                 );
-                resp.broadcastPrefixed(text("You can read the profile file using the viewer web-app - " + SparkPlatform.VIEWER_URL, GRAY));
+                resp.broadcastPrefixed(text("You can read the profile file using the viewer web-app - " + platform.getViewerUrl(), GRAY));
 
                 platform.getActivityLog().addToLog(Activity.fileActivity(resp.sender(), System.currentTimeMillis(), "Profiler", file.toString()));
             } catch (IOException e) {

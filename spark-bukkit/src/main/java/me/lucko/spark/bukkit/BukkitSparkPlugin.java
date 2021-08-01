@@ -59,7 +59,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
         this.platform.enable();
 
         // override Spigot's TPS command with our own.
-        if (getConfig().getBoolean("override-tps-command", true)) {
+        if (this.platform.getConfiguration().getBoolean("overrideTpsCommand", true)) {
             this.tpsCommand = (sender, command, label, args) -> {
                 if (!sender.hasPermission("spark") && !sender.hasPermission("spark.tps") && !sender.hasPermission("bukkit.command.tps")) {
                     sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");

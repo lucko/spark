@@ -45,6 +45,7 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.util.Configuration;
 
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -79,16 +80,14 @@ import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
  */
 public class SparkPlatform {
 
-    /** The URL of the viewer frontend */
-    public static final String VIEWER_URL = "https://spark.lucko.me/";
-    /** The shared okhttp client */
-    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient();
-    /** The bytebin instance used by the platform */
-    public static final BytebinClient BYTEBIN_CLIENT = new BytebinClient(OK_HTTP_CLIENT, "https://bytebin.lucko.me/", "spark-plugin");
     /** The date time formatter instance used by the platform */
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
 
     private final SparkPlugin plugin;
+    private final Configuration configuration;
+    private final String viewerUrl;
+    private final OkHttpClient httpClient;
+    private final BytebinClient bytebinClient;
     private final List<CommandModule> commandModules;
     private final List<Command> commands;
     private final ReentrantLock commandExecuteLock = new ReentrantLock(true);
@@ -103,6 +102,14 @@ public class SparkPlatform {
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
+
+        this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
+
+        this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
+        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://bytebin.lucko.me/");
+
+        this.httpClient = new OkHttpClient();
+        this.bytebinClient = new BytebinClient(this.httpClient, bytebinUrl, "spark-plugin");
 
         this.commandModules = ImmutableList.of(
                 new SamplerModule(),
@@ -170,12 +177,24 @@ public class SparkPlatform {
 
         // shutdown okhttp
         // see: https://github.com/square/okhttp/issues/4029
-        OK_HTTP_CLIENT.dispatcher().executorService().shutdown();
-        OK_HTTP_CLIENT.connectionPool().evictAll();
+        this.httpClient.dispatcher().executorService().shutdown();
+        this.httpClient.connectionPool().evictAll();
     }
 
     public SparkPlugin getPlugin() {
         return this.plugin;
+    }
+
+    public Configuration getConfiguration() {
+        return this.configuration;
+    }
+
+    public String getViewerUrl() {
+        return this.viewerUrl;
+    }
+
+    public BytebinClient getBytebinClient() {
+        return this.bytebinClient;
     }
 
     public ActivityLog getActivityLog() {

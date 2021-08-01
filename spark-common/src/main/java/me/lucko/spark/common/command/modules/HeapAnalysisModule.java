@@ -105,8 +105,8 @@ public class HeapAnalysisModule implements CommandModule {
             saveToFile = true;
         } else {
             try {
-                String key = SparkPlatform.BYTEBIN_CLIENT.postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
-                String url = SparkPlatform.VIEWER_URL + key;
+                String key = platform.getBytebinClient().postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
+                String url = platform.getViewerUrl() + key;
 
                 resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));
                 resp.broadcast(text()
@@ -135,7 +135,7 @@ public class HeapAnalysisModule implements CommandModule {
                         .append(text(file.toString(), GRAY))
                         .build()
                 );
-                resp.broadcastPrefixed(text("You can read the heap dump summary file using the viewer web-app - " + SparkPlatform.VIEWER_URL, GRAY));
+                resp.broadcastPrefixed(text("You can read the heap dump summary file using the viewer web-app - " + platform.getViewerUrl(), GRAY));
 
                 platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump summary", file.toString()));
             } catch (IOException e) {
