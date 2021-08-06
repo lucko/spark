@@ -11,15 +11,15 @@ dependencies {
     implementation 'com.squareup.okio:okio:1.17.3'
     implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
     implementation 'org.tukaani:xz:1.8'
-    api('net.kyori:adventure-api:4.7.0') {
+    api('net.kyori:adventure-api:4.8.1') {
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')
     }
-    api('net.kyori:adventure-text-serializer-gson:4.7.0') {
+    api('net.kyori:adventure-text-serializer-gson:4.8.1') {
         exclude(module: 'adventure-api')
         exclude(module: 'gson')
     }
-    api('net.kyori:adventure-text-serializer-legacy:4.7.0') {
+    api('net.kyori:adventure-text-serializer-legacy:4.8.1') {
         exclude(module: 'adventure-api')
     }
     implementation('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
