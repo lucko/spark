@@ -22,33 +22,26 @@ package me.lucko.spark.common;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.api.SparkApi;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
-import me.lucko.spark.common.command.modules.ActivityLogModule;
-import me.lucko.spark.common.command.modules.GcMonitoringModule;
-import me.lucko.spark.common.command.modules.HealthModule;
-import me.lucko.spark.common.command.modules.HeapAnalysisModule;
-import me.lucko.spark.common.command.modules.SamplerModule;
-import me.lucko.spark.common.command.modules.TickMonitoringModule;
+import me.lucko.spark.common.command.modules.*;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.sampler.SamplerService;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.common.util.Configuration;
-
 import net.kyori.adventure.text.event.ClickEvent;
-
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
@@ -56,22 +49,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
-import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
-import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
-import static net.kyori.adventure.text.format.NamedTextColor.RED;
-import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
@@ -80,7 +65,9 @@ import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
  */
 public class SparkPlatform {
 
-    /** The date time formatter instance used by the platform */
+    /**
+     * The date time formatter instance used by the platform
+     */
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
 
     private final SparkPlugin plugin;
@@ -94,11 +81,12 @@ public class SparkPlatform {
     private final ActivityLog activityLog;
     private final TickHook tickHook;
     private final TickReporter tickReporter;
+    private final SamplerService samplerService;
     private final ClassSourceLookup classSourceLookup;
     private final TickStatistics tickStatistics;
+    private final AtomicBoolean enabled = new AtomicBoolean(false);
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
     private long serverNormalOperationStartTime;
-    private final AtomicBoolean enabled = new AtomicBoolean(false);
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
@@ -131,6 +119,7 @@ public class SparkPlatform {
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
+        this.samplerService = new SamplerService(this);
         this.classSourceLookup = plugin.createClassSourceLookup();
         this.tickStatistics = this.tickHook != null ? new TickStatistics() : null;
     }
@@ -207,6 +196,10 @@ public class SparkPlatform {
 
     public TickReporter getTickReporter() {
         return this.tickReporter;
+    }
+
+    public SamplerService getSamplerService() {
+        return this.samplerService;
     }
 
     public ClassSourceLookup getClassSourceLookup() {

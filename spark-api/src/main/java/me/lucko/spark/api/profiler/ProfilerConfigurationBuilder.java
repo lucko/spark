@@ -12,11 +12,17 @@ public class ProfilerConfigurationBuilder {
     private boolean forceJavaSampler = true;
     private int minimumTickDuration = -1;
     private @Nullable Duration duration = null;
-    private @Nullable DumperChoice dumper = null;
+    private @Nullable Dumper dumper = null;
     private @Nullable GrouperChoice grouper = null;
 
+    /**
+     * Set the interval to a given value or 5 if value is below 0.
+     *
+     * @param interval the interval
+     * @return the builder instance
+     */
     public ProfilerConfigurationBuilder interval(double interval) {
-        this.interval = interval;
+        this.interval = interval > 0 ? interval : 5;
         return this;
     }
 
@@ -35,6 +41,13 @@ public class ProfilerConfigurationBuilder {
         return this;
     }
 
+    /**
+     * Set the minimum tick duration that will be profiled.
+     * If the minimumTickDuration is lower than 0 (default is -1), all ticks will be recorded.
+     *
+     * @param minimumTickDuration the minimum tick duration
+     * @return the builder instance
+     */
     public ProfilerConfigurationBuilder minimumTickDuration(int minimumTickDuration) {
         this.minimumTickDuration = minimumTickDuration;
         return this;
@@ -45,7 +58,7 @@ public class ProfilerConfigurationBuilder {
         return this;
     }
 
-    public ProfilerConfigurationBuilder dumper(DumperChoice dumper) {
+    public ProfilerConfigurationBuilder dumper(Dumper dumper) {
         this.dumper = dumper;
         return this;
     }
@@ -88,7 +101,7 @@ public class ProfilerConfigurationBuilder {
             }
 
             @Override
-            public @Nullable DumperChoice dumper() {
+            public @Nullable Dumper dumper() {
                 return dumper;
             }
 

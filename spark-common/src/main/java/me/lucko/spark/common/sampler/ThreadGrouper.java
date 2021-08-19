@@ -25,6 +25,7 @@ import me.lucko.spark.common.sampler.grouper.NameThreadGrouper;
 import me.lucko.spark.common.sampler.grouper.PoolThreadGrouper;
 import me.lucko.spark.common.sampler.grouper.SingleThreadGrouper;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Function for grouping threads together
@@ -35,7 +36,10 @@ public interface ThreadGrouper {
     ThreadGrouper BY_POOL = new PoolThreadGrouper();
     ThreadGrouper AS_ONE = new SingleThreadGrouper();
 
-    static ThreadGrouper get(GrouperChoice choice) {
+    static ThreadGrouper get(@Nullable GrouperChoice choice) {
+        if (choice == null) {
+            return BY_POOL;
+        }
         switch (choice) {
             case SINGLE:
                 return AS_ONE;

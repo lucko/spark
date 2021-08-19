@@ -40,6 +40,7 @@ public interface ProfilerConfiguration {
 
     /**
      * Minimum duration (in millis) a tick has to take in order to be recorded.
+     * If this value is below 0, all ticks will be recorded.
      *
      * @return the minimum tick duration
      */
@@ -60,7 +61,7 @@ public interface ProfilerConfiguration {
      * @return the thread dumper choice
      */
     @Nullable
-    DumperChoice dumper();
+    Dumper dumper();
 
     /**
      * Get the choice of which thread grouper (AS_ONE, BY_NAME, BY_POOL) to use for this profiler.

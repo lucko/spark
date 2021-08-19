@@ -5,8 +5,8 @@ plugins {
 version = '0.1-SNAPSHOT'
 
 dependencies {
-    compileOnly 'org.checkerframework:checker-qual:3.8.0'
-    compileOnly 'org.jetbrains:annotations:20.1.0'
+    compileOnly 'org.checkerframework:checker-qual:3.16.0'
+    compileOnly 'org.jetbrains:annotations:22.0.0'
 }
 
 publishing {
