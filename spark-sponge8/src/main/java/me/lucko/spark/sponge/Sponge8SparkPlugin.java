@@ -21,13 +21,16 @@
 package me.lucko.spark.sponge;
 
 import com.google.inject.Inject;
+
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
+
 import net.kyori.adventure.text.Component;
+
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
@@ -59,8 +62,9 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     private final Game game;
     private final Path configDirectory;
     private final ExecutorService asyncExecutor;
-    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
+    
     private SparkPlatform platform;
+    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
     public Sponge8SparkPlugin(PluginContainer pluginContainer, Game game, @ConfigDir(sharedRoot = false) Path configDirectory) {
