@@ -20,87 +20,36 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.api.profiler.GrouperChoice;
+import me.lucko.spark.common.sampler.grouper.NameThreadGrouper;
+import me.lucko.spark.common.sampler.grouper.PoolThreadGrouper;
+import me.lucko.spark.common.sampler.grouper.SingleThreadGrouper;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Function for grouping threads together
  */
 public interface ThreadGrouper {
 
-    /**
-     * Implementation of {@link ThreadGrouper} that just groups by thread name.
-     */
-    ThreadGrouper BY_NAME = new ThreadGrouper() {
-        @Override
-        public String getGroup(long threadId, String threadName) {
-            return threadName;
+    ThreadGrouper BY_NAME = new NameThreadGrouper();
+    ThreadGrouper BY_POOL = new PoolThreadGrouper();
+    ThreadGrouper AS_ONE = new SingleThreadGrouper();
+
+    static ThreadGrouper get(GrouperChoice choice) {
+        switch (choice) {
+            case SINGLE:
+                return AS_ONE;
+            case NAME:
+                return BY_NAME;
+            default:
+                return BY_POOL;
         }
-
-        @Override
-        public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
-            return SamplerMetadata.DataAggregator.ThreadGrouper.BY_NAME;
-        }
-    };
-
-    /**
-     * Implementation of {@link ThreadGrouper} that attempts to group by the name of the pool
-     * the thread originated from.
-     *
-     * <p>The regex pattern used to match pools expects a digit at the end of the thread name,
-     * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
-     */
-    ThreadGrouper BY_POOL = new ThreadGrouper() {
-        private final Map<Long, String> cache = new ConcurrentHashMap<>();
-        private final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
-
-        @Override
-        public String getGroup(long threadId, String threadName) {
-            String group = this.cache.get(threadId);
-            if (group != null) {
-                return group;
-            }
-
-            Matcher matcher = this.pattern.matcher(threadName);
-            if (!matcher.matches()) {
-                return threadName;
-            }
-
-            group = matcher.group(1).trim() + " (Combined)";
-            this.cache.put(threadId, group); // we don't care about race conditions here
-            return group;
-        }
-
-        @Override
-        public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
-            return SamplerMetadata.DataAggregator.ThreadGrouper.BY_POOL;
-        }
-    };
-
-    /**
-     * Implementation of {@link ThreadGrouper} which groups all threads as one, under
-     * the name "All".
-     */
-    ThreadGrouper AS_ONE = new ThreadGrouper() {
-        @Override
-        public String getGroup(long threadId, String threadName) {
-            return "All";
-        }
-
-        @Override
-        public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
-            return SamplerMetadata.DataAggregator.ThreadGrouper.AS_ONE;
-        }
-    };
+    }
 
     /**
      * Gets the group for the given thread.
      *
-     * @param threadId the id of the thread
+     * @param threadId   the id of the thread
      * @param threadName the name of the thread
      * @return the group
      */

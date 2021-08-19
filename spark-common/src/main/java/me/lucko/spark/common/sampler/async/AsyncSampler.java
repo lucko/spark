@@ -26,6 +26,7 @@ import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
+import me.lucko.spark.common.sampler.dumper.SpecificThreadDumper;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
@@ -119,7 +120,7 @@ public class AsyncSampler implements Sampler {
         }
 
         String command = "start,event=cpu,interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
+        if (this.threadDumper instanceof SpecificThreadDumper) {
             command += ",filter";
         }
 
@@ -128,8 +129,8 @@ public class AsyncSampler implements Sampler {
             throw new RuntimeException("Unexpected response: " + resp);
         }
 
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            ThreadDumper.Specific threadDumper = (ThreadDumper.Specific) this.threadDumper;
+        if (this.threadDumper instanceof SpecificThreadDumper) {
+            SpecificThreadDumper threadDumper = (SpecificThreadDumper) this.threadDumper;
             for (Thread thread : threadDumper.getThreads()) {
                 this.profiler.addThread(thread);
             }
@@ -187,8 +188,8 @@ public class AsyncSampler implements Sampler {
         this.outputComplete = true;
 
         Predicate<String> threadFilter;
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            ThreadDumper.Specific threadDumper = (ThreadDumper.Specific) this.threadDumper;
+        if (this.threadDumper instanceof SpecificThreadDumper) {
+            SpecificThreadDumper threadDumper = (SpecificThreadDumper) this.threadDumper;
             threadFilter = n -> threadDumper.getThreadNames().contains(n.toLowerCase());
         } else {
             threadFilter = n -> true;

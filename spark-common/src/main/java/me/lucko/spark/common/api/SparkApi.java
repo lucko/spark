@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.gc.GarbageCollector;
+import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
@@ -37,9 +38,7 @@ import me.lucko.spark.common.monitor.tick.TickStatistics;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.Ref;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -169,6 +168,11 @@ public class SparkApi implements Spark {
             map.put(entry.getKey(), new GarbageCollectorInfo(entry.getKey(), entry.getValue(), serverUptime));
         }
         return ImmutableMap.copyOf(map);
+    }
+
+    @Override
+    public @NonNull Profiler profiler() {
+        return null;
     }
 
     public static void register(Spark spark) {

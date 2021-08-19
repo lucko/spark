@@ -21,7 +21,7 @@
 package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
-
+import me.lucko.spark.api.profiler.GrouperChoice;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
@@ -31,44 +31,35 @@ import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import me.lucko.spark.common.sampler.Sampler;
-import me.lucko.spark.common.sampler.SamplerBuilder;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.ThreadNodeOrder;
+import me.lucko.spark.common.sampler.*;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
+import me.lucko.spark.common.sampler.dumper.PatternThreadDumper;
+import me.lucko.spark.common.sampler.dumper.SpecificThreadDumper;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkProtos;
-
 import net.kyori.adventure.text.event.ClickEvent;
-
 import okhttp3.MediaType;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
-import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
-import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
-import static net.kyori.adventure.text.format.NamedTextColor.RED;
+import static net.kyori.adventure.text.format.NamedTextColor.*;
 
 public class SamplerModule implements CommandModule {
     private static final MediaType SPARK_SAMPLER_MEDIA_TYPE = MediaType.parse("application/x-spark-sampler");
 
-    /** The sampler instance currently running, if any */
+    /**
+     * The sampler instance currently running, if any
+     */
     private Sampler activeSampler = null;
 
     @Override
@@ -171,20 +162,20 @@ public class SamplerModule implements CommandModule {
             threadDumper = ThreadDumper.ALL;
         } else {
             if (arguments.boolFlag("regex")) {
-                threadDumper = new ThreadDumper.Regex(threads);
+                threadDumper = new PatternThreadDumper(threads);
             } else {
                 // specific matches
-                threadDumper = new ThreadDumper.Specific(threads);
+                threadDumper = new SpecificThreadDumper(threads);
             }
         }
 
         ThreadGrouper threadGrouper;
         if (arguments.boolFlag("combine-all")) {
-            threadGrouper = ThreadGrouper.AS_ONE;
+            threadGrouper = ThreadGrouper.get(GrouperChoice.SINGLE);
         } else if (arguments.boolFlag("not-combined")) {
-            threadGrouper = ThreadGrouper.BY_NAME;
+            threadGrouper = ThreadGrouper.get(GrouperChoice.NAME);
         } else {
-            threadGrouper = ThreadGrouper.BY_POOL;
+            threadGrouper = ThreadGrouper.get(GrouperChoice.POOL);
         }
 
         int ticksOver = arguments.intFlag("only-ticks-over");
@@ -204,16 +195,17 @@ public class SamplerModule implements CommandModule {
 
         resp.broadcastPrefixed(text("Initializing a new profiler, please wait..."));
 
-        SamplerBuilder builder = new SamplerBuilder();
-        builder.threadDumper(threadDumper);
-        builder.threadGrouper(threadGrouper);
+        SamplerBuilder builder = new SamplerBuilder()
+                .threadDumper(threadDumper)
+                .threadGrouper(threadGrouper)
+                .samplingInterval(intervalMillis)
+                .ignoreSleeping(ignoreSleeping)
+                .ignoreNative(ignoreNative)
+                .forceJavaSampler(forceJavaSampler);
+
         if (timeoutSeconds != -1) {
             builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
         }
-        builder.samplingInterval(intervalMillis);
-        builder.ignoreSleeping(ignoreSleeping);
-        builder.ignoreNative(ignoreNative);
-        builder.forceJavaSampler(forceJavaSampler);
         if (ticksOver != -1) {
             builder.ticksOver(ticksOver, tickHook);
         }
@@ -236,7 +228,7 @@ public class SamplerModule implements CommandModule {
         // send message if profiling fails
         future.whenCompleteAsync((s, throwable) -> {
             if (throwable != null) {
-                resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable.toString(), RED));
+                resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable, RED));
                 throwable.printStackTrace();
             }
         });
