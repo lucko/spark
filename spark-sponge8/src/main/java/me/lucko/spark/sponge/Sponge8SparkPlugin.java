@@ -145,7 +145,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         public CommandResult process(CommandCause cause, ArgumentReader.Mutable arguments) {
             this.plugin.threadDumper.ensureSetup();
             this.plugin.platform.executeCommand(new Sponge8CommandSender(cause), arguments.input().split(" "));
-            return CommandResult.empty();
+            return CommandResult.success();
         }
 
         @Override
