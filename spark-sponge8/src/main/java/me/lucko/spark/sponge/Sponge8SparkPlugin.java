@@ -62,7 +62,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     private final Game game;
     private final Path configDirectory;
     private final ExecutorService asyncExecutor;
-    
+
     private SparkPlatform platform;
     private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
