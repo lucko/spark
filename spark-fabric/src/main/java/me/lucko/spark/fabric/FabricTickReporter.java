@@ -20,7 +20,7 @@
 
 package me.lucko.spark.fabric;
 
-import me.lucko.spark.common.tick.AbstractTickReporter;
+import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -28,36 +28,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.MinecraftServer;
 
-public abstract class FabricTickReporter extends AbstractTickReporter implements TickReporter {
-    private boolean closed = false;
-
-    private long start = 0;
-
-    protected void onStart() {
-        if (this.closed) {
-            return;
-        }
-
-        this.start = System.nanoTime();
-    }
-
-    protected void onEnd() {
-        if (this.closed) {
-            return;
-        }
-
-        if (this.start == 0) {
-            return;
-        }
-
-        double duration = (System.nanoTime() - this.start) / 1000000d;
-        onTick(duration);
-    }
-
-    @Override
-    public void close() {
-        this.closed = true;
-    }
+public abstract class FabricTickReporter extends SimpleTickReporter implements TickReporter {
 
     public static final class Server extends FabricTickReporter implements ServerTickEvents.StartTick, ServerTickEvents.EndTick {
         @Override

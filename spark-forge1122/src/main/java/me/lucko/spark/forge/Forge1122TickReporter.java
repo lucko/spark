@@ -20,17 +20,15 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.tick.AbstractTickReporter;
+import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public class Forge1122TickReporter extends AbstractTickReporter implements TickReporter {
+public class Forge1122TickReporter extends SimpleTickReporter implements TickReporter {
     private final TickEvent.Type type;
-
-    private long start = 0;
 
     public Forge1122TickReporter(TickEvent.Type type) {
         this.type = type;
@@ -44,15 +42,10 @@ public class Forge1122TickReporter extends AbstractTickReporter implements TickR
 
         switch (e.phase) {
             case START:
-                this.start = System.nanoTime();
+                onStart();
                 break;
             case END:
-                if (this.start == 0) {
-                    return;
-                }
-
-                double duration = (System.nanoTime() - this.start) / 1000000d;
-                onTick(duration);
+                onEnd();
                 break;
             default:
                 throw new AssertionError(e.phase);
@@ -67,6 +60,7 @@ public class Forge1122TickReporter extends AbstractTickReporter implements TickR
     @Override
     public void close() {
         MinecraftForge.EVENT_BUS.unregister(this);
+        super.close();
     }
 
 }
