@@ -82,7 +82,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
         }
 
         this.threadDumper.ensureSetup();
-        CommandOutput source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getMinecraftServer();
+        CommandOutput source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
         this.platform.executeCommand(new FabricCommandSender(source, this), args);
         return Command.SINGLE_SUCCESS;
     }
