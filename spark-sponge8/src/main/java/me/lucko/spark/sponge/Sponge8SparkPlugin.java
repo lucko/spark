@@ -46,7 +46,7 @@ import org.spongepowered.api.event.lifecycle.RegisterCommandEvent;
 import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.event.lifecycle.StoppingEngineEvent;
 import org.spongepowered.plugin.PluginContainer;
-import org.spongepowered.plugin.jvm.Plugin;
+import org.spongepowered.plugin.builtin.jvm.Plugin;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -93,7 +93,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Override
     public String getVersion() {
-        return this.pluginContainer.metadata().version();
+        return this.pluginContainer.metadata().version().toString();
     }
 
     @Override

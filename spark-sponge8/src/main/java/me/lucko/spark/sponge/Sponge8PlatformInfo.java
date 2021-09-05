@@ -44,7 +44,7 @@ public class Sponge8PlatformInfo extends AbstractPlatformInfo {
 
     @Override
     public String getVersion() {
-        return this.game.platform().container(Platform.Component.IMPLEMENTATION).metadata().version();
+        return this.game.platform().container(Platform.Component.IMPLEMENTATION).metadata().version().toString();
     }
 
     @Override
