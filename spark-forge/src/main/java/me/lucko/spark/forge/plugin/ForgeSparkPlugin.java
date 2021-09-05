@@ -26,10 +26,13 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
@@ -38,6 +41,7 @@ import me.lucko.spark.forge.ForgeSparkMod;
 import net.minecraft.commands.CommandSource;
 
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -112,5 +116,23 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new ForgeClassSourceLookup();
+    }
+
+    protected CompletableFuture<Suggestions> generateSuggestions(CommandSender sender, String[] args, SuggestionsBuilder builder) {
+        SuggestionsBuilder suggestions;
+
+        int lastSpaceIdx = builder.getRemaining().lastIndexOf(' ');
+        if (lastSpaceIdx != -1) {
+            suggestions = builder.createOffset(builder.getStart() + lastSpaceIdx + 1);
+        } else {
+            suggestions = builder;
+        }
+
+        return CompletableFuture.supplyAsync(() -> {
+            for (String suggestion : this.platform.tabCompleteCommand(sender, args)) {
+                suggestions.suggest(suggestion);
+            }
+            return suggestions.build();
+        });
     }
 }

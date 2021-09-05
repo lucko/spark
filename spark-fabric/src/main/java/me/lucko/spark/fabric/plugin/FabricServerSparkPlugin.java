@@ -43,7 +43,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
@@ -94,13 +93,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
             return Suggestions.empty();
         }
 
-        ServerPlayerEntity player = context.getSource().getPlayer();
-        return CompletableFuture.supplyAsync(() -> {
-            for (String suggestion : this.platform.tabCompleteCommand(new FabricCommandSender(player, this), args)) {
-                builder.suggest(suggestion);
-            }
-            return builder.build();
-        });
+        return generateSuggestions(new FabricCommandSender(context.getSource().getPlayer(), this), args, builder);
     }
 
     private static String[] processArgs(CommandContext<ServerCommandSource> context, boolean tabComplete) {

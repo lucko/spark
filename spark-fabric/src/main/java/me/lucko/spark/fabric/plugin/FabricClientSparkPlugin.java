@@ -118,12 +118,7 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
             return Suggestions.empty();
         }
 
-        return CompletableFuture.supplyAsync(() -> {
-            for (String suggestion : this.platform.tabCompleteCommand(new FabricCommandSender(this.minecraft.player, this), args)) {
-                builder.suggest(suggestion);
-            }
-            return builder.build();
-        });
+        return generateSuggestions(new FabricCommandSender(this.minecraft.player, this), args, builder);
     }
 
     private static String[] processArgs(String input, boolean tabComplete) {

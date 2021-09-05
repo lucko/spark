@@ -40,7 +40,6 @@ import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
@@ -102,13 +101,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             return Suggestions.empty();
         }
 
-        ServerPlayer player = context.getSource().getPlayerOrException();
-        return CompletableFuture.supplyAsync(() -> {
-            for (String suggestion : this.platform.tabCompleteCommand(new ForgeCommandSender(player, this), args)) {
-                builder.suggest(suggestion);
-            }
-            return builder.build();
-        });
+        return generateSuggestions(new ForgeCommandSender(context.getSource().getPlayerOrException(), this), args, builder);
     }
 
     private static String [] processArgs(CommandContext<CommandSourceStack> context, boolean tabComplete) {

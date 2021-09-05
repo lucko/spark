@@ -117,12 +117,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
             return Suggestions.empty();
         }
 
-        return CompletableFuture.supplyAsync(() -> {
-            for (String suggestion : this.platform.tabCompleteCommand(new ForgeCommandSender(this.minecraft.player, this), args)) {
-                builder.suggest(suggestion);
-            }
-            return builder.build();
-        });
+        return generateSuggestions(new ForgeCommandSender(this.minecraft.player, this), args, builder);
     }
 
     private static String[] processArgs(String input, boolean tabComplete) {
