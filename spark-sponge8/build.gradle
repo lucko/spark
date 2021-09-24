@@ -13,7 +13,7 @@ repositories {
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
-        include 'META-INF/plugins.json'
+        include 'META-INF/sponge_plugins.json'
         expand (
                 version: project.pluginVersion,
                 description: project.pluginDescription
