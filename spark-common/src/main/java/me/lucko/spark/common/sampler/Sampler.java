@@ -65,7 +65,7 @@ public interface Sampler {
      *
      * @return a future
      */
-    CompletableFuture<? extends Sampler> getFuture();
+    CompletableFuture<Sampler> getFuture();
 
     // Methods used to export the sampler data to the web viewer.
     SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);

@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.sampler.Sampler;
+import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.node.MergeMode;
@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -52,7 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * A sampler implementation using Java (WarmRoast).
  */
-public class JavaSampler implements Sampler, Runnable {
+public class JavaSampler extends AbstractSampler implements Runnable {
     private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
 
     /** The worker pool for inserting stack nodes */
@@ -65,56 +64,24 @@ public class JavaSampler implements Sampler, Runnable {
 
     /** The thread management interface for the current JVM */
     private final ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-    /** The instance used to generate thread information for use in sampling */
-    private final ThreadDumper threadDumper;
+
     /** Responsible for aggregating and then outputting collected sampling data */
     private final JavaDataAggregator dataAggregator;
-
-    /** A future to encapsulate the completion of this sampler instance */
-    private final CompletableFuture<JavaSampler> future = new CompletableFuture<>();
-    /** The interval to wait between sampling, in microseconds */
-    private final int interval;
-    /** The time when sampling first began */
-    private long startTime = -1;
-    /** The unix timestamp (in millis) when this sampler should automatically complete. */
-    private final long endTime; // -1 for nothing
     
     public JavaSampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative) {
-        this.threadDumper = threadDumper;
+        super(interval, threadDumper, endTime);
         this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
-        this.interval = interval;
-        this.endTime = endTime;
     }
 
     public JavaSampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
-        this.threadDumper = threadDumper;
+        super(interval, threadDumper, endTime);
         this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
-        this.interval = interval;
-        this.endTime = endTime;
     }
 
     @Override
     public void start() {
         this.startTime = System.currentTimeMillis();
         this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
-    }
-
-    @Override
-    public long getStartTime() {
-        if (this.startTime == -1) {
-            throw new IllegalStateException("Not yet started");
-        }
-        return this.startTime;
-    }
-
-    @Override
-    public long getEndTime() {
-        return this.endTime;
-    }
-
-    @Override
-    public CompletableFuture<JavaSampler> getFuture() {
-        return this.future;
     }
 
     @Override
