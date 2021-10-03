@@ -46,6 +46,7 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.common.util.Configuration;
+import me.lucko.spark.common.util.TemporaryFiles;
 
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -174,6 +175,8 @@ public class SparkPlatform {
         }
 
         SparkApi.unregister();
+
+        TemporaryFiles.deleteTemporaryFiles();
 
         // shutdown okhttp
         // see: https://github.com/square/okhttp/issues/4029

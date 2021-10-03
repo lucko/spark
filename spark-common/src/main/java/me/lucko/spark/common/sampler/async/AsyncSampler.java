@@ -31,6 +31,7 @@ import me.lucko.spark.common.sampler.async.jfr.JfrReader;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.proto.SparkProtos;
 
 import one.profiler.AsyncProfiler;
@@ -94,8 +95,7 @@ public class AsyncSampler extends AbstractSampler {
         this.startTime = System.currentTimeMillis();
 
         try {
-            this.outputFile = Files.createTempFile("spark-profile-", ".jfr.tmp");
-            this.outputFile.toFile().deleteOnExit();
+            this.outputFile = TemporaryFiles.create("spark-profile-", ".jfr.tmp");
         } catch (IOException e) {
             throw new RuntimeException("Unable to create temporary output file", e);
         }
@@ -272,7 +272,7 @@ public class AsyncSampler extends AbstractSampler {
         if (className == null || className.length == 0) {
             // native call
             result = new AsyncStackTraceElement(
-                    "native",
+                    AsyncStackTraceElement.NATIVE_CALL,
                     new String(methodName, StandardCharsets.UTF_8),
                     null
             );

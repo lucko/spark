@@ -23,6 +23,7 @@ package me.lucko.spark.common.sampler.java;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.aggregator.AbstractDataAggregator;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
+import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import java.lang.management.ThreadInfo;
@@ -34,6 +35,12 @@ import java.util.concurrent.TimeUnit;
  * Abstract {@link DataAggregator} for the {@link JavaSampler}.
  */
 public abstract class JavaDataAggregator extends AbstractDataAggregator {
+
+    /** A describer for java.lang.StackTraceElement */
+    private static final StackTraceNode.Describer<StackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) -> {
+        int parentLineNumber = parent == null ? StackTraceNode.NULL_LINE_NUMBER : parent.getLineNumber();
+        return new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getLineNumber(), parentLineNumber);
+    };
 
     /** The worker pool for inserting stack nodes */
     protected final ExecutorService workerPool;
@@ -72,7 +79,7 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
 
         try {
             ThreadNode node = getNode(this.threadGrouper.getGroup(threadInfo.getThreadId(), threadInfo.getThreadName()));
-            node.log(threadInfo.getStackTrace(), this.interval);
+            node.log(STACK_TRACE_DESCRIBER, threadInfo.getStackTrace(), this.interval);
         } catch (Exception e) {
             e.printStackTrace();
         }

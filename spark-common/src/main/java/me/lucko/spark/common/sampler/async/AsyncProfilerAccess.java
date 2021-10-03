@@ -20,6 +20,8 @@
 
 package me.lucko.spark.common.sampler.async;
 
+import me.lucko.spark.common.util.TemporaryFiles;
+
 import one.profiler.AsyncProfiler;
 
 import java.io.InputStream;
@@ -58,8 +60,7 @@ public final class AsyncProfilerAccess {
             throw new IllegalStateException("Could not find libasyncProfiler.so in spark jar file");
         }
 
-        Path extractPath = Files.createTempFile("spark-", "-libasyncProfiler.so.tmp");
-        extractPath.toFile().deleteOnExit();
+        Path extractPath = TemporaryFiles.create("spark-", "-libasyncProfiler.so.tmp");
 
         try (InputStream in = profilerResource.openStream()) {
             Files.copy(in, extractPath, StandardCopyOption.REPLACE_EXISTING);

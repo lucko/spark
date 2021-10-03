@@ -22,6 +22,7 @@ package me.lucko.spark.common.sampler.async;
 
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.aggregator.AbstractDataAggregator;
+import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
 
@@ -29,6 +30,11 @@ import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
  * Data aggregator for {@link AsyncSampler}.
  */
 public class AsyncDataAggregator extends AbstractDataAggregator {
+
+    /** A describer for async-profiler stack trace elements. */
+    private static final StackTraceNode.Describer<AsyncStackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) ->
+            new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getMethodDescription());
+
     protected AsyncDataAggregator(ThreadGrouper threadGrouper) {
         super(threadGrouper);
     }
@@ -44,7 +50,7 @@ public class AsyncDataAggregator extends AbstractDataAggregator {
     public void insertData(ProfileSegment element) {
         try {
             ThreadNode node = getNode(this.threadGrouper.getGroup(element.getNativeThreadId(), element.getThreadName()));
-            node.log(element.getStackTrace(), element.getTime());
+            node.log(STACK_TRACE_DESCRIBER, element.getStackTrace(), element.getTime());
         } catch (Exception e) {
             e.printStackTrace();
         }

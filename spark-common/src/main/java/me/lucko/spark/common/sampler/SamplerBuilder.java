@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Builds {@link Sampler} instances.
  */
+@SuppressWarnings("UnusedReturnValue")
 public class SamplerBuilder {
 
     private double samplingInterval = 4; // milliseconds
@@ -91,17 +92,15 @@ public class SamplerBuilder {
     }
 
     public Sampler start() {
-        Sampler sampler;
-
         int intervalMicros = (int) (this.samplingInterval * 1000d);
-        if (this.ticksOver == -1 || this.tickHook == null) {
-            if (this.useAsyncProfiler && !(this.threadDumper instanceof ThreadDumper.Regex) && AsyncProfilerAccess.INSTANCE.isSupported()) {
-                sampler = new AsyncSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout);
-            } else {
-                sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
-            }
-        } else {
+
+        Sampler sampler;
+        if (this.ticksOver != -1 && this.tickHook != null) {
             sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
+        } else if (this.useAsyncProfiler && !(this.threadDumper instanceof ThreadDumper.Regex) && AsyncProfilerAccess.INSTANCE.isSupported()) {
+            sampler = new AsyncSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout);
+        } else {
+            sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
         }
 
         sampler.start();
