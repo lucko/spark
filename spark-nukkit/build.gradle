@@ -4,12 +4,12 @@ plugins {
 
 dependencies {
     implementation project(':spark-common')
-    implementation('net.kyori:adventure-text-serializer-legacy:4.4.0')
+    implementation 'net.kyori:adventure-text-serializer-legacy:4.4.0'
     compileOnly 'cn.nukkit:nukkit:1.0-SNAPSHOT'
 }
 
 repositories {
-    maven { url "https://repo.opencollab.dev/maven-snapshots/" }
+    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
 }
 
 processResources {
@@ -27,6 +27,8 @@ shadowJar {
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
+    relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
     relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'

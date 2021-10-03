@@ -48,7 +48,6 @@ public class Sponge8TickHook extends AbstractTickHook implements TickHook, Runna
     public void start() {
         Task task = Task.builder()
                 .interval(Ticks.of(1))
-                .name("spark-ticker")
                 .plugin(this.plugin)
                 .execute(this)
                 .build();
