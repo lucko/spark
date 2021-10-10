@@ -84,7 +84,7 @@ public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
         );
 
         TextComponent.Builder valueComponent = text().content(activity.getDataValue()).color(WHITE);
-        if (activity.getDataType().equals("url")) {
+        if (activity.getDataType().equals(Activity.DATA_TYPE_URL)) {
             valueComponent.clickEvent(ClickEvent.openUrl(activity.getDataValue()));
         }
 

@@ -21,8 +21,6 @@
 
 package me.lucko.spark.common.sampler.node;
 
-import me.lucko.spark.common.sampler.async.AsyncStackTraceElement;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,18 +36,14 @@ public abstract class AbstractNode {
 
     private static final int MAX_STACK_DEPTH = 300;
 
-    /**
-     * A map of this nodes children
-     */
+    /** A map of the nodes children */
     private final Map<StackTraceNode.Description, StackTraceNode> children = new ConcurrentHashMap<>();
 
-    /**
-     * The accumulated sample time for this node, measured in microseconds
-     */
+    /** The accumulated sample time for this node, measured in microseconds */
     private final LongAdder totalTime = new LongAdder();
 
     /**
-     * Returns the total sample time for this node in milliseconds.
+     * Gets the total sample time logged for this node in milliseconds.
      *
      * @return the total time
      */
@@ -62,87 +56,51 @@ public abstract class AbstractNode {
     }
 
     /**
-     * Merge {@code other} into {@code this}.
+     * Logs the given stack trace against this node and its children.
      *
-     * @param other the other node
+     * @param describer the function that describes the elements of the stack
+     * @param stack the stack
+     * @param time the total time to log
+     * @param <T> the stack trace element type
      */
-    public void merge(AbstractNode other) {
-        this.totalTime.add(other.totalTime.longValue());
-        for (Map.Entry<StackTraceNode.Description, StackTraceNode> child : other.children.entrySet()) {
-            resolveChild(child.getKey()).merge(child.getValue());
+    public <T> void log(StackTraceNode.Describer<T> describer, T[] stack, long time) {
+        if (stack.length == 0) {
+            return;
+        }
+
+        this.totalTime.add(time);
+
+        AbstractNode node = this;
+        T previousElement = null;
+
+        for (int offset = 0; offset < Math.min(MAX_STACK_DEPTH, stack.length); offset++) {
+            T element = stack[(stack.length - 1) - offset];
+
+            node = node.resolveChild(describer.describe(element, previousElement));
+            node.totalTime.add(time);
+
+            previousElement = element;
         }
     }
 
-    private AbstractNode resolveChild(StackTraceNode.Description description) {
+    private StackTraceNode resolveChild(StackTraceNode.Description description) {
         StackTraceNode result = this.children.get(description); // fast path
         if (result != null) {
             return result;
         }
-        return this.children.computeIfAbsent(description, name -> new StackTraceNode(description));
+        return this.children.computeIfAbsent(description, StackTraceNode::new);
     }
 
-    public void log(StackTraceElement[] elements, long time) {
-        log(elements, 0, time);
-    }
-    
-    private void log(StackTraceElement[] elements, int offset, long time) {
-        this.totalTime.add(time);
-
-        if (offset >= MAX_STACK_DEPTH) {
-            return;
+    /**
+     * Merge {@code other} into {@code this}.
+     *
+     * @param other the other node
+     */
+    protected void merge(AbstractNode other) {
+        this.totalTime.add(other.totalTime.longValue());
+        for (Map.Entry<StackTraceNode.Description, StackTraceNode> child : other.children.entrySet()) {
+            resolveChild(child.getKey()).merge(child.getValue());
         }
-        
-        if (elements.length - offset == 0) {
-            return;
-        }
-
-        // the first element in the array is the top of the call stack, and the last is the root
-        // offset starts at 0.
-
-        // pointer is determined by subtracting the offset from the index of the last element
-        int pointer = (elements.length - 1) - offset;
-        StackTraceElement element = elements[pointer];
-
-        // the parent stack element is located at pointer+1.
-        // when the current offset is 0, we know the current pointer is at the last element in the
-        // array (the root) and therefore there is no parent.
-        StackTraceElement parent = offset == 0 ? null : elements[pointer + 1];
-
-        // get the line number of the parent element - the line which called "us"
-        int parentLineNumber = parent == null ? StackTraceNode.NULL_LINE_NUMBER : parent.getLineNumber();
-
-        // resolve a child element within the structure for the element at pointer
-        AbstractNode child = resolveChild(new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getLineNumber(), parentLineNumber));
-        // call the log method on the found child, with an incremented offset.
-        child.log(elements, offset + 1, time);
-    }
-
-    public void log(AsyncStackTraceElement[] elements, long time) {
-        log(elements, 0, time);
-    }
-
-    private void log(AsyncStackTraceElement[] elements, int offset, long time) {
-        this.totalTime.add(time);
-
-        if (offset >= MAX_STACK_DEPTH) {
-            return;
-        }
-
-        if (elements.length - offset == 0) {
-            return;
-        }
-
-        // the first element in the array is the top of the call stack, and the last is the root
-        // offset starts at 0.
-
-        // pointer is determined by subtracting the offset from the index of the last element
-        int pointer = (elements.length - 1) - offset;
-        AsyncStackTraceElement element = elements[pointer];
-
-        // resolve a child element within the structure for the element at pointer
-        AbstractNode child = resolveChild(new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getMethodDescription()));
-        // call the log method on the found child, with an incremented offset.
-        child.log(elements, offset + 1, time);
     }
 
     protected List<StackTraceNode> exportChildren(MergeMode mergeMode) {

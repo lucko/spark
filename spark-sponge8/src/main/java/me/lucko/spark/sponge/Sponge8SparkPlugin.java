@@ -71,7 +71,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         this.pluginContainer = pluginContainer;
         this.game = game;
         this.configDirectory = configDirectory;
-        this.asyncExecutor = game.asyncScheduler().createExecutor(pluginContainer);
+        this.asyncExecutor = game.asyncScheduler().executor(pluginContainer);
     }
 
 

@@ -24,6 +24,8 @@ package me.lucko.spark.common.sampler.node;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkProtos;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.util.Objects;
 
 /**
@@ -104,6 +106,25 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
         }
 
         return this.description.compareTo(that.description);
+    }
+
+    /**
+     * Function to construct a {@link StackTraceNode.Description} from a stack trace element
+     * of type {@code T}.
+     *
+     * @param <T> the stack trace element type, e.g. {@link java.lang.StackTraceElement}
+     */
+    @FunctionalInterface
+    public interface Describer<T> {
+
+        /**
+         * Create a description for the given element.
+         *
+         * @param element the element
+         * @param parent the parent element
+         * @return the description
+         */
+        Description describe(T element, @Nullable T parent);
     }
 
     /**

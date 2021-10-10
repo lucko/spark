@@ -231,7 +231,7 @@ public class SamplerModule implements CommandModule {
             resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
         }
 
-        CompletableFuture<? extends Sampler> future = this.activeSampler.getFuture();
+        CompletableFuture<Sampler> future = this.activeSampler.getFuture();
 
         // send message if profiling fails
         future.whenCompleteAsync((s, throwable) -> {

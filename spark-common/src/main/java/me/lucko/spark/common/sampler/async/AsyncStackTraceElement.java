@@ -25,6 +25,9 @@ package me.lucko.spark.common.sampler.async;
  */
 public class AsyncStackTraceElement {
 
+    /** The class name used for native method calls */
+    public static final String NATIVE_CALL = "native";
+
     /** The name of the class */
     private final String className;
     /** The name of the method */

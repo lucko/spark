@@ -23,5 +23,6 @@ include (
         'spark-forge1122',
         'spark-fabric',
         'spark-nukkit',
+        'spark-waterdog',
         'spark-universal'
 )

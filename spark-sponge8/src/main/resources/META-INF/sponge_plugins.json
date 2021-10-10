@@ -1,11 +1,15 @@
 {
+    "loader": {
+        "name": "java_plain",
+        "version": "1.0"
+    },
+    "license": "MIT",
     "plugins": [
         {
-            "loader": "java_plain",
             "id": "spark",
             "name": "spark-sponge8",
             "version": "${version}",
-            "main-class": "me.lucko.spark.sponge.Sponge8SparkPlugin",
+            "entrypoint": "me.lucko.spark.sponge.Sponge8SparkPlugin",
             "description": "${description}",
             "links": {
                 "homepage": "https://spark.lucko.me/",
@@ -21,9 +25,7 @@
             "dependencies": [
                 {
                     "id": "spongeapi",
-                    "version": "8.0.0",
-                    "load-order": "AFTER",
-                    "optional": false
+                    "version": "8.0.0"
                 }
             ]
         }

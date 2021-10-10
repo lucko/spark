@@ -20,15 +20,18 @@
 
 package me.lucko.spark.common.sampler.async;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.sampler.Sampler;
+import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.proto.SparkProtos;
 
 import one.profiler.AsyncProfiler;
@@ -41,53 +44,33 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 /**
  * A sampler implementation using async-profiler.
  */
-public class AsyncSampler implements Sampler {
+public class AsyncSampler extends AbstractSampler {
     private final AsyncProfiler profiler;
 
-    /** The instance used to generate thread information for use in sampling */
-    private final ThreadDumper threadDumper;
     /** Responsible for aggregating and then outputting collected sampling data */
     private final AsyncDataAggregator dataAggregator;
+
     /** Flag to mark if the output has been completed */
     private boolean outputComplete = false;
+
     /** The temporary output file */
     private Path outputFile;
 
-    /** The interval to wait between sampling, in microseconds */
-    private final int interval;
-    /** The time when sampling first began */
-    private long startTime = -1;
+    /** The executor used for timeouts */
+    private ScheduledExecutorService timeoutExecutor;
 
-    public AsyncSampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper) {
+    public AsyncSampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
+        super(interval, threadDumper, endTime);
         this.profiler = AsyncProfilerAccess.INSTANCE.getProfiler();
-        this.threadDumper = threadDumper;
         this.dataAggregator = new AsyncDataAggregator(threadGrouper);
-        this.interval = interval;
-    }
-
-    @Override
-    public long getStartTime() {
-        if (this.startTime == -1) {
-            throw new IllegalStateException("Not yet started");
-        }
-        return this.startTime;
-    }
-
-    @Override
-    public long getEndTime() {
-        return -1;
-    }
-
-    @Override
-    public CompletableFuture<? extends Sampler> getFuture() {
-        return new CompletableFuture<>();
     }
 
     /**
@@ -112,8 +95,7 @@ public class AsyncSampler implements Sampler {
         this.startTime = System.currentTimeMillis();
 
         try {
-            this.outputFile = Files.createTempFile("spark-profile-", ".jfr.tmp");
-            this.outputFile.toFile().deleteOnExit();
+            this.outputFile = TemporaryFiles.create("spark-profile-", ".jfr.tmp");
         } catch (IOException e) {
             throw new RuntimeException("Unable to create temporary output file", e);
         }
@@ -134,6 +116,28 @@ public class AsyncSampler implements Sampler {
                 this.profiler.addThread(thread);
             }
         }
+
+        scheduleTimeout();
+    }
+
+    private void scheduleTimeout() {
+        if (this.endTime == -1) {
+            return;
+        }
+
+        long delay = this.endTime - System.currentTimeMillis();
+        if (delay <= 0) {
+            return;
+        }
+
+        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat("spark-asyncsampler-timeout-thread").build()
+        );
+
+        this.timeoutExecutor.schedule(() -> {
+            stop();
+            this.future.complete(this);
+        }, delay, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -142,6 +146,11 @@ public class AsyncSampler implements Sampler {
     @Override
     public void stop() {
         this.profiler.stop();
+
+        if (this.timeoutExecutor != null) {
+            this.timeoutExecutor.shutdown();
+            this.timeoutExecutor = null;
+        }
     }
 
     @Override
@@ -263,7 +272,7 @@ public class AsyncSampler implements Sampler {
         if (className == null || className.length == 0) {
             // native call
             result = new AsyncStackTraceElement(
-                    "native",
+                    AsyncStackTraceElement.NATIVE_CALL,
                     new String(methodName, StandardCharsets.UTF_8),
                     null
             );

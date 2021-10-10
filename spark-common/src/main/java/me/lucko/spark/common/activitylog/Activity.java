@@ -29,6 +29,9 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import java.util.concurrent.TimeUnit;
 
 public final class Activity {
+    public static final String DATA_TYPE_URL = "url";
+    public static final String DATA_TYPE_FILE = "file";
+
     private final CommandSender.Data user;
     private final long time;
     private final String type;
@@ -37,11 +40,11 @@ public final class Activity {
     private final String dataValue;
 
     public static Activity urlActivity(CommandSender user, long time, String type, String url) {
-        return new Activity(user.toData(), time, type, "url", url);
+        return new Activity(user.toData(), time, type, DATA_TYPE_URL, url);
     }
 
     public static Activity fileActivity(CommandSender user, long time, String type, String filePath) {
-        return new Activity(user.toData(), time, type, "file", filePath);
+        return new Activity(user.toData(), time, type, DATA_TYPE_FILE, filePath);
     }
 
     private Activity(CommandSender.Data user, long time, String type, String dataType, String dataValue) {
@@ -73,7 +76,7 @@ public final class Activity {
     }
 
     public boolean shouldExpire() {
-        if (this.dataType.equals("url")) {
+        if (this.dataType.equals(DATA_TYPE_URL)) {
             return (System.currentTimeMillis() - this.time) > TimeUnit.DAYS.toMillis(60);
         } else {
             return false;
