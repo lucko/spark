@@ -13,6 +13,7 @@ compileJava {
 
 repositories {
     maven { url 'https://maven.fabricmc.net/' }
+    maven { url "https://maven.nucleoid.xyz/" }
     mavenLocal()
 }
 
@@ -39,6 +40,8 @@ dependencies {
     }
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.1-SNAPSHOT'))
+
+    modImplementation("eu.pb4:placeholder-api:1.1.1+1.17.1")
 
     shade project(':spark-common')
 }
