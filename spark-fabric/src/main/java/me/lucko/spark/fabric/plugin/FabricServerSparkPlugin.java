@@ -37,8 +37,10 @@ import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
 
+import me.lucko.spark.fabric.placeholder.SparkFabricPlaceholderApi;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
@@ -57,6 +59,11 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
         // register commands
         registerCommands(server.getCommandManager().getDispatcher(), plugin, plugin, "spark");
         CommandRegistrationCallback.EVENT.register((dispatcher, isDedicated) -> registerCommands(dispatcher, plugin, plugin, "spark"));
+
+
+        if (FabricLoader.getInstance().isModLoaded("placeholder-api")) {
+            new SparkFabricPlaceholderApi(plugin.platform);
+        }
 
         // register shutdown hook
         ServerLifecycleEvents.SERVER_STOPPING.register(stoppingServer -> {
