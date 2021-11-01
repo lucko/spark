@@ -29,6 +29,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 
+import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
 import org.spongepowered.api.command.CommandResult;
@@ -49,6 +50,7 @@ import org.spongepowered.api.world.World;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -67,6 +69,7 @@ import javax.annotation.Nullable;
 public class SpongeSparkPlugin implements SparkPlugin {
 
     private final PluginContainer pluginContainer;
+    private final Logger logger;
     private final Game game;
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
@@ -75,8 +78,9 @@ public class SpongeSparkPlugin implements SparkPlugin {
     private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
-    public SpongeSparkPlugin(PluginContainer pluginContainer, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
+    public SpongeSparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
         this.pluginContainer = pluginContainer;
+        this.logger = logger;
         this.game = game;
         this.configDirectory = configDirectory;
         this.asyncExecutor = asyncExecutor;
@@ -120,6 +124,19 @@ public class SpongeSparkPlugin implements SparkPlugin {
     @Override
     public void executeAsync(Runnable task) {
         this.asyncExecutor.execute(task);
+    }
+
+    @Override
+    public void log(Level level, String msg) {
+        if (level == Level.INFO) {
+            this.logger.info(msg);
+        } else if (level == Level.WARNING) {
+            this.logger.warn(msg);
+        } else if (level == Level.SEVERE) {
+            this.logger.error(msg);
+        } else {
+            throw new IllegalArgumentException(level.getName());
+        }
     }
 
     @Override

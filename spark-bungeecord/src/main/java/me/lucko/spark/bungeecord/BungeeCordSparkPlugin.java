@@ -32,6 +32,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.nio.file.Path;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
@@ -77,6 +78,11 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
     @Override
     public void executeAsync(Runnable task) {
         getProxy().getScheduler().runAsync(BungeeCordSparkPlugin.this, task);
+    }
+
+    @Override
+    public void log(Level level, String msg) {
+        getLogger().log(level, msg);
     }
 
     @Override

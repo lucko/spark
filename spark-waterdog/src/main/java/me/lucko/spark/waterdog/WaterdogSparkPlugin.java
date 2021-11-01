@@ -31,6 +31,7 @@ import dev.waterdog.waterdogpe.command.CommandSender;
 import dev.waterdog.waterdogpe.plugin.Plugin;
 
 import java.nio.file.Path;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class WaterdogSparkPlugin extends Plugin implements SparkPlugin {
@@ -78,6 +79,19 @@ public class WaterdogSparkPlugin extends Plugin implements SparkPlugin {
     @Override
     public void executeAsync(Runnable task) {
         getProxy().getScheduler().scheduleAsync(task);
+    }
+
+    @Override
+    public void log(Level level, String msg) {
+        if (level == Level.INFO) {
+            getLogger().info(msg);
+        } else if (level == Level.WARNING) {
+            getLogger().warning(msg);
+        } else if (level == Level.SEVERE) {
+            getLogger().error(msg);
+        } else {
+            throw new IllegalArgumentException(level.getName());
+        }
     }
 
     @Override

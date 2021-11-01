@@ -42,6 +42,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
@@ -134,6 +135,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     @Override
     public void executeAsync(Runnable task) {
         getServer().getScheduler().runTaskAsynchronously(BukkitSparkPlugin.this, task);
+    }
+
+    @Override
+    public void log(Level level, String msg) {
+        getLogger().log(level, msg);
     }
 
     @Override

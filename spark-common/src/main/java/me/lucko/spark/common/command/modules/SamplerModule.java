@@ -217,7 +217,7 @@ public class SamplerModule implements CommandModule {
         if (ticksOver != -1) {
             builder.ticksOver(ticksOver, tickHook);
         }
-        Sampler sampler = this.activeSampler = builder.start();
+        Sampler sampler = this.activeSampler = builder.start(platform);
 
         resp.broadcastPrefixed(text()
                 .append(text("Profiler now active!", GOLD))

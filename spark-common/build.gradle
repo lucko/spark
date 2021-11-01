@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     api project(':spark-api')
-    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.0'
+    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.5'
     implementation 'org.ow2.asm:asm:9.1'
     implementation 'com.google.protobuf:protobuf-javalite:3.15.6'
     implementation 'com.squareup.okhttp3:okhttp:3.14.1'
@@ -32,7 +32,8 @@ dependencies {
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
-        include 'libasyncProfiler.so'
+        include 'linux/libasyncProfiler.so'
+        include 'macosx/libasyncProfiler.so'
     }
 }
 

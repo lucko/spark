@@ -33,6 +33,7 @@ import cn.nukkit.plugin.service.ServicePriority;
 import cn.nukkit.scheduler.AsyncTask;
 
 import java.nio.file.Path;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class NukkitSparkPlugin extends PluginBase implements SparkPlugin {
@@ -86,6 +87,19 @@ public class NukkitSparkPlugin extends PluginBase implements SparkPlugin {
                 task.run();
             }
         });
+    }
+
+    @Override
+    public void log(Level level, String msg) {
+        if (level == Level.INFO) {
+            getLogger().info(msg);
+        } else if (level == Level.WARNING) {
+            getLogger().warning(msg);
+        } else if (level == Level.SEVERE) {
+            getLogger().error(msg);
+        } else {
+            throw new IllegalArgumentException(level.getName());
+        }
     }
 
     @Override

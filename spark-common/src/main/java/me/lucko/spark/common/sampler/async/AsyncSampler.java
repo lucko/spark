@@ -218,10 +218,10 @@ public class AsyncSampler extends AbstractSampler {
         }
     }
 
-    private void readSegments(JfrReader reader, Predicate<String> threadFilter) {
-        List<JfrReader.Sample> samples = reader.samples;
+    private void readSegments(JfrReader reader, Predicate<String> threadFilter) throws IOException {
+        List<JfrReader.ExecutionSample> samples = reader.readAllEvents(JfrReader.ExecutionSample.class);
         for (int i = 0; i < samples.size(); i++) {
-            JfrReader.Sample sample = samples.get(i);
+            JfrReader.ExecutionSample sample = samples.get(i);
 
             long duration;
             if (i == 0) {
@@ -245,7 +245,7 @@ public class AsyncSampler extends AbstractSampler {
         }
     }
 
-    private static ProfileSegment parseSegment(JfrReader reader, JfrReader.Sample sample, String threadName, long duration) {
+    private static ProfileSegment parseSegment(JfrReader reader, JfrReader.ExecutionSample sample, String threadName, long duration) {
         JfrReader.StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
         int len = stackTrace.methods.length;
 

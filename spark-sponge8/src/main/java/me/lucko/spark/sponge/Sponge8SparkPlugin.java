@@ -31,6 +31,7 @@ import me.lucko.spark.common.tick.TickHook;
 
 import net.kyori.adventure.text.Component;
 
+import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
@@ -52,6 +53,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -59,6 +61,7 @@ import java.util.stream.Stream;
 public class Sponge8SparkPlugin implements SparkPlugin {
 
     private final PluginContainer pluginContainer;
+    private final Logger logger;
     private final Game game;
     private final Path configDirectory;
     private final ExecutorService asyncExecutor;
@@ -67,8 +70,9 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
-    public Sponge8SparkPlugin(PluginContainer pluginContainer, Game game, @ConfigDir(sharedRoot = false) Path configDirectory) {
+    public Sponge8SparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory) {
         this.pluginContainer = pluginContainer;
+        this.logger = logger;
         this.game = game;
         this.configDirectory = configDirectory;
         this.asyncExecutor = game.asyncScheduler().executor(pluginContainer);
@@ -117,6 +121,19 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     @Override
     public void executeAsync(Runnable task) {
         this.asyncExecutor.execute(task);
+    }
+
+    @Override
+    public void log(Level level, String msg) {
+        if (level == Level.INFO) {
+            this.logger.info(msg);
+        } else if (level == Level.WARNING) {
+            this.logger.warn(msg);
+        } else if (level == Level.SEVERE) {
+            this.logger.error(msg);
+        } else {
+            throw new IllegalArgumentException(level.getName());
+        }
     }
 
     @Override

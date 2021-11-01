@@ -31,23 +31,29 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Level;
 
 import javax.annotation.Nullable;
 
 public abstract class Forge1122SparkPlugin implements SparkPlugin, ICommand {
 
     private final Forge1122SparkMod mod;
+    private final Logger logger;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
     protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected Forge1122SparkPlugin(Forge1122SparkMod mod) {
         this.mod = mod;
+        this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread thread = Executors.defaultThreadFactory().newThread(r);
             thread.setName("spark-forge-async-worker");
@@ -81,6 +87,19 @@ public abstract class Forge1122SparkPlugin implements SparkPlugin, ICommand {
     @Override
     public void executeAsync(Runnable task) {
         this.scheduler.execute(task);
+    }
+
+    @Override
+    public void log(Level level, String msg) {
+        if (level == Level.INFO) {
+            this.logger.info(msg);
+        } else if (level == Level.WARNING) {
+            this.logger.warn(msg);
+        } else if (level == Level.SEVERE) {
+            this.logger.error(msg);
+        } else {
+            throw new IllegalArgumentException(level.getName());
+        }
     }
 
     @Override

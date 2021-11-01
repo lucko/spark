@@ -29,6 +29,7 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.ClassSourceLookup;
 
 import java.nio.file.Path;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 /**
@@ -70,6 +71,14 @@ public interface SparkPlugin {
      * @param task the task
      */
     void executeAsync(Runnable task);
+
+    /**
+     * Print to the plugin logger.
+     *
+     * @param level the log level
+     * @param msg the message
+     */
+    void log(Level level, String msg);
 
     /**
      * Gets the default {@link ThreadDumper} to be used by the plugin.

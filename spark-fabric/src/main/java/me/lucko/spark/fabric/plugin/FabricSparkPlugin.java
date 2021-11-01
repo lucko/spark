@@ -40,20 +40,26 @@ import me.lucko.spark.fabric.FabricSparkMod;
 
 import net.minecraft.server.command.CommandOutput;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Level;
 
 public abstract class FabricSparkPlugin implements SparkPlugin {
 
     private final FabricSparkMod mod;
+    private final Logger logger;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
     protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected FabricSparkPlugin(FabricSparkMod mod) {
         this.mod = mod;
+        this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread thread = Executors.defaultThreadFactory().newThread(r);
             thread.setName("spark-fabric-async-worker");
@@ -87,6 +93,19 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
     @Override
     public void executeAsync(Runnable task) {
         this.scheduler.execute(task);
+    }
+
+    @Override
+    public void log(Level level, String msg) {
+        if (level == Level.INFO) {
+            this.logger.info(msg);
+        } else if (level == Level.WARNING) {
+            this.logger.warn(msg);
+        } else if (level == Level.SEVERE) {
+            this.logger.error(msg);
+        } else {
+            throw new IllegalArgumentException(level.getName());
+        }
     }
 
     @Override

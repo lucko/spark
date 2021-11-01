@@ -20,6 +20,10 @@
 
 package me.lucko.spark.common.sampler.async;
 
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Multimap;
+
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.util.TemporaryFiles;
 
 import one.profiler.AsyncProfiler;
@@ -29,35 +33,72 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Locale;
+import java.util.logging.Level;
 
 /**
  * Provides a bridge between spark and async-profiler.
  */
-public final class AsyncProfilerAccess {
+public enum AsyncProfilerAccess {
+    INSTANCE;
 
-    // Singleton
-    public static final AsyncProfilerAccess INSTANCE = new AsyncProfilerAccess();
+    /** An instance of the async-profiler Java API. */
+    private final AsyncProfiler profiler;
 
-    // Only support Linux x86_64
-    private static final String SUPPORTED_OS = "linux";
-    private static final String SUPPORTED_ARCH = "amd64";
+    /** If profiler is null, contains the reason why setup failed */
+    private final Exception setupException;
+
+    AsyncProfilerAccess() {
+        AsyncProfiler profiler;
+        Exception setupException = null;
+
+        try {
+            profiler = load();
+            ensureCpuEventSupported(profiler);
+        } catch (Exception e) {
+            profiler = null;
+            setupException = e;
+        }
+
+        this.profiler = profiler;
+        this.setupException = setupException;
+    }
+
+    public AsyncProfiler getProfiler() {
+        if (this.profiler == null) {
+            throw new UnsupportedOperationException("async-profiler not supported", this.setupException);
+        }
+        return this.profiler;
+    }
+
+    public boolean checkSupported(SparkPlatform platform) {
+        if (this.setupException != null) {
+            platform.getPlugin().log(Level.INFO, "async-profiler engine is not supported on your system: " + this.setupException.getMessage());
+            platform.getPlugin().log(Level.INFO, "Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler");
+        }
+        return this.profiler != null;
+    }
 
     private static AsyncProfiler load() throws Exception {
         // check compatibility
-        String os = System.getProperty("os.name");
-        if (!SUPPORTED_OS.equalsIgnoreCase(os)) {
-            throw new UnsupportedOperationException("Only supported on Linux x86_64, your OS: " + os);
-        }
+        String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
+        String arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
 
-        String arch = System.getProperty("os.arch");
-        if (!SUPPORTED_ARCH.equalsIgnoreCase(arch)) {
-            throw new UnsupportedOperationException("Only supported on Linux x86_64, your arch: " + os);
+        Multimap<String, String> supported = ImmutableSetMultimap.<String, String>builder()
+                .put("linux", "amd64")
+                .put("macosx", "amd64")
+                .put("macosx", "aarch64")
+                .build();
+
+        if (!supported.containsEntry(os, arch)) {
+            throw new UnsupportedOperationException("Not supported for your os/arch: " + os + '/' + arch);
         }
 
         // extract the profiler binary from the spark jar file
-        URL profilerResource = AsyncProfilerAccess.class.getClassLoader().getResource("libasyncProfiler.so");
+        String resource = os + "/libasyncProfiler.so";
+        URL profilerResource = AsyncProfilerAccess.class.getClassLoader().getResource(resource);
         if (profilerResource == null) {
-            throw new IllegalStateException("Could not find libasyncProfiler.so in spark jar file");
+            throw new IllegalStateException("Could not find " + resource + " in spark jar file");
         }
 
         Path extractPath = TemporaryFiles.create("spark-", "-libasyncProfiler.so.tmp");
@@ -74,28 +115,6 @@ public final class AsyncProfilerAccess {
         }
     }
 
-    /** An instance of the async-profiler Java API. */
-    private final AsyncProfiler profiler;
-
-    /** If profiler is null, contains the reason why setup failed */
-    private final Exception setupException;
-
-    private AsyncProfilerAccess() {
-        AsyncProfiler profiler;
-        Exception setupException = null;
-
-        try {
-            profiler = load();
-            ensureCpuEventSupported(profiler);
-        } catch (Exception e) {
-            profiler = null;
-            setupException = e;
-        }
-
-        this.profiler = profiler;
-        this.setupException = setupException;
-    }
-
     /**
      * Checks the {@code profiler} to ensure the CPU event is supported.
      *
@@ -107,20 +126,5 @@ public final class AsyncProfilerAccess {
         if (!resp.equalsIgnoreCase("ok")) {
             throw new UnsupportedOperationException("CPU event is not supported");
         }
-    }
-
-    public AsyncProfiler getProfiler() {
-        if (this.profiler == null) {
-            throw new UnsupportedOperationException("async-profiler not supported", this.setupException);
-        }
-        return this.profiler;
-    }
-
-    public boolean isSupported() {
-        if (this.setupException != null) {
-            System.out.println("[spark] async-profiler engine is not supported on your system: " + this.setupException.getMessage());
-            System.out.println("[spark] Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler");
-        }
-        return this.profiler != null;
     }
 }
