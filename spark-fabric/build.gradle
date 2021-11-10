@@ -5,10 +5,11 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-compileJava {
-    // override, compile targeting J16
-    options.compilerArgs.clear()
-    options.compilerArgs.addAll(['--release', '16'])
+java {
+    toolchain {
+        // override, compile targeting J16
+        languageVersion = JavaLanguageVersion.of(16)
+    }
 }
 
 repositories {

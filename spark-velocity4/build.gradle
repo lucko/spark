@@ -3,10 +3,11 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
-compileJava {
-    // override, compile targeting J11
-    options.compilerArgs.clear()
-    options.compilerArgs.addAll(['--release', '11'])
+java {
+    toolchain {
+        // override, compile targeting J11
+        languageVersion = JavaLanguageVersion.of(11)
+    }
 }
 
 dependencies {
