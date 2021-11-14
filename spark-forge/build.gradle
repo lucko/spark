@@ -14,11 +14,9 @@ plugins {
 
 apply plugin: 'net.minecraftforge.gradle'
 
-java {
-    toolchain {
-        // override, compile targeting J16
-        languageVersion = JavaLanguageVersion.of(16)
-    }
+tasks.withType(JavaCompile) {
+    // override, compile targeting J16
+    options.release = 16
 }
 
 minecraft {
