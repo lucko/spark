@@ -95,7 +95,6 @@ public class SparkPlatform {
     private final ActivityLog activityLog;
     private final TickHook tickHook;
     private final TickReporter tickReporter;
-    private final ClassSourceLookup classSourceLookup;
     private final TickStatistics tickStatistics;
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
     private long serverNormalOperationStartTime;
@@ -132,7 +131,6 @@ public class SparkPlatform {
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
-        this.classSourceLookup = plugin.createClassSourceLookup();
         this.tickStatistics = this.tickHook != null ? new TickStatistics() : null;
     }
 
@@ -212,8 +210,8 @@ public class SparkPlatform {
         return this.tickReporter;
     }
 
-    public ClassSourceLookup getClassSourceLookup() {
-        return this.classSourceLookup;
+    public ClassSourceLookup createClassSourceLookup() {
+        return this.plugin.createClassSourceLookup();
     }
 
     public TickStatistics getTickStatistics() {

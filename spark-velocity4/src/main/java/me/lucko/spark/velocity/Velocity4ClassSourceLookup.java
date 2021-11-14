@@ -27,6 +27,9 @@ import me.lucko.spark.common.util.ClassSourceLookup;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Velocity4ClassSourceLookup extends ClassSourceLookup.ByClassLoader {
     private static final Class<?> PLUGIN_CLASS_LOADER;
 
@@ -38,21 +41,22 @@ public class Velocity4ClassSourceLookup extends ClassSourceLookup.ByClassLoader 
         }
     }
 
-    private final PluginManager pluginManager;
+    private final Map<ClassLoader, String> classLoadersToPlugin;
 
     public Velocity4ClassSourceLookup(PluginManager pluginManager) {
-        this.pluginManager = pluginManager;
+        this.classLoadersToPlugin = new HashMap<>();
+        for (PluginContainer plugin : pluginManager.plugins()) {
+            Object instance = plugin.instance();
+            if (instance != null) {
+                this.classLoadersToPlugin.put(instance.getClass().getClassLoader(), plugin.description().name());
+            }
+        }
     }
 
     @Override
     public @Nullable String identify(ClassLoader loader) {
         if (PLUGIN_CLASS_LOADER.isInstance(loader)) {
-            for (PluginContainer plugin : this.pluginManager.plugins()) {
-                Object instance = plugin.instance();
-                if (instance != null && instance.getClass().getClassLoader() == loader) {
-                    return plugin.description().name();
-                }
-            }
+            return this.classLoadersToPlugin.get(loader);
         }
         return null;
     }

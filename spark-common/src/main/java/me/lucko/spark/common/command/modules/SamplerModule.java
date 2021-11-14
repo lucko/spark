@@ -305,7 +305,7 @@ public class SamplerModule implements CommandModule {
     }
 
     private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, String comment, MergeMode mergeMode, boolean saveToFileFlag) {
-        SparkProtos.SamplerData output = sampler.toProto(platform.getPlugin().getPlatformInfo(), resp.sender(), threadOrder, comment, mergeMode, platform.getClassSourceLookup());
+        SparkProtos.SamplerData output = sampler.toProto(platform.getPlugin().getPlatformInfo(), resp.sender(), threadOrder, comment, mergeMode, platform.createClassSourceLookup());
 
         boolean saveToFile = false;
         if (saveToFileFlag) {

@@ -34,7 +34,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     }
 
     @Override
-    protected String identifyFile(Path path) {
+    public String identifyFile(Path path) {
         if (!path.startsWith(this.modsDirectory)) {
             return null;
         }
