@@ -73,8 +73,15 @@ public enum AsyncProfilerAccess {
 
     public boolean checkSupported(SparkPlatform platform) {
         if (this.setupException != null) {
-            platform.getPlugin().log(Level.INFO, "async-profiler engine is not supported on your system: " + this.setupException.getMessage());
-            platform.getPlugin().log(Level.INFO, "Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler");
+            if (this.setupException instanceof UnsupportedSystemException) {
+                platform.getPlugin().log(Level.INFO, "The async-profiler engine is not supported for your os/arch (" +
+                        this.setupException.getMessage() + "), so the built-in Java engine will be used instead.");
+            } else {
+                platform.getPlugin().log(Level.WARNING, "Unable to initialise the async-profiler engine: " + this.setupException.getMessage());
+                platform.getPlugin().log(Level.WARNING, "Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler");
+                this.setupException.printStackTrace();
+            }
+
         }
         return this.profiler != null;
     }
@@ -91,7 +98,7 @@ public enum AsyncProfilerAccess {
                 .build();
 
         if (!supported.containsEntry(os, arch)) {
-            throw new UnsupportedOperationException("Not supported for your os/arch: " + os + '/' + arch);
+            throw new UnsupportedSystemException(os, arch);
         }
 
         // extract the profiler binary from the spark jar file
@@ -125,6 +132,12 @@ public enum AsyncProfilerAccess {
         String resp = profiler.execute("check,event=cpu").trim();
         if (!resp.equalsIgnoreCase("ok")) {
             throw new UnsupportedOperationException("CPU event is not supported");
+        }
+    }
+
+    private static final class UnsupportedSystemException extends UnsupportedOperationException {
+        public UnsupportedSystemException(String os, String arch) {
+            super(os + '/' + arch);
         }
     }
 }
