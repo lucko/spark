@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.gc.GarbageCollector;
-import me.lucko.spark.api.statistic.StatisticWindow;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
@@ -40,6 +39,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+
+import static me.lucko.spark.api.statistic.StatisticWindow.CpuUsage;
+import static me.lucko.spark.api.statistic.StatisticWindow.MillisPerTick;
+import static me.lucko.spark.api.statistic.StatisticWindow.TicksPerSecond;
 
 public class SparkApi implements Spark {
     private static final Method SINGLETON_SET_METHOD;
@@ -60,12 +63,12 @@ public class SparkApi implements Spark {
     }
 
     @Override
-    public @NonNull DoubleStatistic<StatisticWindow.CpuUsage> cpuProcess() {
-        return new AbstractStatistic.Double<StatisticWindow.CpuUsage>(
-                "CPU Process Usage", StatisticWindow.CpuUsage.class
+    public @NonNull DoubleStatistic<CpuUsage> cpuProcess() {
+        return new AbstractStatistic.Double<CpuUsage>(
+                "CPU Process Usage", CpuUsage.class
         ) {
             @Override
-            public double poll(StatisticWindow.@NonNull CpuUsage window) {
+            public double poll(@NonNull CpuUsage window) {
                 switch (window) {
                     case SECONDS_10:
                         return CpuMonitor.processLoad10SecAvg();
@@ -81,12 +84,12 @@ public class SparkApi implements Spark {
     }
 
     @Override
-    public @NonNull DoubleStatistic<StatisticWindow.CpuUsage> cpuSystem() {
-        return new AbstractStatistic.Double<StatisticWindow.CpuUsage>(
-                "CPU System Usage", StatisticWindow.CpuUsage.class
+    public @NonNull DoubleStatistic<CpuUsage> cpuSystem() {
+        return new AbstractStatistic.Double<CpuUsage>(
+                "CPU System Usage", CpuUsage.class
         ) {
             @Override
-            public double poll(StatisticWindow.@NonNull CpuUsage window) {
+            public double poll(@NonNull CpuUsage window) {
                 switch (window) {
                     case SECONDS_10:
                         return CpuMonitor.systemLoad10SecAvg();
@@ -102,17 +105,17 @@ public class SparkApi implements Spark {
     }
 
     @Override
-    public @Nullable DoubleStatistic<StatisticWindow.TicksPerSecond> tps() {
+    public @Nullable DoubleStatistic<TicksPerSecond> tps() {
         TickStatistics stats = this.platform.getTickStatistics();
         if (stats == null) {
             return null;
         }
 
-        return new AbstractStatistic.Double<StatisticWindow.TicksPerSecond>(
-                "Ticks Per Second", StatisticWindow.TicksPerSecond.class
+        return new AbstractStatistic.Double<TicksPerSecond>(
+                "Ticks Per Second", TicksPerSecond.class
         ) {
             @Override
-            public double poll(StatisticWindow.@NonNull TicksPerSecond window) {
+            public double poll(@NonNull TicksPerSecond window) {
                 switch (window) {
                     case SECONDS_5:
                         return stats.tps5Sec();
@@ -132,17 +135,17 @@ public class SparkApi implements Spark {
     }
 
     @Override
-    public @Nullable GenericStatistic<DoubleAverageInfo, StatisticWindow.MillisPerTick> mspt() {
+    public @Nullable GenericStatistic<DoubleAverageInfo, MillisPerTick> mspt() {
         TickStatistics stats = this.platform.getTickStatistics();
         if (stats == null || !stats.isDurationSupported()) {
             return null;
         }
 
-        return new AbstractStatistic.Generic<DoubleAverageInfo, StatisticWindow.MillisPerTick>(
-                "Milliseconds Per Tick", DoubleAverageInfo.class, StatisticWindow.MillisPerTick.class
+        return new AbstractStatistic.Generic<DoubleAverageInfo, MillisPerTick>(
+                "Milliseconds Per Tick", DoubleAverageInfo.class, MillisPerTick.class
         ) {
             @Override
-            public DoubleAverageInfo poll(StatisticWindow.@NonNull MillisPerTick window) {
+            public DoubleAverageInfo poll(@NonNull MillisPerTick window) {
                 switch (window) {
                     case SECONDS_10:
                         return stats.duration10Sec();

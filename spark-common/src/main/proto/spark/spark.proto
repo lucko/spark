@@ -31,6 +31,8 @@ message PlatformMetadata {
   int32 n_cpus = 5;
   MemoryUsage heapUsage = 6;
 
+  int32 spark_version = 7;
+
   enum Type {
     SERVER = 0;
     CLIENT = 1;

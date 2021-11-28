@@ -39,8 +39,14 @@ public interface PlatformInfo {
 
     MemoryUsage getHeapUsage();
 
+    default int getSparkVersion() {
+        // does not necessarily correspond to the plugin/mod version
+        // this is like a data version I suppose
+        return 1;
+    }
+
     default Data toData() {
-        return new Data(getType(), getName(), getVersion(), getMinecraftVersion(), getNCpus(), getHeapUsage());
+        return new Data(getType(), getName(), getVersion(), getMinecraftVersion(), getNCpus(), getHeapUsage(), getSparkVersion());
     }
 
     enum Type {
@@ -66,14 +72,16 @@ public interface PlatformInfo {
         private final String minecraftVersion;
         private final int nCpus;
         private final MemoryUsage heapUsage;
+        private final int sparkVersion;
 
-        public Data(Type type, String name, String version, String minecraftVersion, int nCpus, MemoryUsage heapUsage) {
+        public Data(Type type, String name, String version, String minecraftVersion, int nCpus, MemoryUsage heapUsage, int sparkVersion) {
             this.type = type;
             this.name = name;
             this.version = version;
             this.minecraftVersion = minecraftVersion;
             this.nCpus = nCpus;
             this.heapUsage = heapUsage;
+            this.sparkVersion = sparkVersion;
         }
 
         public Type getType() {
@@ -100,6 +108,10 @@ public interface PlatformInfo {
             return this.heapUsage;
         }
 
+        public int getSparkVersion() {
+            return this.sparkVersion;
+        }
+
         public SparkProtos.MemoryUsage getHeapUsageProto() {
             return SparkProtos.MemoryUsage.newBuilder()
                     .setUsed(this.heapUsage.getUsed())
@@ -114,7 +126,8 @@ public interface PlatformInfo {
                     .setName(this.name)
                     .setVersion(this.version)
                     .setNCpus(this.nCpus)
-                    .setHeapUsage(getHeapUsageProto());
+                    .setHeapUsage(getHeapUsageProto())
+                    .setSparkVersion(this.sparkVersion);
 
             if (this.minecraftVersion != null) {
                 proto.setMinecraftVersion(this.minecraftVersion);
