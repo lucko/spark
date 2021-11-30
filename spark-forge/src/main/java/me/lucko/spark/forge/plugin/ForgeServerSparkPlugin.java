@@ -44,9 +44,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fmllegacy.server.ServerLifecycleHooks;
-import net.minecraftforge.fmlserverevents.FMLServerStoppingEvent;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
 
@@ -78,7 +78,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @SubscribeEvent
-    public void onDisable(FMLServerStoppingEvent event) {
+    public void onDisable(ServerStoppingEvent event) {
         disable();
     }
 
