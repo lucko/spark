@@ -13,7 +13,7 @@ subprojects {
     apply plugin: 'java-library'
 
     ext {
-        pluginVersion = '1.6.3'
+        pluginVersion = '1.6.4'
         pluginDescription = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
     }
 
