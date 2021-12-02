@@ -1,6 +1,6 @@
 dependencies {
     implementation project(':spark-common')
-    implementation('me.lucko:adventure-platform-bukkit:4.8.1') {
+    implementation('me.lucko:adventure-platform-bukkit:4.9.4') {
         exclude(module: 'adventure-api')
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')

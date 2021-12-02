@@ -22,8 +22,6 @@ package me.lucko.spark.nukkit;
 
 import me.lucko.spark.common.util.ClassSourceLookup;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 import cn.nukkit.plugin.PluginClassLoader;
 
 import java.io.IOException;
@@ -32,7 +30,7 @@ import java.net.URISyntaxException;
 public class NukkitClassSourceLookup extends ClassSourceLookup.ByFirstUrlSource {
 
     @Override
-    public @Nullable String identify(ClassLoader loader) throws IOException, URISyntaxException {
+    public String identify(ClassLoader loader) throws IOException, URISyntaxException {
         if (loader instanceof PluginClassLoader) {
             return super.identify(loader);
         }
