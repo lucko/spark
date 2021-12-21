@@ -156,7 +156,7 @@ public class HealthModule implements CommandModule {
             e.printStackTrace();
         }
 
-        report.forEach(resp::reply);
+        resp.reply(report);
     }
 
     private static void addTickStats(List<Component> report, TickStatistics tickStatistics) {

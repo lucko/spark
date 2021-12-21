@@ -119,7 +119,7 @@ public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
                             this,
                             value -> "/" + platform.getPlugin().getCommandName() + " activity --page " + value
                     );
-                    activityPagination.render(log, page).forEach(resp::reply);
+                    resp.reply(activityPagination.render(log, page));
                 })
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--page"))
                 .build()

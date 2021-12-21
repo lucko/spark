@@ -24,6 +24,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
 
 import java.util.Set;
@@ -81,8 +82,18 @@ public class CommandResponseHandler {
         this.sender.sendMessage(message);
     }
 
+    public void reply(Iterable<Component> message) {
+        Component joinedMsg = Component.join(JoinConfiguration.separator(Component.newline()), message);
+        this.sender.sendMessage(joinedMsg);
+    }
+
     public void broadcast(Component message) {
         allSenders(sender -> sender.sendMessage(message));
+    }
+
+    public void broadcast(Iterable<Component> message) {
+        Component joinedMsg = Component.join(JoinConfiguration.separator(Component.newline()), message);
+        allSenders(sender -> sender.sendMessage(joinedMsg));
     }
 
     public void replyPrefixed(Component message) {
