@@ -1,0 +1,7 @@
+[{
+  "modid": "spark",
+  "name": "spark",
+  "description": "${pluginDescription}",
+  "version": "${pluginVersion}",
+  "authors": ["Luck"]
+}]
