@@ -13,6 +13,10 @@ rootProject.name = 'spark'
 include (
         'spark-api',
         'spark-common',
+        'spark-forge1122'
+)
+if (JavaVersion.current() != JavaVersion.VERSION_1_8){
+    include (
         'spark-bukkit',
         'spark-bungeecord',
         'spark-velocity',
@@ -20,9 +24,13 @@ include (
         'spark-sponge',
         'spark-sponge8',
         'spark-forge',
-        'spark-forge1122',
         'spark-fabric',
         'spark-nukkit',
         'spark-waterdog',
         'spark-universal'
-)
+    )
+} else {
+    include (
+        'spark-forge1710'
+    )
+}
