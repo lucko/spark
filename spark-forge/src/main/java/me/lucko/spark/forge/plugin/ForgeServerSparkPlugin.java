@@ -20,6 +20,7 @@
 
 package me.lucko.spark.forge.plugin;
 
+import com.google.common.collect.ImmutableMap;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
@@ -40,19 +41,26 @@ import me.lucko.spark.forge.ForgeTickReporter;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.server.ServerLifecycleHooks;
-import net.minecraftforge.server.permission.DefaultPermissionLevel;
 import net.minecraftforge.server.permission.PermissionAPI;
+import net.minecraftforge.server.permission.events.PermissionGatherEvent;
+import net.minecraftforge.server.permission.nodes.PermissionNode;
+import net.minecraftforge.server.permission.nodes.PermissionNode.PermissionResolver;
+import net.minecraftforge.server.permission.nodes.PermissionTypes;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
@@ -67,10 +75,10 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         // register commands & permissions
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
         registerCommands(dispatcher, plugin, plugin, "spark");
-        PermissionAPI.registerNode("spark", DefaultPermissionLevel.OP, "Access to the spark command");
     }
 
     private final Supplier<MinecraftServer> server;
+    private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
 
     public ForgeServerSparkPlugin(ForgeSparkMod mod, Supplier<MinecraftServer> server) {
         super(mod);
@@ -80,6 +88,28 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @SubscribeEvent
     public void onDisable(ServerStoppingEvent event) {
         disable();
+    }
+
+    @SubscribeEvent
+    public void onPermissionGather(PermissionGatherEvent.Nodes e) {
+        PermissionResolver<Boolean> defaultValue = (player, playerUUID, context) -> player != null && player.hasPermissions(4);
+
+        // collect all possible permissions
+        List<String> permissions = this.platform.getCommands().stream()
+                .map(me.lucko.spark.common.command.Command::primaryAlias)
+                .collect(Collectors.toList());
+
+        // special case for the "spark" permission: map it to "spark.all"
+        permissions.add("all");
+
+        // register permissions with forge & keep a copy for lookup
+        ImmutableMap.Builder<String, PermissionNode<Boolean>> builder = ImmutableMap.builder();
+        for (String permission : permissions) {
+            PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, defaultValue);
+            e.addNodes(node);
+            builder.put("spark." + permission, node);
+        }
+        this.registeredPermissions = builder.build();
     }
 
     @Override
@@ -115,8 +145,16 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public boolean hasPermission(CommandSource sender, String permission) {
-        if (sender instanceof Player) {
-            return PermissionAPI.hasPermission((Player) sender, permission);
+        if (sender instanceof ServerPlayer) {
+            if (permission.equals("spark")) {
+                permission = "spark.all";
+            }
+
+            PermissionNode<Boolean> permissionNode = this.registeredPermissions.get(permission);
+            if (permissionNode == null) {
+                throw new IllegalStateException("spark permission not registered: " + permission);
+            }
+            return PermissionAPI.getPermission((ServerPlayer) sender, permissionNode);
         } else {
             return true;
         }

@@ -198,6 +198,10 @@ public class SparkPlatform {
         return this.bytebinClient;
     }
 
+    public List<Command> getCommands() {
+        return this.commands;
+    }
+
     public ActivityLog getActivityLog() {
         return this.activityLog;
     }
