@@ -45,9 +45,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraftforge.server.permission.PermissionAPI;
 import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
@@ -59,35 +59,48 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
 
-    public static void register(ForgeSparkMod mod, RegisterCommandsEvent event) {
-        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, ServerLifecycleHooks::getCurrentServer);
+    public static void register(ForgeSparkMod mod, ServerAboutToStartEvent event) {
+        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
-
-        // register listeners
-        MinecraftForge.EVENT_BUS.register(plugin);
-
-        // register commands & permissions
-        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        registerCommands(dispatcher, plugin, plugin, "spark");
     }
 
-    private final Supplier<MinecraftServer> server;
+    private final MinecraftServer server;
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
 
-    public ForgeServerSparkPlugin(ForgeSparkMod mod, Supplier<MinecraftServer> server) {
+    public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
     }
 
+    @Override
+    public void enable() {
+        super.enable();
+
+        // register commands
+        registerCommands(this.server.getCommands().getDispatcher());
+
+        // register listeners
+        MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    @Override
+    public void disable() {
+        super.disable();
+
+        // unregister listeners
+        MinecraftForge.EVENT_BUS.unregister(this);
+    }
+
     @SubscribeEvent
     public void onDisable(ServerStoppingEvent event) {
-        disable();
+        if (event.getServer() == this.server) {
+            disable();
+        }
     }
 
     @SubscribeEvent
@@ -110,6 +123,15 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             builder.put("spark." + permission, node);
         }
         this.registeredPermissions = builder.build();
+    }
+
+    @SubscribeEvent
+    public void onCommandRegister(RegisterCommandsEvent e) {
+        registerCommands(e.getDispatcher());
+    }
+
+    private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        registerCommands(dispatcher, this, this, "spark");
     }
 
     @Override
@@ -163,8 +185,8 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public Stream<ForgeCommandSender> getCommandSenders() {
         return Stream.concat(
-            this.server.get().getPlayerList().getPlayers().stream(),
-            Stream.of(this.server.get())
+            this.server.getPlayerList().getPlayers().stream(),
+            Stream.of(this.server)
         ).map(sender -> new ForgeCommandSender(sender, this));
     }
 

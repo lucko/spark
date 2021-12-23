@@ -58,12 +58,6 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
         ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, Minecraft.getInstance());
         plugin.enable();
-
-        // register listeners
-        MinecraftForge.EVENT_BUS.register(plugin);
-
-        // ensure commands are registered
-        plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
     }
 
     private final Minecraft minecraft;
@@ -72,6 +66,17 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
+    }
+
+    @Override
+    public void enable() {
+        super.enable();
+
+        // ensure commands are registered
+        this.scheduler.scheduleWithFixedDelay(this::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
+
+        // register listeners
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     private CommandDispatcher<SharedSuggestionProvider> getPlayerCommandDispatcher() {

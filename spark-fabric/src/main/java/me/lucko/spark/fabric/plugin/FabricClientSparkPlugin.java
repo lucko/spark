@@ -55,16 +55,6 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
     public static void register(FabricSparkMod mod, MinecraftClient client) {
         FabricClientSparkPlugin plugin = new FabricClientSparkPlugin(mod, client);
         plugin.enable();
-
-        // ensure commands are registered
-        plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
-
-        // register shutdown hook
-        ClientLifecycleEvents.CLIENT_STOPPING.register(stoppingClient -> {
-            if (stoppingClient == plugin.minecraft) {
-                plugin.disable();
-            }
-        });
     }
 
     private final MinecraftClient minecraft;
@@ -73,6 +63,23 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Sugges
     public FabricClientSparkPlugin(FabricSparkMod mod, MinecraftClient minecraft) {
         super(mod);
         this.minecraft = minecraft;
+    }
+
+    @Override
+    public void enable() {
+        super.enable();
+
+        // ensure commands are registered
+        this.scheduler.scheduleWithFixedDelay(this::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
+
+        // events
+        ClientLifecycleEvents.CLIENT_STOPPING.register(this::onDisable);
+    }
+
+    private void onDisable(MinecraftClient stoppingClient) {
+        if (stoppingClient == this.minecraft) {
+            disable();
+        }
     }
 
     private CommandDispatcher<CommandSource> getPlayerCommandDispatcher() {

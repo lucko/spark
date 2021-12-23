@@ -2,11 +2,13 @@ package me.lucko.spark.fabric.placeholder;
 
 import eu.pb4.placeholders.PlaceholderAPI;
 import eu.pb4.placeholders.PlaceholderResult;
+
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.modules.HealthModule;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.RollingAverage;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.text.Text;

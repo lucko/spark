@@ -21,6 +21,7 @@
 package me.lucko.spark.fabric.plugin;
 
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -36,10 +37,8 @@ import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
-
 import me.lucko.spark.fabric.placeholder.SparkFabricPlaceholderApi;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
@@ -52,25 +51,10 @@ import java.util.stream.Stream;
 
 public class FabricServerSparkPlugin extends FabricSparkPlugin implements Command<ServerCommandSource>, SuggestionProvider<ServerCommandSource> {
 
-    public static void register(FabricSparkMod mod, MinecraftServer server) {
+    public static FabricServerSparkPlugin register(FabricSparkMod mod, MinecraftServer server) {
         FabricServerSparkPlugin plugin = new FabricServerSparkPlugin(mod, server);
         plugin.enable();
-
-        // register commands
-        registerCommands(server.getCommandManager().getDispatcher(), plugin, plugin, "spark");
-        CommandRegistrationCallback.EVENT.register((dispatcher, isDedicated) -> registerCommands(dispatcher, plugin, plugin, "spark"));
-
-
-        if (FabricLoader.getInstance().isModLoaded("placeholder-api")) {
-            new SparkFabricPlaceholderApi(plugin.platform);
-        }
-
-        // register shutdown hook
-        ServerLifecycleEvents.SERVER_STOPPING.register(stoppingServer -> {
-            if (stoppingServer == plugin.server) {
-                plugin.disable();
-            }
-        });
+        return plugin;
     }
 
     private final MinecraftServer server;
@@ -78,6 +62,23 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     public FabricServerSparkPlugin(FabricSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
+    }
+
+    @Override
+    public void enable() {
+        super.enable();
+
+        // register commands
+        registerCommands(this.server.getCommandManager().getDispatcher());
+
+        // placeholders
+        if (FabricLoader.getInstance().isModLoaded("placeholder-api")) {
+            new SparkFabricPlaceholderApi(this.platform);
+        }
+    }
+
+    public void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
+        registerCommands(dispatcher, this, this, "spark");
     }
 
     @Override
