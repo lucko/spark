@@ -33,14 +33,11 @@ import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
-import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -130,37 +127,9 @@ public class JavaSampler extends AbstractSampler implements Runnable {
 
     @Override
     public SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
-        final SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
-                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats()))
-                .setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics())
-                .setCreator(creator.toData().toProto())
-                .setStartTime(this.startTime)
-                .setInterval(this.interval)
-                .setThreadDumper(this.threadDumper.getMetadata())
-                .setDataAggregator(this.dataAggregator.getMetadata());
-
-        if (comment != null) {
-            metadata.setComment(comment);
-        }
-
         SamplerData.Builder proto = SamplerData.newBuilder();
-        proto.setMetadata(metadata.build());
-
-        List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
-        data.sort(outputOrder);
-
-        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
-
-        for (Map.Entry<String, ThreadNode> entry : data) {
-            proto.addThreads(entry.getValue().toProto(mergeMode));
-            classSourceVisitor.visit(entry.getValue());
-        }
-
-        if (classSourceVisitor.hasMappings()) {
-            proto.putAllClassSources(classSourceVisitor.getMapping());
-        }
-
+        writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
+        writeDataToProto(proto, this.dataAggregator, outputOrder, mergeMode, classSourceLookup);
         return proto.build();
     }
 

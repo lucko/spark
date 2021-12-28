@@ -126,14 +126,23 @@ public final class HeapDumpSummary {
     }
 
     public HeapData toProto(SparkPlatform platform, CommandSender creator) {
-        HeapData.Builder proto = HeapData.newBuilder();
-        proto.setMetadata(HeapMetadata.newBuilder()
+        HeapMetadata.Builder metadata = HeapMetadata.newBuilder()
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null))
-                .setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics())
-                .setCreator(creator.toData().toProto())
-                .build()
-        );
+                .setCreator(creator.toData().toProto());
+        try {
+            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            metadata.setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        HeapData.Builder proto = HeapData.newBuilder();
+        proto.setMetadata(metadata);
 
         for (Entry entry : this.entries) {
             proto.addEntries(entry.toProto());

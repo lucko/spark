@@ -33,7 +33,6 @@ import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
-import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import one.profiler.AsyncProfiler;
 
@@ -41,7 +40,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -157,39 +155,10 @@ public class AsyncSampler extends AbstractSampler {
 
     @Override
     public SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
-        final SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
-                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats()))
-                .setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics())
-                .setCreator(creator.toData().toProto())
-                .setStartTime(this.startTime)
-                .setInterval(this.interval)
-                .setThreadDumper(this.threadDumper.getMetadata())
-                .setDataAggregator(this.dataAggregator.getMetadata());
-
-        if (comment != null) {
-            metadata.setComment(comment);
-        }
-
         SamplerData.Builder proto = SamplerData.newBuilder();
-        proto.setMetadata(metadata.build());
-
+        writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
         aggregateOutput();
-
-        List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
-        data.sort(outputOrder);
-
-        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
-
-        for (Map.Entry<String, ThreadNode> entry : data) {
-            proto.addThreads(entry.getValue().toProto(mergeMode));
-            classSourceVisitor.visit(entry.getValue());
-        }
-
-        if (classSourceVisitor.hasMappings()) {
-            proto.putAllClassSources(classSourceVisitor.getMapping());
-        }
-
+        writeDataToProto(proto, this.dataAggregator, outputOrder, mergeMode, classSourceLookup);
         return proto.build();
     }
 
