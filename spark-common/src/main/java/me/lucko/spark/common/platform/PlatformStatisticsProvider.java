@@ -82,9 +82,9 @@ public class PlatformStatisticsProvider {
                         .build()
                 )
                 .setJava(SystemStatistics.Java.newBuilder()
-                        .setVendor(System.getProperty("java.vendor"))
-                        .setVersion(System.getProperty("java.version"))
-                        .setVendorVersion(System.getProperty("java.vendor.version"))
+                        .setVendor(System.getProperty("java.vendor", "unknown"))
+                        .setVersion(System.getProperty("java.version", "unknown"))
+                        .setVendorVersion(System.getProperty("java.vendor.version", "unknown"))
                         .build()
                 );
 
