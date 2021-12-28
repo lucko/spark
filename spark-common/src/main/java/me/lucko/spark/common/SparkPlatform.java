@@ -64,7 +64,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static net.kyori.adventure.text.Component.space;
@@ -262,12 +264,59 @@ public class SparkPlatform {
     }
 
     public void executeCommand(CommandSender sender, String[] args) {
+        AtomicReference<Thread> executorThread = new AtomicReference<>();
+        AtomicReference<Thread> timeoutThread = new AtomicReference<>();
+        AtomicBoolean completed = new AtomicBoolean(false);
+
+        // execute the command
         this.plugin.executeAsync(() -> {
+            executorThread.set(Thread.currentThread());
             this.commandExecuteLock.lock();
             try {
                 executeCommand0(sender, args);
             } finally {
                 this.commandExecuteLock.unlock();
+                executorThread.set(null);
+                completed.set(true);
+
+                Thread timeout = timeoutThread.get();
+                if (timeout != null) {
+                    timeout.interrupt();
+                }
+            }
+        });
+
+        // schedule a task to detect timeouts
+        this.plugin.executeAsync(() -> {
+            timeoutThread.set(Thread.currentThread());
+            try {
+                for (int i = 1; i <= 3; i++) {
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+
+                    if (completed.get()) {
+                        return;
+                    }
+
+                    Thread executor = executorThread.get();
+                    if (executor == null) {
+                        getPlugin().log(Level.WARNING, "A command execution has not completed after " +
+                                (i * 5) + " seconds but there is no executor present. Perhaps the executor shutdown?");
+
+                    } else {
+                        String stackTrace = Arrays.stream(executor.getStackTrace())
+                                .map(el -> "  " + el.toString())
+                                .collect(Collectors.joining("\n"));
+
+                        getPlugin().log(Level.WARNING, "A command execution has not completed after " +
+                                (i * 5) + " seconds, it might be stuck. Trace: \n" + stackTrace);
+                    }
+                }
+            } finally {
+                timeoutThread.set(null);
             }
         });
     }

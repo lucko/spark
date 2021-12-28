@@ -35,6 +35,7 @@ import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
 
@@ -79,12 +80,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     protected ForgeSparkPlugin(ForgeSparkMod mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = Executors.defaultThreadFactory().newThread(r);
-            thread.setName("spark-forge-async-worker");
-            thread.setDaemon(true);
-            return thread;
-        });
+        this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
         this.platform = new SparkPlatform(this);
     }
 
