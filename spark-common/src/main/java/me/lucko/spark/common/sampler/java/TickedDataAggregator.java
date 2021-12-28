@@ -24,7 +24,7 @@ import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;

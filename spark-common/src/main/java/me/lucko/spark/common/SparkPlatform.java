@@ -41,6 +41,7 @@ import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.platform.PlatformStatisticsProvider;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
@@ -96,6 +97,7 @@ public class SparkPlatform {
     private final TickHook tickHook;
     private final TickReporter tickReporter;
     private final TickStatistics tickStatistics;
+    private final PlatformStatisticsProvider statisticsProvider;
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
     private long serverNormalOperationStartTime;
     private final AtomicBoolean enabled = new AtomicBoolean(false);
@@ -132,6 +134,7 @@ public class SparkPlatform {
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
         this.tickStatistics = this.tickHook != null ? new TickStatistics() : null;
+        this.statisticsProvider = new PlatformStatisticsProvider(this);
     }
 
     public void enable() {
@@ -212,6 +215,10 @@ public class SparkPlatform {
 
     public TickReporter getTickReporter() {
         return this.tickReporter;
+    }
+
+    public PlatformStatisticsProvider getStatisticsProvider() {
+        return this.statisticsProvider;
     }
 
     public ClassSourceLookup createClassSourceLookup() {

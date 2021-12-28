@@ -23,8 +23,8 @@ package me.lucko.spark.common.sampler.java;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
@@ -32,8 +32,8 @@ import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.ClassSourceLookup;
-import me.lucko.spark.proto.SparkProtos.SamplerData;
-import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
@@ -129,9 +129,11 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     }
 
     @Override
-    public SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    public SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
         final SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
-                .setPlatformMetadata(platformInfo.toData().toProto())
+                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
+                .setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats()))
+                .setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics())
                 .setCreator(creator.toData().toProto())
                 .setStartTime(this.startTime)
                 .setInterval(this.interval)

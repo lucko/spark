@@ -32,8 +32,8 @@ dependencies {
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
-        include 'linux/libasyncProfiler.so'
-        include 'macosx/libasyncProfiler.so'
+        include 'spark/linux/libasyncProfiler.so'
+        include 'spark/macosx/libasyncProfiler.so'
     }
 }
 

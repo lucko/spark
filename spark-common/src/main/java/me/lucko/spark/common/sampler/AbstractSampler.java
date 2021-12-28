@@ -20,6 +20,9 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
+
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -41,6 +44,9 @@ public abstract class AbstractSampler implements Sampler {
 
     /** A future to encapsulate the completion of this sampler instance */
     protected final CompletableFuture<Sampler> future = new CompletableFuture<>();
+
+    /** The garbage collector statistics when profiling started */
+    protected Map<String, GarbageCollectorStatistics> initialGcStats;
 
     protected AbstractSampler(int interval, ThreadDumper threadDumper, long endTime) {
         this.interval = interval;
@@ -64,5 +70,13 @@ public abstract class AbstractSampler implements Sampler {
     @Override
     public CompletableFuture<Sampler> getFuture() {
         return this.future;
+    }
+
+    protected void recordInitialGcStats() {
+        this.initialGcStats = GarbageCollectorStatistics.pollStats();
+    }
+
+    protected Map<String, GarbageCollectorStatistics> getInitialGcStats() {
+        return this.initialGcStats;
     }
 }

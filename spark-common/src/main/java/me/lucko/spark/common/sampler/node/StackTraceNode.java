@@ -22,7 +22,7 @@
 package me.lucko.spark.common.sampler.node;
 
 import me.lucko.spark.common.util.MethodDisambiguator;
-import me.lucko.spark.proto.SparkProtos;
+import me.lucko.spark.proto.SparkSamplerProtos;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -65,8 +65,8 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
         return this.description.parentLineNumber;
     }
 
-    public SparkProtos.StackTraceNode toProto(MergeMode mergeMode) {
-        SparkProtos.StackTraceNode.Builder proto = SparkProtos.StackTraceNode.newBuilder()
+    public SparkSamplerProtos.StackTraceNode toProto(MergeMode mergeMode) {
+        SparkSamplerProtos.StackTraceNode.Builder proto = SparkSamplerProtos.StackTraceNode.newBuilder()
                 .setTime(getTotalTime())
                 .setClassName(this.description.className)
                 .setMethodName(this.description.methodName);

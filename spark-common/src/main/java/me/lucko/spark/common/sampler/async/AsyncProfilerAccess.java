@@ -102,7 +102,7 @@ public enum AsyncProfilerAccess {
         }
 
         // extract the profiler binary from the spark jar file
-        String resource = os + "/libasyncProfiler.so";
+        String resource = "spark/" + os + "/libasyncProfiler.so";
         URL profilerResource = AsyncProfilerAccess.class.getClassLoader().getResource(resource);
         if (profilerResource == null) {
             throw new IllegalStateException("Could not find " + resource + " in spark jar file");

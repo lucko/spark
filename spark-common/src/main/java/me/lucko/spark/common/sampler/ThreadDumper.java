@@ -22,7 +22,7 @@
 package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.common.util.ThreadFinder;
-import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;

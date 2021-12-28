@@ -30,6 +30,7 @@ import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
+import me.lucko.spark.common.monitor.disk.DiskUsage;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.RollingAverage;
@@ -38,15 +39,11 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
-import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -64,8 +61,6 @@ import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 
 public class HealthModule implements CommandModule {
-
-    private static final double MSPT_95_PERCENTILE = 0.95d;
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
@@ -150,11 +145,7 @@ public class HealthModule implements CommandModule {
             addDetailedMemoryStats(report, memoryMXBean);
         }
 
-        try {
-            addDiskStats(report);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        addDiskStats(report);
 
         resp.reply(report);
     }
@@ -309,10 +300,14 @@ public class HealthModule implements CommandModule {
         }
     }
 
-    private static void addDiskStats(List<Component> report) throws IOException {
-        FileStore fileStore = Files.getFileStore(Paths.get("."));
-        long totalSpace = fileStore.getTotalSpace();
-        long usedSpace = totalSpace - fileStore.getUsableSpace();
+    private static void addDiskStats(List<Component> report) {
+        long total = DiskUsage.getTotal();
+        long used = DiskUsage.getUsed();
+        
+        if (total == 0 || used == 0) {
+            return;
+        }
+
         report.add(text()
                 .append(text(">", DARK_GRAY, BOLD))
                 .append(space())
@@ -321,18 +316,18 @@ public class HealthModule implements CommandModule {
         );
         report.add(text()
                 .content("    ")
-                .append(text(FormatUtil.formatBytes(usedSpace), WHITE))
+                .append(text(FormatUtil.formatBytes(used), WHITE))
                 .append(space())
                 .append(text("/", GRAY))
                 .append(space())
-                .append(text(FormatUtil.formatBytes(totalSpace), WHITE))
+                .append(text(FormatUtil.formatBytes(total), WHITE))
                 .append(text("   "))
                 .append(text("(", GRAY))
-                .append(text(FormatUtil.percent(usedSpace, totalSpace), GREEN))
+                .append(text(FormatUtil.percent(used, total), GREEN))
                 .append(text(")", GRAY))
                 .build()
         );
-        report.add(text().content("    ").append(generateDiskUsageDiagram(usedSpace, totalSpace, 40)).build());
+        report.add(text().content("    ").append(generateDiskUsageDiagram(used, total, 40)).build());
         report.add(empty());
     }
 
@@ -355,7 +350,7 @@ public class HealthModule implements CommandModule {
                 .append(text('/', GRAY))
                 .append(formatTickDuration(average.median()))
                 .append(text('/', GRAY))
-                .append(formatTickDuration(average.percentile(MSPT_95_PERCENTILE)))
+                .append(formatTickDuration(average.percentile95th()))
                 .append(text('/', GRAY))
                 .append(formatTickDuration(average.max()))
                 .build();

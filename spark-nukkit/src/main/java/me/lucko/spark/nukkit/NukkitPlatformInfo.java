@@ -20,11 +20,11 @@
 
 package me.lucko.spark.nukkit;
 
-import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 
 import cn.nukkit.Server;
 
-public class NukkitPlatformInfo extends AbstractPlatformInfo {
+public class NukkitPlatformInfo implements PlatformInfo {
     private final Server server;
 
     public NukkitPlatformInfo(Server server) {

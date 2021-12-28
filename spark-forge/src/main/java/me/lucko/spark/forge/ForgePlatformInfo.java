@@ -20,12 +20,12 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 
 import net.minecraftforge.versions.forge.ForgeVersion;
 import net.minecraftforge.versions.mcp.MCPVersion;
 
-public class ForgePlatformInfo extends AbstractPlatformInfo {
+public class ForgePlatformInfo implements PlatformInfo {
     private final Type type;
 
     public ForgePlatformInfo(Type type) {

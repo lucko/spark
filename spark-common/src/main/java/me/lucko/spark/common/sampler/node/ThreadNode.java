@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.sampler.node;
 
-import me.lucko.spark.proto.SparkProtos;
+import me.lucko.spark.proto.SparkSamplerProtos;
 
 /**
  * The root of a sampling stack for a given thread / thread group.
@@ -36,8 +36,8 @@ public final class ThreadNode extends AbstractNode {
         this.threadName = threadName;
     }
 
-    public SparkProtos.ThreadNode toProto(MergeMode mergeMode) {
-        SparkProtos.ThreadNode.Builder proto = SparkProtos.ThreadNode.newBuilder()
+    public SparkSamplerProtos.ThreadNode toProto(MergeMode mergeMode) {
+        SparkSamplerProtos.ThreadNode.Builder proto = SparkSamplerProtos.ThreadNode.newBuilder()
                 .setName(this.threadName)
                 .setTime(getTotalTime());
 
