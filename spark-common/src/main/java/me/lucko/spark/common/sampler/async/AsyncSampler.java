@@ -99,7 +99,7 @@ public class AsyncSampler extends AbstractSampler {
             throw new RuntimeException("Unable to create temporary output file", e);
         }
 
-        String command = "start,event=cpu,interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
+        String command = "start,event=" + AsyncProfilerAccess.INSTANCE.getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
         if (this.threadDumper instanceof ThreadDumper.Specific) {
             command += ",filter";
         }
