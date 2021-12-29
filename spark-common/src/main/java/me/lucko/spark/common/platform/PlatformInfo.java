@@ -24,7 +24,7 @@ import me.lucko.spark.proto.SparkProtos.PlatformMetadata;
 
 public interface PlatformInfo {
 
-    int DATA_VERSION = 1;
+    int DATA_VERSION = 2;
 
     Type getType();
 
