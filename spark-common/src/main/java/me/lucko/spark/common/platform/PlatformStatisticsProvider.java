@@ -21,6 +21,7 @@
 package me.lucko.spark.common.platform;
 
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.monitor.cpu.CpuInfo;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.disk.DiskUsage;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
@@ -58,6 +59,7 @@ public class PlatformStatisticsProvider {
                                 .setLast15M(CpuMonitor.systemLoad15MinAvg())
                                 .build()
                         )
+                        .setModelName(CpuInfo.queryCpuModel())
                         .build()
                 )
                 .setMemory(SystemStatistics.Memory.newBuilder()
