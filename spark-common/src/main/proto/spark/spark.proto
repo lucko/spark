@@ -36,7 +36,7 @@ message SystemStatistics {
     int32 threads = 1;
     Usage process_usage = 2;
     Usage system_usage = 3;
-    string modelName = 4; // optional
+    string model_name = 4; // optional
 
     message Usage {
       double last1m = 1;
