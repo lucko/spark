@@ -27,6 +27,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.util.TemporaryFiles;
 
 import one.profiler.AsyncProfiler;
+import one.profiler.Events;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -60,8 +61,8 @@ public enum AsyncProfilerAccess {
             profiler = load();
             if (isEventSupported(profiler, ProfilingEvent.CPU, false)) {
                 profilingEvent = ProfilingEvent.CPU;
-            } else if (isEventSupported(profiler, ProfilingEvent.ITIMER, true)) {
-                profilingEvent = ProfilingEvent.ITIMER;
+            } else if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
+                profilingEvent = ProfilingEvent.WALL;
             }
         } catch (Exception e) {
             profiler = null;
@@ -161,11 +162,18 @@ public enum AsyncProfilerAccess {
     }
 
     enum ProfilingEvent {
-        CPU, ITIMER;
+        CPU(Events.CPU),
+        WALL(Events.WALL);
+
+        private final String id;
+
+        ProfilingEvent(String id) {
+            this.id = id;
+        }
 
         @Override
         public String toString() {
-            return name().toLowerCase(Locale.ROOT);
+            return this.id;
         }
     }
 
