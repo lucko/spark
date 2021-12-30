@@ -32,6 +32,7 @@ import me.lucko.spark.proto.SparkProtos.SystemStatistics;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
+import java.lang.management.RuntimeMXBean;
 import java.util.Map;
 
 public class PlatformStatisticsProvider {
@@ -42,6 +43,8 @@ public class PlatformStatisticsProvider {
     }
 
     public SystemStatistics getSystemStatistics() {
+        RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
+
         SystemStatistics.Builder builder = SystemStatistics.newBuilder()
                 .setCpu(SystemStatistics.Cpu.newBuilder()
                         .setThreads(Runtime.getRuntime().availableProcessors())
@@ -85,10 +88,11 @@ public class PlatformStatisticsProvider {
                         .setVendor(System.getProperty("java.vendor", "unknown"))
                         .setVersion(System.getProperty("java.version", "unknown"))
                         .setVendorVersion(System.getProperty("java.vendor.version", "unknown"))
+                        .setVmArgs(String.join(" ", runtimeBean.getInputArguments()))
                         .build()
                 );
 
-        long uptime = ManagementFactory.getRuntimeMXBean().getUptime();
+        long uptime = runtimeBean.getUptime();
         builder.setUptime(uptime);
 
         Map<String, GarbageCollectorStatistics> gcStats = GarbageCollectorStatistics.pollStats();

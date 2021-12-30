@@ -74,6 +74,7 @@ message SystemStatistics {
     string vendor = 1;
     string version = 2;
     string vendor_version = 3;
+    string vm_args = 4;
   }
 }
 
