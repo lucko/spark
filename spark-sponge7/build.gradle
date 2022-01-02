@@ -1,15 +1,26 @@
 plugins {
+    id 'net.kyori.blossom' version '1.3.0'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 dependencies {
     implementation project(':spark-common')
-    implementation project(':spark-bukkit')
-    implementation project(':spark-bungeecord')
+    compileOnly 'org.spongepowered:spongeapi:7.3.0'
+    annotationProcessor 'org.spongepowered:spongeapi:7.3.0'
+}
+
+repositories {
+    maven { url "https://repo.spongepowered.org/maven" }
+}
+
+blossom {
+    replaceTokenIn('src/main/java/me/lucko/spark/sponge/SpongeSparkPlugin.java')
+    replaceToken '@version@', project.pluginVersion
+    replaceToken '@desc@', project.pluginDescription
 }
 
 shadowJar {
-    archiveName = 'spark.jar'
+    archiveFileName = 'spark-sponge7.jar'
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
@@ -30,4 +41,3 @@ artifacts {
     archives shadowJar
     shadow shadowJar
 }
-

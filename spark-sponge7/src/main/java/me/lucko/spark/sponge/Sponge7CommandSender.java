@@ -31,8 +31,8 @@ import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.util.UUID;
 
-public class SpongeCommandSender extends AbstractCommandSender<CommandSource> {
-    public SpongeCommandSender(CommandSource source) {
+public class Sponge7CommandSender extends AbstractCommandSender<CommandSource> {
+    public Sponge7CommandSender(CommandSource source) {
         super(source);
     }
 

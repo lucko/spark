@@ -38,7 +38,6 @@ import org.spongepowered.api.config.ConfigDir;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.game.state.GameStoppingServerEvent;
-import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.scheduler.AsynchronousExecutor;
@@ -60,13 +59,9 @@ import javax.annotation.Nullable;
         name = "spark",
         version = "@version@",
         description = "@desc@",
-        authors = {"Luck"},
-        dependencies = {
-                // explicit dependency on spongeapi with no defined API version
-                @Dependency(id = "spongeapi")
-        }
+        authors = {"Luck"}
 )
-public class SpongeSparkPlugin implements SparkPlugin {
+public class Sponge7SparkPlugin implements SparkPlugin {
 
     private final PluginContainer pluginContainer;
     private final Logger logger;
@@ -78,7 +73,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
     private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
-    public SpongeSparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
+    public Sponge7SparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
         this.pluginContainer = pluginContainer;
         this.logger = logger;
         this.game = game;
@@ -100,7 +95,7 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
     @Override
     public String getVersion() {
-        return SpongeSparkPlugin.class.getAnnotation(Plugin.class).version();
+        return Sponge7SparkPlugin.class.getAnnotation(Plugin.class).version();
     }
 
     @Override
@@ -114,11 +109,11 @@ public class SpongeSparkPlugin implements SparkPlugin {
     }
 
     @Override
-    public Stream<SpongeCommandSender> getCommandSenders() {
+    public Stream<Sponge7CommandSender> getCommandSenders() {
         return Stream.concat(
                 this.game.getServer().getOnlinePlayers().stream(),
                 Stream.of(this.game.getServer().getConsole())
-        ).map(SpongeCommandSender::new);
+        ).map(Sponge7CommandSender::new);
     }
 
     @Override
@@ -146,12 +141,12 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
     @Override
     public TickHook createTickHook() {
-        return new SpongeTickHook(this);
+        return new Sponge7TickHook(this);
     }
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new SpongePlatformInfo(this.game);
+        return new Sponge7PlatformInfo(this.game);
     }
 
     @Override
@@ -160,27 +155,27 @@ public class SpongeSparkPlugin implements SparkPlugin {
     }
 
     private static final class SparkCommand implements CommandCallable {
-        private final SpongeSparkPlugin plugin;
+        private final Sponge7SparkPlugin plugin;
 
-        private SparkCommand(SpongeSparkPlugin plugin) {
+        private SparkCommand(Sponge7SparkPlugin plugin) {
             this.plugin = plugin;
         }
 
         @Override
         public CommandResult process(CommandSource source, String arguments) {
             this.plugin.threadDumper.ensureSetup();
-            this.plugin.platform.executeCommand(new SpongeCommandSender(source), arguments.split(" "));
+            this.plugin.platform.executeCommand(new Sponge7CommandSender(source), arguments.split(" "));
             return CommandResult.empty();
         }
 
         @Override
         public List<String> getSuggestions(CommandSource source, String arguments, @Nullable Location<World> targetPosition) {
-            return this.plugin.platform.tabCompleteCommand(new SpongeCommandSender(source), arguments.split(" "));
+            return this.plugin.platform.tabCompleteCommand(new Sponge7CommandSender(source), arguments.split(" "));
         }
 
         @Override
         public boolean testPermission(CommandSource source) {
-            return this.plugin.platform.hasPermissionForAnyCommand(new SpongeCommandSender(source));
+            return this.plugin.platform.hasPermissionForAnyCommand(new Sponge7CommandSender(source));
         }
 
         @Override

@@ -17,7 +17,7 @@ include (
         'spark-bungeecord',
         'spark-velocity',
         'spark-velocity4',
-        'spark-sponge',
+        'spark-sponge7',
         'spark-sponge8',
         'spark-forge',
         'spark-fabric',

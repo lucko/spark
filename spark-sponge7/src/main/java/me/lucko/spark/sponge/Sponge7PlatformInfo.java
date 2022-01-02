@@ -20,32 +20,35 @@
 
 package me.lucko.spark.sponge;
 
-import me.lucko.spark.common.tick.AbstractTickHook;
-import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.platform.PlatformInfo;
 
-import org.spongepowered.api.scheduler.Task;
+import org.spongepowered.api.Game;
+import org.spongepowered.api.Platform;
 
-public class SpongeTickHook extends AbstractTickHook implements TickHook, Runnable {
-    private final SpongeSparkPlugin plugin;
-    private Task task;
+public class Sponge7PlatformInfo implements PlatformInfo {
+    private final Game game;
 
-    public SpongeTickHook(SpongeSparkPlugin plugin) {
-        this.plugin = plugin;
+    public Sponge7PlatformInfo(Game game) {
+        this.game = game;
     }
 
     @Override
-    public void run() {
-        onTick();
+    public Type getType() {
+        return Type.SERVER;
     }
 
     @Override
-    public void start() {
-        this.task = Task.builder().intervalTicks(1).name("spark-ticker").execute(this).submit(this.plugin);
+    public String getName() {
+        return "Sponge";
     }
 
     @Override
-    public void close() {
-        this.task.cancel();
+    public String getVersion() {
+        return this.game.getPlatform().getContainer(Platform.Component.IMPLEMENTATION).getVersion().orElse("unknown");
     }
 
+    @Override
+    public String getMinecraftVersion() {
+        return this.game.getPlatform().getMinecraftVersion().getName();
+    }
 }
