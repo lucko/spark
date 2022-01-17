@@ -88,12 +88,26 @@ public class CommandResponseHandler {
     }
 
     public void broadcast(Component message) {
-        allSenders(sender -> sender.sendMessage(message));
+        if (platform.getDisableResponseBroadcast())
+        {
+            reply(message);
+        }
+        else
+        {
+            allSenders(sender -> sender.sendMessage(message));
+        }
     }
 
     public void broadcast(Iterable<Component> message) {
-        Component joinedMsg = Component.join(JoinConfiguration.separator(Component.newline()), message);
-        allSenders(sender -> sender.sendMessage(joinedMsg));
+        if (platform.getDisableResponseBroadcast())
+        {
+            reply(message);
+        }
+        else
+        {
+            Component joinedMsg = Component.join(JoinConfiguration.separator(Component.newline()), message);
+            allSenders(sender -> sender.sendMessage(joinedMsg));
+        }
     }
 
     public void replyPrefixed(Component message) {
