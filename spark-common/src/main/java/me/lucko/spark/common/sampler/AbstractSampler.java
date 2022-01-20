@@ -23,6 +23,7 @@ package me.lucko.spark.common.sampler;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
@@ -112,6 +113,13 @@ public abstract class AbstractSampler implements Sampler {
 
         try {
             metadata.setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            ServerConfigProvider serverConfigProvider = platform.getPlugin().createServerConfigProvider();
+            metadata.putAllServerConfigurations(serverConfigProvider.exportServerConfigurations());
         } catch (Exception e) {
             e.printStackTrace();
         }

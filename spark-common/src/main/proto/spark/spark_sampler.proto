@@ -23,6 +23,7 @@ message SamplerMetadata {
   PlatformMetadata platform_metadata = 7;
   PlatformStatistics platform_statistics = 8;
   SystemStatistics system_statistics = 9;
+  map<string, string> server_configurations = 10;
 
   message ThreadDumper {
     Type type = 1;

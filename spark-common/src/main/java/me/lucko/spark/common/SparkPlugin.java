@@ -24,6 +24,7 @@ import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
@@ -130,6 +131,15 @@ public interface SparkPlugin {
      */
     default PlayerPingProvider createPlayerPingProvider() {
         return null;
+    }
+
+    /**
+     * Creates a server config provider.
+     *
+     * @return the server config provider function
+     */
+    default ServerConfigProvider createServerConfigProvider() {
+        return ServerConfigProvider.NO_OP;
     }
 
     /**
