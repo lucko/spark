@@ -25,6 +25,7 @@ import me.lucko.spark.bukkit.placeholder.SparkMVdWPlaceholders;
 import me.lucko.spark.bukkit.placeholder.SparkPlaceholderApi;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
@@ -169,6 +170,15 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new BukkitClassSourceLookup();
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        if (BukkitPlayerPingProvider.isSupported()) {
+            return new BukkitPlayerPingProvider(getServer());
+        } else {
+            return null;
+        }
     }
 
     @Override

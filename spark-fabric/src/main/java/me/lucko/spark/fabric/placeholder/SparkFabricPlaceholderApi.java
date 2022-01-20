@@ -4,10 +4,10 @@ import eu.pb4.placeholders.PlaceholderAPI;
 import eu.pb4.placeholders.PlaceholderResult;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.command.modules.HealthModule;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.RollingAverage;
+import me.lucko.spark.common.util.StatisticFormatter;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -47,16 +47,16 @@ public class SparkFabricPlaceholderApi {
                         if (tps == null) {
                             return PlaceholderResult.invalid("Invalid argument");
                         } else {
-                            return PlaceholderResult.value(toText(HealthModule.formatTps(tps)));
+                            return PlaceholderResult.value(toText(StatisticFormatter.formatTps(tps)));
                         }
                     } else {
                         return PlaceholderResult.value(toText(
                                 Component.text()
-                                        .append(HealthModule.formatTps(tickStatistics.tps5Sec())).append(Component.text(", "))
-                                        .append(HealthModule.formatTps(tickStatistics.tps10Sec())).append(Component.text(", "))
-                                        .append(HealthModule.formatTps(tickStatistics.tps1Min())).append(Component.text(", "))
-                                        .append(HealthModule.formatTps(tickStatistics.tps5Min())).append(Component.text(", "))
-                                        .append(HealthModule.formatTps(tickStatistics.tps15Min()))
+                                        .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec())).append(Component.text(", "))
+                                        .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec())).append(Component.text(", "))
+                                        .append(StatisticFormatter.formatTps(tickStatistics.tps1Min())).append(Component.text(", "))
+                                        .append(StatisticFormatter.formatTps(tickStatistics.tps5Min())).append(Component.text(", "))
+                                        .append(StatisticFormatter.formatTps(tickStatistics.tps15Min()))
                                         .build()
                         ));
                     }
@@ -84,13 +84,13 @@ public class SparkFabricPlaceholderApi {
                         if (duration == null) {
                             return PlaceholderResult.invalid("Invalid argument");
                         } else {
-                            return PlaceholderResult.value(toText(HealthModule.formatTickDurations(duration)));
+                            return PlaceholderResult.value(toText(StatisticFormatter.formatTickDurations(duration)));
                         }
                     } else {
                         return PlaceholderResult.value(toText(
                                 Component.text()
-                                        .append(HealthModule.formatTickDurations(tickStatistics.duration10Sec())).append(Component.text(";  "))
-                                        .append(HealthModule.formatTickDurations(tickStatistics.duration1Min()))
+                                        .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec())).append(Component.text(";  "))
+                                        .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min()))
                                         .build()
                         ));
                     }
@@ -115,14 +115,14 @@ public class SparkFabricPlaceholderApi {
                         if (usage == null) {
                             return PlaceholderResult.invalid("Invalid argument");
                         } else {
-                            return PlaceholderResult.value(toText(HealthModule.formatCpuUsage(usage)));
+                            return PlaceholderResult.value(toText(StatisticFormatter.formatCpuUsage(usage)));
                         }
                     } else {
                         return PlaceholderResult.value(toText(
                                 Component.text()
-                                        .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(Component.text(", "))
-                                        .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(Component.text(", "))
-                                        .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
+                                        .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(Component.text(", "))
+                                        .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(Component.text(", "))
+                                        .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
                                         .build()
                         ));
                     }
@@ -147,14 +147,14 @@ public class SparkFabricPlaceholderApi {
                         if (usage == null) {
                             return PlaceholderResult.invalid("Invalid argument");
                         } else {
-                            return PlaceholderResult.value(toText(HealthModule.formatCpuUsage(usage)));
+                            return PlaceholderResult.value(toText(StatisticFormatter.formatCpuUsage(usage)));
                         }
                     } else {
                         return PlaceholderResult.value(toText(
                                 Component.text()
-                                        .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(Component.text(", "))
-                                        .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(Component.text(", "))
-                                        .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
+                                        .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(Component.text(", "))
+                                        .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(Component.text(", "))
+                                        .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
                                         .build()
                         ));
                     }

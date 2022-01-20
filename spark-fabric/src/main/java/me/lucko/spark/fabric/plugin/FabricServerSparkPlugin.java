@@ -29,11 +29,13 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.fabric.api.permissions.v0.Permissions;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
 import me.lucko.spark.fabric.FabricPlatformInfo;
+import me.lucko.spark.fabric.FabricPlayerPingProvider;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
@@ -138,6 +140,11 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public TickReporter createTickReporter() {
         return new FabricTickReporter.Server();
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        return new FabricPlayerPingProvider(this.server);
     }
 
     @Override

@@ -26,6 +26,7 @@ import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.disk.DiskUsage;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.memory.MemoryInfo;
+import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.proto.SparkProtos.PlatformStatistics;
@@ -148,18 +149,26 @@ public class PlatformStatisticsProvider {
             );
             if (tickStatistics.isDurationSupported()) {
                 builder.setMspt(PlatformStatistics.Mspt.newBuilder()
-                        .setLast1M(msptValues(tickStatistics.duration1Min()))
-                        .setLast5M(msptValues(tickStatistics.duration5Min()))
+                        .setLast1M(rollingAverageValues(tickStatistics.duration1Min()))
+                        .setLast5M(rollingAverageValues(tickStatistics.duration5Min()))
                         .build()
                 );
             }
         }
 
+        PingStatistics pingStatistics = this.platform.getPingStatistics();
+        if (pingStatistics != null && pingStatistics.getPingAverage().getSamples() != 0) {
+            builder.setPing(PlatformStatistics.Ping.newBuilder()
+                    .setLast15M(rollingAverageValues(pingStatistics.getPingAverage()))
+                    .build()
+            );
+        }
+
         return builder.build();
     }
 
-    private static PlatformStatistics.Mspt.Values msptValues(RollingAverage rollingAverage) {
-        return PlatformStatistics.Mspt.Values.newBuilder()
+    private static PlatformStatistics.RollingAverageValues rollingAverageValues(RollingAverage rollingAverage) {
+        return PlatformStatistics.RollingAverageValues.newBuilder()
                 .setMean(rollingAverage.mean())
                 .setMax(rollingAverage.max())
                 .setMin(rollingAverage.min())

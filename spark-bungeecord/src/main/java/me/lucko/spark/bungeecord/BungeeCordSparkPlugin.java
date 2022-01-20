@@ -22,6 +22,7 @@ package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.util.ClassSourceLookup;
 
@@ -88,6 +89,11 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new BungeeCordClassSourceLookup();
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        return new BungeeCordPlayerPingProvider(getProxy());
     }
 
     @Override

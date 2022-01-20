@@ -25,6 +25,7 @@ import com.google.inject.Inject;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
@@ -142,6 +143,15 @@ public class Sponge7SparkPlugin implements SparkPlugin {
     @Override
     public TickHook createTickHook() {
         return new Sponge7TickHook(this);
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        if (this.game.isServerAvailable()) {
+            return new Sponge7PlayerPingProvider(this.game.getServer());
+        } else {
+            return null;
+        }
     }
 
     @Override

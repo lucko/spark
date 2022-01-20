@@ -20,8 +20,6 @@
 
 package me.lucko.spark.common.command.modules;
 
-import com.google.common.base.Strings;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
@@ -31,13 +29,14 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.disk.DiskUsage;
+import me.lucko.spark.common.monitor.ping.PingStatistics;
+import me.lucko.spark.common.monitor.ping.PingSummary;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.RollingAverage;
+import me.lucko.spark.common.util.StatisticFormatter;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.TextColor;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -46,6 +45,7 @@ import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static net.kyori.adventure.text.Component.empty;
@@ -57,7 +57,6 @@ import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.GREEN;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
 import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
-import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 
 public class HealthModule implements CommandModule {
@@ -68,6 +67,14 @@ public class HealthModule implements CommandModule {
                 .aliases("tps", "cpu")
                 .executor(HealthModule::tps)
                 .tabCompleter(Command.TabCompleter.empty())
+                .build()
+        );
+
+        consumer.accept(Command.builder()
+                .aliases("ping")
+                .argumentUsage("player", "username")
+                .executor(HealthModule::ping)
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--player"))
                 .build()
         );
 
@@ -86,11 +93,11 @@ public class HealthModule implements CommandModule {
             resp.replyPrefixed(text("TPS from last 5s, 10s, 1m, 5m, 15m:"));
             resp.replyPrefixed(text()
                     .content(" ")
-                    .append(formatTps(tickStatistics.tps5Sec())).append(text(", "))
-                    .append(formatTps(tickStatistics.tps10Sec())).append(text(", "))
-                    .append(formatTps(tickStatistics.tps1Min())).append(text(", "))
-                    .append(formatTps(tickStatistics.tps5Min())).append(text(", "))
-                    .append(formatTps(tickStatistics.tps15Min()))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec())).append(text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec())).append(text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps1Min())).append(text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Min())).append(text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps15Min()))
                     .build()
             );
             resp.replyPrefixed(empty());
@@ -99,8 +106,8 @@ public class HealthModule implements CommandModule {
                 resp.replyPrefixed(text("Tick durations (min/med/95%ile/max ms) from last 10s, 1m:"));
                 resp.replyPrefixed(text()
                         .content(" ")
-                        .append(formatTickDurations(tickStatistics.duration10Sec())).append(text(";  "))
-                        .append(formatTickDurations(tickStatistics.duration1Min()))
+                        .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec())).append(text(";  "))
+                        .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min()))
                         .build()
                 );
                 resp.replyPrefixed(empty());
@@ -110,18 +117,63 @@ public class HealthModule implements CommandModule {
         resp.replyPrefixed(text("CPU usage from last 10s, 1m, 15m:"));
         resp.replyPrefixed(text()
                 .content(" ")
-                .append(formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(text(", "))
-                .append(formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(text(", "))
-                .append(formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(text(", "))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(text(", "))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
                 .append(text("  (system)", DARK_GRAY))
                 .build()
         );
         resp.replyPrefixed(text()
                 .content(" ")
-                .append(formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(text(", "))
-                .append(formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(text(", "))
-                .append(formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(text(", "))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(text(", "))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
                 .append(text("  (process)", DARK_GRAY))
+                .build()
+        );
+    }
+
+    private static void ping(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+        PingStatistics pingStatistics = platform.getPingStatistics();
+        if (pingStatistics == null) {
+            resp.replyPrefixed(text("Ping data is not available on this platform."));
+            return;
+        }
+
+        // lookup for specific player
+        Set<String> players = arguments.stringFlag("player");
+        if (!players.isEmpty()) {
+            for (String player : players) {
+                PingStatistics.PlayerPing playerPing = pingStatistics.query(player);
+                if (playerPing == null) {
+                    resp.replyPrefixed(text("Ping data is not available for '" + player + "'."));
+                } else {
+                    resp.replyPrefixed(text()
+                            .content("Player ")
+                            .append(text(playerPing.name(), WHITE))
+                            .append(text(" has "))
+                            .append(StatisticFormatter.formatPingRtt(playerPing.ping()))
+                            .append(text(" ms ping."))
+                            .build()
+                    );
+                }
+            }
+            return;
+        }
+
+        PingSummary summary = pingStatistics.currentSummary();
+        RollingAverage average = pingStatistics.getPingAverage();
+
+        if (summary.total() == 0 && average.getSamples() == 0) {
+            resp.replyPrefixed(text("There is not enough data to show ping averages yet. Please try again later."));
+            return;
+        }
+
+        resp.replyPrefixed(text("Average Pings (min/med/95%ile/max ms) from now, last 15m:"));
+        resp.replyPrefixed(text()
+                .content(" ")
+                .append(StatisticFormatter.formatPingRtts(summary.min(), summary.median(), summary.percentile95th(), summary.max())).append(text(";  "))
+                .append(StatisticFormatter.formatPingRtts(average.min(), average.median(), average.percentile95th(), average.max()))
                 .build()
         );
     }
@@ -159,11 +211,11 @@ public class HealthModule implements CommandModule {
         );
         report.add(text()
                 .content("    ")
-                .append(formatTps(tickStatistics.tps5Sec())).append(text(", "))
-                .append(formatTps(tickStatistics.tps10Sec())).append(text(", "))
-                .append(formatTps(tickStatistics.tps1Min())).append(text(", "))
-                .append(formatTps(tickStatistics.tps5Min())).append(text(", "))
-                .append(formatTps(tickStatistics.tps15Min()))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec())).append(text(", "))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec())).append(text(", "))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps1Min())).append(text(", "))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps5Min())).append(text(", "))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps15Min()))
                 .build()
         );
         report.add(empty());
@@ -177,8 +229,8 @@ public class HealthModule implements CommandModule {
             );
             report.add(text()
                     .content("    ")
-                    .append(formatTickDurations(tickStatistics.duration10Sec())).append(text("; "))
-                    .append(formatTickDurations(tickStatistics.duration1Min()))
+                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec())).append(text("; "))
+                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min()))
                     .build()
             );
             report.add(empty());
@@ -194,17 +246,17 @@ public class HealthModule implements CommandModule {
         );
         report.add(text()
                 .content("    ")
-                .append(formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(text(", "))
-                .append(formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(text(", "))
-                .append(formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(text(", "))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(text(", "))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
                 .append(text("  (system)", DARK_GRAY))
                 .build()
         );
         report.add(text()
                 .content("    ")
-                .append(formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(text(", "))
-                .append(formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(text(", "))
-                .append(formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(text(", "))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(text(", "))
+                .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
                 .append(text("  (process)", DARK_GRAY))
                 .build()
         );
@@ -232,7 +284,7 @@ public class HealthModule implements CommandModule {
                 .append(text(")", GRAY))
                 .build()
         );
-        report.add(text().content("    ").append(generateMemoryUsageDiagram(heapUsage, 40)).build());
+        report.add(text().content("    ").append(StatisticFormatter.generateMemoryUsageDiagram(heapUsage, 60)).build());
         report.add(empty());
     }
 
@@ -283,7 +335,7 @@ public class HealthModule implements CommandModule {
                     .append(text(")", GRAY))
                     .build()
             );
-            report.add(text().content("    ").append(generateMemoryPoolDiagram(usage, collectionUsage, 40)).build());
+            report.add(text().content("    ").append(StatisticFormatter.generateMemoryPoolDiagram(usage, collectionUsage, 60)).build());
 
             if (collectionUsage != null) {
                 report.add(text()
@@ -327,127 +379,8 @@ public class HealthModule implements CommandModule {
                 .append(text(")", GRAY))
                 .build()
         );
-        report.add(text().content("    ").append(generateDiskUsageDiagram(used, total, 40)).build());
+        report.add(text().content("    ").append(StatisticFormatter.generateDiskUsageDiagram(used, total, 60)).build());
         report.add(empty());
-    }
-
-    public static TextComponent formatTps(double tps) {
-        TextColor color;
-        if (tps > 18.0) {
-            color = GREEN;
-        } else if (tps > 16.0) {
-            color = YELLOW;
-        } else {
-            color = RED;
-        }
-
-        return text((tps > 20.0 ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, 20.0), color);
-    }
-
-    public static TextComponent formatTickDurations(RollingAverage average) {
-        return text()
-                .append(formatTickDuration(average.min()))
-                .append(text('/', GRAY))
-                .append(formatTickDuration(average.median()))
-                .append(text('/', GRAY))
-                .append(formatTickDuration(average.percentile95th()))
-                .append(text('/', GRAY))
-                .append(formatTickDuration(average.max()))
-                .build();
-    }
-
-    public static TextComponent formatTickDuration(double duration) {
-        TextColor color;
-        if (duration >= 50d) {
-            color = RED;
-        } else if (duration >= 40d) {
-            color = YELLOW;
-        } else {
-            color = GREEN;
-        }
-
-        return text(String.format("%.1f", duration), color);
-    }
-
-    public static TextComponent formatCpuUsage(double usage) {
-        TextColor color;
-        if (usage > 0.9) {
-            color = RED;
-        } else if (usage > 0.65) {
-            color = YELLOW;
-        } else {
-            color = GREEN;
-        }
-
-        return text(FormatUtil.percent(usage, 1d), color);
-    }
-
-    private static TextComponent generateMemoryUsageDiagram(MemoryUsage usage, int length) {
-        double used = usage.getUsed();
-        double committed = usage.getCommitted();
-        double max = usage.getMax();
-
-        int usedChars = (int) ((used * length) / max);
-        int committedChars = (int) ((committed * length) / max);
-
-        TextComponent.Builder line = text().content(Strings.repeat("/", usedChars)).color(GRAY);
-        if (committedChars > usedChars) {
-            line.append(text(Strings.repeat(" ", (committedChars - usedChars) - 1)));
-            line.append(text("|", YELLOW));
-        }
-        if (length > committedChars) {
-            line.append(text(Strings.repeat(" ", (length - committedChars))));
-        }
-
-        return text()
-                .append(text("[", DARK_GRAY))
-                .append(line.build())
-                .append(text("]", DARK_GRAY))
-                .build();
-    }
-
-    private static TextComponent generateMemoryPoolDiagram(MemoryUsage usage, MemoryUsage collectionUsage, int length) {
-        double used = usage.getUsed();
-        double collectionUsed = used;
-        if (collectionUsage != null) {
-            collectionUsed = collectionUsage.getUsed();
-        }
-        double committed = usage.getCommitted();
-        double max = usage.getMax();
-
-        int usedChars = (int) ((used * length) / max);
-        int collectionUsedChars = (int) ((collectionUsed * length) / max);
-        int committedChars = (int) ((committed * length) / max);
-
-        TextComponent.Builder line = text().content(Strings.repeat("/", collectionUsedChars)).color(GRAY);
-
-        if (usedChars > collectionUsedChars) {
-            line.append(text("|", RED));
-            line.append(text(Strings.repeat("/", (usedChars - collectionUsedChars) - 1), GRAY));
-        }
-        if (committedChars > usedChars) {
-            line.append(text(Strings.repeat(" ", (committedChars - usedChars) - 1)));
-            line.append(text("|", YELLOW));
-        }
-        if (length > committedChars) {
-            line.append(text(Strings.repeat(" ", (length - committedChars))));
-        }
-
-        return text()
-                .append(text("[", DARK_GRAY))
-                .append(line.build())
-                .append(text("]", DARK_GRAY))
-                .build();
-    }
-
-    private static TextComponent generateDiskUsageDiagram(double used, double max, int length) {
-        int usedChars = (int) ((used * length) / max);
-        String line = Strings.repeat("/", usedChars) + Strings.repeat(" ", length - usedChars);
-        return text()
-                .append(text("[", DARK_GRAY))
-                .append(text(line, GRAY))
-                .append(text("]", DARK_GRAY))
-                .build();
     }
 
 }

@@ -40,6 +40,8 @@ import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
+import me.lucko.spark.common.monitor.ping.PingStatistics;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
 import me.lucko.spark.common.tick.TickHook;
@@ -99,6 +101,7 @@ public class SparkPlatform {
     private final TickHook tickHook;
     private final TickReporter tickReporter;
     private final TickStatistics tickStatistics;
+    private final PingStatistics pingStatistics;
     private final PlatformStatisticsProvider statisticsProvider;
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
     private long serverNormalOperationStartTime;
@@ -136,6 +139,10 @@ public class SparkPlatform {
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
         this.tickStatistics = this.tickHook != null ? new TickStatistics() : null;
+
+        PlayerPingProvider pingProvider = plugin.createPlayerPingProvider();
+        this.pingStatistics = pingProvider != null ? new PingStatistics(pingProvider) : null;
+
         this.statisticsProvider = new PlatformStatisticsProvider(this);
     }
 
@@ -151,6 +158,9 @@ public class SparkPlatform {
         if (this.tickReporter != null) {
             this.tickReporter.addCallback(this.tickStatistics);
             this.tickReporter.start();
+        }
+        if (this.pingStatistics != null) {
+            this.pingStatistics.start();
         }
         CpuMonitor.ensureMonitoring();
 
@@ -171,6 +181,9 @@ public class SparkPlatform {
         }
         if (this.tickReporter != null) {
             this.tickReporter.close();
+        }
+        if (this.pingStatistics != null) {
+            this.pingStatistics.close();
         }
 
         for (CommandModule module : this.commandModules) {
@@ -229,6 +242,10 @@ public class SparkPlatform {
 
     public TickStatistics getTickStatistics() {
         return this.tickStatistics;
+    }
+
+    public PingStatistics getPingStatistics() {
+        return this.pingStatistics;
     }
 
     public Map<String, GarbageCollectorStatistics> getStartupGcStatistics() {

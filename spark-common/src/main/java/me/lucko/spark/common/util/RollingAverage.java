@@ -39,6 +39,12 @@ public class RollingAverage implements DoubleAverageInfo {
         this.samples = new ArrayDeque<>(this.windowSize + 1);
     }
 
+    public int getSamples() {
+        synchronized (this) {
+            return this.samples.size();
+        }
+    }
+
     public void add(BigDecimal num) {
         synchronized (this) {
             this.total = this.total.add(num);
