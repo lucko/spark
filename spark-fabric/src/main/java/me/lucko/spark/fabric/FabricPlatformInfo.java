@@ -23,6 +23,7 @@ package me.lucko.spark.fabric;
 import me.lucko.spark.common.platform.PlatformInfo;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.server.MinecraftServer;
 
 import java.util.Optional;
 
@@ -51,6 +52,19 @@ public class FabricPlatformInfo implements PlatformInfo {
     @Override
     public String getMinecraftVersion() {
         return getModVersion("minecraft").orElse(null);
+    }
+
+    @Override
+    public OnlineMode getOnlineMode() {
+        if (this.type == Type.SERVER) {
+            if (((MinecraftServer) FabricLoader.getInstance().getGameInstance()).isOnlineMode()) {
+                return OnlineMode.ONLINE;
+            } else {
+                return OnlineMode.OFFLINE;
+            }
+        }
+
+        return OnlineMode.UNKNOWN;
     }
 
     private Optional<String> getModVersion(String mod) {

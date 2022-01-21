@@ -11,6 +11,7 @@ message PlatformMetadata {
   string version = 3;
   string minecraft_version = 4; // optional
   int32 spark_version = 7;
+  OnlineMode online_mode = 8;
 
   // replaced
   reserved 5, 6;
@@ -20,6 +21,14 @@ message PlatformMetadata {
     SERVER = 0;
     CLIENT = 1;
     PROXY = 2;
+  }
+
+  enum OnlineMode {
+    UNKNOWN = 0;
+    ONLINE = 1;
+    OFFLINE = 2;
+    BUNGEE = 3;
+    VELOCITY = 4;
   }
 }
 

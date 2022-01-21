@@ -51,4 +51,13 @@ public class Sponge7PlatformInfo implements PlatformInfo {
     public String getMinecraftVersion() {
         return this.game.getPlatform().getMinecraftVersion().getName();
     }
+
+    @Override
+    public OnlineMode getOnlineMode() {
+        if (this.game.getServer().getOnlineMode()) {
+            return OnlineMode.ONLINE;
+        } else {
+            return OnlineMode.OFFLINE;
+        }
+    }
 }

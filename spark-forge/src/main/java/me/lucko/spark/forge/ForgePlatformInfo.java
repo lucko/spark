@@ -22,6 +22,9 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.common.platform.PlatformInfo;
 
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.util.LogicalSidedProvider;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import net.minecraftforge.versions.mcp.MCPVersion;
 
@@ -50,5 +53,18 @@ public class ForgePlatformInfo implements PlatformInfo {
     @Override
     public String getMinecraftVersion() {
         return MCPVersion.getMCVersion();
+    }
+
+    @Override
+    public OnlineMode getOnlineMode() {
+        if (this.type == Type.SERVER) {
+            if (ServerLifecycleHooks.getCurrentServer().usesAuthentication()) {
+                return OnlineMode.ONLINE;
+            } else {
+                return OnlineMode.OFFLINE;
+            }
+        }
+
+        return OnlineMode.UNKNOWN;
     }
 }

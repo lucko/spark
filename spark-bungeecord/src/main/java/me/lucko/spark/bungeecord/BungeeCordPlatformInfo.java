@@ -50,4 +50,13 @@ public class BungeeCordPlatformInfo implements PlatformInfo {
     public String getMinecraftVersion() {
         return null;
     }
+
+    @Override
+    public OnlineMode getOnlineMode() {
+        if (this.proxy.getConfig().isOnlineMode()) {
+            return OnlineMode.ONLINE;
+        } else {
+            return OnlineMode.OFFLINE;
+        }
+    }
 }

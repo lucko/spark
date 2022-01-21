@@ -39,8 +39,12 @@ public interface PlatformInfo {
         return DATA_VERSION;
     }
 
+    default OnlineMode getOnlineMode() {
+        return OnlineMode.UNKNOWN;
+    }
+
     default Data toData() {
-        return new Data(getType(), getName(), getVersion(), getMinecraftVersion(), getSparkVersion());
+        return new Data(getType(), getName(), getVersion(), getMinecraftVersion(), getSparkVersion(), getOnlineMode());
     }
 
     enum Type {
@@ -59,19 +63,39 @@ public interface PlatformInfo {
         }
     }
 
+    enum OnlineMode {
+        UNKNOWN(PlatformMetadata.OnlineMode.UNKNOWN),
+        ONLINE(PlatformMetadata.OnlineMode.ONLINE),
+        OFFLINE(PlatformMetadata.OnlineMode.OFFLINE),
+        BUNGEE(PlatformMetadata.OnlineMode.BUNGEE),
+        VELOCITY(PlatformMetadata.OnlineMode.VELOCITY);
+
+        private final PlatformMetadata.OnlineMode onlineMode;
+
+        OnlineMode(PlatformMetadata.OnlineMode onlineMode) {
+            this.onlineMode = onlineMode;
+        }
+
+        public PlatformMetadata.OnlineMode toProto() {
+            return this.onlineMode;
+        }
+    }
+
     final class Data {
         private final Type type;
         private final String name;
         private final String version;
         private final String minecraftVersion;
         private final int sparkVersion;
+        private final OnlineMode onlineMode;
 
-        public Data(Type type, String name, String version, String minecraftVersion, int sparkVersion) {
+        public Data(Type type, String name, String version, String minecraftVersion, int sparkVersion, OnlineMode onlineMode) {
             this.type = type;
             this.name = name;
             this.version = version;
             this.minecraftVersion = minecraftVersion;
             this.sparkVersion = sparkVersion;
+            this.onlineMode = onlineMode;
         }
 
         public Type getType() {
@@ -94,12 +118,17 @@ public interface PlatformInfo {
             return this.sparkVersion;
         }
 
+        public OnlineMode getOnlineMode() {
+            return this.onlineMode;
+        }
+
         public PlatformMetadata toProto() {
             PlatformMetadata.Builder proto = PlatformMetadata.newBuilder()
                     .setType(this.type.toProto())
                     .setName(this.name)
                     .setVersion(this.version)
-                    .setSparkVersion(this.sparkVersion);
+                    .setSparkVersion(this.sparkVersion)
+                    .setOnlineMode(this.onlineMode.toProto());
 
             if (this.minecraftVersion != null) {
                 proto.setMinecraftVersion(this.minecraftVersion);

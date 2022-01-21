@@ -23,6 +23,7 @@ package me.lucko.spark.bukkit;
 import me.lucko.spark.common.platform.PlatformInfo;
 
 import org.bukkit.Server;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -74,5 +75,22 @@ public class BukkitPlatformInfo implements PlatformInfo {
         }
 
         return serverClass.getPackage().getName().split("\\.")[3];
+    }
+
+    @Override
+    public OnlineMode getOnlineMode() {
+        if (this.server.getOnlineMode()) {
+            return OnlineMode.ONLINE;
+        } else {
+            if (this.server.spigot().getPaperConfig().getBoolean("settings.velocity-support.online-mode")) {
+                return OnlineMode.VELOCITY;
+            }
+
+            if (this.server.spigot().getSpigotConfig().getBoolean("settings.bungeecord")) {
+                return OnlineMode.BUNGEE;
+            }
+
+            return OnlineMode.OFFLINE;
+        }
     }
 }

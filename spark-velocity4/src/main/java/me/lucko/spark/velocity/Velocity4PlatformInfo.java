@@ -50,4 +50,13 @@ public class Velocity4PlatformInfo implements PlatformInfo {
     public String getMinecraftVersion() {
         return null;
     }
+
+    @Override
+    public OnlineMode getOnlineMode() {
+        if (this.proxy.configuration().isOnlineMode()) {
+            return OnlineMode.ONLINE;
+        } else {
+            return OnlineMode.OFFLINE;
+        }
+    }
 }
