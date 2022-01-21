@@ -94,6 +94,7 @@ public class SparkPlatform {
     private final String viewerUrl;
     private final OkHttpClient httpClient;
     private final BytebinClient bytebinClient;
+    private final boolean disableResponseBroadcast;
     private final List<CommandModule> commandModules;
     private final List<Command> commands;
     private final ReentrantLock commandExecuteLock = new ReentrantLock(true);
@@ -117,6 +118,8 @@ public class SparkPlatform {
 
         this.httpClient = new OkHttpClient();
         this.bytebinClient = new BytebinClient(this.httpClient, bytebinUrl, "spark-plugin");
+
+        this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
 
         this.commandModules = ImmutableList.of(
                 new SamplerModule(),
@@ -214,6 +217,10 @@ public class SparkPlatform {
 
     public BytebinClient getBytebinClient() {
         return this.bytebinClient;
+    }
+
+    public boolean shouldBroadcastResponse() {
+        return !this.disableResponseBroadcast;
     }
 
     public List<Command> getCommands() {
