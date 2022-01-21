@@ -55,8 +55,10 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
         this.files.forEach((path, type) -> {
             try {
                 JsonElement json = load(path, type);
-                delete(json, this.hiddenPaths);
-                builder.put(path, json);
+                if (json != null) {
+                    delete(json, this.hiddenPaths);
+                    builder.put(path, json);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
