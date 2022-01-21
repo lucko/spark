@@ -82,11 +82,13 @@ public class BukkitPlatformInfo implements PlatformInfo {
         if (this.server.getOnlineMode()) {
             return OnlineMode.ONLINE;
         } else {
-            if (this.server.spigot().getPaperConfig().getBoolean("settings.velocity-support.online-mode")) {
+            if (this.server.spigot().getPaperConfig().getBoolean("settings.velocity-support.enabled")
+                    && this.server.spigot().getPaperConfig().getBoolean("settings.velocity-support.online-mode")) {
                 return OnlineMode.VELOCITY;
             }
 
-            if (this.server.spigot().getSpigotConfig().getBoolean("settings.bungeecord")) {
+            if (this.server.spigot().getSpigotConfig().getBoolean("settings.bungeecord")
+                    && this.server.spigot().getPaperConfig().getBoolean("settings.bungee-online-mode")) {
                 return OnlineMode.BUNGEE;
             }
 
