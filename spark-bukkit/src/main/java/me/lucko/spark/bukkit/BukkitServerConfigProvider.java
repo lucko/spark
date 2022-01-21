@@ -20,9 +20,8 @@
 
 package me.lucko.spark.bukkit;
 
-import co.aikar.timings.TimingsManager;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -33,12 +32,17 @@ import me.lucko.spark.common.platform.serverconfig.AbstractServerConfigProvider;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import co.aikar.timings.TimingsManager;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,22 +53,10 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
             .registerTypeAdapter(MemorySection.class, (JsonSerializer<MemorySection>) (obj, type, ctx) -> ctx.serialize(obj.getValues(false)))
             .create();
 
-    private static final Map<String, FileType> FILES = ImmutableMap.<String, FileType>builder()
-            .put("server.properties", FileType.PROPERTIES)
-            .put("bukkit.yml", FileType.YAML)
-            .put("spigot.yml", FileType.YAML)
-            .put("paper.yml", FileType.YAML)
-            .put("pufferfish.yml", FileType.YAML)
-            .put("purpur.yml", FileType.YAML)
-            .build();
-
-    // todo: make configurable?
-    private static final List<String> HIDDEN_PATHS = ImmutableList.<String>builder()
-            .addAll(TimingsManager.hiddenConfigs)
-            .add("database")
-            .add("settings.bungeecord-addresses")
-            .add("settings.velocity-support.secret")
-            .build();
+    /** A map of provided files and their type */
+    private static final Map<String, FileType> FILES;
+    /** A collection of paths to be excluded from the files */
+    private static final Collection<String> HIDDEN_PATHS;
 
     public BukkitServerConfigProvider() {
         super(FILES, HIDDEN_PATHS);
@@ -77,36 +69,81 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
             return null;
         }
 
-        switch (type) {
-            case PROPERTIES: {
-                try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
-                    Properties properties = new Properties();
-                    properties.load(reader);
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+            Map<String, Object> values;
 
-                    Map<String, Object> values = new HashMap<>();
-                    for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                        values.put(entry.getKey().toString(), entry.getValue());
+            if (type == FileType.PROPERTIES) {
+                Properties properties = new Properties();
+                properties.load(reader);
+
+                values = new HashMap<>();
+                properties.forEach((k, v) -> {
+                    String key = k.toString();
+                    String value = v.toString();
+
+                    if ("true".equals(value) || "false".equals(value)) {
+                        values.put(key, Boolean.parseBoolean(value));
+                    } else if (value.matches("\\d+")) {
+                        values.put(key, Integer.parseInt(value));
+                    } else {
+                        values.put(key, value);
                     }
-
-                    return GSON.toJsonTree(values);
-                }
-            }
-            case YAML: {
-                try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
-                    YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
-                    Map<String, Object> values = config.getValues(false);
-                    return GSON.toJsonTree(values);
-                }
-            }
-            default: {
+                });
+            } else if (type == FileType.YAML) {
+                YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
+                values = config.getValues(false);
+            } else {
                 throw new IllegalArgumentException("Unknown file type: " + type);
             }
+
+            return GSON.toJsonTree(values);
         }
     }
 
     enum FileType {
         PROPERTIES,
         YAML
+    }
+
+    static {
+        ImmutableMap.Builder<String, FileType> files = ImmutableMap.<String, FileType>builder()
+                .put("server.properties", FileType.PROPERTIES)
+                .put("bukkit.yml", FileType.YAML)
+                .put("spigot.yml", FileType.YAML)
+                .put("paper.yml", FileType.YAML)
+                .put("purpur.yml", FileType.YAML);
+
+        for (String config : getSystemPropertyList("spark.serverconfigs.extra")) {
+            files.put(config, FileType.YAML);
+        }
+
+        ImmutableSet.Builder<String> hiddenPaths = ImmutableSet.<String>builder()
+                .add("database")
+                .add("settings.bungeecord-addresses")
+                .add("settings.velocity-support.secret")
+                .add("server-ip")
+                .add("motd")
+                .add("resource-pack")
+                .addAll(getTimingsHiddenConfigs())
+                .addAll(getSystemPropertyList("spark.serverconfigs.hiddenpaths"));
+
+        FILES = files.build();
+        HIDDEN_PATHS = hiddenPaths.build();
+    }
+
+    private static List<String> getSystemPropertyList(String property) {
+        String value = System.getProperty(property);
+        return value == null
+                ? Collections.emptyList()
+                : Arrays.asList(value.split(","));
+    }
+
+    private static List<String> getTimingsHiddenConfigs() {
+        try {
+            return TimingsManager.hiddenConfigs;
+        } catch (NoClassDefFoundError e) {
+            return Collections.emptyList();
+        }
     }
 
 }
