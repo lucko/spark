@@ -26,9 +26,9 @@ import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,9 +41,9 @@ import java.util.Map;
  */
 public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements ServerConfigProvider {
     private final Map<String, T> files;
-    private final List<String> hiddenPaths;
+    private final Collection<String> hiddenPaths;
 
-    protected AbstractServerConfigProvider(Map<String, T> files, List<String> hiddenPaths) {
+    protected AbstractServerConfigProvider(Map<String, T> files, Collection<String> hiddenPaths) {
         this.files = files;
         this.hiddenPaths = hiddenPaths;
     }
@@ -55,8 +55,10 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
         this.files.forEach((path, type) -> {
             try {
                 JsonElement json = load(path, type);
-                delete(json, this.hiddenPaths);
-                builder.put(path, json);
+                if (json != null) {
+                    delete(json, this.hiddenPaths);
+                    builder.put(path, json);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -81,7 +83,7 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
      * @param json the json element
      * @param paths the paths to delete
      */
-    private static void delete(JsonElement json, List<String> paths) {
+    private static void delete(JsonElement json, Collection<String> paths) {
         for (String path : paths) {
             Deque<String> pathDeque = new LinkedList<>(Arrays.asList(path.split("\\.")));
             delete(json, pathDeque);
