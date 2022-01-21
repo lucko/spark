@@ -88,25 +88,19 @@ public class CommandResponseHandler {
     }
 
     public void broadcast(Component message) {
-        if (platform.getDisableResponseBroadcast())
-        {
-            reply(message);
-        }
-        else
-        {
+        if (this.platform.shouldBroadcastResponse()) {
             allSenders(sender -> sender.sendMessage(message));
+        } else {
+            reply(message);
         }
     }
 
     public void broadcast(Iterable<Component> message) {
-        if (platform.getDisableResponseBroadcast())
-        {
-            reply(message);
-        }
-        else
-        {
+        if (this.platform.shouldBroadcastResponse()) {
             Component joinedMsg = Component.join(JoinConfiguration.separator(Component.newline()), message);
             allSenders(sender -> sender.sendMessage(joinedMsg));
+        } else {
+            reply(message);
         }
     }
 

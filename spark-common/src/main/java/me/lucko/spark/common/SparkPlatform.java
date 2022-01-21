@@ -206,8 +206,8 @@ public class SparkPlatform {
         return this.bytebinClient;
     }
 
-    public boolean getDisableResponseBroadcast() {
-        return this.disableResponseBroadcast;
+    public boolean shouldBroadcastResponse() {
+        return !this.disableResponseBroadcast;
     }
 
     public List<Command> getCommands() {
