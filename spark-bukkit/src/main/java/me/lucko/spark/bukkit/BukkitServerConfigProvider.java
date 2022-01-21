@@ -83,9 +83,9 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
                     Properties properties = new Properties();
                     properties.load(reader);
 
-                    Map<String, String> values = new HashMap<>();
+                    Map<String, Object> values = new HashMap<>();
                     for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                        values.put(entry.getKey().toString(), entry.getValue().toString());
+                        values.put(entry.getKey().toString(), entry.getValue());
                     }
 
                     return GSON.toJsonTree(values);
