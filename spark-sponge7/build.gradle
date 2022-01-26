@@ -35,6 +35,7 @@ shadowJar {
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+	exclude 'META-INF/versions/**'
 }
 
 artifacts {
