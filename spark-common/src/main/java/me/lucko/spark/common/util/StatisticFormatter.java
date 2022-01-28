@@ -38,7 +38,8 @@ import static net.kyori.adventure.text.format.NamedTextColor.YELLOW;
 public enum StatisticFormatter {
     ;
 
-    private static final String BAR_CHARACTER = "|";
+    private static final String BAR_TRUE_CHARACTER = "┃";
+    private static final String BAR_FALSE_CHARACTER = "╻";
 
     public static TextComponent formatTps(double tps) {
         TextColor color;
@@ -124,13 +125,13 @@ public enum StatisticFormatter {
         int usedChars = (int) ((used * length) / max);
         int committedChars = (int) ((committed * length) / max);
 
-        TextComponent.Builder line = text().content(Strings.repeat(BAR_CHARACTER, usedChars)).color(YELLOW);
+        TextComponent.Builder line = text().content(Strings.repeat(BAR_TRUE_CHARACTER, usedChars)).color(YELLOW);
         if (committedChars > usedChars) {
-            line.append(text(Strings.repeat(BAR_CHARACTER, (committedChars - usedChars) - 1), GRAY));
-            line.append(Component.text(BAR_CHARACTER, RED));
+            line.append(text(Strings.repeat(BAR_FALSE_CHARACTER, (committedChars - usedChars) - 1), GRAY));
+            line.append(Component.text(BAR_FALSE_CHARACTER, RED));
         }
         if (length > committedChars) {
-            line.append(text(Strings.repeat(BAR_CHARACTER, (length - committedChars)), GRAY));
+            line.append(text(Strings.repeat(BAR_FALSE_CHARACTER, (length - committedChars)), GRAY));
         }
 
         return text()
@@ -153,18 +154,18 @@ public enum StatisticFormatter {
         int collectionUsedChars = (int) ((collectionUsed * length) / max);
         int committedChars = (int) ((committed * length) / max);
 
-        TextComponent.Builder line = text().content(Strings.repeat(BAR_CHARACTER, collectionUsedChars)).color(YELLOW);
+        TextComponent.Builder line = text().content(Strings.repeat(BAR_TRUE_CHARACTER, collectionUsedChars)).color(YELLOW);
 
         if (usedChars > collectionUsedChars) {
-            line.append(Component.text(BAR_CHARACTER, RED));
-            line.append(text(Strings.repeat(BAR_CHARACTER, (usedChars - collectionUsedChars) - 1), YELLOW));
+            line.append(Component.text(BAR_TRUE_CHARACTER, RED));
+            line.append(text(Strings.repeat(BAR_TRUE_CHARACTER, (usedChars - collectionUsedChars) - 1), YELLOW));
         }
         if (committedChars > usedChars) {
-            line.append(text(Strings.repeat(BAR_CHARACTER, (committedChars - usedChars) - 1), GRAY));
-            line.append(Component.text(BAR_CHARACTER, YELLOW));
+            line.append(text(Strings.repeat(BAR_FALSE_CHARACTER, (committedChars - usedChars) - 1), GRAY));
+            line.append(Component.text(BAR_FALSE_CHARACTER, YELLOW));
         }
         if (length > committedChars) {
-            line.append(text(Strings.repeat(BAR_CHARACTER, (length - committedChars)), GRAY));
+            line.append(text(Strings.repeat(BAR_FALSE_CHARACTER, (length - committedChars)), GRAY));
         }
 
         return text()
@@ -179,8 +180,8 @@ public enum StatisticFormatter {
         int freeChars = length - usedChars;
         return text()
                 .append(text("[", DARK_GRAY))
-                .append(text(Strings.repeat(BAR_CHARACTER, usedChars), YELLOW))
-                .append(text(Strings.repeat(BAR_CHARACTER, freeChars), GRAY))
+                .append(text(Strings.repeat(BAR_TRUE_CHARACTER, usedChars), YELLOW))
+                .append(text(Strings.repeat(BAR_FALSE_CHARACTER, freeChars), GRAY))
                 .append(text("]", DARK_GRAY))
                 .build();
     }
