@@ -44,6 +44,10 @@ public enum DiskUsage {
     }
 
     public static long getUsed() {
+        if (FILE_STORE == null) {
+            return 0;
+        }
+
         try {
             long total = FILE_STORE.getTotalSpace();
             return total - FILE_STORE.getUsableSpace();
@@ -53,6 +57,10 @@ public enum DiskUsage {
     }
 
     public static long getTotal() {
+        if (FILE_STORE == null) {
+            return 0;
+        }
+
         try {
             return FILE_STORE.getTotalSpace();
         } catch (IOException e) {
