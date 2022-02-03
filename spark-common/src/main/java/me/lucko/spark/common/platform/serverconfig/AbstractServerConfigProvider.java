@@ -99,7 +99,7 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
         }
 
         JsonObject jsonObject = json.getAsJsonObject();
-        String member = path.removeFirst().replace("\\.", ".");
+        String member = path.removeFirst().replace("<dot>", ".");
 
         if (!jsonObject.has(member)) {
             return;

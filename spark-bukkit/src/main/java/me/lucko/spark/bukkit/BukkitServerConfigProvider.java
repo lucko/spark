@@ -124,7 +124,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
                 .add("server-ip")
                 .add("motd")
                 .add("resource-pack")
-                .add("rcon\\.password")
+                .add("rcon<dot>password")
                 .addAll(getTimingsHiddenConfigs())
                 .addAll(getSystemPropertyList("spark.serverconfigs.hiddenpaths"));
 
