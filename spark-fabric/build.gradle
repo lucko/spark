@@ -67,7 +67,7 @@ processResources {
 }
 
 shadowJar {
-    archiveFileName = 'spark-fabric-dev.jar'
+    archiveFileName = "spark-fabric-${project.pluginVersion}-dev.jar"
     configurations = [project.configurations.shade]
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
@@ -89,7 +89,7 @@ task remappedShadowJar(type: RemapJarTask) {
     dependsOn tasks.shadowJar
     input = tasks.shadowJar.archiveFile
     addNestedDependencies = true
-    archiveFileName = 'spark-fabric.jar'
+    archiveFileName = "spark-${project.pluginVersion}-fabric.jar"
 }
 
 tasks.assemble.dependsOn tasks.remappedShadowJar

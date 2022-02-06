@@ -25,7 +25,7 @@ blossom {
 }
 
 shadowJar {
-    archiveName = 'spark-velocity4.jar'
+    archiveName = "spark-${project.pluginVersion}-velocity4.jar"
 
     dependencies {
         exclude(dependency('net.kyori:^(?!adventure-text-feature-pagination).+$'))

@@ -49,7 +49,7 @@ processResources {
 }
 
 shadowJar {
-    archiveName = 'spark-forge.jar'
+    archiveName = "spark-${project.pluginVersion}-forge.jar"
     configurations = [project.configurations.shade]
 
     relocate 'okio', 'me.lucko.spark.lib.okio'

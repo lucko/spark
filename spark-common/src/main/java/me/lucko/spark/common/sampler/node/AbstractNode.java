@@ -1,7 +1,6 @@
 /*
  * This file is part of spark.
  *
- *  Copyright (C) Albert Pham <http://www.sk89q.com>
  *  Copyright (c) lucko (Luck) <luck@lucko.me>
  *  Copyright (c) contributors
  *

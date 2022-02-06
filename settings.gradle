@@ -1,6 +1,5 @@
 pluginManagement {
     repositories {
-        jcenter()
         maven {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
@@ -22,6 +21,5 @@ include (
         'spark-forge',
         'spark-fabric',
         'spark-nukkit',
-        'spark-waterdog',
-        'spark-universal'
+        'spark-waterdog'
 )

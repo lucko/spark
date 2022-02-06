@@ -2,6 +2,10 @@ plugins {
     id 'com.google.protobuf' version '0.8.16'
 }
 
+license {
+    exclude '**/sampler/async/jfr/**'
+}
+
 dependencies {
     api project(':spark-api')
     implementation 'com.github.jvm-profiling-tools:async-profiler:v2.5'

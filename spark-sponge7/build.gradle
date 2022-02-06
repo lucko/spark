@@ -20,7 +20,7 @@ blossom {
 }
 
 shadowJar {
-    archiveFileName = 'spark-sponge7.jar'
+    archiveFileName = "spark-${project.pluginVersion}-sponge7.jar"
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
