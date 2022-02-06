@@ -324,7 +324,7 @@ public class SamplerModule implements CommandModule {
                 );
 
                 platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the results. Attempting to save to disk instead.", RED));
                 e.printStackTrace();
                 saveToFile = true;

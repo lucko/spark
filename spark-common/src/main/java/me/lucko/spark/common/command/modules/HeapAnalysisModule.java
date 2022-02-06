@@ -111,7 +111,7 @@ public class HeapAnalysisModule implements CommandModule {
                 );
 
                 platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the data. Attempting to save to disk instead.", RED));
                 e.printStackTrace();
                 saveToFile = true;
