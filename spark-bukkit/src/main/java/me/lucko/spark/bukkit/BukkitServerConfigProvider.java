@@ -84,7 +84,11 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
                     if ("true".equals(value) || "false".equals(value)) {
                         values.put(key, Boolean.parseBoolean(value));
                     } else if (value.matches("\\d+")) {
-                        values.put(key, Integer.parseInt(value));
+                        try {
+                            values.put(key, Long.parseLong(value));
+                        } catch (NumberFormatException e) {
+                            values.put(key, value);
+                        }
                     } else {
                         values.put(key, value);
                     }
