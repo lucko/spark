@@ -26,6 +26,7 @@ import me.lucko.spark.common.sampler.node.ThreadNode;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -87,8 +88,22 @@ public interface ClassSourceLookup {
      */
     interface ByUrl extends ClassSourceLookup {
 
-        default String identifyUrl(URL url) throws URISyntaxException {
-            return url.getProtocol().equals("file") ? identifyFile(Paths.get(url.toURI())) : null;
+        default String identifyUrl(URL url) throws URISyntaxException, MalformedURLException {
+            Path path = null;
+
+            String protocol = url.getProtocol();
+            if (protocol.equals("file")) {
+                path = Paths.get(url.toURI());
+            } else if (protocol.equals("jar")) {
+                URL innerUrl = new URL(url.getPath());
+                path = Paths.get(innerUrl.getPath().split("!")[0]);
+            }
+
+            if (path != null) {
+                return identifyFile(path.toAbsolutePath().normalize());
+            }
+
+            return null;
         }
 
         default String identifyFile(Path path) {
@@ -123,7 +138,7 @@ public interface ClassSourceLookup {
      */
     class ByCodeSource implements ClassSourceLookup, ByUrl {
         @Override
-        public @Nullable String identify(Class<?> clazz) throws URISyntaxException {
+        public @Nullable String identify(Class<?> clazz) throws URISyntaxException, MalformedURLException {
             ProtectionDomain protectionDomain = clazz.getProtectionDomain();
             if (protectionDomain == null) {
                 return null;
@@ -148,12 +163,12 @@ public interface ClassSourceLookup {
 
     static Visitor createVisitor(ClassSourceLookup lookup) {
         if (lookup == ClassSourceLookup.NO_OP) {
-            return NoOpVistitor.INSTANCE; // don't bother!
+            return NoOpVisitor.INSTANCE; // don't bother!
         }
         return new VisitorImpl(lookup);
     }
 
-    enum NoOpVistitor implements Visitor {
+    enum NoOpVisitor implements Visitor {
         INSTANCE;
 
         @Override
