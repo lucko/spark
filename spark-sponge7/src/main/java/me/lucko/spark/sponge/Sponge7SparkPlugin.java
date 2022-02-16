@@ -30,6 +30,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 
+import me.lucko.spark.common.util.ClassSourceLookup;
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
@@ -143,6 +144,11 @@ public class Sponge7SparkPlugin implements SparkPlugin {
     @Override
     public TickHook createTickHook() {
         return new Sponge7TickHook(this);
+    }
+
+    @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new Sponge7ClassSourceLookup(this.game);
     }
 
     @Override
