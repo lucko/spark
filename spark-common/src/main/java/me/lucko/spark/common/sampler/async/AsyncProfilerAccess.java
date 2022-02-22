@@ -20,8 +20,8 @@
 
 package me.lucko.spark.common.sampler.async;
 
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ImmutableTable;
+import com.google.common.collect.Table;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.util.TemporaryFiles;
@@ -108,18 +108,20 @@ public enum AsyncProfilerAccess {
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
         String arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
 
-        Multimap<String, String> supported = ImmutableSetMultimap.<String, String>builder()
-                .put("linux", "amd64")
-                .put("macosx", "amd64")
-                .put("macosx", "aarch64")
+        Table<String, String, String> supported = ImmutableTable.<String, String, String>builder()
+                .put("linux", "amd64", "linux/amd64")
+                .put("linux", "aarch64", "linux/aarch64")
+                .put("macosx", "amd64", "macos")
+                .put("macosx", "aarch64", "macos")
                 .build();
 
-        if (!supported.containsEntry(os, arch)) {
+        String libPath = supported.get(os, arch);
+        if (libPath == null) {
             throw new UnsupportedSystemException(os, arch);
         }
 
         // extract the profiler binary from the spark jar file
-        String resource = "spark/" + os + "/libasyncProfiler.so";
+        String resource = "spark/" + libPath + "/libasyncProfiler.so";
         URL profilerResource = AsyncProfilerAccess.class.getClassLoader().getResource(resource);
         if (profilerResource == null) {
             throw new IllegalStateException("Could not find " + resource + " in spark jar file");
