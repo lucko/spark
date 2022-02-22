@@ -28,6 +28,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonSerializer;
 
 import me.lucko.spark.common.platform.serverconfig.AbstractServerConfigProvider;
+import me.lucko.spark.common.platform.serverconfig.PropertiesFileReader;
 
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -43,10 +44,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 public class BukkitServerConfigProvider extends AbstractServerConfigProvider<BukkitServerConfigProvider.FileType> {
     private static final Gson GSON = new GsonBuilder()
@@ -73,26 +72,8 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
             Map<String, Object> values;
 
             if (type == FileType.PROPERTIES) {
-                Properties properties = new Properties();
-                properties.load(reader);
-
-                values = new HashMap<>();
-                properties.forEach((k, v) -> {
-                    String key = k.toString();
-                    String value = v.toString();
-
-                    if ("true".equals(value) || "false".equals(value)) {
-                        values.put(key, Boolean.parseBoolean(value));
-                    } else if (value.matches("\\d+")) {
-                        try {
-                            values.put(key, Long.parseLong(value));
-                        } catch (NumberFormatException e) {
-                            values.put(key, value);
-                        }
-                    } else {
-                        values.put(key, value);
-                    }
-                });
+                PropertiesFileReader propertiesReader = new PropertiesFileReader(reader);
+                values = propertiesReader.readProperties();
             } else if (type == FileType.YAML) {
                 YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
                 values = config.getValues(false);
@@ -129,6 +110,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
                 .add("motd")
                 .add("resource-pack")
                 .add("rcon<dot>password")
+                .add("level-seed")
                 .addAll(getTimingsHiddenConfigs())
                 .addAll(getSystemPropertyList("spark.serverconfigs.hiddenpaths"));
 
