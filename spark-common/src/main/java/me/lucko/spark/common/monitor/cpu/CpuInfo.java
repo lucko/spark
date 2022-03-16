@@ -20,13 +20,8 @@
 
 package me.lucko.spark.common.monitor.cpu;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import me.lucko.spark.common.util.LinuxProc;
+
 import java.util.regex.Pattern;
 
 /**
@@ -43,8 +38,7 @@ public enum CpuInfo {
      * @return the cpu model
      */
     public static String queryCpuModel() {
-        List<String> cpuInfo = readFile("/proc/cpuinfo");
-        for (String line : cpuInfo) {
+        for (String line : LinuxProc.CPUINFO.read()) {
             String[] splitLine = SPACE_COLON_SPACE_PATTERN.split(line);
 
             if (splitLine[0].equals("model name") || splitLine[0].equals("Processor")) {
@@ -52,18 +46,6 @@ public enum CpuInfo {
             }
         }
         return "";
-    }
-
-    private static List<String> readFile(String file) {
-        Path path = Paths.get(file);
-        if (Files.isReadable(path)) {
-            try {
-                return Files.readAllLines(path, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                // ignore
-            }
-        }
-        return new ArrayList<>();
     }
 
 }
