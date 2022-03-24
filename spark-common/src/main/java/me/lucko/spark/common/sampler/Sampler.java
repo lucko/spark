@@ -28,7 +28,6 @@ import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -68,6 +67,6 @@ public interface Sampler {
     CompletableFuture<Sampler> getFuture();
 
     // Methods used to export the sampler data to the web viewer.
-    SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
+    SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
 
 }

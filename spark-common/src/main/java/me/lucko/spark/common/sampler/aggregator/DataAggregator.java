@@ -23,7 +23,7 @@ package me.lucko.spark.common.sampler.aggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * Aggregates sampling data.
@@ -35,7 +35,7 @@ public interface DataAggregator {
      *
      * @return the output data
      */
-    Map<String, ThreadNode> getData();
+    List<ThreadNode> exportData();
 
     /**
      * Gets metadata about the data aggregator instance.

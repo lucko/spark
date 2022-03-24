@@ -28,17 +28,34 @@ import me.lucko.spark.proto.SparkSamplerProtos;
 public final class ThreadNode extends AbstractNode {
 
     /**
-     * The name of this thread
+     * The name of this thread / thread group
      */
-    private final String threadName;
+    private final String name;
 
-    public ThreadNode(String threadName) {
-        this.threadName = threadName;
+    /**
+     * The label used to describe this thread in the viewer
+     */
+    public String label;
+
+    public ThreadNode(String name) {
+        this.name = name;
+    }
+
+    public String getThreadLabel() {
+        return this.label != null ? this.label : this.name;
+    }
+
+    public String getThreadGroup() {
+        return this.name;
+    }
+
+    public void setThreadLabel(String label) {
+        this.label = label;
     }
 
     public SparkSamplerProtos.ThreadNode toProto(MergeMode mergeMode) {
         SparkSamplerProtos.ThreadNode.Builder proto = SparkSamplerProtos.ThreadNode.newBuilder()
-                .setName(this.threadName)
+                .setName(getThreadLabel())
                 .setTime(getTotalTime());
 
         for (StackTraceNode child : exportChildren(mergeMode)) {

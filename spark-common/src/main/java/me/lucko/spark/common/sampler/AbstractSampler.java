@@ -31,7 +31,6 @@ import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -127,15 +126,15 @@ public abstract class AbstractSampler implements Sampler {
         proto.setMetadata(metadata);
     }
 
-    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
-        List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(dataAggregator.getData().entrySet());
+    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, Comparator<ThreadNode> outputOrder, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+        List<ThreadNode> data = dataAggregator.exportData();
         data.sort(outputOrder);
 
         ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
 
-        for (Map.Entry<String, ThreadNode> entry : data) {
-            proto.addThreads(entry.getValue().toProto(mergeMode));
-            classSourceVisitor.visit(entry.getValue());
+        for (ThreadNode entry : data) {
+            proto.addThreads(entry.toProto(mergeMode));
+            classSourceVisitor.visit(entry);
         }
 
         if (classSourceVisitor.hasMappings()) {
