@@ -90,6 +90,9 @@ public interface ThreadGrouper {
         @Override
         public String getLabel(String group) {
             int count = this.seen.getOrDefault(group, Collections.emptySet()).size();
+            if (count == 0) {
+                return group;
+            }
             return group + " (x" + count + ")";
         }
 
