@@ -67,10 +67,24 @@ public enum MemoryInfo {
     /* Physical Memory */
 
     public static long getUsedPhysicalMemory() {
-        return BEAN.getTotalPhysicalMemorySize() - getAvailablePhysicalMemory();
+        return getTotalPhysicalMemory() - getAvailablePhysicalMemory();
     }
 
     public static long getTotalPhysicalMemory() {
+        // try to read from /proc/meminfo on linux systems
+        for (String line : LinuxProc.MEMINFO.read()) {
+            Matcher matcher = PROC_MEMINFO_VALUE.matcher(line);
+            if (matcher.matches()) {
+                String label = matcher.group(1);
+                long value = Long.parseLong(matcher.group(2)) * 1024; // kB -> B
+
+                if (label.equals("MemTotal")) {
+                    return value;
+                }
+            }
+        }
+
+        // fallback to JVM measure
         return BEAN.getTotalPhysicalMemorySize();
     }
 
