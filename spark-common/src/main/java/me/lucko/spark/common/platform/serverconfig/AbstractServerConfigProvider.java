@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * Abstract implementation of {@link ServerConfigProvider}.
  *
- * <p>THis implementation is able to delete hidden paths from
+ * <p>This implementation is able to delete hidden paths from
  * the configurations before they are sent to the viewer.</p>
  *
  * @param <T> the file type

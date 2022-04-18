@@ -44,7 +44,12 @@ public enum LinuxProc {
     /**
      * Information about the system memory.
      */
-    MEMINFO("/proc/meminfo");
+    MEMINFO("/proc/meminfo"),
+
+    /**
+     * Information about the system network usage.
+     */
+    NET_DEV("/proc/net/dev");
 
     private final Path path;
 

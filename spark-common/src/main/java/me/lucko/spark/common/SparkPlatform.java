@@ -40,6 +40,7 @@ import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
+import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
@@ -166,6 +167,7 @@ public class SparkPlatform {
             this.pingStatistics.start();
         }
         CpuMonitor.ensureMonitoring();
+        NetworkMonitor.ensureMonitoring();
 
         // poll startup GC statistics after plugins & the world have loaded
         this.plugin.executeAsync(() -> {

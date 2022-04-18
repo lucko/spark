@@ -26,9 +26,10 @@ import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.disk.DiskUsage;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.memory.MemoryInfo;
+import me.lucko.spark.common.monitor.net.NetworkInterfaceAverages;
+import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.proto.SparkProtos.PlatformStatistics;
 import me.lucko.spark.proto.SparkProtos.SystemStatistics;
 
@@ -108,6 +109,17 @@ public class PlatformStatisticsProvider {
                         .build()
         ));
 
+        Map<String, NetworkInterfaceAverages> networkInterfaceStats = NetworkMonitor.systemAverages();
+        networkInterfaceStats.forEach((name, statistics) -> builder.putNet(
+                name,
+                SystemStatistics.NetInterface.newBuilder()
+                        .setRxBytesPerSecond(statistics.rxBytesPerSecond().toProto())
+                        .setRxPacketsPerSecond(statistics.rxPacketsPerSecond().toProto())
+                        .setTxBytesPerSecond(statistics.txBytesPerSecond().toProto())
+                        .setTxPacketsPerSecond(statistics.txPacketsPerSecond().toProto())
+                        .build()
+        ));
+
         return builder.build();
     }
 
@@ -149,8 +161,8 @@ public class PlatformStatisticsProvider {
             );
             if (tickStatistics.isDurationSupported()) {
                 builder.setMspt(PlatformStatistics.Mspt.newBuilder()
-                        .setLast1M(rollingAverageValues(tickStatistics.duration1Min()))
-                        .setLast5M(rollingAverageValues(tickStatistics.duration5Min()))
+                        .setLast1M(tickStatistics.duration1Min().toProto())
+                        .setLast5M(tickStatistics.duration5Min().toProto())
                         .build()
                 );
             }
@@ -159,22 +171,12 @@ public class PlatformStatisticsProvider {
         PingStatistics pingStatistics = this.platform.getPingStatistics();
         if (pingStatistics != null && pingStatistics.getPingAverage().getSamples() != 0) {
             builder.setPing(PlatformStatistics.Ping.newBuilder()
-                    .setLast15M(rollingAverageValues(pingStatistics.getPingAverage()))
+                    .setLast15M(pingStatistics.getPingAverage().toProto())
                     .build()
             );
         }
 
         return builder.build();
-    }
-
-    private static PlatformStatistics.RollingAverageValues rollingAverageValues(RollingAverage rollingAverage) {
-        return PlatformStatistics.RollingAverageValues.newBuilder()
-                .setMean(rollingAverage.mean())
-                .setMax(rollingAverage.max())
-                .setMin(rollingAverage.min())
-                .setMedian(rollingAverage.median())
-                .setPercentile95(rollingAverage.percentile95th())
-                .build();
     }
 
 }

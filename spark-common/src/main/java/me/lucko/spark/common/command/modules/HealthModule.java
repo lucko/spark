@@ -29,6 +29,9 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.disk.DiskUsage;
+import me.lucko.spark.common.monitor.net.Direction;
+import me.lucko.spark.common.monitor.net.NetworkInterfaceAverages;
+import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PingSummary;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
@@ -45,6 +48,7 @@ import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -81,8 +85,9 @@ public class HealthModule implements CommandModule {
         consumer.accept(Command.builder()
                 .aliases("healthreport", "health", "ht")
                 .argumentUsage("memory", null)
+                .argumentUsage("network", null)
                 .executor(HealthModule::healthReport)
-                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--memory"))
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--memory", "--network"))
                 .build()
         );
     }
@@ -196,6 +201,8 @@ public class HealthModule implements CommandModule {
         if (arguments.boolFlag("memory")) {
             addDetailedMemoryStats(report, memoryMXBean);
         }
+
+        addNetworkStats(report, arguments.boolFlag("network"));
 
         addDiskStats(report);
 
@@ -348,6 +355,48 @@ public class HealthModule implements CommandModule {
                         .build()
                 );
             }
+            report.add(empty());
+        }
+    }
+
+    private static void addNetworkStats(List<Component> report, boolean detailed) {
+        List<Component> averagesReport = new LinkedList<>();
+
+        for (Map.Entry<String, NetworkInterfaceAverages> ent : NetworkMonitor.systemAverages().entrySet()) {
+            String interfaceName = ent.getKey();
+            NetworkInterfaceAverages averages = ent.getValue();
+
+            for (Direction direction : Direction.values()) {
+                long bytesPerSec = (long) averages.bytesPerSecond(direction).mean();
+                long packetsPerSec = (long) averages.packetsPerSecond(direction).mean();
+
+                if (detailed || bytesPerSec > 0 || packetsPerSec > 0) {
+                    averagesReport.add(text()
+                            .color(GRAY)
+                            .content("    ")
+                            .append(FormatUtil.formatBytes(bytesPerSec, GREEN, "/s"))
+                            .append(text(" / "))
+                            .append(text(String.format("%,d", packetsPerSec), WHITE))
+                            .append(text(" pps "))
+                            .append(text().color(DARK_GRAY)
+                                    .append(text('('))
+                                    .append(text(interfaceName + " " + direction.abbrev(), WHITE))
+                                    .append(text(')'))
+                            )
+                            .build()
+                    );
+                }
+            }
+        }
+
+        if (!averagesReport.isEmpty()) {
+            report.add(text()
+                    .append(text(">", DARK_GRAY, BOLD))
+                    .append(space())
+                    .append(text("Network usage: (system, last 15m)", GOLD))
+                    .build()
+            );
+            report.addAll(averagesReport);
             report.add(empty());
         }
     }

@@ -34,13 +34,14 @@ import java.util.concurrent.TimeUnit;
  * Provides statistics for player ping RTT to the server.
  */
 public final class PingStatistics implements Runnable, AutoCloseable {
-    private static final int WINDOW_SIZE_SECONDS = (int) TimeUnit.MINUTES.toSeconds(15);
     private static final int QUERY_RATE_SECONDS = 10;
+    private static final int WINDOW_SIZE_SECONDS = (int) TimeUnit.MINUTES.toSeconds(15); // 900
+    private static final int WINDOW_SIZE = WINDOW_SIZE_SECONDS / QUERY_RATE_SECONDS; // 90
 
     /** The platform function that provides player ping times */
     private final PlayerPingProvider provider;
     /** Rolling average of the median ping across all players */
-    private final RollingAverage rollingAverage = new RollingAverage(WINDOW_SIZE_SECONDS / QUERY_RATE_SECONDS);
+    private final RollingAverage rollingAverage = new RollingAverage(WINDOW_SIZE);
 
     /** The scheduler task that polls pings and calculates the rolling average */
     private ScheduledFuture<?> future;

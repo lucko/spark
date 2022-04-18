@@ -31,6 +31,7 @@ message SystemStatistics {
   Os os = 5;
   Java java = 6;
   int64 uptime = 7;
+  map<string, NetInterface> net = 8;
 
   message Cpu {
     int32 threads = 1;
@@ -77,6 +78,13 @@ message SystemStatistics {
     string vendor_version = 3;
     string vm_args = 4;
   }
+
+  message NetInterface {
+    RollingAverageValues rx_bytes_per_second = 1;
+    RollingAverageValues tx_bytes_per_second = 2;
+    RollingAverageValues rx_packets_per_second = 3;
+    RollingAverageValues tx_packets_per_second = 4;
+  }
 }
 
 message PlatformStatistics {
@@ -116,14 +124,14 @@ message PlatformStatistics {
   message Ping {
     RollingAverageValues last15m = 1;
   }
+}
 
-  message RollingAverageValues {
-    double mean = 1;
-    double max = 2;
-    double min = 3;
-    double median = 4;
-    double percentile95 = 5;
-  }
+message RollingAverageValues {
+  double mean = 1;
+  double max = 2;
+  double min = 3;
+  double median = 4;
+  double percentile95 = 5;
 }
 
 message CommandSenderMetadata {
