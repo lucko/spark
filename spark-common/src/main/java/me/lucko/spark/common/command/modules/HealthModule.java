@@ -48,6 +48,7 @@ import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -376,7 +377,7 @@ public class HealthModule implements CommandModule {
                             .content("    ")
                             .append(FormatUtil.formatBytes(bytesPerSec, GREEN, "/s"))
                             .append(text(" / "))
-                            .append(text(String.format("%,d", packetsPerSec), WHITE))
+                            .append(text(String.format(Locale.ENGLISH, "%,d", packetsPerSec), WHITE))
                             .append(text(" pps "))
                             .append(text().color(DARK_GRAY)
                                     .append(text('('))

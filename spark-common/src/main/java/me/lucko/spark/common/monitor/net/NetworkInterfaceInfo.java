@@ -200,7 +200,7 @@ public final class NetworkInterfaceInfo {
         }
     }
 
-    private static final Pattern PROC_NET_DEV_PATTERN = Pattern.compile("^\\s+(\\w+):([\\d\\s]+)$");
+    private static final Pattern PROC_NET_DEV_PATTERN = Pattern.compile("^\\s*(\\w+):([\\d\\s]+)$");
 
     private static @NonNull Map<String, NetworkInterfaceInfo> read(List<String> output) {
         // Inter-|   Receive                                                |  Transmit

@@ -27,6 +27,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
 
 import java.lang.management.MemoryUsage;
+import java.util.Locale;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
@@ -76,7 +77,7 @@ public enum StatisticFormatter {
             color = GREEN;
         }
 
-        return text(String.format("%.1f", duration), color);
+        return text(String.format(Locale.ENGLISH, "%.1f", duration), color);
     }
 
     public static TextComponent formatCpuUsage(double usage) {
