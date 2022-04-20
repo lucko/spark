@@ -41,8 +41,9 @@ public enum NetworkMonitor {
     // Latest readings
     private static final AtomicReference<Map<String, NetworkInterfaceInfo>> SYSTEM = new AtomicReference<>();
     
-    // a pattern to match the interface names to calculate rolling averages for
-    private static final Pattern INTERFACES_TO_MONITOR = Pattern.compile("^(eth\\d+)|(lo)$");
+    // a pattern to match the interface names to exclude from monitoring
+    // ignore: virtual eth adapters + container bridge networks
+    private static final Pattern INTERFACES_TO_IGNORE = Pattern.compile("^(veth\\w+)|(br-\\w+)$");
 
     // Rolling averages for system/process data over 15 mins
     private static final Map<String, NetworkInterfaceAverages> SYSTEM_AVERAGES = new ConcurrentHashMap<>();
@@ -96,7 +97,7 @@ public enum NetworkMonitor {
         private static void submit(Map<String, NetworkInterfaceAverages> rollingAveragesMap, Map<String, NetworkInterfaceInfo> values) {
             // ensure all incoming keys are present in the rolling averages map
             for (String key : values.keySet()) {
-                if (INTERFACES_TO_MONITOR.matcher(key).matches()) {
+                if (!INTERFACES_TO_IGNORE.matcher(key).matches()) {
                     rollingAveragesMap.computeIfAbsent(key, k -> new NetworkInterfaceAverages(WINDOW_SIZE));
                 }
             }
