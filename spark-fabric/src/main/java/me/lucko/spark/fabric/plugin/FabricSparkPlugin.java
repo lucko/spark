@@ -55,17 +55,18 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
     private final FabricSparkMod mod;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
-    protected final SparkPlatform platform;
+
+    protected SparkPlatform platform;
     protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected FabricSparkPlugin(FabricSparkMod mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
-        this.platform = new SparkPlatform(this);
     }
 
     public void enable() {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
 

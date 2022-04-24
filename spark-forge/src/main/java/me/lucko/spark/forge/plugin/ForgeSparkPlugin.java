@@ -74,17 +74,18 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     private final ForgeSparkMod mod;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
-    protected final SparkPlatform platform;
+
+    protected SparkPlatform platform;
     protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected ForgeSparkPlugin(ForgeSparkMod mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
-        this.platform = new SparkPlatform(this);
     }
 
     public void enable() {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
 
