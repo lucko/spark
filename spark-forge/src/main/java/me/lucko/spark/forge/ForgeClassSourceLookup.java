@@ -22,15 +22,15 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.common.util.ClassSourceLookup;
 
-import cpw.mods.modlauncher.TransformingClassLoader;
+import java.net.URL;
 
-public class ForgeClassSourceLookup implements ClassSourceLookup {
+public class ForgeClassSourceLookup extends ClassSourceLookup.ByCodeSource {
 
     @Override
-    public String identify(Class<?> clazz) {
-        if (clazz.getClassLoader() instanceof TransformingClassLoader) {
-            String name = clazz.getModule().getName();
-            return name.equals("forge") || name.equals("minecraft") ? null : name;
+    public String identifyUrl(URL url) {
+        if (url.getProtocol().equals("modjar")) {
+            String host = url.getHost();
+            return host.equals("forge") ? null : host;
         }
         return null;
     }

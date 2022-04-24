@@ -4,7 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.0.9', changing: true
     }
 }
 
@@ -14,13 +14,15 @@ plugins {
 
 apply plugin: 'net.minecraftforge.gradle'
 
+/*
 tasks.withType(JavaCompile) {
     // override, compile targeting J17
     options.release = 17
 }
+*/
 
 minecraft {
-    mappings channel: 'official', version: '1.18.2'
+    mappings channel: 'official', version: '1.16.5'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 }
 
@@ -30,7 +32,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.2-40.0.1'
+    minecraft 'net.minecraftforge:forge:1.16.5-36.2.34'
     shade project(':spark-common')
 }
 

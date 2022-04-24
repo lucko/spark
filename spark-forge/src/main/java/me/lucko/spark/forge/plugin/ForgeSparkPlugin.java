@@ -39,7 +39,7 @@ import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
 
-import net.minecraft.commands.CommandSource;
+import net.minecraft.command.ICommandSource;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,7 +50,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 
-public abstract class ForgeSparkPlugin implements SparkPlugin {
+public abstract class ForgeSparkPlugin<G> implements SparkPlugin {
 
     public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
         if (aliases.length == 0) {
@@ -72,13 +72,15 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     }
 
     private final ForgeSparkMod mod;
+    protected final G game;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
     protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
-    protected ForgeSparkPlugin(ForgeSparkMod mod) {
+    protected ForgeSparkPlugin(ForgeSparkMod mod, G game) {
         this.mod = mod;
+        this.game = game;
         this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
         this.platform = new SparkPlatform(this);
@@ -93,7 +95,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
         this.scheduler.shutdown();
     }
 
-    public abstract boolean hasPermission(CommandSource sender, String permission);
+    public abstract boolean hasPermission(ICommandSource sender, String permission);
 
     @Override
     public String getVersion() {

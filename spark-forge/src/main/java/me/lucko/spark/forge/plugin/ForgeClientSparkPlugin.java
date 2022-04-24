@@ -38,9 +38,9 @@ import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.commands.CommandSource;
-import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.client.network.play.ClientPlayNetHandler;
+import net.minecraft.command.ICommandSource;
+import net.minecraft.command.ISuggestionProvider;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -53,19 +53,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements SuggestionProvider<SharedSuggestionProvider> {
+public class ForgeClientSparkPlugin extends ForgeSparkPlugin<Minecraft> implements SuggestionProvider<ISuggestionProvider> {
 
     public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
         ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, Minecraft.getInstance());
         plugin.enable();
     }
 
-    private final Minecraft minecraft;
-    private CommandDispatcher<SharedSuggestionProvider> dispatcher;
+    private CommandDispatcher<ISuggestionProvider> dispatcher;
 
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
-        super(mod);
-        this.minecraft = minecraft;
+        super(mod, minecraft);
     }
 
     @Override
@@ -79,15 +77,15 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    private CommandDispatcher<SharedSuggestionProvider> getPlayerCommandDispatcher() {
-        return Optional.ofNullable(this.minecraft.player)
+    private CommandDispatcher<ISuggestionProvider> getPlayerCommandDispatcher() {
+        return Optional.ofNullable(this.game.player)
                 .map(player -> player.connection)
-                .map(ClientPacketListener::getCommands)
+                .map(ClientPlayNetHandler::getCommands)
                 .orElse(null);
     }
 
     private void checkCommandRegistered() {
-        CommandDispatcher<SharedSuggestionProvider> dispatcher = getPlayerCommandDispatcher();
+        CommandDispatcher<ISuggestionProvider> dispatcher = getPlayerCommandDispatcher();
         if (dispatcher == null) {
             return;
         }
@@ -110,19 +108,19 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
         }
 
         this.threadDumper.ensureSetup();
-        this.platform.executeCommand(new ForgeCommandSender(this.minecraft.player, this), args);
-        this.minecraft.gui.getChat().addRecentChat(event.getMessage());
+        this.platform.executeCommand(new ForgeCommandSender(this.game.player, this), args);
+        this.game.gui.getChat().addRecentChat(event.getMessage());
         event.setCanceled(true);
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<SharedSuggestionProvider> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<ISuggestionProvider> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         String[] args = processArgs(context.getInput(), true);
         if (args == null) {
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new ForgeCommandSender(this.minecraft.player, this), args, builder);
+        return generateSuggestions(new ForgeCommandSender(this.game.player, this), args, builder);
     }
 
     private static String[] processArgs(String input, boolean tabComplete) {
@@ -135,13 +133,13 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     }
 
     @Override
-    public boolean hasPermission(CommandSource sender, String permission) {
+    public boolean hasPermission(ICommandSource sender, String permission) {
         return true;
     }
 
     @Override
     public Stream<ForgeCommandSender> getCommandSenders() {
-        return Stream.of(new ForgeCommandSender(this.minecraft.player, this));
+        return Stream.of(new ForgeCommandSender(this.game.player, this));
     }
 
     @Override

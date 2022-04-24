@@ -41,9 +41,14 @@ public class ForgeTickReporter extends SimpleTickReporter implements TickReporte
         }
 
         switch (e.phase) {
-            case START -> onStart();
-            case END -> onEnd();
-            default -> throw new AssertionError(e.phase);
+            case START:
+                onStart();
+                break;
+            case END:
+                onEnd();
+                break;
+            default:
+                throw new AssertionError(e.phase);
         }
     }
 

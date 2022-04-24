@@ -300,6 +300,9 @@ public class SparkPlatform {
             this.commandExecuteLock.lock();
             try {
                 executeCommand0(sender, args);
+            } catch (Exception e) {
+                this.plugin.log(Level.WARNING, "Exception occurred executing a spark command");
+                e.printStackTrace();
             } finally {
                 this.commandExecuteLock.unlock();
                 executorThread.set(null);

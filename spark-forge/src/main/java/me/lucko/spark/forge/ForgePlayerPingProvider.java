@@ -24,8 +24,8 @@ import com.google.common.collect.ImmutableMap;
 
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 
@@ -39,7 +39,7 @@ public class ForgePlayerPingProvider implements PlayerPingProvider {
     @Override
     public Map<String, Integer> poll() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
-        for (ServerPlayer player : this.server.getPlayerList().getPlayers()) {
+        for (ServerPlayerEntity player : this.server.getPlayerList().getPlayers()) {
             builder.put(player.getGameProfile().getName(), player.latency);
         }
         return builder.build();
