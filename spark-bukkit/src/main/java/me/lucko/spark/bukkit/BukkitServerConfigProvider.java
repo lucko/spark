@@ -111,6 +111,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
                 .add("resource-pack")
                 .add("rcon<dot>password")
                 .add("level-seed")
+                .add("world-settings.*.feature-seeds")
                 .addAll(getTimingsHiddenConfigs())
                 .addAll(getSystemPropertyList("spark.serverconfigs.hiddenpaths"));
 
