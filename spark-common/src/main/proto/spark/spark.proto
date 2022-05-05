@@ -94,6 +94,7 @@ message PlatformStatistics {
   Tps tps = 4; // optional
   Mspt mspt = 5; // optional
   Ping ping = 6; // optional
+  int64 player_count = 7;
 
   message Memory {
     MemoryPool heap = 1;

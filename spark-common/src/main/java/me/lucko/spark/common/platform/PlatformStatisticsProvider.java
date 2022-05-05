@@ -176,6 +176,12 @@ public class PlatformStatisticsProvider {
             );
         }
 
+        PlatformInfo.Type platformType = this.platform.getPlugin().getPlatformInfo().getType();
+        if (platformType != PlatformInfo.Type.CLIENT) {
+            long playerCount = this.platform.getPlugin().getCommandSenders().count() - 1; // includes console
+            builder.setPlayerCount(playerCount);
+        }
+
         return builder.build();
     }
 
