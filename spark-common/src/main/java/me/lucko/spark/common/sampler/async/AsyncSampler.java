@@ -144,7 +144,14 @@ public class AsyncSampler extends AbstractSampler {
      */
     @Override
     public void stop() {
-        this.profiler.stop();
+        try {
+            this.profiler.stop();
+        } catch (IllegalStateException e) {
+            if (!e.getMessage().equals("Profiler is not active")) { // ignore
+                throw e;
+            }
+        }
+
 
         if (this.timeoutExecutor != null) {
             this.timeoutExecutor.shutdown();
