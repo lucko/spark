@@ -27,9 +27,11 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Abstract implementation of {@link ServerConfigProvider}.
@@ -99,13 +101,28 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
         }
 
         JsonObject jsonObject = json.getAsJsonObject();
-        String member = path.removeFirst().replace("<dot>", ".");
+        String expected = path.removeFirst().replace("<dot>", ".");
 
-        if (member.equals("*") || jsonObject.has(member)) {
+        Collection<String> keys;
+        if (expected.equals("*")) {
+            keys = jsonObject.entrySet().stream()
+                    .map(Map.Entry::getKey)
+                    .collect(Collectors.toList());
+        } else if (jsonObject.has(expected)) {
+            keys = Collections.singletonList(expected);
+        } else {
+            keys = Collections.emptyList();
+        }
+
+        for (String key : keys) {
             if (path.isEmpty()) {
-                jsonObject.remove(member);
+                jsonObject.remove(key);
             } else {
-                delete(jsonObject.get(member), path);
+                Deque<String> pathCopy = expected.equals("*")
+                        ? new LinkedList<>(path)
+                        : path;
+
+                delete(jsonObject.get(key), pathCopy);
             }
         }
     }
