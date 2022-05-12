@@ -96,6 +96,7 @@ public abstract class AbstractSampler implements Sampler {
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
                 .setCreator(creator.toData().toProto())
                 .setStartTime(this.startTime)
+                .setEndTime(System.currentTimeMillis())
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())
                 .setDataAggregator(dataAggregator.getMetadata());

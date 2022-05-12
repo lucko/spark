@@ -24,6 +24,7 @@ message SamplerMetadata {
   PlatformStatistics platform_statistics = 8;
   SystemStatistics system_statistics = 9;
   map<string, string> server_configurations = 10;
+  int64 end_time = 11;
 
   message ThreadDumper {
     Type type = 1;
