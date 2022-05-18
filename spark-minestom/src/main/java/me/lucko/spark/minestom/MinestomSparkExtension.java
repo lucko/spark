@@ -23,6 +23,7 @@ package me.lucko.spark.minestom;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import net.minestom.server.MinecraftServer;
@@ -89,6 +90,11 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new MinestomClassSourceLookup();
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        return new MinestomPlayerPingProvider();
     }
 
     @Override
