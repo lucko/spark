@@ -108,6 +108,7 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
     private static final class MinestomSparkCommand extends Command {
         public MinestomSparkCommand(MinestomSparkExtension extension) {
             super("sparkms");
+            setDefaultExecutor((sender, context) -> extension.platform.executeCommand(new MinestomCommandSender(sender), new String[0]));
             var arrayArgument = ArgumentType.StringArray("query");
             arrayArgument.setSuggestionCallback((sender, context, suggestion) -> {
                 var args = context.get(arrayArgument);
@@ -119,13 +120,13 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
                     suggestion.addEntry(new SuggestionEntry(suggestionEntry));
                 }
             });
-            setDefaultExecutor((sender, context) -> {
+            addSyntax((sender, context) -> {
                 var args = context.get(arrayArgument);
                 if (args == null) {
                     args = new String[0];
                 }
                 extension.platform.executeCommand(new MinestomCommandSender(sender), args);
-            });
+            }, arrayArgument);
         }
     }
 }
