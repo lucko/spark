@@ -22,26 +22,21 @@ package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.tick.AbstractTickHook;
 import net.minestom.server.MinecraftServer;
-import net.minestom.server.event.Event;
-import net.minestom.server.event.EventNode;
-import net.minestom.server.event.server.ServerTickMonitorEvent;
-
-import java.util.UUID;
+import net.minestom.server.timer.Task;
+import net.minestom.server.timer.TaskSchedule;
 
 public class MinestomTickHook extends AbstractTickHook {
-    private final EventNode<Event> node = EventNode.all("sparkTickHook-" + UUID.randomUUID());
-
-    public MinestomTickHook() {
-        node.addListener(ServerTickMonitorEvent.class, event -> onTick());
-    }
+    private Task task;
 
     @Override
     public void start() {
-        MinecraftServer.getGlobalEventHandler().addChild(node);
+        task = MinecraftServer.getSchedulerManager().buildTask(this::onTick).repeat(TaskSchedule.nextTick()).schedule();
     }
 
     @Override
     public void close() {
-        MinecraftServer.getGlobalEventHandler().removeChild(node);
+        if (task != null) {
+            task.cancel();
+        }
     }
 }
