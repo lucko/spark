@@ -119,13 +119,13 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
                     suggestion.addEntry(new SuggestionEntry(suggestionEntry));
                 }
             });
-            addSyntax((sender, context) -> {
+            setDefaultExecutor((sender, context) -> {
                 var args = context.get(arrayArgument);
                 if (args == null) {
                     args = new String[0];
                 }
                 extension.platform.executeCommand(new MinestomCommandSender(sender), args);
-            }, arrayArgument);
+            });
         }
     }
 }
