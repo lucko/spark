@@ -32,7 +32,7 @@ public class MinestomTickHook extends AbstractTickHook {
     public void start() {
         task = MinecraftServer.getSchedulerManager()
                 .buildTask(this::onTick)
-                .repeat(TaskSchedule.immediate())
+                .repeat(TaskSchedule.nextTick())
                 .schedule();
     }
 
