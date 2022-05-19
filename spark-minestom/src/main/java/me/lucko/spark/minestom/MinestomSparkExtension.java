@@ -30,6 +30,7 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.builder.Command;
+import net.minestom.server.command.builder.arguments.ArgumentStringArray;
 import net.minestom.server.command.builder.arguments.ArgumentType;
 import net.minestom.server.command.builder.suggestion.SuggestionEntry;
 import net.minestom.server.extensions.Extension;
@@ -127,19 +128,19 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
         public MinestomSparkCommand(MinestomSparkExtension extension) {
             super("sparkms");
             setDefaultExecutor((sender, context) -> extension.platform.executeCommand(new MinestomCommandSender(sender), new String[0]));
-            var arrayArgument = ArgumentType.StringArray("query");
+            ArgumentStringArray arrayArgument = ArgumentType.StringArray("query");
             arrayArgument.setSuggestionCallback((sender, context, suggestion) -> {
-                var args = context.get(arrayArgument);
+                String[] args = context.get(arrayArgument);
                 if (args == null) {
                     args = new String[0];
                 }
                 Iterable<String> suggestionEntries = extension.platform.tabCompleteCommand(new MinestomCommandSender(sender), args);
-                for (var suggestionEntry : suggestionEntries) {
+                for (String suggestionEntry : suggestionEntries) {
                     suggestion.addEntry(new SuggestionEntry(suggestionEntry));
                 }
             });
             addSyntax((sender, context) -> {
-                var args = context.get(arrayArgument);
+                String[] args = context.get(arrayArgument);
                 if (args == null) {
                     args = new String[0];
                 }
