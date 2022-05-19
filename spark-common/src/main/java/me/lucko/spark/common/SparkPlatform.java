@@ -142,7 +142,7 @@ public class SparkPlatform {
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
-        this.tickStatistics = this.tickHook != null ? new TickStatistics() : null;
+        this.tickStatistics = this.tickHook != null || this.tickReporter != null ? new TickStatistics() : null;
 
         PlayerPingProvider pingProvider = plugin.createPlayerPingProvider();
         this.pingStatistics = pingProvider != null ? new PingStatistics(pingProvider) : null;

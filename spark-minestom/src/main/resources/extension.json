@@ -1,0 +1,5 @@
+{
+  "entrypoint": "me.lucko.spark.minestom.MinestomSparkExtension",
+  "name": "spark",
+  "version": "${pluginVersion}"
+}

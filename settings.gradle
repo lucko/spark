@@ -21,5 +21,6 @@ include (
         'spark-forge',
         'spark-fabric',
         'spark-nukkit',
-        'spark-waterdog'
+        'spark-waterdog',
+        'spark-minestom'
 )
