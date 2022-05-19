@@ -25,8 +25,6 @@ import net.minestom.server.MinecraftServer;
 import net.minestom.server.timer.Task;
 import net.minestom.server.timer.TaskSchedule;
 
-import java.time.temporal.ChronoUnit;
-
 public class MinestomTickHook extends AbstractTickHook {
     private Task task;
 
