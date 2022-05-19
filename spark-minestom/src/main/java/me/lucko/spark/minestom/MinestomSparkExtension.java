@@ -56,7 +56,7 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
 
     @Override
     public String getCommandName() {
-        return "sparkms";
+        return "spark";
     }
 
     @Override
@@ -126,7 +126,7 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
 
     private static final class MinestomSparkCommand extends Command {
         public MinestomSparkCommand(MinestomSparkExtension extension) {
-            super("sparkms");
+            super("spark", "sparkms");
             setDefaultExecutor((sender, context) -> extension.platform.executeCommand(new MinestomCommandSender(sender), new String[0]));
             ArgumentStringArray arrayArgument = ArgumentType.StringArray("query");
             arrayArgument.setSuggestionCallback((sender, context, suggestion) -> {
