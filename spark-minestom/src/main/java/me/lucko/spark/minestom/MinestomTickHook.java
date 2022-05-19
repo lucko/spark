@@ -25,6 +25,8 @@ import net.minestom.server.MinecraftServer;
 import net.minestom.server.timer.Task;
 import net.minestom.server.timer.TaskSchedule;
 
+import java.time.temporal.ChronoUnit;
+
 public class MinestomTickHook extends AbstractTickHook {
     private Task task;
 
@@ -32,7 +34,8 @@ public class MinestomTickHook extends AbstractTickHook {
     public void start() {
         task = MinecraftServer.getSchedulerManager()
                 .buildTask(this::onTick)
-                .repeat(TaskSchedule.nextTick())
+                .delay(TaskSchedule.tick(1))
+                .repeat(TaskSchedule.tick(1))
                 .schedule();
     }
 
