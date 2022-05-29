@@ -37,6 +37,7 @@ import net.minestom.server.extensions.Extension;
 import net.minestom.server.timer.ExecutionType;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -130,10 +131,9 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
             setDefaultExecutor((sender, context) -> extension.platform.executeCommand(new MinestomCommandSender(sender), new String[0]));
             ArgumentStringArray arrayArgument = ArgumentType.StringArray("query");
             arrayArgument.setSuggestionCallback((sender, context, suggestion) -> {
-                String[] args = context.get(arrayArgument);
-                if (args == null) {
-                    args = new String[0];
-                }
+                String input = context.getInput();
+                String[] split = input.split(" ");
+                String[] args = Arrays.copyOfRange(split, 1, split.length);
                 Iterable<String> suggestionEntries = extension.platform.tabCompleteCommand(new MinestomCommandSender(sender), args);
                 for (String suggestionEntry : suggestionEntries) {
                     suggestion.addEntry(new SuggestionEntry(suggestionEntry));
