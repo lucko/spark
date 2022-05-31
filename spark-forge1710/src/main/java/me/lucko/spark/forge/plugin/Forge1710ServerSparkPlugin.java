@@ -28,6 +28,7 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.*;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.List;
@@ -54,8 +55,9 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
 
     @Override
     public boolean hasPermission(ICommandSender sender, String permission) {
-        if (sender instanceof EntityPlayer) {
-            return isOp((EntityPlayer) sender);
+        if (sender instanceof EntityPlayerMP) {
+            EntityPlayerMP player = (EntityPlayerMP)sender;
+            return isOp(player) || player.mcServer.getServerOwner().equals(player.getGameProfile().getName());
         } else {
             return true;
         }
