@@ -20,11 +20,11 @@
 
 package me.lucko.spark.forge;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.tick.AbstractTickHook;
 import me.lucko.spark.common.tick.TickHook;
-import net.minecraftforge.common.MinecraftForge;
 
 public class Forge1710TickHook extends AbstractTickHook implements TickHook {
     private final TickEvent.Type type;
@@ -48,12 +48,12 @@ public class Forge1710TickHook extends AbstractTickHook implements TickHook {
 
     @Override
     public void start() {
-        MinecraftForge.EVENT_BUS.register(this);
+        FMLCommonHandler.instance().bus().register(this);
     }
 
     @Override
     public void close() {
-        MinecraftForge.EVENT_BUS.unregister(this);
+        FMLCommonHandler.instance().bus().unregister(this);
     }
 
 }
