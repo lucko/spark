@@ -108,6 +108,12 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
             keys = jsonObject.entrySet().stream()
                     .map(Map.Entry::getKey)
                     .collect(Collectors.toList());
+        } else if (expected.endsWith("*")) {
+            String pattern = expected.substring(0, expected.length() - 1);
+            keys = jsonObject.entrySet().stream()
+                    .map(Map.Entry::getKey)
+                    .filter(key -> key.startsWith(pattern))
+                    .collect(Collectors.toList());
         } else if (jsonObject.has(expected)) {
             keys = Collections.singletonList(expected);
         } else {
@@ -118,7 +124,7 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
             if (path.isEmpty()) {
                 jsonObject.remove(key);
             } else {
-                Deque<String> pathCopy = expected.equals("*")
+                Deque<String> pathCopy = keys.size() > 1
                         ? new LinkedList<>(path)
                         : path;
 
