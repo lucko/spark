@@ -21,7 +21,9 @@
 package me.lucko.spark.minestom;
 
 import com.google.common.collect.ImmutableMap;
+
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.entity.Player;
 

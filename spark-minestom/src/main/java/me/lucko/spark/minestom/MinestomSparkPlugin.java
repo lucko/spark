@@ -22,27 +22,49 @@ package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.ClassSourceLookup;
+
 import net.minestom.server.MinecraftServer;
+import net.minestom.server.command.CommandSender;
 import net.minestom.server.command.builder.Command;
+import net.minestom.server.command.builder.CommandContext;
+import net.minestom.server.command.builder.CommandExecutor;
 import net.minestom.server.command.builder.arguments.ArgumentStringArray;
 import net.minestom.server.command.builder.arguments.ArgumentType;
+import net.minestom.server.command.builder.suggestion.Suggestion;
+import net.minestom.server.command.builder.suggestion.SuggestionCallback;
 import net.minestom.server.command.builder.suggestion.SuggestionEntry;
 import net.minestom.server.extensions.Extension;
 import net.minestom.server.timer.ExecutionType;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
-public class MinestomSparkExtension extends Extension implements SparkPlugin {
+public class MinestomSparkPlugin extends Extension implements SparkPlugin {
     private SparkPlatform platform;
     private MinestomSparkCommand command;
+
+    @Override
+    public void initialize() {
+        this.platform = new SparkPlatform(this);
+        this.platform.enable();
+        this.command = new MinestomSparkCommand(this.platform);
+        MinecraftServer.getCommandManager().register(this.command);
+    }
+
+    @Override
+    public void terminate() {
+        this.platform.disable();
+        MinecraftServer.getCommandManager().unregister(this.command);
+    }
 
     @Override
     public String getVersion() {
@@ -60,7 +82,7 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
     }
 
     @Override
-    public Stream<? extends CommandSender> getCommandSenders() {
+    public Stream<MinestomCommandSender> getCommandSenders() {
         return Stream.concat(
                 MinecraftServer.getConnectionManager().getOnlinePlayers().stream(),
                 Stream.of(MinecraftServer.getCommandManager().getConsoleSender())
@@ -110,42 +132,52 @@ public class MinestomSparkExtension extends Extension implements SparkPlugin {
         return new MinestomTickHook();
     }
 
-    @Override
-    public void initialize() {
-        this.platform = new SparkPlatform(this);
-        this.platform.enable();
-        this.command = new MinestomSparkCommand(this);
-        MinecraftServer.getCommandManager().register(command);
-    }
+    private static final class MinestomSparkCommand extends Command implements CommandExecutor, SuggestionCallback {
+        private final SparkPlatform platform;
 
-    @Override
-    public void terminate() {
-        this.platform.disable();
-        MinecraftServer.getCommandManager().unregister(command);
-    }
+        public MinestomSparkCommand(SparkPlatform platform) {
+            super("spark");
+            this.platform = platform;
 
-    private static final class MinestomSparkCommand extends Command {
-        public MinestomSparkCommand(MinestomSparkExtension extension) {
-            super("spark", "sparkms");
-            setDefaultExecutor((sender, context) -> extension.platform.executeCommand(new MinestomCommandSender(sender), new String[0]));
-            ArgumentStringArray arrayArgument = ArgumentType.StringArray("query");
-            arrayArgument.setSuggestionCallback((sender, context, suggestion) -> {
-                String[] args = context.get(arrayArgument);
-                if (args == null) {
-                    args = new String[0];
-                }
-                Iterable<String> suggestionEntries = extension.platform.tabCompleteCommand(new MinestomCommandSender(sender), args);
-                for (String suggestionEntry : suggestionEntries) {
-                    suggestion.addEntry(new SuggestionEntry(suggestionEntry));
-                }
-            });
-            addSyntax((sender, context) -> {
-                String[] args = context.get(arrayArgument);
-                if (args == null) {
-                    args = new String[0];
-                }
-                extension.platform.executeCommand(new MinestomCommandSender(sender), args);
-            }, arrayArgument);
+            ArgumentStringArray arrayArgument = ArgumentType.StringArray("args");
+            arrayArgument.setSuggestionCallback(this);
+
+            addSyntax(this, arrayArgument);
+            setDefaultExecutor((sender, context) -> platform.executeCommand(new MinestomCommandSender(sender), new String[0]));
+        }
+
+        // execute
+        @Override
+        public void apply(@NotNull CommandSender sender, @NotNull CommandContext context) {
+            String[] args = processArgs(context, false);
+            if (args == null) {
+                return;
+            }
+
+            this.platform.executeCommand(new MinestomCommandSender(sender), args);
+        }
+
+        // tab complete
+        @Override
+        public void apply(@NotNull CommandSender sender, @NotNull CommandContext context, @NotNull Suggestion suggestion) {
+            String[] args = processArgs(context, true);
+            if (args == null) {
+                return;
+            }
+
+            Iterable<String> suggestionEntries = this.platform.tabCompleteCommand(new MinestomCommandSender(sender), args);
+            for (String suggestionEntry : suggestionEntries) {
+                suggestion.addEntry(new SuggestionEntry(suggestionEntry));
+            }
+        }
+
+        private static String [] processArgs(CommandContext context, boolean tabComplete) {
+            String[] split = context.getInput().split(" ", tabComplete ? -1 : 0);
+            if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
+                return null;
+            }
+
+            return Arrays.copyOfRange(split, 1, split.length);
         }
     }
 }

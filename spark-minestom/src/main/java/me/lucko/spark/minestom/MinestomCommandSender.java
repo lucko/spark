@@ -21,6 +21,7 @@
 package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
+
 import net.kyori.adventure.text.Component;
 import net.minestom.server.command.CommandSender;
 import net.minestom.server.command.ConsoleSender;
@@ -35,12 +36,12 @@ public class MinestomCommandSender extends AbstractCommandSender<CommandSender> 
 
     @Override
     public String getName() {
-        if (delegate instanceof Player player) {
+        if (this.delegate instanceof Player player) {
             return player.getUsername();
-        } else if (delegate instanceof ConsoleSender) {
+        } else if (this.delegate instanceof ConsoleSender) {
             return "Console";
          }else {
-            return "unknown:" + delegate.getClass().getSimpleName();
+            return "unknown:" + this.delegate.getClass().getSimpleName();
         }
     }
 
@@ -54,11 +55,11 @@ public class MinestomCommandSender extends AbstractCommandSender<CommandSender> 
 
     @Override
     public void sendMessage(Component message) {
-        delegate.sendMessage(message);
+        this.delegate.sendMessage(message);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return delegate.hasPermission(permission);
+        return this.delegate.hasPermission(permission);
     }
 }

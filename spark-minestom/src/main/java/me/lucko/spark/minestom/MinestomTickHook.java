@@ -21,6 +21,7 @@
 package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.tick.AbstractTickHook;
+
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.timer.Task;
 import net.minestom.server.timer.TaskSchedule;
@@ -30,7 +31,7 @@ public class MinestomTickHook extends AbstractTickHook {
 
     @Override
     public void start() {
-        task = MinecraftServer.getSchedulerManager()
+        this.task = MinecraftServer.getSchedulerManager()
                 .buildTask(this::onTick)
                 .delay(TaskSchedule.tick(1))
                 .repeat(TaskSchedule.tick(1))
@@ -39,8 +40,8 @@ public class MinestomTickHook extends AbstractTickHook {
 
     @Override
     public void close() {
-        if (task != null) {
-            task.cancel();
+        if (this.task != null) {
+            this.task.cancel();
         }
     }
 }

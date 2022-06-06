@@ -21,6 +21,7 @@
 package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.tick.AbstractTickReporter;
+
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.event.Event;
 import net.minestom.server.event.EventNode;
@@ -32,16 +33,16 @@ public class MinestomTickReporter extends AbstractTickReporter {
     private final EventNode<Event> node = EventNode.all("sparkTickReporter-" + UUID.randomUUID());
 
     public MinestomTickReporter() {
-        node.addListener(ServerTickMonitorEvent.class, event -> onTick(event.getTickMonitor().getTickTime()));
+        this.node.addListener(ServerTickMonitorEvent.class, event -> onTick(event.getTickMonitor().getTickTime()));
     }
 
     @Override
     public void start() {
-        MinecraftServer.getGlobalEventHandler().addChild(node);
+        MinecraftServer.getGlobalEventHandler().addChild(this.node);
     }
 
     @Override
     public void close() {
-        MinecraftServer.getGlobalEventHandler().removeChild(node);
+        MinecraftServer.getGlobalEventHandler().removeChild(this.node);
     }
 }
