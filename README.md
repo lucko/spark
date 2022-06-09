@@ -1,11 +1,11 @@
 <h1 align="center">
 	<img
 		alt="spark"
-		src="https://i.imgur.com/cJ4sYV5.png">
+		src="https://i.imgur.com/ykHn9vx.png">
 </h1>
 
 <h3 align="center">
-  spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.
+  spark is a performance profiler for Minecraft clients, servers and proxies.
 </h3>
 
 #### Useful Links
@@ -18,10 +18,9 @@
 
 spark is made up of three separate components:
 
-|                 CPU Profiler                  |            Memory Inspection             |          Server Health Reporting           |
-| :-------------------------------------------: | :--------------------------------------: | :----------------------------------------: |
-| [![](https://i.imgur.com/ggSGzRq.png)](#zap-cpu-profiler) | [![](https://i.imgur.com/BsdTxqA.png)](#zap-memory-inspection) | [![](https://i.imgur.com/SrKEmA6.png)](#zap-server-health-reporting) |
-| Diagnose performance issues. | Diagnose memory issues. | Keep track of overall server health. |
+* **CPU Profiler**: Diagnose performance issues.
+* **Memory Inspection**: Diagnose memory issues.
+* **Server Health Reporting**: Keep track of overall server health.
 
 ### :zap: CPU Profiler
 

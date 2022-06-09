@@ -20,13 +20,14 @@
 
 package me.lucko.spark.common.sampler.async;
 
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.ImmutableTable;
+import com.google.common.collect.Table;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.util.TemporaryFiles;
 
 import one.profiler.AsyncProfiler;
+import one.profiler.Events;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -45,22 +46,31 @@ public enum AsyncProfilerAccess {
     /** An instance of the async-profiler Java API. */
     private final AsyncProfiler profiler;
 
+    /** The event to use for profiling */
+    private final ProfilingEvent profilingEvent;
+
     /** If profiler is null, contains the reason why setup failed */
     private final Exception setupException;
 
     AsyncProfilerAccess() {
         AsyncProfiler profiler;
+        ProfilingEvent profilingEvent = null;
         Exception setupException = null;
 
         try {
             profiler = load();
-            ensureCpuEventSupported(profiler);
+            if (isEventSupported(profiler, ProfilingEvent.CPU, false)) {
+                profilingEvent = ProfilingEvent.CPU;
+            } else if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
+                profilingEvent = ProfilingEvent.WALL;
+            }
         } catch (Exception e) {
             profiler = null;
             setupException = e;
         }
 
         this.profiler = profiler;
+        this.profilingEvent = profilingEvent;
         this.setupException = setupException;
     }
 
@@ -71,11 +81,18 @@ public enum AsyncProfilerAccess {
         return this.profiler;
     }
 
+    public ProfilingEvent getProfilingEvent() {
+        return this.profilingEvent;
+    }
+
     public boolean checkSupported(SparkPlatform platform) {
         if (this.setupException != null) {
             if (this.setupException instanceof UnsupportedSystemException) {
                 platform.getPlugin().log(Level.INFO, "The async-profiler engine is not supported for your os/arch (" +
                         this.setupException.getMessage() + "), so the built-in Java engine will be used instead.");
+            } else if (this.setupException instanceof NativeLoadingException && this.setupException.getCause().getMessage().contains("libstdc++")) {
+                platform.getPlugin().log(Level.WARNING, "Unable to initialise the async-profiler engine because libstdc++ is not installed.");
+                platform.getPlugin().log(Level.WARNING, "Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler#install-libstdc");
             } else {
                 platform.getPlugin().log(Level.WARNING, "Unable to initialise the async-profiler engine: " + this.setupException.getMessage());
                 platform.getPlugin().log(Level.WARNING, "Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler");
@@ -91,18 +108,20 @@ public enum AsyncProfilerAccess {
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
         String arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
 
-        Multimap<String, String> supported = ImmutableSetMultimap.<String, String>builder()
-                .put("linux", "amd64")
-                .put("macosx", "amd64")
-                .put("macosx", "aarch64")
+        Table<String, String, String> supported = ImmutableTable.<String, String, String>builder()
+                .put("linux", "amd64", "linux/amd64")
+                .put("linux", "aarch64", "linux/aarch64")
+                .put("macosx", "amd64", "macos")
+                .put("macosx", "aarch64", "macos")
                 .build();
 
-        if (!supported.containsEntry(os, arch)) {
+        String libPath = supported.get(os, arch);
+        if (libPath == null) {
             throw new UnsupportedSystemException(os, arch);
         }
 
         // extract the profiler binary from the spark jar file
-        String resource = os + "/libasyncProfiler.so";
+        String resource = "spark/" + libPath + "/libasyncProfiler.so";
         URL profilerResource = AsyncProfilerAccess.class.getClassLoader().getResource(resource);
         if (profilerResource == null) {
             throw new IllegalStateException("Could not find " + resource + " in spark jar file");
@@ -118,7 +137,7 @@ public enum AsyncProfilerAccess {
         try {
             return AsyncProfiler.getInstance(extractPath.toAbsolutePath().toString());
         } catch (UnsatisfiedLinkError e) {
-            throw new RuntimeException("A runtime error occurred whilst loading the native library", e);
+            throw new NativeLoadingException(e);
         }
     }
 
@@ -126,18 +145,49 @@ public enum AsyncProfilerAccess {
      * Checks the {@code profiler} to ensure the CPU event is supported.
      *
      * @param profiler the profiler instance
-     * @throws Exception if the event is not supported
+     * @return if the event is supported
      */
-    private static void ensureCpuEventSupported(AsyncProfiler profiler) throws Exception {
-        String resp = profiler.execute("check,event=cpu").trim();
-        if (!resp.equalsIgnoreCase("ok")) {
-            throw new UnsupportedOperationException("CPU event is not supported");
+    private static boolean isEventSupported(AsyncProfiler profiler, ProfilingEvent event, boolean throwException) {
+        try {
+            String resp = profiler.execute("check,event=" + event).trim();
+            if (resp.equalsIgnoreCase("ok")) {
+                return true;
+            } else if (throwException) {
+                throw new IllegalArgumentException(resp);
+            }
+        } catch (Exception e) {
+            if (throwException) {
+                throw new RuntimeException("Event " + event + " is not supported", e);
+            }
+        }
+        return false;
+    }
+
+    enum ProfilingEvent {
+        CPU(Events.CPU),
+        WALL(Events.WALL);
+
+        private final String id;
+
+        ProfilingEvent(String id) {
+            this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            return this.id;
         }
     }
 
     private static final class UnsupportedSystemException extends UnsupportedOperationException {
         public UnsupportedSystemException(String os, String arch) {
             super(os + '/' + arch);
+        }
+    }
+
+    private static final class NativeLoadingException extends RuntimeException {
+        public NativeLoadingException(Throwable cause) {
+            super("A runtime error occurred whilst loading the native library", cause);
         }
     }
 }

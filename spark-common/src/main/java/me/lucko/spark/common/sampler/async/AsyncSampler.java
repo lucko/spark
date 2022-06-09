@@ -22,8 +22,8 @@ package me.lucko.spark.common.sampler.async;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
@@ -32,7 +32,7 @@ import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.common.util.TemporaryFiles;
-import me.lucko.spark.proto.SparkProtos;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import one.profiler.AsyncProfiler;
 
@@ -40,10 +40,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -100,7 +98,7 @@ public class AsyncSampler extends AbstractSampler {
             throw new RuntimeException("Unable to create temporary output file", e);
         }
 
-        String command = "start,event=cpu,interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
+        String command = "start,event=" + AsyncProfilerAccess.INSTANCE.getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
         if (this.threadDumper instanceof ThreadDumper.Specific) {
             command += ",filter";
         }
@@ -117,6 +115,7 @@ public class AsyncSampler extends AbstractSampler {
             }
         }
 
+        recordInitialGcStats();
         scheduleTimeout();
     }
 
@@ -145,7 +144,14 @@ public class AsyncSampler extends AbstractSampler {
      */
     @Override
     public void stop() {
-        this.profiler.stop();
+        try {
+            this.profiler.stop();
+        } catch (IllegalStateException e) {
+            if (!e.getMessage().equals("Profiler is not active")) { // ignore
+                throw e;
+            }
+        }
+
 
         if (this.timeoutExecutor != null) {
             this.timeoutExecutor.shutdown();
@@ -154,38 +160,11 @@ public class AsyncSampler extends AbstractSampler {
     }
 
     @Override
-    public SparkProtos.SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
-        final SparkProtos.SamplerMetadata.Builder metadata = SparkProtos.SamplerMetadata.newBuilder()
-                .setPlatformMetadata(platformInfo.toData().toProto())
-                .setCreator(creator.toData().toProto())
-                .setStartTime(this.startTime)
-                .setInterval(this.interval)
-                .setThreadDumper(this.threadDumper.getMetadata())
-                .setDataAggregator(this.dataAggregator.getMetadata());
-
-        if (comment != null) {
-            metadata.setComment(comment);
-        }
-
-        SparkProtos.SamplerData.Builder proto = SparkProtos.SamplerData.newBuilder();
-        proto.setMetadata(metadata.build());
-
+    public SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+        SamplerData.Builder proto = SamplerData.newBuilder();
+        writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
         aggregateOutput();
-
-        List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
-        data.sort(outputOrder);
-
-        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
-
-        for (Map.Entry<String, ThreadNode> entry : data) {
-            proto.addThreads(entry.getValue().toProto(mergeMode));
-            classSourceVisitor.visit(entry.getValue());
-        }
-
-        if (classSourceVisitor.hasMappings()) {
-            proto.putAllClassSources(classSourceVisitor.getMapping());
-        }
-
+        writeDataToProto(proto, this.dataAggregator, outputOrder, mergeMode, classSourceLookup);
         return proto.build();
     }
 

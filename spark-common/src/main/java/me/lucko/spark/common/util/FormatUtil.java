@@ -20,6 +20,11 @@
 
 package me.lucko.spark.common.util;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextColor;
+
+import java.util.Locale;
+
 public enum FormatUtil {
     ;
 
@@ -31,10 +36,30 @@ public enum FormatUtil {
     }
 
     public static String formatBytes(long bytes) {
-        if (bytes == 0) {
+        if (bytes <= 0) {
             return "0 bytes";
         }
         int sizeIndex = (int) (Math.log(bytes) / Math.log(1024));
-        return String.format("%.1f", bytes / Math.pow(1024, sizeIndex)) + " " + SIZE_UNITS[sizeIndex];
+        return String.format(Locale.ENGLISH, "%.1f", bytes / Math.pow(1024, sizeIndex)) + " " + SIZE_UNITS[sizeIndex];
+    }
+
+    public static Component formatBytes(long bytes, TextColor color, String suffix) {
+        String value;
+        String unit;
+
+        if (bytes <= 0) {
+            value = "0";
+            unit = "KB" + suffix;
+        } else {
+            int sizeIndex = (int) (Math.log(bytes) / Math.log(1024));
+            value = String.format(Locale.ENGLISH, "%.1f", bytes / Math.pow(1024, sizeIndex));
+            unit = SIZE_UNITS[sizeIndex] + suffix;
+        }
+
+        return Component.text()
+                .append(Component.text(value, color))
+                .append(Component.space())
+                .append(Component.text(unit))
+                .build();
     }
 }

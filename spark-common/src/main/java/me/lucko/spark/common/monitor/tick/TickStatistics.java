@@ -56,7 +56,8 @@ public class TickStatistics implements TickHook.Callback, TickReporter.Callback 
     private boolean durationSupported = false;
     private final RollingAverage tickDuration10Sec = new RollingAverage(TPS * 10);
     private final RollingAverage tickDuration1Min = new RollingAverage(TPS * 60);
-    private final RollingAverage[] tickDurationAverages = {this.tickDuration10Sec, this.tickDuration1Min};
+    private final RollingAverage tickDuration5Min = new RollingAverage(TPS * 60 * 5);
+    private final RollingAverage[] tickDurationAverages = {this.tickDuration10Sec, this.tickDuration1Min, this.tickDuration5Min};
 
     private long last = 0;
 
@@ -129,6 +130,13 @@ public class TickStatistics implements TickHook.Callback, TickReporter.Callback 
             return null;
         }
         return this.tickDuration1Min;
+    }
+
+    public RollingAverage duration5Min() {
+        if (!this.durationSupported) {
+            return null;
+        }
+        return this.tickDuration5Min;
     }
 
 

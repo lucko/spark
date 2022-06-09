@@ -74,12 +74,22 @@ public class GarbageCollectorStatistics {
         this(bean.getCollectionCount(), bean.getCollectionTime());
     }
 
+    // all times in milliseconds
+
     public long getCollectionCount() {
         return this.collectionCount;
     }
 
     public long getCollectionTime() {
         return this.collectionTime;
+    }
+
+    public double getAverageCollectionTime() {
+        return this.collectionCount == 0 ? 0 : (double) this.collectionTime / this.collectionCount;
+    }
+
+    public long getAverageCollectionFrequency(long serverUptime) {
+        return this.collectionCount == 0 ? 0 : (long) ((serverUptime - (double) this.collectionTime) / this.collectionCount);
     }
 
     public GarbageCollectorStatistics subtract(GarbageCollectorStatistics other) {

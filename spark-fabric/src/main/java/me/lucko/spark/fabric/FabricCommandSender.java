@@ -34,8 +34,6 @@ import net.minecraft.text.Text;
 import java.util.UUID;
 
 public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
-    private static final UUID NIL_UUID = new UUID(0, 0);
-
     private final FabricSparkPlugin plugin;
 
     public FabricCommandSender(CommandOutput commandOutput, FabricSparkPlugin plugin) {
@@ -67,7 +65,7 @@ public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
     @Override
     public void sendMessage(Component message) {
         Text component = Text.Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
-        super.delegate.sendSystemMessage(component, NIL_UUID);
+        super.delegate.sendMessage(component);
     }
 
     @Override

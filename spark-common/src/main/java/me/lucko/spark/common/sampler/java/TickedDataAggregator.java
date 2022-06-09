@@ -24,12 +24,11 @@ import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -102,13 +101,13 @@ public class TickedDataAggregator extends JavaDataAggregator {
     }
 
     @Override
-    public Map<String, ThreadNode> getData() {
+    public List<ThreadNode> exportData() {
         // push the current tick
         synchronized (this.mutex) {
             pushCurrentTick();
         }
 
-        return super.getData();
+        return super.exportData();
     }
 
     private final class TickList implements Runnable {

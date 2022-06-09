@@ -20,14 +20,14 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 
 import org.bukkit.Server;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-public class BukkitPlatformInfo extends AbstractPlatformInfo {
+public class BukkitPlatformInfo implements PlatformInfo {
     private final Server server;
 
     public BukkitPlatformInfo(Server server) {

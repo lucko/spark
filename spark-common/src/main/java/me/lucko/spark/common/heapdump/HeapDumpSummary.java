@@ -20,11 +20,11 @@
 
 package me.lucko.spark.common.heapdump;
 
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.proto.SparkProtos;
-import me.lucko.spark.proto.SparkProtos.HeapData;
-import me.lucko.spark.proto.SparkProtos.HeapEntry;
+import me.lucko.spark.proto.SparkHeapProtos.HeapData;
+import me.lucko.spark.proto.SparkHeapProtos.HeapEntry;
+import me.lucko.spark.proto.SparkHeapProtos.HeapMetadata;
 
 import org.objectweb.asm.Type;
 
@@ -125,13 +125,24 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
-    public HeapData toProto(PlatformInfo platformInfo, CommandSender creator) {
+    public HeapData toProto(SparkPlatform platform, CommandSender creator) {
+        HeapMetadata.Builder metadata = HeapMetadata.newBuilder()
+                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
+                .setCreator(creator.toData().toProto());
+        try {
+            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            metadata.setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         HeapData.Builder proto = HeapData.newBuilder();
-        proto.setMetadata(SparkProtos.HeapMetadata.newBuilder()
-                .setPlatformMetadata(platformInfo.toData().toProto())
-                .setCreator(creator.toData().toProto())
-                .build()
-        );
+        proto.setMetadata(metadata);
 
         for (Entry entry : this.entries) {
             proto.addEntries(entry.toProto());

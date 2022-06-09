@@ -2,9 +2,13 @@ plugins {
     id 'com.google.protobuf' version '0.8.16'
 }
 
+license {
+    exclude '**/sampler/async/jfr/**'
+}
+
 dependencies {
     api project(':spark-api')
-    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.5'
+    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.7'
     implementation 'org.ow2.asm:asm:9.1'
     implementation 'com.google.protobuf:protobuf-javalite:3.15.6'
     implementation 'com.squareup.okhttp3:okhttp:3.14.1'
@@ -32,8 +36,8 @@ dependencies {
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
-        include 'linux/libasyncProfiler.so'
-        include 'macosx/libasyncProfiler.so'
+        include 'spark/linux/libasyncProfiler.so'
+        include 'spark/macosx/libasyncProfiler.so'
     }
 }
 

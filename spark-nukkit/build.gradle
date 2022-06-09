@@ -23,7 +23,7 @@ processResources {
 }
 
 shadowJar {
-    archiveName = 'spark-nukkit.jar'
+    archiveName = "spark-${project.pluginVersion}-nukkit.jar"
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'

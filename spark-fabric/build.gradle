@@ -1,7 +1,7 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '0.10.+'
+    id 'fabric-loom' version '0.12.+'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
@@ -28,19 +28,19 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.18.1'
-    mappings 'net.fabricmc:yarn:1.18.1+build.9:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.12.12'
+    minecraft 'com.mojang:minecraft:1.19'
+    mappings 'net.fabricmc:yarn:1.19+build.1:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.14.7'
 
     Set<String> apiModules = [
             "fabric-api-base",
-            "fabric-command-api-v1",
+            "fabric-command-api-v2",
             "fabric-lifecycle-events-v1"
     ]
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.45.0+1.18'))
+        modImplementation(fabricApi.module(it, '0.55.3+1.19'))
     }
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.1-SNAPSHOT'))
@@ -67,7 +67,7 @@ processResources {
 }
 
 shadowJar {
-    archiveFileName = 'spark-fabric-dev.jar'
+    archiveFileName = "spark-fabric-${project.pluginVersion}-dev.jar"
     configurations = [project.configurations.shade]
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
@@ -89,7 +89,7 @@ task remappedShadowJar(type: RemapJarTask) {
     dependsOn tasks.shadowJar
     input = tasks.shadowJar.archiveFile
     addNestedDependencies = true
-    archiveFileName = 'spark-fabric.jar'
+    archiveFileName = "spark-${project.pluginVersion}-fabric.jar"
 }
 
 tasks.assemble.dependsOn tasks.remappedShadowJar

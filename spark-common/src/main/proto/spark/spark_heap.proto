@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package spark;
+
+import "spark/spark.proto";
+
+option java_package = "me.lucko.spark.proto";
+option java_outer_classname = "SparkHeapProtos";
+
+message HeapData {
+  HeapMetadata metadata = 1;
+  repeated HeapEntry entries = 2;
+}
+
+message HeapMetadata {
+  CommandSenderMetadata creator = 1;
+  PlatformMetadata platform_metadata = 2;
+  PlatformStatistics platform_statistics = 3;
+  SystemStatistics system_statistics = 4;
+}
+
+message HeapEntry {
+  int32 order = 1;
+  int32 instances = 2;
+  int64 size = 3;
+  string type = 4;
+}

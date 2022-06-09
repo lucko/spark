@@ -23,6 +23,7 @@ package me.lucko.spark.nukkit;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.util.ClassSourceLookup;
 
@@ -105,6 +106,11 @@ public class NukkitSparkPlugin extends PluginBase implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new NukkitClassSourceLookup();
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        return new NukkitPlayerPingProvider(getServer());
     }
 
     @Override

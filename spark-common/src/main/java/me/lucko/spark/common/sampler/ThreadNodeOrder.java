@@ -23,20 +23,19 @@ package me.lucko.spark.common.sampler;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import java.util.Comparator;
-import java.util.Map;
 
 /**
  * Methods of ordering {@link ThreadNode}s in the output data.
  */
-public enum ThreadNodeOrder implements Comparator<Map.Entry<String, ThreadNode>> {
+public enum ThreadNodeOrder implements Comparator<ThreadNode> {
 
     /**
      * Order by the name of the thread (alphabetically)
      */
     BY_NAME {
         @Override
-        public int compare(Map.Entry<String, ThreadNode> o1, Map.Entry<String, ThreadNode> o2) {
-            return o1.getKey().compareTo(o2.getKey());
+        public int compare(ThreadNode o1, ThreadNode o2) {
+            return o1.getThreadLabel().compareTo(o2.getThreadLabel());
         }
     },
 
@@ -45,8 +44,8 @@ public enum ThreadNodeOrder implements Comparator<Map.Entry<String, ThreadNode>>
      */
     BY_TIME {
         @Override
-        public int compare(Map.Entry<String, ThreadNode> o1, Map.Entry<String, ThreadNode> o2) {
-            return -Double.compare(o1.getValue().getTotalTime(), o2.getValue().getTotalTime());
+        public int compare(ThreadNode o1, ThreadNode o2) {
+            return -Double.compare(o1.getTotalTime(), o2.getTotalTime());
         }
     }
 

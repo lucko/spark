@@ -1,7 +1,6 @@
 /*
  * This file is part of spark.
  *
- *  Copyright (C) Albert Pham <http://www.sk89q.com>
  *  Copyright (c) lucko (Luck) <luck@lucko.me>
  *  Copyright (c) contributors
  *
@@ -23,8 +22,8 @@ package me.lucko.spark.common.sampler.java;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
@@ -32,16 +31,12 @@ import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.ClassSourceLookup;
-import me.lucko.spark.proto.SparkProtos.SamplerData;
-import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -129,36 +124,10 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     }
 
     @Override
-    public SamplerData toProto(PlatformInfo platformInfo, CommandSender creator, Comparator<? super Map.Entry<String, ThreadNode>> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
-        final SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
-                .setPlatformMetadata(platformInfo.toData().toProto())
-                .setCreator(creator.toData().toProto())
-                .setStartTime(this.startTime)
-                .setInterval(this.interval)
-                .setThreadDumper(this.threadDumper.getMetadata())
-                .setDataAggregator(this.dataAggregator.getMetadata());
-
-        if (comment != null) {
-            metadata.setComment(comment);
-        }
-
+    public SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
         SamplerData.Builder proto = SamplerData.newBuilder();
-        proto.setMetadata(metadata.build());
-
-        List<Map.Entry<String, ThreadNode>> data = new ArrayList<>(this.dataAggregator.getData().entrySet());
-        data.sort(outputOrder);
-
-        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
-
-        for (Map.Entry<String, ThreadNode> entry : data) {
-            proto.addThreads(entry.getValue().toProto(mergeMode));
-            classSourceVisitor.visit(entry.getValue());
-        }
-
-        if (classSourceVisitor.hasMappings()) {
-            proto.putAllClassSources(classSourceVisitor.getMapping());
-        }
-
+        writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
+        writeDataToProto(proto, this.dataAggregator, outputOrder, mergeMode, classSourceLookup);
         return proto.build();
     }
 
