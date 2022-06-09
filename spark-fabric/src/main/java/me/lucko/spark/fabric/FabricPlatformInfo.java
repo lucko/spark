@@ -35,7 +35,7 @@ public class FabricPlatformInfo implements PlatformInfo {
 
     @Override
     public Type getType() {
-        return type;
+        return this.type;
     }
 
     @Override

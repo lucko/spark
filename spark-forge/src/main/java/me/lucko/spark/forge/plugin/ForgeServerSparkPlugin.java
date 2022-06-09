@@ -56,7 +56,6 @@ import net.minecraftforge.server.permission.nodes.PermissionNode;
 import net.minecraftforge.server.permission.nodes.PermissionNode.PermissionResolver;
 import net.minecraftforge.server.permission.nodes.PermissionTypes;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -138,33 +137,25 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        String[] args = processArgs(context, false);
+        String[] args = processArgs(context, false, "/spark", "spark");
         if (args == null) {
             return 0;
         }
 
         this.threadDumper.ensureSetup();
-        this.platform.executeCommand(new ForgeCommandSender(context.getSource().source, this), args);
+        CommandSource source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
+        this.platform.executeCommand(new ForgeCommandSender(source, this), args);
         return Command.SINGLE_SUCCESS;
     }
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context, true);
+        String[] args = processArgs(context, true, "/spark", "spark");
         if (args == null) {
             return Suggestions.empty();
         }
 
         return generateSuggestions(new ForgeCommandSender(context.getSource().getPlayerOrException(), this), args, builder);
-    }
-
-    private static String [] processArgs(CommandContext<CommandSourceStack> context, boolean tabComplete) {
-        String[] split = context.getInput().split(" ", tabComplete ? -1 : 0);
-        if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
-            return null;
-        }
-
-        return Arrays.copyOfRange(split, 1, split.length);
     }
 
     @Override

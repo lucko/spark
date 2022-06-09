@@ -47,7 +47,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
 
-import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -85,7 +84,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
     @Override
     public int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        String[] args = processArgs(context, false);
+        String[] args = processArgs(context, false, "/spark", "spark");
         if (args == null) {
             return 0;
         }
@@ -98,21 +97,12 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<ServerCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context, true);
+        String[] args = processArgs(context, true, "/spark", "spark");
         if (args == null) {
             return Suggestions.empty();
         }
 
         return generateSuggestions(new FabricCommandSender(context.getSource().getPlayer(), this), args, builder);
-    }
-
-    private static String[] processArgs(CommandContext<ServerCommandSource> context, boolean tabComplete) {
-        String[] split = context.getInput().split(" ", tabComplete ? -1 : 0);
-        if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
-            return null;
-        }
-
-        return Arrays.copyOfRange(split, 1, split.length);
     }
 
     @Override

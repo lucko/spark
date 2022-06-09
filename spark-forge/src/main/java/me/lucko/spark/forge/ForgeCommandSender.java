@@ -25,14 +25,14 @@ import me.lucko.spark.forge.plugin.ForgeSparkPlugin;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.Util;
 import net.minecraft.commands.CommandSource;
+import net.minecraft.network.chat.Component.Serializer;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.rcon.RconConsoleSource;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public class ForgeCommandSender extends AbstractCommandSender<CommandSource> {
@@ -66,8 +66,9 @@ public class ForgeCommandSender extends AbstractCommandSender<CommandSource> {
 
     @Override
     public void sendMessage(Component message) {
-        MutableComponent component = TextComponent.Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
-        super.delegate.sendMessage(component, Util.NIL_UUID);
+        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
+        Objects.requireNonNull(component, "component");
+        super.delegate.sendSystemMessage(component);
     }
 
     @Override

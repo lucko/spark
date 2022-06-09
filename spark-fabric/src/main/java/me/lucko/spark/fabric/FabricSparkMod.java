@@ -26,12 +26,14 @@ import me.lucko.spark.fabric.plugin.FabricClientSparkPlugin;
 import me.lucko.spark.fabric.plugin.FabricServerSparkPlugin;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.CommandManager.RegistrationEnvironment;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.nio.file.Path;
@@ -54,20 +56,19 @@ public class FabricSparkMod implements ModInitializer {
                 .orElseThrow(() -> new IllegalStateException("Unable to get container for spark"));
         this.configDirectory = loader.getConfigDir().resolve("spark");
 
-        // lifecycle hooks
+        // server event hooks
         ServerLifecycleEvents.SERVER_STARTING.register(this::initializeServer);
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
-
-        // events to propagate to active server plugin
-        CommandRegistrationCallback.EVENT.register(this::onCommandRegister);
+        CommandRegistrationCallback.EVENT.register(this::onServerCommandRegister);
     }
 
-    // called be entrypoint defined in fabric.mod.json
+    // client (called be entrypoint defined in fabric.mod.json)
     public static void initializeClient() {
         Objects.requireNonNull(FabricSparkMod.mod, "mod");
         FabricClientSparkPlugin.register(FabricSparkMod.mod, MinecraftClient.getInstance());
     }
 
+    // server
     public void initializeServer(MinecraftServer server) {
         this.activeServerPlugin = FabricServerSparkPlugin.register(this, server);
     }
@@ -79,7 +80,7 @@ public class FabricSparkMod implements ModInitializer {
         }
     }
 
-    public void onCommandRegister(CommandDispatcher<ServerCommandSource> dispatcher, boolean isDedicated) {
+    public void onServerCommandRegister(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess access, RegistrationEnvironment env) {
         if (this.activeServerPlugin != null) {
             this.activeServerPlugin.registerCommands(dispatcher);
         }
