@@ -20,13 +20,13 @@
 
 package me.lucko.spark.fabric;
 
-import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.util.Optional;
 
-public class FabricPlatformInfo extends AbstractPlatformInfo {
+public class FabricPlatformInfo implements PlatformInfo {
     private final Type type;
 
     public FabricPlatformInfo(Type type) {
@@ -35,7 +35,7 @@ public class FabricPlatformInfo extends AbstractPlatformInfo {
 
     @Override
     public Type getType() {
-        return type;
+        return this.type;
     }
 
     @Override

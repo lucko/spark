@@ -20,12 +20,11 @@
 
 package me.lucko.spark.common.platform;
 
-import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.PlatformMetadata;
 
-import java.lang.management.MemoryUsage;
-
 public interface PlatformInfo {
+
+    int DATA_VERSION = 2;
 
     Type getType();
 
@@ -35,18 +34,13 @@ public interface PlatformInfo {
 
     String getMinecraftVersion();
 
-    int getNCpus();
-
-    MemoryUsage getHeapUsage();
-
     default int getSparkVersion() {
         // does not necessarily correspond to the plugin/mod version
-        // this is like a data version I suppose
-        return 1;
+        return DATA_VERSION;
     }
 
     default Data toData() {
-        return new Data(getType(), getName(), getVersion(), getMinecraftVersion(), getNCpus(), getHeapUsage(), getSparkVersion());
+        return new Data(getType(), getName(), getVersion(), getMinecraftVersion(), getSparkVersion());
     }
 
     enum Type {
@@ -70,17 +64,13 @@ public interface PlatformInfo {
         private final String name;
         private final String version;
         private final String minecraftVersion;
-        private final int nCpus;
-        private final MemoryUsage heapUsage;
         private final int sparkVersion;
 
-        public Data(Type type, String name, String version, String minecraftVersion, int nCpus, MemoryUsage heapUsage, int sparkVersion) {
+        public Data(Type type, String name, String version, String minecraftVersion, int sparkVersion) {
             this.type = type;
             this.name = name;
             this.version = version;
             this.minecraftVersion = minecraftVersion;
-            this.nCpus = nCpus;
-            this.heapUsage = heapUsage;
             this.sparkVersion = sparkVersion;
         }
 
@@ -100,24 +90,8 @@ public interface PlatformInfo {
             return this.minecraftVersion;
         }
 
-        public int getNCpus() {
-            return this.nCpus;
-        }
-
-        public MemoryUsage getHeapUsage() {
-            return this.heapUsage;
-        }
-
         public int getSparkVersion() {
             return this.sparkVersion;
-        }
-
-        public SparkProtos.MemoryUsage getHeapUsageProto() {
-            return SparkProtos.MemoryUsage.newBuilder()
-                    .setUsed(this.heapUsage.getUsed())
-                    .setCommitted(this.heapUsage.getCommitted())
-                    .setMax(this.heapUsage.getMax())
-                    .build();
         }
 
         public PlatformMetadata toProto() {
@@ -125,8 +99,6 @@ public interface PlatformInfo {
                     .setType(this.type.toProto())
                     .setName(this.name)
                     .setVersion(this.version)
-                    .setNCpus(this.nCpus)
-                    .setHeapUsage(getHeapUsageProto())
                     .setSparkVersion(this.sparkVersion);
 
             if (this.minecraftVersion != null) {

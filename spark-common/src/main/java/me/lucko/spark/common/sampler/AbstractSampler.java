@@ -20,6 +20,20 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
+import me.lucko.spark.common.sampler.aggregator.DataAggregator;
+import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -41,6 +55,9 @@ public abstract class AbstractSampler implements Sampler {
 
     /** A future to encapsulate the completion of this sampler instance */
     protected final CompletableFuture<Sampler> future = new CompletableFuture<>();
+
+    /** The garbage collector statistics when profiling started */
+    protected Map<String, GarbageCollectorStatistics> initialGcStats;
 
     protected AbstractSampler(int interval, ThreadDumper threadDumper, long endTime) {
         this.interval = interval;
@@ -64,5 +81,65 @@ public abstract class AbstractSampler implements Sampler {
     @Override
     public CompletableFuture<Sampler> getFuture() {
         return this.future;
+    }
+
+    protected void recordInitialGcStats() {
+        this.initialGcStats = GarbageCollectorStatistics.pollStats();
+    }
+
+    protected Map<String, GarbageCollectorStatistics> getInitialGcStats() {
+        return this.initialGcStats;
+    }
+
+    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender creator, String comment, DataAggregator dataAggregator) {
+        SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
+                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
+                .setCreator(creator.toData().toProto())
+                .setStartTime(this.startTime)
+                .setEndTime(System.currentTimeMillis())
+                .setInterval(this.interval)
+                .setThreadDumper(this.threadDumper.getMetadata())
+                .setDataAggregator(dataAggregator.getMetadata());
+
+        if (comment != null) {
+            metadata.setComment(comment);
+        }
+
+        try {
+            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            metadata.setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            ServerConfigProvider serverConfigProvider = platform.getPlugin().createServerConfigProvider();
+            metadata.putAllServerConfigurations(serverConfigProvider.exportServerConfigurations());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        proto.setMetadata(metadata);
+    }
+
+    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, Comparator<ThreadNode> outputOrder, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+        List<ThreadNode> data = dataAggregator.exportData();
+        data.sort(outputOrder);
+
+        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
+
+        for (ThreadNode entry : data) {
+            proto.addThreads(entry.toProto(mergeMode));
+            classSourceVisitor.visit(entry);
+        }
+
+        if (classSourceVisitor.hasMappings()) {
+            proto.putAllClassSources(classSourceVisitor.getMapping());
+        }
     }
 }

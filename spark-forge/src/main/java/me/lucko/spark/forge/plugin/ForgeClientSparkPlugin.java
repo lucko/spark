@@ -21,7 +21,6 @@
 package me.lucko.spark.forge.plugin;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
@@ -38,95 +37,64 @@ import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.commands.CommandSource;
-import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraftforge.client.event.ClientChatEvent;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements SuggestionProvider<SharedSuggestionProvider> {
+public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
 
     public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
         ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, Minecraft.getInstance());
         plugin.enable();
-
-        // register listeners
-        MinecraftForge.EVENT_BUS.register(plugin);
-
-        // ensure commands are registered
-        plugin.scheduler.scheduleWithFixedDelay(plugin::checkCommandRegistered, 10, 10, TimeUnit.SECONDS);
     }
 
     private final Minecraft minecraft;
-    private CommandDispatcher<SharedSuggestionProvider> dispatcher;
 
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
     }
 
-    private CommandDispatcher<SharedSuggestionProvider> getPlayerCommandDispatcher() {
-        return Optional.ofNullable(this.minecraft.player)
-                .map(player -> player.connection)
-                .map(ClientPacketListener::getCommands)
-                .orElse(null);
-    }
+    @Override
+    public void enable() {
+        super.enable();
 
-    private void checkCommandRegistered() {
-        CommandDispatcher<SharedSuggestionProvider> dispatcher = getPlayerCommandDispatcher();
-        if (dispatcher == null) {
-            return;
-        }
-
-        try {
-            if (dispatcher != this.dispatcher) {
-                this.dispatcher = dispatcher;
-                registerCommands(this.dispatcher, context -> Command.SINGLE_SUCCESS, this, "sparkc", "sparkclient");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // register listeners
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
     @SubscribeEvent
-    public void onClientChat(ClientChatEvent event) {
-        String[] args = processArgs(event.getMessage(), false);
-        if (args == null) {
-            return;
-        }
-
-        this.threadDumper.ensureSetup();
-        this.platform.executeCommand(new ForgeCommandSender(this.minecraft.player, this), args);
-        this.minecraft.gui.getChat().addRecentChat(event.getMessage());
-        event.setCanceled(true);
+    public void onCommandRegister(RegisterClientCommandsEvent e) {
+        registerCommands(e.getDispatcher(), this, this, "sparkc", "sparkclient");
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<SharedSuggestionProvider> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context.getInput(), true);
+    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        String[] args = processArgs(context, false, "sparkc", "sparkclient");
+        if (args == null) {
+            return 0;
+        }
+
+        this.threadDumper.ensureSetup();
+        this.platform.executeCommand(new ForgeCommandSender(context.getSource().getEntity(), this), args);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    @Override
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+        String[] args = processArgs(context, true, "/sparkc", "/sparkclient");
         if (args == null) {
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new ForgeCommandSender(this.minecraft.player, this), args, builder);
-    }
-
-    private static String[] processArgs(String input, boolean tabComplete) {
-        String[] split = input.split(" ", tabComplete ? -1 : 0);
-        if (split.length == 0 || !split[0].equals("/sparkc") && !split[0].equals("/sparkclient")) {
-            return null;
-        }
-
-        return Arrays.copyOfRange(split, 1, split.length);
+        return generateSuggestions(new ForgeCommandSender(context.getSource().getEntity(), this), args, builder);
     }
 
     @Override
@@ -158,5 +126,4 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Suggesti
     public String getCommandName() {
         return "sparkc";
     }
-
 }

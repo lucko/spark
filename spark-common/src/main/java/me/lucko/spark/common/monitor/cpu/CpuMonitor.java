@@ -20,12 +20,11 @@
 
 package me.lucko.spark.common.monitor.cpu;
 
+import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.util.RollingAverage;
 
 import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.management.JMX;
@@ -42,13 +41,6 @@ public enum CpuMonitor {
     private static final String OPERATING_SYSTEM_BEAN = "java.lang:type=OperatingSystem";
     /** The OperatingSystemMXBean instance */
     private static final OperatingSystemMXBean BEAN;
-    /** The executor used to monitor & calculate rolling averages. */
-    private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread thread = Executors.defaultThreadFactory().newThread(r);
-        thread.setName("spark-cpu-monitor");
-        thread.setDaemon(true);
-        return thread;
-    });
 
     // Rolling averages for system/process data
     private static final RollingAverage SYSTEM_AVERAGE_10_SEC = new RollingAverage(10);
@@ -68,7 +60,7 @@ public enum CpuMonitor {
         }
 
         // schedule rolling average calculations.
-        EXECUTOR.scheduleAtFixedRate(new RollingAverageCollectionTask(), 1, 1, TimeUnit.SECONDS);
+        MonitoringExecutor.INSTANCE.scheduleAtFixedRate(new RollingAverageCollectionTask(), 1, 1, TimeUnit.SECONDS);
     }
 
     /**

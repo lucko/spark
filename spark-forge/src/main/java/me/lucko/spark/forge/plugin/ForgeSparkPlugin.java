@@ -25,6 +25,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -35,6 +36,7 @@ import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
 
@@ -44,6 +46,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -51,44 +54,21 @@ import java.util.logging.Level;
 
 public abstract class ForgeSparkPlugin implements SparkPlugin {
 
-    public static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
-        if (aliases.length == 0) {
-            return;
-        }
-
-        String mainName = aliases[0];
-        LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(mainName)
-                .executes(executor)
-                .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
-                        .suggests(suggestor)
-                        .executes(executor)
-                );
-
-        LiteralCommandNode<T> node = dispatcher.register(command);
-        for (int i = 1; i < aliases.length; i++) {
-            dispatcher.register(LiteralArgumentBuilder.<T>literal(aliases[i]).redirect(node));
-        }
-    }
-
     private final ForgeSparkMod mod;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
-    protected final SparkPlatform platform;
+
+    protected SparkPlatform platform;
     protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected ForgeSparkPlugin(ForgeSparkMod mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = Executors.defaultThreadFactory().newThread(r);
-            thread.setName("spark-forge-async-worker");
-            thread.setDaemon(true);
-            return thread;
-        });
-        this.platform = new SparkPlatform(this);
+        this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
     }
 
     public void enable() {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
 
@@ -153,5 +133,33 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
             }
             return suggestions.build();
         });
+    }
+
+    protected static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
+        if (aliases.length == 0) {
+            return;
+        }
+
+        String mainName = aliases[0];
+        LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(mainName)
+                .executes(executor)
+                .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
+                        .suggests(suggestor)
+                        .executes(executor)
+                );
+
+        LiteralCommandNode<T> node = dispatcher.register(command);
+        for (int i = 1; i < aliases.length; i++) {
+            dispatcher.register(LiteralArgumentBuilder.<T>literal(aliases[i]).redirect(node));
+        }
+    }
+
+    protected static String[] processArgs(CommandContext<?> context, boolean tabComplete, String... aliases) {
+        String[] split = context.getInput().split(" ", tabComplete ? -1 : 0);
+        if (split.length == 0 || !Arrays.asList(aliases).contains(split[0])) {
+            return null;
+        }
+
+        return Arrays.copyOfRange(split, 1, split.length);
     }
 }

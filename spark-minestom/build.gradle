@@ -1,0 +1,50 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+tasks.withType(JavaCompile) {
+    // override, compile targeting J17
+    options.release = 17
+}
+
+dependencies {
+    implementation project(':spark-common')
+    compileOnly 'com.github.Minestom:Minestom:367c389bc6'
+    implementation 'com.google.guava:guava:19.0'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        expand (
+                'pluginVersion': project.pluginVersion,
+                'pluginDescription': project.pluginDescription
+        )
+        include 'extension.json'
+    }
+}
+
+shadowJar {
+    archiveName = "spark-${project.pluginVersion}-minestom.jar"
+
+    dependencies {
+        exclude(dependency('net.kyori:^(?!adventure-text-feature-pagination).+$'))
+    }
+
+    relocate 'okio', 'me.lucko.spark.lib.okio'
+    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'net.kyori.adventure.text.feature.pagination', 'me.lucko.spark.lib.adventure.pagination'
+    relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
+    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+    relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
+
+    exclude 'module-info.class'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/proguard/**'
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
+}

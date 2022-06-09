@@ -1,0 +1,44 @@
+plugins {
+    id 'net.kyori.blossom' version '1.3.0'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+dependencies {
+    implementation project(':spark-common')
+    compileOnly 'org.spongepowered:spongeapi:7.3.0'
+    annotationProcessor 'org.spongepowered:spongeapi:7.3.0'
+}
+
+repositories {
+    maven { url "https://repo.spongepowered.org/maven" }
+}
+
+blossom {
+    replaceTokenIn('src/main/java/me/lucko/spark/sponge/Sponge7SparkPlugin.java')
+    replaceToken '@version@', project.pluginVersion
+    replaceToken '@desc@', project.pluginDescription
+}
+
+shadowJar {
+    archiveFileName = "spark-${project.pluginVersion}-sponge7.jar"
+
+    relocate 'okio', 'me.lucko.spark.lib.okio'
+    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
+    relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
+    relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
+    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+    relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
+
+    exclude 'module-info.class'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/proguard/**'
+    exclude 'META-INF/versions/**'
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
+}

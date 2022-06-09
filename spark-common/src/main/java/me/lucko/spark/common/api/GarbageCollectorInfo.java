@@ -36,10 +36,8 @@ public class GarbageCollectorInfo implements GarbageCollector {
         this.name = name;
         this.totalCollections = stats.getCollectionCount();
         this.totalTime = stats.getCollectionTime();
-
-        double totalTimeDouble = this.totalTime;
-        this.averageTime = this.totalCollections == 0 ? 0 : totalTimeDouble / this.totalCollections;
-        this.averageFrequency = this.totalCollections == 0 ? 0 : (long) ((serverUptime - totalTimeDouble) / this.totalCollections);
+        this.averageTime = stats.getAverageCollectionTime();
+        this.averageFrequency = stats.getAverageCollectionFrequency(serverUptime);
     }
 
     @Override

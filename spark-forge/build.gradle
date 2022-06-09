@@ -20,8 +20,7 @@ tasks.withType(JavaCompile) {
 }
 
 minecraft {
-    mappings channel: 'official', version: '1.18.1'
-    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    mappings channel: 'official', version: '1.19'
 }
 
 configurations {
@@ -30,7 +29,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.18.1-39.0.8'
+    minecraft 'net.minecraftforge:forge:1.19-41.0.11'
     shade project(':spark-common')
 }
 
@@ -49,7 +48,7 @@ processResources {
 }
 
 shadowJar {
-    archiveName = 'spark-forge.jar'
+    archiveName = "spark-${project.pluginVersion}-forge.jar"
     configurations = [project.configurations.shade]
 
     relocate 'okio', 'me.lucko.spark.lib.okio'

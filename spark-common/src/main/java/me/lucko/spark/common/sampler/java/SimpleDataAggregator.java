@@ -22,7 +22,7 @@ package me.lucko.spark.common.sampler.java;
 
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
-import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import java.lang.management.ThreadInfo;
 import java.util.concurrent.ExecutorService;

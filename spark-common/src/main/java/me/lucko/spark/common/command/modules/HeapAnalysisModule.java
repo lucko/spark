@@ -30,20 +30,15 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.heapdump.HeapDump;
 import me.lucko.spark.common.heapdump.HeapDumpSummary;
+import me.lucko.spark.common.util.Compression;
 import me.lucko.spark.common.util.FormatUtil;
-import me.lucko.spark.proto.SparkProtos;
+import me.lucko.spark.proto.SparkHeapProtos;
 
 import net.kyori.adventure.text.event.ClickEvent;
-
-import org.tukaani.xz.LZMA2Options;
-import org.tukaani.xz.LZMAOutputStream;
-import org.tukaani.xz.XZOutputStream;
 
 import okhttp3.MediaType;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -51,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
-import java.util.zip.GZIPOutputStream;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
@@ -98,7 +92,7 @@ public class HeapAnalysisModule implements CommandModule {
             return;
         }
 
-        SparkProtos.HeapData output = heapDump.toProto(platform.getPlugin().getPlatformInfo(), sender);
+        SparkHeapProtos.HeapData output = heapDump.toProto(platform, sender);
 
         boolean saveToFile = false;
         if (arguments.boolFlag("save-to-file")) {
@@ -117,7 +111,7 @@ public class HeapAnalysisModule implements CommandModule {
                 );
 
                 platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the data. Attempting to save to disk instead.", RED));
                 e.printStackTrace();
                 saveToFile = true;
@@ -175,11 +169,11 @@ public class HeapAnalysisModule implements CommandModule {
         platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump", file.toString()));
 
 
-        CompressionMethod compressionMethod = null;
+        Compression compressionMethod = null;
         Iterator<String> compressArgs = arguments.stringFlag("compress").iterator();
         if (compressArgs.hasNext()) {
             try {
-                compressionMethod = CompressionMethod.valueOf(compressArgs.next().toUpperCase());
+                compressionMethod = Compression.valueOf(compressArgs.next().toUpperCase());
             } catch (IllegalArgumentException e) {
                 // ignore
             }
@@ -194,7 +188,7 @@ public class HeapAnalysisModule implements CommandModule {
         }
     }
 
-    private static void heapDumpCompress(SparkPlatform platform, CommandResponseHandler resp, Path file, CompressionMethod method) throws IOException {
+    private static void heapDumpCompress(SparkPlatform platform, CommandResponseHandler resp, Path file, Compression method) throws IOException {
         resp.broadcastPrefixed(text("Compressing heap dump, please wait..."));
 
         long size = Files.size(file);
@@ -242,73 +236,6 @@ public class HeapAnalysisModule implements CommandModule {
                 .append(text(compressedFile.toString(), GRAY))
                 .build()
         );
-    }
-
-    public enum CompressionMethod {
-        GZIP {
-            @Override
-            public Path compress(Path file, LongConsumer progressHandler) throws IOException {
-                Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".gz");
-                try (InputStream in = Files.newInputStream(file)) {
-                    try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                        try (GZIPOutputStream compressionOut = new GZIPOutputStream(out, 1024 * 64)) {
-                            copy(in, compressionOut, progressHandler);
-                        }
-                    }
-                }
-                return compressedFile;
-            }
-        },
-        XZ {
-            @Override
-            public Path compress(Path file, LongConsumer progressHandler) throws IOException {
-                Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".xz");
-                try (InputStream in = Files.newInputStream(file)) {
-                    try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                        try (XZOutputStream compressionOut = new XZOutputStream(out, new LZMA2Options())) {
-                            copy(in, compressionOut, progressHandler);
-                        }
-                    }
-                }
-                return compressedFile;
-            }
-        },
-        LZMA {
-            @Override
-            public Path compress(Path file, LongConsumer progressHandler) throws IOException {
-                Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".lzma");
-                try (InputStream in = Files.newInputStream(file)) {
-                    try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                        try (LZMAOutputStream compressionOut = new LZMAOutputStream(out, new LZMA2Options(), true)) {
-                            copy(in, compressionOut, progressHandler);
-                        }
-                    }
-                }
-                return compressedFile;
-            }
-        };
-
-        public abstract Path compress(Path file, LongConsumer progressHandler) throws IOException;
-
-        private static long copy(InputStream from, OutputStream to, LongConsumer progress) throws IOException {
-            byte[] buf = new byte[1024 * 64];
-            long total = 0;
-            long iterations = 0;
-            while (true) {
-                int r = from.read(buf);
-                if (r == -1) {
-                    break;
-                }
-                to.write(buf, 0, r);
-                total += r;
-
-                // report progress every 5MB
-                if (iterations++ % ((1024 / 64) * 5) == 0) {
-                    progress.accept(total);
-                }
-            }
-            return total;
-        }
     }
 
 }

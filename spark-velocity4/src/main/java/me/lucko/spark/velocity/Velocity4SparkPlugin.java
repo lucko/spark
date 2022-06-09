@@ -32,6 +32,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.util.ClassSourceLookup;
 
@@ -130,6 +131,11 @@ public class Velocity4SparkPlugin implements SparkPlugin, SimpleCommand {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new Velocity4ClassSourceLookup(this.proxy.pluginManager());
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        return new Velocity4PlayerPingProvider(this.proxy);
     }
 
     @Override

@@ -20,9 +20,11 @@
 
 package me.lucko.spark.common.sampler;
 
-import me.lucko.spark.proto.SparkProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -42,6 +44,11 @@ public interface ThreadGrouper {
         }
 
         @Override
+        public String getLabel(String group) {
+            return group;
+        }
+
+        @Override
         public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
             return SamplerMetadata.DataAggregator.ThreadGrouper.BY_NAME;
         }
@@ -55,14 +62,18 @@ public interface ThreadGrouper {
      * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
      */
     ThreadGrouper BY_POOL = new ThreadGrouper() {
+        private /* static */ final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
+
+        // thread id -> group
         private final Map<Long, String> cache = new ConcurrentHashMap<>();
-        private final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
+        // group -> thread ids
+        private final Map<String, Set<Long>> seen = new ConcurrentHashMap<>();
 
         @Override
         public String getGroup(long threadId, String threadName) {
-            String group = this.cache.get(threadId);
-            if (group != null) {
-                return group;
+            String cached = this.cache.get(threadId);
+            if (cached != null) {
+                return cached;
             }
 
             Matcher matcher = this.pattern.matcher(threadName);
@@ -70,9 +81,19 @@ public interface ThreadGrouper {
                 return threadName;
             }
 
-            group = matcher.group(1).trim() + " (Combined)";
-            this.cache.put(threadId, group); // we don't care about race conditions here
+            String group = matcher.group(1).trim();
+            this.cache.put(threadId, group);
+            this.seen.computeIfAbsent(group, g -> ConcurrentHashMap.newKeySet()).add(threadId);
             return group;
+        }
+
+        @Override
+        public String getLabel(String group) {
+            int count = this.seen.getOrDefault(group, Collections.emptySet()).size();
+            if (count == 0) {
+                return group;
+            }
+            return group + " (x" + count + ")";
         }
 
         @Override
@@ -86,9 +107,17 @@ public interface ThreadGrouper {
      * the name "All".
      */
     ThreadGrouper AS_ONE = new ThreadGrouper() {
+        private final Set<Long> seen = ConcurrentHashMap.newKeySet();
+
         @Override
         public String getGroup(long threadId, String threadName) {
-            return "All";
+            this.seen.add(threadId);
+            return "root";
+        }
+
+        @Override
+        public String getLabel(String group) {
+            return "All (x" + this.seen.size() + ")";
         }
 
         @Override
@@ -105,6 +134,14 @@ public interface ThreadGrouper {
      * @return the group
      */
     String getGroup(long threadId, String threadName);
+
+    /**
+     * Gets the label to use for a given group.
+     *
+     * @param group the group
+     * @return the label
+     */
+    String getLabel(String group);
 
     SamplerMetadata.DataAggregator.ThreadGrouper asProto();
 

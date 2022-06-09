@@ -28,7 +28,7 @@ processResources {
 }
 
 shadowJar {
-    archiveName = 'spark-waterdog.jar'
+    archiveName = "spark-${project.pluginVersion}-waterdog.jar"
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
     relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'

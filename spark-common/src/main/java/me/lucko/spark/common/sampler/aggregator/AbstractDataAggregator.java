@@ -23,6 +23,8 @@ package me.lucko.spark.common.sampler.aggregator;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -50,7 +52,11 @@ public abstract class AbstractDataAggregator implements DataAggregator {
     }
 
     @Override
-    public Map<String, ThreadNode> getData() {
-        return this.threadData;
+    public List<ThreadNode> exportData() {
+        List<ThreadNode> data = new ArrayList<>(this.threadData.values());
+        for (ThreadNode node : data) {
+            node.setThreadLabel(this.threadGrouper.getLabel(node.getThreadGroup()));
+        }
+        return data;
     }
 }

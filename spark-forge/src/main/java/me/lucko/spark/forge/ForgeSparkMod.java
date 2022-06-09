@@ -24,7 +24,7 @@ import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
@@ -61,13 +61,13 @@ public class ForgeSparkMod {
         this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
     }
 
-    @SubscribeEvent
-    public void registerCommands(RegisterCommandsEvent e) {
-        ForgeServerSparkPlugin.register(this, e);
-    }
-
     public void clientInit(FMLClientSetupEvent e) {
         ForgeClientSparkPlugin.register(this, e);
+    }
+
+    @SubscribeEvent
+    public void serverInit(ServerAboutToStartEvent e) {
+        ForgeServerSparkPlugin.register(this, e);
     }
 
     public Path getConfigDirectory() {

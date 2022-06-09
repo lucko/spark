@@ -20,11 +20,11 @@
 
 package me.lucko.spark.bungeecord;
 
-import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 
 import net.md_5.bungee.api.ProxyServer;
 
-public class BungeeCordPlatformInfo extends AbstractPlatformInfo {
+public class BungeeCordPlatformInfo implements PlatformInfo {
     private final ProxyServer proxy;
 
     public BungeeCordPlatformInfo(ProxyServer proxy) {

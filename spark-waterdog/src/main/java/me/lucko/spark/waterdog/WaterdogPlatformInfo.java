@@ -20,11 +20,11 @@
 
 package me.lucko.spark.waterdog;
 
-import me.lucko.spark.common.platform.AbstractPlatformInfo;
+import me.lucko.spark.common.platform.PlatformInfo;
 
 import dev.waterdog.waterdogpe.WaterdogPE;
 
-public class WaterdogPlatformInfo extends AbstractPlatformInfo {
+public class WaterdogPlatformInfo implements PlatformInfo {
 
     @Override
     public Type getType() {

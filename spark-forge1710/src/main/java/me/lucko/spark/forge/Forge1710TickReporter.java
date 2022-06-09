@@ -20,11 +20,11 @@
 
 package me.lucko.spark.forge;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
-import net.minecraftforge.common.MinecraftForge;
 
 public class Forge1710TickReporter extends SimpleTickReporter implements TickReporter {
     private final TickEvent.Type type;
@@ -53,12 +53,12 @@ public class Forge1710TickReporter extends SimpleTickReporter implements TickRep
 
     @Override
     public void start() {
-        MinecraftForge.EVENT_BUS.register(this);
+        FMLCommonHandler.instance().bus().register(this);
     }
 
     @Override
     public void close() {
-        MinecraftForge.EVENT_BUS.unregister(this);
+        FMLCommonHandler.instance().bus().unregister(this);
         super.close();
     }
 

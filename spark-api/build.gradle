@@ -9,6 +9,10 @@ dependencies {
     compileOnly 'org.jetbrains:annotations:20.1.0'
 }
 
+license {
+    header = project.file('HEADER.txt')
+}
+
 publishing {
     //repositories {
     //    maven {

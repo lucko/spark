@@ -29,11 +29,13 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgePlatformInfo;
+import me.lucko.spark.forge.ForgePlayerPingProvider;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
@@ -45,49 +47,61 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.server.ServerLifecycleHooks;
 import net.minecraftforge.server.permission.PermissionAPI;
 import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import net.minecraftforge.server.permission.nodes.PermissionNode.PermissionResolver;
 import net.minecraftforge.server.permission.nodes.PermissionTypes;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
 
-    public static void register(ForgeSparkMod mod, RegisterCommandsEvent event) {
-        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, ServerLifecycleHooks::getCurrentServer);
+    public static void register(ForgeSparkMod mod, ServerAboutToStartEvent event) {
+        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
-
-        // register listeners
-        MinecraftForge.EVENT_BUS.register(plugin);
-
-        // register commands & permissions
-        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        registerCommands(dispatcher, plugin, plugin, "spark");
     }
 
-    private final Supplier<MinecraftServer> server;
+    private final MinecraftServer server;
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
 
-    public ForgeServerSparkPlugin(ForgeSparkMod mod, Supplier<MinecraftServer> server) {
+    public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
     }
 
+    @Override
+    public void enable() {
+        super.enable();
+
+        // register commands
+        registerCommands(this.server.getCommands().getDispatcher());
+
+        // register listeners
+        MinecraftForge.EVENT_BUS.register(this);
+    }
+
+    @Override
+    public void disable() {
+        super.disable();
+
+        // unregister listeners
+        MinecraftForge.EVENT_BUS.unregister(this);
+    }
+
     @SubscribeEvent
     public void onDisable(ServerStoppingEvent event) {
-        disable();
+        if (event.getServer() == this.server) {
+            disable();
+        }
     }
 
     @SubscribeEvent
@@ -112,35 +126,36 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         this.registeredPermissions = builder.build();
     }
 
+    @SubscribeEvent
+    public void onCommandRegister(RegisterCommandsEvent e) {
+        registerCommands(e.getDispatcher());
+    }
+
+    private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
+        registerCommands(dispatcher, this, this, "spark");
+    }
+
     @Override
     public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        String[] args = processArgs(context, false);
+        String[] args = processArgs(context, false, "/spark", "spark");
         if (args == null) {
             return 0;
         }
 
         this.threadDumper.ensureSetup();
-        this.platform.executeCommand(new ForgeCommandSender(context.getSource().source, this), args);
+        CommandSource source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
+        this.platform.executeCommand(new ForgeCommandSender(source, this), args);
         return Command.SINGLE_SUCCESS;
     }
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context, true);
+        String[] args = processArgs(context, true, "/spark", "spark");
         if (args == null) {
             return Suggestions.empty();
         }
 
         return generateSuggestions(new ForgeCommandSender(context.getSource().getPlayerOrException(), this), args, builder);
-    }
-
-    private static String [] processArgs(CommandContext<CommandSourceStack> context, boolean tabComplete) {
-        String[] split = context.getInput().split(" ", tabComplete ? -1 : 0);
-        if (split.length == 0 || !split[0].equals("/spark") && !split[0].equals("spark")) {
-            return null;
-        }
-
-        return Arrays.copyOfRange(split, 1, split.length);
     }
 
     @Override
@@ -163,8 +178,8 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public Stream<ForgeCommandSender> getCommandSenders() {
         return Stream.concat(
-            this.server.get().getPlayerList().getPlayers().stream(),
-            Stream.of(this.server.get())
+            this.server.getPlayerList().getPlayers().stream(),
+            Stream.of(this.server)
         ).map(sender -> new ForgeCommandSender(sender, this));
     }
 
@@ -176,6 +191,11 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public TickReporter createTickReporter() {
         return new ForgeTickReporter(TickEvent.Type.SERVER);
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        return new ForgePlayerPingProvider(this.server);
     }
 
     @Override

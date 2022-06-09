@@ -3,7 +3,7 @@
  *
  *  Copyright (c) lucko (Luck) <luck@lucko.me>
  *  Copyright (c) contributors
- *  
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
@@ -21,9 +21,9 @@
 package me.lucko.spark.bukkit.placeholder;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.command.modules.HealthModule;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.util.StatisticFormatter;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -42,22 +42,22 @@ enum SparkPlaceholderProvider {
             switch (placeholder) {
                 case "tps":
                     return Component.text()
-                            .append(HealthModule.formatTps(tickStatistics.tps5Sec())).append(Component.text(", "))
-                            .append(HealthModule.formatTps(tickStatistics.tps10Sec())).append(Component.text(", "))
-                            .append(HealthModule.formatTps(tickStatistics.tps1Min())).append(Component.text(", "))
-                            .append(HealthModule.formatTps(tickStatistics.tps5Min())).append(Component.text(", "))
-                            .append(HealthModule.formatTps(tickStatistics.tps15Min()))
+                            .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec())).append(Component.text(", "))
+                            .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec())).append(Component.text(", "))
+                            .append(StatisticFormatter.formatTps(tickStatistics.tps1Min())).append(Component.text(", "))
+                            .append(StatisticFormatter.formatTps(tickStatistics.tps5Min())).append(Component.text(", "))
+                            .append(StatisticFormatter.formatTps(tickStatistics.tps15Min()))
                             .build();
                 case "tps_5s":
-                    return HealthModule.formatTps(tickStatistics.tps5Sec());
+                    return StatisticFormatter.formatTps(tickStatistics.tps5Sec());
                 case "tps_10s":
-                    return HealthModule.formatTps(tickStatistics.tps10Sec());
+                    return StatisticFormatter.formatTps(tickStatistics.tps10Sec());
                 case "tps_1m":
-                    return HealthModule.formatTps(tickStatistics.tps1Min());
+                    return StatisticFormatter.formatTps(tickStatistics.tps1Min());
                 case "tps_5m":
-                    return HealthModule.formatTps(tickStatistics.tps5Min());
+                    return StatisticFormatter.formatTps(tickStatistics.tps5Min());
                 case "tps_15m":
-                    return HealthModule.formatTps(tickStatistics.tps15Min());
+                    return StatisticFormatter.formatTps(tickStatistics.tps15Min());
             }
         }
 
@@ -70,13 +70,13 @@ enum SparkPlaceholderProvider {
             switch (placeholder) {
                 case "tickduration":
                     return Component.text()
-                            .append(HealthModule.formatTickDurations(tickStatistics.duration10Sec())).append(Component.text(";  "))
-                            .append(HealthModule.formatTickDurations(tickStatistics.duration1Min()))
+                            .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec())).append(Component.text(";  "))
+                            .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min()))
                             .build();
                 case "tickduration_10s":
-                    return HealthModule.formatTickDurations(tickStatistics.duration10Sec());
+                    return StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec());
                 case "tickduration_1m":
-                    return HealthModule.formatTickDurations(tickStatistics.duration1Min());
+                    return StatisticFormatter.formatTickDurations(tickStatistics.duration1Min());
             }
         }
         
@@ -84,28 +84,28 @@ enum SparkPlaceholderProvider {
             switch (placeholder) {
                 case "cpu_system":
                     return Component.text()
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(Component.text(", "))
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(Component.text(", "))
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
+                            .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad10SecAvg())).append(Component.text(", "))
+                            .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad1MinAvg())).append(Component.text(", "))
+                            .append(StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad15MinAvg()))
                             .build();
                 case "cpu_system_10s":
-                    return HealthModule.formatCpuUsage(CpuMonitor.systemLoad10SecAvg());
+                    return StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad10SecAvg());
                 case "cpu_system_1m":
-                    return HealthModule.formatCpuUsage(CpuMonitor.systemLoad1MinAvg());
+                    return StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad1MinAvg());
                 case "cpu_system_15m":
-                    return HealthModule.formatCpuUsage(CpuMonitor.systemLoad15MinAvg());
+                    return StatisticFormatter.formatCpuUsage(CpuMonitor.systemLoad15MinAvg());
                 case "cpu_process":
                     return Component.text()
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(Component.text(", "))
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(Component.text(", "))
-                            .append(HealthModule.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
+                            .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad10SecAvg())).append(Component.text(", "))
+                            .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad1MinAvg())).append(Component.text(", "))
+                            .append(StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad15MinAvg()))
                             .build();
                 case "cpu_process_10s":
-                    return HealthModule.formatCpuUsage(CpuMonitor.processLoad10SecAvg());
+                    return StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad10SecAvg());
                 case "cpu_process_1m":
-                    return HealthModule.formatCpuUsage(CpuMonitor.processLoad1MinAvg());
+                    return StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad1MinAvg());
                 case "cpu_process_15m":
-                    return HealthModule.formatCpuUsage(CpuMonitor.processLoad15MinAvg());
+                    return StatisticFormatter.formatCpuUsage(CpuMonitor.processLoad15MinAvg());
             }
         }
 

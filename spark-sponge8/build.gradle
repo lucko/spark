@@ -22,7 +22,7 @@ processResources {
 }
 
 shadowJar {
-    archiveFileName = 'spark-sponge8.jar'
+    archiveFileName = "spark-${project.pluginVersion}-sponge8.jar"
 
     dependencies {
         exclude(dependency('net.kyori:^(?!adventure-text-feature-pagination).+$'))

@@ -20,12 +20,12 @@
 
 package me.lucko.spark.common.tick;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public abstract class AbstractTickHook implements TickHook {
 
-    private final Set<Callback> tasks = new HashSet<>();
+    private final Set<Callback> tasks = new CopyOnWriteArraySet<>();
     private int tick = 0;
 
     protected void onTick() {

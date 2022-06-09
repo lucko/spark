@@ -25,9 +25,11 @@ import com.google.inject.Inject;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.kyori.adventure.text.Component;
 
@@ -144,6 +146,20 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     @Override
     public TickHook createTickHook() {
         return new Sponge8TickHook(this.pluginContainer, this.game);
+    }
+
+    @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new Sponge8ClassSourceLookup(this.game);
+    }
+
+    @Override
+    public PlayerPingProvider createPlayerPingProvider() {
+        if (this.game.isServerAvailable()) {
+            return new Sponge8PlayerPingProvider(this.game.server());
+        } else {
+            return null;
+        }
     }
 
     @Override

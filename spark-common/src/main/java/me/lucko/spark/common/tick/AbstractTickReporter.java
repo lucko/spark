@@ -20,11 +20,11 @@
 
 package me.lucko.spark.common.tick;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public abstract class AbstractTickReporter implements TickReporter {
-    private final Set<Callback> tasks = new HashSet<>();
+    private final Set<Callback> tasks = new CopyOnWriteArraySet<>();
 
     protected void onTick(double duration) {
         for (Callback r : this.tasks) {
