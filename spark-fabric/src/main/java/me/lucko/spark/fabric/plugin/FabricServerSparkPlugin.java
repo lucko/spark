@@ -42,11 +42,15 @@ import me.lucko.spark.fabric.FabricTickReporter;
 import me.lucko.spark.fabric.placeholder.SparkFabricPlaceholderApi;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.Version;
+import net.fabricmc.loader.api.VersionParsingException;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.command.ServerCommandSource;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -73,8 +77,17 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
         registerCommands(this.server.getCommandManager().getDispatcher());
 
         // placeholders
-        if (FabricLoader.getInstance().isModLoaded("placeholder-api")) {
-            new SparkFabricPlaceholderApi(this.platform);
+        Optional<ModContainer> placeholderApi = FabricLoader.getInstance().getModContainer("placeholder-api");
+        if (placeholderApi.isPresent()) {
+            try {
+                Version version = placeholderApi.get().getMetadata().getVersion();
+                if (version.compareTo(Version.parse("2.0.0-beta.1+1.19")) >= 0
+                        && version.compareTo(Version.parse("3.0.0")) < 0) {
+                    new SparkFabricPlaceholderApi(this.platform);
+                }
+            } catch (VersionParsingException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 

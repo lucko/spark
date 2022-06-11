@@ -20,8 +20,8 @@
 
 package me.lucko.spark.fabric.placeholder;
 
-import eu.pb4.placeholders.PlaceholderAPI;
-import eu.pb4.placeholders.PlaceholderResult;
+import eu.pb4.placeholders.api.Placeholders;
+import eu.pb4.placeholders.api.PlaceholderResult;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
@@ -40,16 +40,16 @@ public class SparkFabricPlaceholderApi {
     public SparkFabricPlaceholderApi(SparkPlatform platform) {
         this.platform = platform;
 
-        PlaceholderAPI.register(
+        Placeholders.register(
                 new Identifier("spark", "tps"),
-                context -> {
+                (context, arg) -> {
                     TickStatistics tickStatistics = platform.getTickStatistics();
                     if (tickStatistics == null) {
                         return PlaceholderResult.invalid();
                     }
 
-                    if (context.hasArgument()) {
-                        Double tps = switch (context.getArgument()) {
+                    if (arg != null) {
+                        Double tps = switch (arg) {
                             case "5s":
                                 yield tickStatistics.tps5Sec();
                             case "10s":
@@ -83,16 +83,16 @@ public class SparkFabricPlaceholderApi {
                 }
         );
 
-        PlaceholderAPI.register(
+        Placeholders.register(
                 new Identifier("spark", "tickduration"),
-                context -> {
+                (context, arg) -> {
                     TickStatistics tickStatistics = platform.getTickStatistics();
                     if (tickStatistics == null || !tickStatistics.isDurationSupported()) {
                         return PlaceholderResult.invalid();
                     }
 
-                    if (context.hasArgument()) {
-                        RollingAverage duration = switch (context.getArgument()) {
+                    if (arg != null) {
+                        RollingAverage duration = switch (arg) {
                             case "10s":
                                 yield tickStatistics.duration10Sec();
                             case "1m":
@@ -117,11 +117,11 @@ public class SparkFabricPlaceholderApi {
                 }
         );
 
-        PlaceholderAPI.register(
+        Placeholders.register(
                 new Identifier("spark", "cpu_system"),
-                context -> {
-                    if (context.hasArgument()) {
-                        Double usage = switch (context.getArgument()) {
+                (context, arg) -> {
+                    if (arg != null) {
+                        Double usage = switch (arg) {
                             case "10s":
                                 yield CpuMonitor.systemLoad10SecAvg();
                             case "1m":
@@ -149,11 +149,11 @@ public class SparkFabricPlaceholderApi {
                 }
         );
 
-        PlaceholderAPI.register(
+        Placeholders.register(
                 new Identifier("spark", "cpu_process"),
-                context -> {
-                    if (context.hasArgument()) {
-                        Double usage = switch (context.getArgument()) {
+                (context, arg) -> {
+                    if (arg != null) {
+                        Double usage = switch (arg) {
                             case "10s":
                                 yield CpuMonitor.processLoad10SecAvg();
                             case "1m":
