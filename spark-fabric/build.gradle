@@ -45,7 +45,7 @@ dependencies {
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.1-SNAPSHOT'))
 
-    modImplementation('eu.pb4:placeholder-api:1.1.1+1.17.1')
+    modImplementation('eu.pb4:placeholder-api:2.0.0-beta.4+1.19')
 
     shade project(':spark-common')
 }

@@ -74,7 +74,11 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
         // placeholders
         if (FabricLoader.getInstance().isModLoaded("placeholder-api")) {
-            new SparkFabricPlaceholderApi(this.platform);
+            try {
+                SparkFabricPlaceholderApi.register(this.platform);
+            } catch (LinkageError e) {
+                // ignore
+            }
         }
     }
 
