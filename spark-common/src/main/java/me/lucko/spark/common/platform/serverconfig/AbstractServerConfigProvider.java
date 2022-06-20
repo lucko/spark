@@ -21,10 +21,17 @@
 package me.lucko.spark.common.platform.serverconfig;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,29 +45,37 @@ import java.util.stream.Collectors;
  *
  * <p>This implementation is able to delete hidden paths from
  * the configurations before they are sent to the viewer.</p>
- *
- * @param <T> the file type
  */
-public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements ServerConfigProvider {
-    private final Map<String, T> files;
+public abstract class AbstractServerConfigProvider implements ServerConfigProvider {
+    private final Map<String, ConfigParser> files;
     private final Collection<String> hiddenPaths;
 
-    protected AbstractServerConfigProvider(Map<String, T> files, Collection<String> hiddenPaths) {
+    private final Gson gson;
+
+    protected AbstractServerConfigProvider(Map<String, ConfigParser> files, Collection<String> hiddenPaths) {
         this.files = files;
         this.hiddenPaths = hiddenPaths;
+
+        GsonBuilder gson = new GsonBuilder();
+        customiseGson(gson);
+        this.gson = gson.create();
     }
 
     @Override
     public final Map<String, JsonElement> loadServerConfigurations() {
         ImmutableMap.Builder<String, JsonElement> builder = ImmutableMap.builder();
 
-        this.files.forEach((path, type) -> {
+        this.files.forEach((path, reader) -> {
             try {
-                JsonElement json = load(path, type);
-                if (json != null) {
-                    delete(json, this.hiddenPaths);
-                    builder.put(path, json);
+                JsonElement json = load(path, reader);
+                if (json == null) {
+                    return;
                 }
+
+                delete(json, this.hiddenPaths);
+
+                String name = rewriteConfigPath(path);
+                builder.put(name, json);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -69,15 +84,25 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
         return builder.build();
     }
 
-    /**
-     * Loads a file from the system.
-     *
-     * @param path the name of the file to load
-     * @param type the type of the file
-     * @return the loaded file
-     * @throws IOException if an error occurs performing i/o
-     */
-    protected abstract JsonElement load(String path, T type) throws IOException;
+    private JsonElement load(String path, ConfigParser parser) throws IOException {
+        Path filePath = Paths.get(path);
+        if (!Files.exists(filePath)) {
+            return null;
+        }
+
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+            Map<String, Object> values = parser.parse(reader);
+            return this.gson.toJsonTree(values);
+        }
+    }
+
+    protected void customiseGson(GsonBuilder gson) {
+
+    }
+
+    protected String rewriteConfigPath(String path) {
+        return path;
+    }
 
     /**
      * Deletes the given paths from the json element.

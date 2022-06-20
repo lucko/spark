@@ -20,25 +20,22 @@
 
 package me.lucko.spark.common.platform.serverconfig;
 
-import java.io.FilterReader;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 /**
- * A {@link Reader} that can parse a .properties file.
+ * A {@link ConfigParser} that can parse a .properties file.
  */
-public class PropertiesFileReader extends FilterReader {
+public enum PropertiesConfigParser implements ConfigParser {
+    INSTANCE;
 
-    public PropertiesFileReader(Reader in) {
-        super(in);
-    }
-
-    public Map<String, Object> readProperties() throws IOException {
+    @Override
+    public Map<String, Object> parse(BufferedReader reader) throws IOException {
         Properties properties = new Properties();
-        properties.load(this);
+        properties.load(reader);
 
         Map<String, Object> values = new HashMap<>();
         properties.forEach((k, v) -> {
