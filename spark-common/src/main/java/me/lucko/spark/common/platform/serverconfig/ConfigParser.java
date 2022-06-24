@@ -22,10 +22,29 @@ package me.lucko.spark.common.platform.serverconfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 public interface ConfigParser {
 
-    Map<String, Object> parse(BufferedReader reader) throws IOException;
+    default String getRealName(String name) {
+        return name;
+    }
+
+    default Map<String, Object> parse(String file) throws IOException {
+        Path filePath = Paths.get(file);
+        if (!Files.exists(filePath)) {
+            return null;
+        }
+
+        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+            return this.parse(reader);
+        }
+    }
+
+     Map<String, Object> parse(BufferedReader reader) throws IOException;
 
 }

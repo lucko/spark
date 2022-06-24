@@ -29,6 +29,8 @@ import me.lucko.spark.common.platform.serverconfig.AbstractServerConfigProvider;
 import me.lucko.spark.common.platform.serverconfig.ConfigParser;
 import me.lucko.spark.common.platform.serverconfig.PropertiesConfigParser;
 
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -36,6 +38,9 @@ import co.aikar.timings.TimingsManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,15 +63,55 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
        gson.registerTypeAdapter(MemorySection.class, (JsonSerializer<MemorySection>) (obj, type, ctx) -> ctx.serialize(obj.getValues(false)));
     }
 
-    @Override
-    protected String rewriteConfigPath(String path) {
-        return path.startsWith("config/")
-                ? path.substring("config/".length())
-                : path;
-    }
-
     private enum YamlConfigParser implements ConfigParser {
         INSTANCE;
+
+        @Override
+        public Map<String, Object> parse(BufferedReader reader) throws IOException {
+            YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
+            return config.getValues(false);
+        }
+    }
+
+    private enum SplitYamlConfigParser implements ConfigParser {
+        INSTANCE;
+
+        @Override
+        public String getRealName(String name) {
+            return name + ".yml";
+        }
+
+        @Override
+        public Map<String, Object> parse(String file) throws IOException {
+            String group = file.replace(".yml", "");
+            Path configDir = Paths.get("config");
+            if (!Files.exists(configDir)) {
+                return null;
+            }
+
+            YamlConfiguration config = new YamlConfiguration();
+            Path globalConfig = configDir.resolve(group + "-global.yml");
+            Path worldDefaultsConfig = configDir.resolve(group + "-world-defaults.yml");
+
+            Map<String, Object> globalMap = this.parse(Files.newBufferedReader(globalConfig));
+            config.set("config-version", globalMap.get("_version"));
+            globalMap.remove("_version");
+
+            Map<String, Object> worldDefaultsMap = this.parse(Files.newBufferedReader(worldDefaultsConfig));
+            worldDefaultsMap.remove("_version");
+
+            config.set("settings", globalMap);
+            config.set("world-settings.default", worldDefaultsMap);
+
+            for (World world : Bukkit.getWorlds()) {
+                Path worldConfig = world.getWorldFolder().toPath().resolve(group + "-world.yml");
+                Map<String, Object> worldMap = this.parse(Files.newBufferedReader(worldConfig));
+                worldMap.remove("_version");
+                config.set("world-settings." + world.getName(), worldMap);
+            }
+
+            return config.getValues(false);
+        }
 
         @Override
         public Map<String, Object> parse(BufferedReader reader) throws IOException {
@@ -81,8 +126,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
                 .put("bukkit.yml", YamlConfigParser.INSTANCE)
                 .put("spigot.yml", YamlConfigParser.INSTANCE)
                 .put("paper.yml", YamlConfigParser.INSTANCE)
-                .put("config/paper-global.yml", YamlConfigParser.INSTANCE)
-                .put("config/paper-world-defaults.yml", YamlConfigParser.INSTANCE)
+                .put("paper", SplitYamlConfigParser.INSTANCE)
                 .put("purpur.yml", YamlConfigParser.INSTANCE);
 
         for (String config : getSystemPropertyList("spark.serverconfigs.extra")) {
