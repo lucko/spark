@@ -30,10 +30,6 @@ import java.util.Map;
 
 public interface ConfigParser {
 
-    default String getRealName(String name) {
-        return name;
-    }
-
     default Map<String, Object> parse(String file) throws IOException {
         Path filePath = Paths.get(file);
         if (!Files.exists(filePath)) {

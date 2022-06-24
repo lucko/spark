@@ -65,17 +65,15 @@ public abstract class AbstractServerConfigProvider implements ServerConfigProvid
     public final Map<String, JsonElement> loadServerConfigurations() {
         ImmutableMap.Builder<String, JsonElement> builder = ImmutableMap.builder();
 
-        this.files.forEach((name, reader) -> {
-            name = reader.getRealName(name);
-
+        this.files.forEach((path, reader) -> {
             try {
-                JsonElement json = load(reader.getRealName(name), reader);
+                JsonElement json = load(path, reader);
                 if (json == null) {
                     return;
                 }
 
                 delete(json, this.hiddenPaths);
-                builder.put(name, json);
+                builder.put(path, json);
             } catch (Exception e) {
                 e.printStackTrace();
             }

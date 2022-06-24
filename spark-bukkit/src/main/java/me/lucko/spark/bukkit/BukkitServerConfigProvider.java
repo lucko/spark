@@ -22,6 +22,7 @@ package me.lucko.spark.bukkit;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSerializer;
 
@@ -77,40 +78,21 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
         INSTANCE;
 
         @Override
-        public String getRealName(String name) {
-            return name + ".yml";
-        }
-
-        @Override
         public Map<String, Object> parse(String file) throws IOException {
-            String group = file.replace(".yml", "");
+            String group = file.replace("/", "");
             Path configDir = Paths.get("config");
             if (!Files.exists(configDir)) {
                 return null;
             }
 
-            YamlConfiguration config = new YamlConfiguration();
-            Path globalConfig = configDir.resolve(group + "-global.yml");
-            Path worldDefaultsConfig = configDir.resolve(group + "-world-defaults.yml");
-
-            Map<String, Object> globalMap = this.parse(Files.newBufferedReader(globalConfig));
-            config.set("config-version", globalMap.get("_version"));
-            globalMap.remove("_version");
-
-            Map<String, Object> worldDefaultsMap = this.parse(Files.newBufferedReader(worldDefaultsConfig));
-            worldDefaultsMap.remove("_version");
-
-            config.set("settings", globalMap);
-            config.set("world-settings.default", worldDefaultsMap);
-
+            Map<String, Object> configs = Maps.newHashMap();
+            configs.put("global.yml", parse(Files.newBufferedReader(configDir.resolve(group + "-global.yml"))));
+            configs.put("world-defaults.yml", parse(Files.newBufferedReader(configDir.resolve(group + "-world-defaults.yml"))));
             for (World world : Bukkit.getWorlds()) {
-                Path worldConfig = world.getWorldFolder().toPath().resolve(group + "-world.yml");
-                Map<String, Object> worldMap = this.parse(Files.newBufferedReader(worldConfig));
-                worldMap.remove("_version");
-                config.set("world-settings." + world.getName(), worldMap);
+                configs.put("world-" + world.getName() + ".yml", parse(Files.newBufferedReader(world.getWorldFolder().toPath().resolve(group + "-world.yml"))));
             }
 
-            return config.getValues(false);
+            return configs;
         }
 
         @Override
@@ -126,7 +108,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
                 .put("bukkit.yml", YamlConfigParser.INSTANCE)
                 .put("spigot.yml", YamlConfigParser.INSTANCE)
                 .put("paper.yml", YamlConfigParser.INSTANCE)
-                .put("paper", SplitYamlConfigParser.INSTANCE)
+                .put("paper/", SplitYamlConfigParser.INSTANCE)
                 .put("purpur.yml", YamlConfigParser.INSTANCE);
 
         for (String config : getSystemPropertyList("spark.serverconfigs.extra")) {
