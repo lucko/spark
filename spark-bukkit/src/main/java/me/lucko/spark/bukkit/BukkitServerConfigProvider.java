@@ -89,7 +89,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
             configs.put("global.yml", parse(Files.newBufferedReader(configDir.resolve(group + "-global.yml"))));
             configs.put("world-defaults.yml", parse(Files.newBufferedReader(configDir.resolve(group + "-world-defaults.yml"))));
             for (World world : Bukkit.getWorlds()) {
-                configs.put("world-" + world.getName() + ".yml", parse(Files.newBufferedReader(world.getWorldFolder().toPath().resolve(group + "-world.yml"))));
+                configs.put(world.getName() + ".yml", parse(Files.newBufferedReader(world.getWorldFolder().toPath().resolve(group + "-world.yml"))));
             }
 
             return configs;
