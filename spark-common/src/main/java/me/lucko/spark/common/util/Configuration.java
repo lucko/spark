@@ -31,14 +31,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public final class Configuration {
+public class Configuration {
     private static final JsonParser PARSER = new JsonParser();
 
     private final JsonObject root;
 
     public Configuration(Path file) {
         JsonObject root = null;
-        if (Files.exists(file)) {
+        if (file != null && Files.exists(file)) {
             try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
                 root = PARSER.parse(reader).getAsJsonObject();
             } catch (IOException e) {

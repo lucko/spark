@@ -110,9 +110,12 @@ public class SparkPlatform {
     private final AtomicBoolean enabled = new AtomicBoolean(false);
 
     public SparkPlatform(SparkPlugin plugin) {
-        this.plugin = plugin;
+        this(plugin, new Configuration(plugin.getPluginDirectory() != null ? plugin.getPluginDirectory().resolve("config.json") : null));
+    }
 
-        this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
+    public SparkPlatform(SparkPlugin plugin, Configuration configuration) {
+        this.plugin = plugin;
+        this.configuration = configuration;
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
         String bytebinUrl = this.configuration.getString("bytebinUrl", "https://bytebin.lucko.me/");
@@ -137,7 +140,7 @@ public class SparkPlatform {
         }
         this.commands = commandsBuilder.build();
 
-        this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
+        this.activityLog = new ActivityLog(plugin.getPluginDirectory() != null ? plugin.getPluginDirectory().resolve("activity.json") : null);
         this.activityLog.load();
 
         this.tickHook = plugin.createTickHook();

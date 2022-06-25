@@ -63,6 +63,10 @@ public class ActivityLog {
     }
 
     public void save() {
+        if (file == null) {
+            return;
+        }
+
         JsonArray array = new JsonArray();
         synchronized (this.mutex) {
             for (Activity activity : this.log) {
@@ -86,6 +90,10 @@ public class ActivityLog {
     }
 
     public void load() {
+        if (file == null) {
+            return;
+        }
+
         if (!Files.exists(this.file)) {
             synchronized (this.mutex) {
                 this.log.clear();

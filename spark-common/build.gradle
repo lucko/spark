@@ -1,5 +1,6 @@
 plugins {
     id 'com.google.protobuf' version '0.8.16'
+    id 'maven-publish'
 }
 
 license {
@@ -55,6 +56,19 @@ protobuf {
                 java {
                     option 'lite'
                 }
+            }
+        }
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'spark-common'
+                description = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
+                url = 'https://spark.lucko.me/'
             }
         }
     }

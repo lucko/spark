@@ -51,7 +51,9 @@ public interface SparkPlugin {
      *
      * @return the plugin directory
      */
-    Path getPluginDirectory();
+    default Path getPluginDirectory() {
+        return null;
+    }
 
     /**
      * Gets the name used for the plugin command.
