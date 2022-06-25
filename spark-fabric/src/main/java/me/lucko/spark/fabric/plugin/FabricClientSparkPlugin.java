@@ -29,6 +29,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
@@ -36,6 +37,7 @@ import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
+import me.lucko.spark.fabric.FabricWorldInfoProvider;
 
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -113,6 +115,11 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     }
 
     @Override
+    public void executeSync(Runnable task) {
+        this.minecraft.executeSync(task);
+    }
+
+    @Override
     public TickHook createTickHook() {
         return new FabricTickHook.Client();
     }
@@ -120,6 +127,11 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public TickReporter createTickReporter() {
         return new FabricTickReporter.Client();
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new FabricWorldInfoProvider.Client(this.minecraft);
     }
 
     @Override

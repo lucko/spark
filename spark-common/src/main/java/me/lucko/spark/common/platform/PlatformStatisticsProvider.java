@@ -30,8 +30,11 @@ import me.lucko.spark.common.monitor.net.NetworkInterfaceAverages;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.platform.world.WorldStatisticsProvider;
 import me.lucko.spark.proto.SparkProtos.PlatformStatistics;
 import me.lucko.spark.proto.SparkProtos.SystemStatistics;
+import me.lucko.spark.proto.SparkProtos.WorldStatistics;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
@@ -181,6 +184,18 @@ public class PlatformStatisticsProvider {
             long playerCount = this.platform.getPlugin().getCommandSenders().count() - 1; // includes console
             builder.setPlayerCount(playerCount);
         }
+
+        try {
+            WorldInfoProvider worldInfo = this.platform.getPlugin().createWorldInfoProvider();
+            WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(this.platform, worldInfo);
+            WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
+            if (worldStatistics != null) {
+                builder.setWorld(worldStatistics);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         return builder.build();
     }

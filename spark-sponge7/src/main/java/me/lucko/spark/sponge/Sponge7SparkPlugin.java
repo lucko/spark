@@ -27,6 +27,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.ClassSourceLookup;
@@ -44,6 +45,7 @@ import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.scheduler.AsynchronousExecutor;
 import org.spongepowered.api.scheduler.SpongeExecutorService;
+import org.spongepowered.api.scheduler.SynchronousExecutor;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
@@ -70,17 +72,19 @@ public class Sponge7SparkPlugin implements SparkPlugin {
     private final Game game;
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
+    private final SpongeExecutorService syncExecutor;
 
     private SparkPlatform platform;
     private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
-    public Sponge7SparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor) {
+    public Sponge7SparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor, @SynchronousExecutor SpongeExecutorService syncExecutor) {
         this.pluginContainer = pluginContainer;
         this.logger = logger;
         this.game = game;
         this.configDirectory = configDirectory;
         this.asyncExecutor = asyncExecutor;
+        this.syncExecutor = syncExecutor;
     }
 
     @Listener
@@ -112,15 +116,24 @@ public class Sponge7SparkPlugin implements SparkPlugin {
 
     @Override
     public Stream<Sponge7CommandSender> getCommandSenders() {
-        return Stream.concat(
-                this.game.getServer().getOnlinePlayers().stream(),
-                Stream.of(this.game.getServer().getConsole())
-        ).map(Sponge7CommandSender::new);
+        if (this.game.isServerAvailable()) {
+            return Stream.concat(
+                    this.game.getServer().getOnlinePlayers().stream(),
+                    Stream.of(this.game.getServer().getConsole())
+            ).map(Sponge7CommandSender::new);
+        } else {
+            return Stream.of(this.game.getServer().getConsole()).map(Sponge7CommandSender::new);
+        }
     }
 
     @Override
     public void executeAsync(Runnable task) {
         this.asyncExecutor.execute(task);
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        this.syncExecutor.execute(task);
     }
 
     @Override
@@ -157,6 +170,15 @@ public class Sponge7SparkPlugin implements SparkPlugin {
             return new Sponge7PlayerPingProvider(this.game.getServer());
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        if (this.game.isServerAvailable()) {
+            return new Sponge7WorldInfoProvider(this.game.getServer());
+        } else {
+            return WorldInfoProvider.NO_OP;
         }
     }
 

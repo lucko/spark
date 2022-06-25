@@ -31,6 +31,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
@@ -39,6 +40,7 @@ import me.lucko.spark.forge.ForgePlayerPingProvider;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
+import me.lucko.spark.forge.ForgeWorldInfoProvider;
 
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -184,6 +186,11 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
+    public void executeSync(Runnable task) {
+        this.server.executeIfPossible(task);
+    }
+
+    @Override
     public TickHook createTickHook() {
         return new ForgeTickHook(TickEvent.Type.SERVER);
     }
@@ -196,6 +203,11 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public PlayerPingProvider createPlayerPingProvider() {
         return new ForgePlayerPingProvider(this.server);
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new ForgeWorldInfoProvider.Server(this.server);
     }
 
     @Override

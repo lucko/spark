@@ -21,6 +21,7 @@ tasks.withType(JavaCompile) {
 
 minecraft {
     mappings channel: 'official', version: '1.19'
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 }
 
 configurations {

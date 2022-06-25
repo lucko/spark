@@ -28,6 +28,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
@@ -35,6 +36,7 @@ import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
+import me.lucko.spark.forge.ForgeWorldInfoProvider;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSource;
@@ -108,6 +110,11 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
+    public void executeSync(Runnable task) {
+        this.minecraft.executeIfPossible(task);
+    }
+
+    @Override
     public TickHook createTickHook() {
         return new ForgeTickHook(TickEvent.Type.CLIENT);
     }
@@ -115,6 +122,11 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public TickReporter createTickReporter() {
         return new ForgeTickReporter(TickEvent.Type.CLIENT);
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new ForgeWorldInfoProvider.Client(this.minecraft);
     }
 
     @Override
