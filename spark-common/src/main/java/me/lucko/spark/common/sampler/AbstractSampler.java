@@ -27,6 +27,7 @@ import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
@@ -41,6 +42,9 @@ import java.util.concurrent.CompletableFuture;
  */
 public abstract class AbstractSampler implements Sampler {
 
+    /** The spark platform instance */
+    protected final SparkPlatform platform;
+
     /** The interval to wait between sampling, in microseconds */
     protected final int interval;
 
@@ -50,8 +54,11 @@ public abstract class AbstractSampler implements Sampler {
     /** The time when sampling first began */
     protected long startTime = -1;
 
+    /** The game tick when sampling first began */
+    protected int startTick = -1;
+
     /** The unix timestamp (in millis) when this sampler should automatically complete. */
-    protected final long endTime; // -1 for nothing
+    protected final long autoEndTime; // -1 for nothing
 
     /** A future to encapsulate the completion of this sampler instance */
     protected final CompletableFuture<Sampler> future = new CompletableFuture<>();
@@ -59,10 +66,11 @@ public abstract class AbstractSampler implements Sampler {
     /** The garbage collector statistics when profiling started */
     protected Map<String, GarbageCollectorStatistics> initialGcStats;
 
-    protected AbstractSampler(int interval, ThreadDumper threadDumper, long endTime) {
+    protected AbstractSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, long autoEndTime) {
+        this.platform = platform;
         this.interval = interval;
         this.threadDumper = threadDumper;
-        this.endTime = endTime;
+        this.autoEndTime = autoEndTime;
     }
 
     @Override
@@ -74,8 +82,8 @@ public abstract class AbstractSampler implements Sampler {
     }
 
     @Override
-    public long getEndTime() {
-        return this.endTime;
+    public long getAutoEndTime() {
+        return this.autoEndTime;
     }
 
     @Override
@@ -91,6 +99,16 @@ public abstract class AbstractSampler implements Sampler {
         return this.initialGcStats;
     }
 
+    @Override
+    public void start() {
+        this.startTime = System.currentTimeMillis();
+
+        TickHook tickHook = this.platform.getTickHook();
+        if (tickHook != null) {
+            this.startTick = tickHook.getCurrentTick();
+        }
+    }
+
     protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender creator, String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
@@ -103,6 +121,14 @@ public abstract class AbstractSampler implements Sampler {
 
         if (comment != null) {
             metadata.setComment(comment);
+        }
+
+        if (this.startTick != -1) {
+            TickHook tickHook = this.platform.getTickHook();
+            if (tickHook != null) {
+                int numberOfTicks = tickHook.getCurrentTick() - this.startTick;
+                metadata.setNumberOfTicks(numberOfTicks);
+            }
         }
 
         try {

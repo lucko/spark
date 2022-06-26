@@ -25,6 +25,7 @@ message SamplerMetadata {
   SystemStatistics system_statistics = 9;
   map<string, string> server_configurations = 10;
   int64 end_time = 11;
+  int32 number_of_ticks = 12;
 
   message ThreadDumper {
     Type type = 1;
@@ -42,6 +43,7 @@ message SamplerMetadata {
     Type type = 1;
     ThreadGrouper thread_grouper = 2;
     int64 tick_length_threshold = 3; // optional
+    int32 number_of_included_ticks = 4; // optional
 
     enum Type {
       SIMPLE = 0;

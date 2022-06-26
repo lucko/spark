@@ -57,7 +57,7 @@ public interface Sampler {
      *
      * @return the end time, or -1 if undefined
      */
-    long getEndTime();
+    long getAutoEndTime();
 
     /**
      * Gets a future to encapsulate the completion of the sampler

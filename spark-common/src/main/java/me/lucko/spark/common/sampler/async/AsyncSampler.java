@@ -65,8 +65,8 @@ public class AsyncSampler extends AbstractSampler {
     /** The executor used for timeouts */
     private ScheduledExecutorService timeoutExecutor;
 
-    public AsyncSampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
-        super(interval, threadDumper, endTime);
+    public AsyncSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
+        super(platform, interval, threadDumper, endTime);
         this.profiler = AsyncProfilerAccess.INSTANCE.getProfiler();
         this.dataAggregator = new AsyncDataAggregator(threadGrouper);
     }
@@ -90,7 +90,7 @@ public class AsyncSampler extends AbstractSampler {
      */
     @Override
     public void start() {
-        this.startTime = System.currentTimeMillis();
+        super.start();
 
         try {
             this.outputFile = TemporaryFiles.create("spark-profile-", ".jfr.tmp");
@@ -120,11 +120,11 @@ public class AsyncSampler extends AbstractSampler {
     }
 
     private void scheduleTimeout() {
-        if (this.endTime == -1) {
+        if (this.autoEndTime == -1) {
             return;
         }
 
-        long delay = this.endTime - System.currentTimeMillis();
+        long delay = this.autoEndTime - System.currentTimeMillis();
         if (delay <= 0) {
             return;
         }
