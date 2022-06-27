@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     implementation project(':spark-common')
-    compileOnly 'com.velocitypowered:velocity-api:3.0.0'
+    compileOnly 'com.velocitypowered:velocity-api:3.1.1'
     annotationProcessor 'com.velocitypowered:velocity-api:3.1.1'
 }
 
