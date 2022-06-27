@@ -8,7 +8,7 @@ dependencies {
     compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
     
     // placeholders
-    compileOnly 'me.clip:placeholderapi:2.10.3'
+    compileOnly 'me.clip:placeholderapi:2.11.1'
     compileOnly('be.maximvdw:MVdWPlaceholderAPI:3.0.1-SNAPSHOT') {
         exclude(module: 'MVdWUpdater')
     }
