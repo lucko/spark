@@ -73,9 +73,7 @@ public abstract class AbstractServerConfigProvider implements ServerConfigProvid
                 }
 
                 delete(json, this.hiddenPaths);
-
-                String name = rewriteConfigPath(path);
-                builder.put(name, json);
+                builder.put(path, json);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -85,23 +83,16 @@ public abstract class AbstractServerConfigProvider implements ServerConfigProvid
     }
 
     private JsonElement load(String path, ConfigParser parser) throws IOException {
-        Path filePath = Paths.get(path);
-        if (!Files.exists(filePath)) {
+        Map<String, Object> values = parser.parse(path);
+        if (values == null) {
             return null;
         }
 
-        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
-            Map<String, Object> values = parser.parse(reader);
-            return this.gson.toJsonTree(values);
-        }
+        return this.gson.toJsonTree(values);
     }
 
     protected void customiseGson(GsonBuilder gson) {
 
-    }
-
-    protected String rewriteConfigPath(String path) {
-        return path;
     }
 
     /**

@@ -22,6 +22,7 @@ package me.lucko.spark.bukkit;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSerializer;
 
@@ -29,6 +30,8 @@ import me.lucko.spark.common.platform.serverconfig.AbstractServerConfigProvider;
 import me.lucko.spark.common.platform.serverconfig.ConfigParser;
 import me.lucko.spark.common.platform.serverconfig.PropertiesConfigParser;
 
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -36,6 +39,9 @@ import co.aikar.timings.TimingsManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,20 +64,52 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
        gson.registerTypeAdapter(MemorySection.class, (JsonSerializer<MemorySection>) (obj, type, ctx) -> ctx.serialize(obj.getValues(false)));
     }
 
-    @Override
-    protected String rewriteConfigPath(String path) {
-        return path.startsWith("config/")
-                ? path.substring("config/".length())
-                : path;
-    }
-
-    private enum YamlConfigParser implements ConfigParser {
-        INSTANCE;
+    private static class YamlConfigParser implements ConfigParser {
+        public static final YamlConfigParser INSTANCE = new YamlConfigParser();
 
         @Override
         public Map<String, Object> parse(BufferedReader reader) throws IOException {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
             return config.getValues(false);
+        }
+    }
+
+    // Paper 1.19+ split config layout
+    private static class SplitYamlConfigParser extends YamlConfigParser {
+        public static final SplitYamlConfigParser INSTANCE = new SplitYamlConfigParser();
+
+        @Override
+        public Map<String, Object> parse(String prefix) throws IOException {
+            Path configDir = Paths.get("config");
+            if (!Files.exists(configDir)) {
+                return null;
+            }
+
+            Map<String, Object> configs = Maps.newHashMap();
+
+            parseIfExists(configs,
+                    "global.yml",
+                    configDir.resolve(prefix + "-global.yml")
+            );
+            parseIfExists(configs,
+                    "world-defaults.yml",
+                    configDir.resolve(prefix + "-world-defaults.yml")
+            );
+            for (World world : Bukkit.getWorlds()) {
+                parseIfExists(configs,
+                        world.getName() + ".yml",
+                        world.getWorldFolder().toPath().resolve(prefix + "-world.yml")
+                );
+            }
+
+            return configs;
+        }
+
+        private void parseIfExists(Map<String, Object> configs, String name, Path path) throws IOException {
+            Map<String, Object> values = parse(path);
+            if (values != null) {
+                configs.put(name, values);
+            }
         }
     }
 
@@ -81,8 +119,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
                 .put("bukkit.yml", YamlConfigParser.INSTANCE)
                 .put("spigot.yml", YamlConfigParser.INSTANCE)
                 .put("paper.yml", YamlConfigParser.INSTANCE)
-                .put("config/paper-global.yml", YamlConfigParser.INSTANCE)
-                .put("config/paper-world-defaults.yml", YamlConfigParser.INSTANCE)
+                .put("paper", SplitYamlConfigParser.INSTANCE)
                 .put("purpur.yml", YamlConfigParser.INSTANCE);
 
         for (String config : getSystemPropertyList("spark.serverconfigs.extra")) {
