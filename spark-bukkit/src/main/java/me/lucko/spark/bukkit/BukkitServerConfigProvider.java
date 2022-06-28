@@ -22,12 +22,15 @@ package me.lucko.spark.bukkit;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializer;
 
 import me.lucko.spark.common.platform.serverconfig.AbstractServerConfigProvider;
 import me.lucko.spark.common.platform.serverconfig.ConfigParser;
+import me.lucko.spark.common.platform.serverconfig.ExcludedConfigFilter;
 import me.lucko.spark.common.platform.serverconfig.PropertiesConfigParser;
 
 import org.bukkit.Bukkit;
@@ -45,6 +48,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -59,13 +63,21 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
         super(FILES, HIDDEN_PATHS);
     }
 
-    @Override
-    protected void customiseGson(GsonBuilder gson) {
-       gson.registerTypeAdapter(MemorySection.class, (JsonSerializer<MemorySection>) (obj, type, ctx) -> ctx.serialize(obj.getValues(false)));
-    }
-
     private static class YamlConfigParser implements ConfigParser {
         public static final YamlConfigParser INSTANCE = new YamlConfigParser();
+        protected static final Gson GSON = new GsonBuilder()
+                .registerTypeAdapter(MemorySection.class, (JsonSerializer<MemorySection>) (obj, type, ctx) -> ctx.serialize(obj.getValues(false)))
+                .create();
+
+        @Override
+        public JsonElement load(String file, ExcludedConfigFilter filter) throws IOException {
+            Map<String, Object> values = this.parse(Paths.get(file));
+            if (values == null) {
+                return null;
+            }
+
+            return filter.apply(GSON.toJsonTree(values));
+        }
 
         @Override
         public Map<String, Object> parse(BufferedReader reader) throws IOException {
@@ -79,37 +91,40 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
         public static final SplitYamlConfigParser INSTANCE = new SplitYamlConfigParser();
 
         @Override
-        public Map<String, Object> parse(String prefix) throws IOException {
+        public JsonElement load(String group, ExcludedConfigFilter filter) throws IOException {
+            String prefix = group.replace("/", "");
+
             Path configDir = Paths.get("config");
             if (!Files.exists(configDir)) {
                 return null;
             }
 
-            Map<String, Object> configs = Maps.newHashMap();
+            JsonObject root = new JsonObject();
 
-            parseIfExists(configs,
-                    "global.yml",
-                    configDir.resolve(prefix + "-global.yml")
-            );
-            parseIfExists(configs,
-                    "world-defaults.yml",
-                    configDir.resolve(prefix + "-world-defaults.yml")
-            );
-            for (World world : Bukkit.getWorlds()) {
-                parseIfExists(configs,
-                        world.getName() + ".yml",
-                        world.getWorldFolder().toPath().resolve(prefix + "-world.yml")
-                );
+            for (Map.Entry<String, Path> entry : getNestedFiles(configDir, prefix).entrySet()) {
+                String fileName = entry.getKey();
+                Path path = entry.getValue();
+
+                Map<String, Object> values = this.parse(path);
+                if (values == null) {
+                    continue;
+                }
+
+                // apply the filter individually to each nested file
+                root.add(fileName, filter.apply(GSON.toJsonTree(values)));
             }
 
-            return configs;
+            return root;
         }
 
-        private void parseIfExists(Map<String, Object> configs, String name, Path path) throws IOException {
-            Map<String, Object> values = parse(path);
-            if (values != null) {
-                configs.put(name, values);
+        private static Map<String, Path> getNestedFiles(Path configDir, String prefix) {
+            Map<String, Path> files = new LinkedHashMap<>();
+            files.put("global.yml", configDir.resolve(prefix + "-global.yml"));
+            files.put("world-defaults.yml", configDir.resolve(prefix + "-world-defaults.yml"));
+            for (World world : Bukkit.getWorlds()) {
+                files.put(world.getName() + ".yml", world.getWorldFolder().toPath().resolve(prefix + "-world.yml"));
             }
+            return files;
         }
     }
 
@@ -119,7 +134,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
                 .put("bukkit.yml", YamlConfigParser.INSTANCE)
                 .put("spigot.yml", YamlConfigParser.INSTANCE)
                 .put("paper.yml", YamlConfigParser.INSTANCE)
-                .put("paper", SplitYamlConfigParser.INSTANCE)
+                .put("paper/", SplitYamlConfigParser.INSTANCE)
                 .put("purpur.yml", YamlConfigParser.INSTANCE);
 
         for (String config : getSystemPropertyList("spark.serverconfigs.extra")) {

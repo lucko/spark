@@ -20,19 +20,18 @@
 
 package me.lucko.spark.common.platform.serverconfig;
 
+import com.google.gson.JsonElement;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 public interface ConfigParser {
 
-    default Map<String, Object> parse(String file) throws IOException {
-        return parse(Paths.get(file));
-    }
+    JsonElement load(String file, ExcludedConfigFilter filter) throws IOException;
 
     default Map<String, Object> parse(Path file) throws IOException {
         if (!Files.exists(file)) {
