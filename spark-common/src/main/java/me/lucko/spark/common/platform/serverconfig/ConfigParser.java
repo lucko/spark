@@ -31,12 +31,15 @@ import java.util.Map;
 public interface ConfigParser {
 
     default Map<String, Object> parse(String file) throws IOException {
-        Path filePath = Paths.get(file);
-        if (!Files.exists(filePath)) {
+        return parse(Paths.get(file));
+    }
+
+    default Map<String, Object> parse(Path file) throws IOException {
+        if (!Files.exists(file)) {
             return null;
         }
 
-        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+        try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             return this.parse(reader);
         }
     }

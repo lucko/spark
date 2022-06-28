@@ -64,8 +64,8 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
        gson.registerTypeAdapter(MemorySection.class, (JsonSerializer<MemorySection>) (obj, type, ctx) -> ctx.serialize(obj.getValues(false)));
     }
 
-    private enum YamlConfigParser implements ConfigParser {
-        INSTANCE;
+    private static class YamlConfigParser implements ConfigParser {
+        public static final YamlConfigParser INSTANCE = new YamlConfigParser();
 
         @Override
         public Map<String, Object> parse(BufferedReader reader) throws IOException {
@@ -74,31 +74,42 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
         }
     }
 
-    private enum SplitYamlConfigParser implements ConfigParser {
-        INSTANCE;
+    // Paper 1.19+ split config layout
+    private static class SplitYamlConfigParser extends YamlConfigParser {
+        public static final SplitYamlConfigParser INSTANCE = new SplitYamlConfigParser();
 
         @Override
-        public Map<String, Object> parse(String file) throws IOException {
-            String group = file.replace("/", "");
+        public Map<String, Object> parse(String prefix) throws IOException {
             Path configDir = Paths.get("config");
             if (!Files.exists(configDir)) {
                 return null;
             }
 
             Map<String, Object> configs = Maps.newHashMap();
-            configs.put("global.yml", parse(Files.newBufferedReader(configDir.resolve(group + "-global.yml"))));
-            configs.put("world-defaults.yml", parse(Files.newBufferedReader(configDir.resolve(group + "-world-defaults.yml"))));
+
+            parseIfExists(configs,
+                    "global.yml",
+                    configDir.resolve(prefix + "-global.yml")
+            );
+            parseIfExists(configs,
+                    "world-defaults.yml",
+                    configDir.resolve(prefix + "-world-defaults.yml")
+            );
             for (World world : Bukkit.getWorlds()) {
-                configs.put(world.getName() + ".yml", parse(Files.newBufferedReader(world.getWorldFolder().toPath().resolve(group + "-world.yml"))));
+                parseIfExists(configs,
+                        world.getName() + ".yml",
+                        world.getWorldFolder().toPath().resolve(prefix + "-world.yml")
+                );
             }
 
             return configs;
         }
 
-        @Override
-        public Map<String, Object> parse(BufferedReader reader) throws IOException {
-            YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
-            return config.getValues(false);
+        private void parseIfExists(Map<String, Object> configs, String name, Path path) throws IOException {
+            Map<String, Object> values = parse(path);
+            if (values != null) {
+                configs.put(name, values);
+            }
         }
     }
 
@@ -108,7 +119,7 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
                 .put("bukkit.yml", YamlConfigParser.INSTANCE)
                 .put("spigot.yml", YamlConfigParser.INSTANCE)
                 .put("paper.yml", YamlConfigParser.INSTANCE)
-                .put("paper/", SplitYamlConfigParser.INSTANCE)
+                .put("paper", SplitYamlConfigParser.INSTANCE)
                 .put("purpur.yml", YamlConfigParser.INSTANCE);
 
         for (String config : getSystemPropertyList("spark.serverconfigs.extra")) {
