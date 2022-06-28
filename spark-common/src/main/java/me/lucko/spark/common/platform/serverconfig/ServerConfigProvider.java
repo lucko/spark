@@ -23,8 +23,8 @@ package me.lucko.spark.common.platform.serverconfig;
 import com.google.gson.JsonElement;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Function to export server configuration files for access within the spark viewer.
@@ -43,12 +43,9 @@ public interface ServerConfigProvider {
     Map<String, JsonElement> loadServerConfigurations();
 
     default Map<String, String> exportServerConfigurations() {
-        return loadServerConfigurations().entrySet()
-                .stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> e.getValue().toString()
-                ));
+        Map<String, String> map = new LinkedHashMap<>();
+        loadServerConfigurations().forEach((key, value) -> map.put(key, value.toString()));
+        return map;
     }
 
     /**
