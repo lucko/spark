@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -158,13 +157,6 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
 
         FILES = files.build();
         HIDDEN_PATHS = hiddenPaths.build();
-    }
-
-    private static List<String> getSystemPropertyList(String property) {
-        String value = System.getProperty(property);
-        return value == null
-                ? Collections.emptyList()
-                : Arrays.asList(value.split(","));
     }
 
     private static List<String> getTimingsHiddenConfigs() {

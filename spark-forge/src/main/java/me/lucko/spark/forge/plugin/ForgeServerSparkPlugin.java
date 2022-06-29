@@ -31,12 +31,14 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgePlayerPingProvider;
+import me.lucko.spark.forge.ForgeServerConfigProvider;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
@@ -203,6 +205,11 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public PlayerPingProvider createPlayerPingProvider() {
         return new ForgePlayerPingProvider(this.server);
+    }
+
+    @Override
+    public ServerConfigProvider createServerConfigProvider() {
+        return new ForgeServerConfigProvider();
     }
 
     @Override

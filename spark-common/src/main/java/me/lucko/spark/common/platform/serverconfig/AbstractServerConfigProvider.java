@@ -23,7 +23,10 @@ package me.lucko.spark.common.platform.serverconfig;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,6 +61,13 @@ public abstract class AbstractServerConfigProvider implements ServerConfigProvid
         });
 
         return builder.build();
+    }
+
+    protected static List<String> getSystemPropertyList(String property) {
+        String value = System.getProperty(property);
+        return value == null
+                ? Collections.emptyList()
+                : Arrays.asList(value.split(","));
     }
 
 }
