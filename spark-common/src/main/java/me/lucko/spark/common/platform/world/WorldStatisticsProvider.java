@@ -122,6 +122,10 @@ public class WorldStatisticsProvider {
             String name = chunk.entityTypeName(key);
             int count = value.get();
 
+            if (name == null) {
+                name = "unknown[" + key.toString() + "]";
+            }
+
             builder.putEntityCounts(name, count);
             combined.add(name, count);
         });
