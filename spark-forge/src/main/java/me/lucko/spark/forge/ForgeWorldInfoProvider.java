@@ -38,7 +38,6 @@ import net.minecraft.world.level.entity.EntitySection;
 import net.minecraft.world.level.entity.EntitySectionStorage;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.level.entity.TransientEntitySectionManager;
-import net.minecraft.world.level.storage.ServerLevelData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,7 +76,7 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
                 EntitySectionStorage<Entity> cache = entityManager.sectionStorage;
 
                 List<ForgeChunkInfo> list = getChunksFromCache(cache);
-                data.put(((ServerLevelData) level.getLevelData()).getLevelName(), list);
+                data.put(level.dimension().location().getPath(), list);
             }
 
             return data;
@@ -104,7 +103,7 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
             EntitySectionStorage<Entity> cache = entityManager.sectionStorage;
 
             List<ForgeChunkInfo> list = getChunksFromCache(cache);
-            data.put(level.dimensionTypeId().location().getPath(), list);
+            data.put(level.dimension().location().getPath(), list);
 
             return data;
         }

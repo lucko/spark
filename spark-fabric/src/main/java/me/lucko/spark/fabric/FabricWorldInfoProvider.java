@@ -42,7 +42,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.entity.EntityTrackingSection;
 import net.minecraft.world.entity.SectionedEntityCache;
-import net.minecraft.world.level.ServerWorldProperties;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,7 +80,7 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
                 SectionedEntityCache<Entity> cache = ((ServerEntityManagerAccessor) entityManager).getCache();
 
                 List<FabricChunkInfo> list = getChunksFromCache(cache);
-                data.put(((ServerWorldProperties) world.getLevelProperties()).getLevelName(), list);
+                data.put(world.getRegistryKey().getValue().getPath(), list);
             }
 
             return data;
@@ -108,7 +107,7 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             SectionedEntityCache<Entity> cache = ((ClientEntityManagerAccessor) entityManager).getCache();
 
             List<FabricChunkInfo> list = getChunksFromCache(cache);
-            data.put(world.getDimensionKey().getValue().getPath(), list);
+            data.put(world.getRegistryKey().getValue().getPath(), list);
 
             return data;
         }
