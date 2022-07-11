@@ -31,7 +31,6 @@ import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.plugin.service.ServicePriority;
-import cn.nukkit.scheduler.AsyncTask;
 
 import java.nio.file.Path;
 import java.util.logging.Level;
@@ -82,12 +81,7 @@ public class NukkitSparkPlugin extends PluginBase implements SparkPlugin {
 
     @Override
     public void executeAsync(Runnable task) {
-        getServer().getScheduler().scheduleAsyncTask(this, new AsyncTask() {
-            @Override
-            public void onRun() {
-                task.run();
-            }
-        });
+        getServer().getScheduler().scheduleTask(this, task, true);
     }
 
     @Override

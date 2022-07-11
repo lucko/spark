@@ -50,6 +50,7 @@ import static net.kyori.adventure.text.format.TextDecoration.BOLD;
 public class ActivityLogModule implements CommandModule, RowRenderer<Activity> {
 
     private final Pagination.Builder pagination = Pagination.builder()
+            .width(45)
             .renderer(new Renderer() {
                 @Override
                 public Component renderEmpty() {

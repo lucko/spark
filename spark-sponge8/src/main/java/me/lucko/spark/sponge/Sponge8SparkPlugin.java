@@ -27,6 +27,7 @@ import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.ClassSourceLookup;
@@ -67,6 +68,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     private final Game game;
     private final Path configDirectory;
     private final ExecutorService asyncExecutor;
+    private final ExecutorService syncExecutor;
 
     private SparkPlatform platform;
     private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
@@ -78,6 +80,14 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         this.game = game;
         this.configDirectory = configDirectory;
         this.asyncExecutor = game.asyncScheduler().executor(pluginContainer);
+
+        if (game.isServerAvailable()) {
+            this.syncExecutor = game.server().scheduler().executor(pluginContainer);
+        } else if (game.isClientAvailable()) {
+            this.syncExecutor = game.client().scheduler().executor(pluginContainer);
+        } else {
+            throw new IllegalStateException("Server and client both unavailable");
+        }
     }
 
 
@@ -114,15 +124,24 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Override
     public Stream<CommandSender> getCommandSenders() {
-        return Stream.concat(
-                this.game.server().onlinePlayers().stream(),
-                Stream.of(this.game.systemSubject())
-        ).map(Sponge8CommandSender::new);
+        if (this.game.isServerAvailable()) {
+            return Stream.concat(
+                    this.game.server().onlinePlayers().stream(),
+                    Stream.of(this.game.systemSubject())
+            ).map(Sponge8CommandSender::new);
+        } else {
+            return Stream.of(this.game.systemSubject()).map(Sponge8CommandSender::new);
+        }
     }
 
     @Override
     public void executeAsync(Runnable task) {
         this.asyncExecutor.execute(task);
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        this.syncExecutor.execute(task);
     }
 
     @Override
@@ -159,6 +178,15 @@ public class Sponge8SparkPlugin implements SparkPlugin {
             return new Sponge8PlayerPingProvider(this.game.server());
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        if (this.game.isServerAvailable()) {
+            return new Sponge8WorldInfoProvider(this.game.server());
+        } else {
+            return WorldInfoProvider.NO_OP;
         }
     }
 

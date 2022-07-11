@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implementation of {@link DataAggregator} which supports only including sampling data from "ticks"
@@ -46,6 +47,9 @@ public class TickedDataAggregator extends JavaDataAggregator {
 
     /** The expected number of samples in each tick */
     private final int expectedSize;
+
+    /** The number of ticks aggregated so far */
+    private final AtomicInteger numberOfTicks = new AtomicInteger();
 
     private final Object mutex = new Object();
 
@@ -64,10 +68,16 @@ public class TickedDataAggregator extends JavaDataAggregator {
 
     @Override
     public SamplerMetadata.DataAggregator getMetadata() {
+        // push the current tick (so numberOfTicks is accurate)
+        synchronized (this.mutex) {
+            pushCurrentTick();
+        }
+
         return SamplerMetadata.DataAggregator.newBuilder()
                 .setType(SamplerMetadata.DataAggregator.Type.TICKED)
                 .setThreadGrouper(this.threadGrouper.asProto())
                 .setTickLengthThreshold(this.tickLengthThreshold)
+                .setNumberOfIncludedTicks(this.numberOfTicks.get())
                 .build();
     }
 
@@ -97,6 +107,7 @@ public class TickedDataAggregator extends JavaDataAggregator {
             return;
         }
 
+        this.numberOfTicks.incrementAndGet();
         this.workerPool.submit(currentData);
     }
 
@@ -108,6 +119,10 @@ public class TickedDataAggregator extends JavaDataAggregator {
         }
 
         return super.exportData();
+    }
+
+    public int getNumberOfTicks() {
+        return this.numberOfTicks.get();
     }
 
     private final class TickList implements Runnable {

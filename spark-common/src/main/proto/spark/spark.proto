@@ -94,7 +94,8 @@ message PlatformStatistics {
   Tps tps = 4; // optional
   Mspt mspt = 5; // optional
   Ping ping = 6; // optional
-  int64 player_count = 7;
+  int64 player_count = 7; // optional
+  WorldStatistics world = 8; // optional
 
   message Memory {
     MemoryPool heap = 1;
@@ -124,6 +125,30 @@ message PlatformStatistics {
 
   message Ping {
     RollingAverageValues last15m = 1;
+  }
+}
+
+message WorldStatistics {
+  int32 total_entities = 1;
+  map<string, int32> entity_counts = 2;
+  repeated World worlds = 3;
+
+  message World {
+    string name = 1;
+    int32 total_entities = 2;
+    repeated Region regions = 3;
+  }
+
+  message Region {
+    int32 total_entities = 1;
+    repeated Chunk chunks = 2;
+  }
+
+  message Chunk {
+    int32 x = 1;
+    int32 z = 2;
+    int32 total_entities = 3;
+    map<string, int32> entity_counts = 4;
   }
 }
 

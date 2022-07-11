@@ -63,19 +63,19 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     /** Responsible for aggregating and then outputting collected sampling data */
     private final JavaDataAggregator dataAggregator;
     
-    public JavaSampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative) {
-        super(interval, threadDumper, endTime);
+    public JavaSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative) {
+        super(platform, interval, threadDumper, endTime);
         this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
     }
 
-    public JavaSampler(int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
-        super(interval, threadDumper, endTime);
+    public JavaSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
+        super(platform, interval, threadDumper, endTime);
         this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
     }
 
     @Override
     public void start() {
-        this.startTime = System.currentTimeMillis();
+        super.start();
         this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
     }
 
@@ -89,7 +89,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         // this is effectively synchronized, the worker pool will not allow this task
         // to concurrently execute.
         try {
-            if (this.endTime != -1 && this.endTime <= System.currentTimeMillis()) {
+            if (this.autoEndTime != -1 && this.autoEndTime <= System.currentTimeMillis()) {
                 this.future.complete(this);
                 stop();
                 return;

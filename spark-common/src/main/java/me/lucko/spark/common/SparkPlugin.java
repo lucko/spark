@@ -25,6 +25,7 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
@@ -73,6 +74,15 @@ public interface SparkPlugin {
      * @param task the task
      */
     void executeAsync(Runnable task);
+
+    /**
+     * Executes the given {@link Runnable} on the server/client main thread.
+     *
+     * @param task the task
+     */
+    default void executeSync(Runnable task) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Print to the plugin logger.
@@ -140,6 +150,15 @@ public interface SparkPlugin {
      */
     default ServerConfigProvider createServerConfigProvider() {
         return ServerConfigProvider.NO_OP;
+    }
+
+    /**
+     * Creates a world info provider.
+     *
+     * @return the world info provider function
+     */
+    default WorldInfoProvider createWorldInfoProvider() {
+        return WorldInfoProvider.NO_OP;
     }
 
     /**

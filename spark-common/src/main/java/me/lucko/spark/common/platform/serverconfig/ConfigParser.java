@@ -22,35 +22,27 @@ package me.lucko.spark.common.platform.serverconfig;
 
 import com.google.gson.JsonElement;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
-/**
- * Function to export server configuration files for access within the spark viewer.
- */
-@FunctionalInterface
-public interface ServerConfigProvider {
+public interface ConfigParser {
 
-    /**
-     * Loads a map of the server configuration files.
-     *
-     * <p>The key is the name of the file and the value is a
-     * {@link JsonElement} of the contents.</p>
-     *
-     * @return the exported server configurations
-     */
-    Map<String, JsonElement> loadServerConfigurations();
+    JsonElement load(String file, ExcludedConfigFilter filter) throws IOException;
 
-    default Map<String, String> exportServerConfigurations() {
-        Map<String, String> map = new LinkedHashMap<>();
-        loadServerConfigurations().forEach((key, value) -> map.put(key, value.toString()));
-        return map;
+    default Map<String, Object> parse(Path file) throws IOException {
+        if (!Files.exists(file)) {
+            return null;
+        }
+
+        try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            return this.parse(reader);
+        }
     }
 
-    /**
-     * A no-op implementation
-     */
-    ServerConfigProvider NO_OP = Collections::emptyMap;
+     Map<String, Object> parse(BufferedReader reader) throws IOException;
 
 }

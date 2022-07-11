@@ -266,7 +266,7 @@ public class SamplerModule implements CommandModule {
         if (this.activeSampler == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
-            long timeout = this.activeSampler.getEndTime();
+            long timeout = this.activeSampler.getAutoEndTime();
             if (timeout == -1) {
                 resp.replyPrefixed(text("There is an active profiler currently running, with no defined timeout."));
             } else {

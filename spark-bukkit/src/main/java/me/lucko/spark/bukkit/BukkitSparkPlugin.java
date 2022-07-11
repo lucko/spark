@@ -28,6 +28,7 @@ import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
@@ -136,7 +137,12 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void executeAsync(Runnable task) {
-        getServer().getScheduler().runTaskAsynchronously(BukkitSparkPlugin.this, task);
+        getServer().getScheduler().runTaskAsynchronously(this, task);
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        getServer().getScheduler().runTask(this, task);
     }
 
     @Override
@@ -185,6 +191,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     @Override
     public ServerConfigProvider createServerConfigProvider() {
         return new BukkitServerConfigProvider();
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new BukkitWorldInfoProvider(getServer());
     }
 
     @Override
