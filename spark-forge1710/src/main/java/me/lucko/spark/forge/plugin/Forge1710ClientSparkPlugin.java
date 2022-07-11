@@ -22,6 +22,7 @@ package me.lucko.spark.forge.plugin;
 
 import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.*;
@@ -70,6 +71,16 @@ public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
     @Override
     public TickReporter createTickReporter() {
         return new Forge1710TickReporter(TickEvent.Type.CLIENT);
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new Forge1710WorldInfoProvider.Client(Minecraft.getMinecraft());
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        this.minecraft.addScheduledTask(task);
     }
 
     @Override
