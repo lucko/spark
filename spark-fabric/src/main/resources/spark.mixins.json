@@ -5,7 +5,8 @@
   "mixins": [],
   "client": [
     "ClientEntityManagerAccessor",
-    "ClientWorldAccessor"
+    "ClientWorldAccessor",
+    "MinecraftClientAccessor"
   ],
   "server": [
     "ServerEntityManagerAccessor",

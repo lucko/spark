@@ -69,9 +69,9 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     private final Path configDirectory;
     private final ExecutorService asyncExecutor;
     private final ExecutorService syncExecutor;
+    private final ThreadDumper.GameThread gameThreadDumper = new ThreadDumper.GameThread();
 
     private SparkPlatform platform;
-    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
     public Sponge8SparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory) {
@@ -88,6 +88,8 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         } else {
             throw new IllegalStateException("Server and client both unavailable");
         }
+
+        this.syncExecutor.execute(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
     }
 
 
@@ -159,7 +161,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return this.threadDumper.get();
+        return this.gameThreadDumper.get();
     }
 
     @Override
@@ -204,7 +206,6 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
         @Override
         public CommandResult process(CommandCause cause, ArgumentReader.Mutable arguments) {
-            this.plugin.threadDumper.ensureSetup();
             this.plugin.platform.executeCommand(new Sponge8CommandSender(cause), arguments.input().split(" "));
             return CommandResult.success();
         }

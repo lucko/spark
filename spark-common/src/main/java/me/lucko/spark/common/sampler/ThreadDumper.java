@@ -83,10 +83,8 @@ public interface ThreadDumper {
             return Objects.requireNonNull(this.dumper, "dumper");
         }
 
-        public void ensureSetup() {
-            if (this.dumper == null) {
-                this.dumper = new Specific(new long[]{Thread.currentThread().getId()});
-            }
+        public void setThread(Thread thread) {
+            this.dumper = new Specific(new long[]{thread.getId()});
         }
     }
 
@@ -97,6 +95,10 @@ public interface ThreadDumper {
         private final long[] ids;
         private Set<Thread> threads;
         private Set<String> threadNamesLowerCase;
+
+        public Specific(Thread thread) {
+            this.ids = new long[]{thread.getId()};
+        }
 
         public Specific(long[] ids) {
             this.ids = ids;

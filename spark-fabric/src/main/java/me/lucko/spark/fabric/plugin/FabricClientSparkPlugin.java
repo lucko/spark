@@ -30,6 +30,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
@@ -38,6 +39,7 @@ import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
 import me.lucko.spark.fabric.FabricWorldInfoProvider;
+import me.lucko.spark.fabric.mixin.MinecraftClientAccessor;
 
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -57,10 +59,12 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     }
 
     private final MinecraftClient minecraft;
+    private final ThreadDumper gameThreadDumper;
 
     public FabricClientSparkPlugin(FabricSparkMod mod, MinecraftClient minecraft) {
         super(mod);
         this.minecraft = minecraft;
+        this.gameThreadDumper = new ThreadDumper.Specific(((MinecraftClientAccessor) minecraft).getThread());
     }
 
     @Override
@@ -89,7 +93,6 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
             return 0;
         }
 
-        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new FabricCommandSender(context.getSource().getEntity(), this), args);
         return Command.SINGLE_SUCCESS;
     }
@@ -117,6 +120,11 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public void executeSync(Runnable task) {
         this.minecraft.executeSync(task);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper;
     }
 
     @Override

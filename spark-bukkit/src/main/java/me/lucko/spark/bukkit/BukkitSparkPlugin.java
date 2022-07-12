@@ -50,14 +50,16 @@ import java.util.stream.Stream;
 
 public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     private BukkitAudiences audienceFactory;
+    private ThreadDumper gameThreadDumper;
+
     private SparkPlatform platform;
 
     private CommandExecutor tpsCommand = null;
-    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Override
     public void onEnable() {
         this.audienceFactory = BukkitAudiences.create(this);
+        this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
 
         this.platform = new SparkPlatform(this);
         this.platform.enable();
@@ -102,7 +104,6 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new BukkitCommandSender(sender, this.audienceFactory), args);
         return true;
     }
@@ -152,7 +153,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return this.threadDumper.get();
+        return this.gameThreadDumper;
     }
 
     @Override
