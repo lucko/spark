@@ -20,6 +20,7 @@
 
 package me.lucko.spark.sponge;
 
+import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
 
 import me.lucko.spark.common.SparkPlatform;
@@ -56,6 +57,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -68,7 +70,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     private final Game game;
     private final Path configDirectory;
     private final ExecutorService asyncExecutor;
-    private final ExecutorService syncExecutor;
+    private final Supplier<ExecutorService> syncExecutor;
     private final ThreadDumper.GameThread gameThreadDumper = new ThreadDumper.GameThread();
 
     private SparkPlatform platform;
@@ -80,16 +82,15 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         this.game = game;
         this.configDirectory = configDirectory;
         this.asyncExecutor = game.asyncScheduler().executor(pluginContainer);
-
-        if (game.isServerAvailable()) {
-            this.syncExecutor = game.server().scheduler().executor(pluginContainer);
-        } else if (game.isClientAvailable()) {
-            this.syncExecutor = game.client().scheduler().executor(pluginContainer);
-        } else {
-            throw new IllegalStateException("Server and client both unavailable");
-        }
-
-        this.syncExecutor.execute(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
+        this.syncExecutor = Suppliers.memoize(() -> {
+            if (this.game.isServerAvailable()) {
+                return this.game.server().scheduler().executor(this.pluginContainer);
+            } else if (this.game.isClientAvailable()) {
+                return this.game.client().scheduler().executor(this.pluginContainer);
+            } else {
+                throw new IllegalStateException("Server and client both unavailable");
+            }
+        });
     }
 
 
@@ -100,6 +101,8 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Listener
     public void onEnable(StartedEngineEvent<Server> event) {
+        executeSync(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
+
         this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
@@ -143,7 +146,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Override
     public void executeSync(Runnable task) {
-        this.syncExecutor.execute(task);
+        this.syncExecutor.get().execute(task);
     }
 
     @Override
