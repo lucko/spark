@@ -33,14 +33,28 @@ import java.util.function.Supplier;
  * the game (server/client) thread.
  */
 public final class GameThreadDumper implements Supplier<ThreadDumper> {
+    private Supplier<Thread> threadSupplier;
     private SpecificThreadDumper dumper = null;
+
+    public GameThreadDumper() {
+
+    }
+
+    public GameThreadDumper(Supplier<Thread> threadSupplier) {
+        this.threadSupplier = threadSupplier;
+    }
 
     @Override
     public ThreadDumper get() {
+        if (this.dumper == null) {
+            setThread(this.threadSupplier.get());
+            this.threadSupplier = null;
+        }
+
         return Objects.requireNonNull(this.dumper, "dumper");
     }
 
     public void setThread(Thread thread) {
-        this.dumper = new SpecificThreadDumper(new long[] {thread.getId()});
+        this.dumper = new SpecificThreadDumper(new long[]{thread.getId()});
     }
 }
