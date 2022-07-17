@@ -26,10 +26,14 @@
 package me.lucko.spark.api;
 
 import me.lucko.spark.api.gc.GarbageCollector;
+import me.lucko.spark.api.profiler.Profiler;
+import me.lucko.spark.api.profiler.ProfilerConfigurationBuilder;
+import me.lucko.spark.api.profiler.thread.ThreadGrouper;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
-
+import me.lucko.spark.api.util.StreamSupplier;
+import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata.DataAggregator;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -84,4 +88,33 @@ public interface Spark {
      */
     @NonNull @Unmodifiable Map<String, GarbageCollector> gc();
 
+    /**
+     * Creates a thread finder.
+     *
+     * @return a thread finder
+     */
+    @NonNull StreamSupplier<Thread> threadFinder();
+
+    /**
+     * Creates a new {@link ProfilerConfigurationBuilder profiler configuration builder}.
+     *
+     * @return the builder
+     */
+    @NonNull ProfilerConfigurationBuilder configurationBuilder();
+
+    /**
+     * Creates a new {@link Profiler profiler}.
+     *
+     * @return the profiler
+     */
+    @NonNull Profiler profiler();
+
+    /**
+     * Gets the {@link ThreadGrouper} associated with a Proto {@link DataAggregator.ThreadGrouper}.
+     *
+     * @param type the Proto type
+     * @return the grouper
+     * @throws AssertionError if the type is {@link DataAggregator.ThreadGrouper#UNRECOGNIZED unknown}.
+     */
+    @NonNull ThreadGrouper getGrouper(DataAggregator.ThreadGrouper type);
 }

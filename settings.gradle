@@ -10,6 +10,7 @@ pluginManagement {
 
 rootProject.name = 'spark'
 include (
+        'spark-proto',
         'spark-api',
         'spark-common',
         'spark-bukkit',

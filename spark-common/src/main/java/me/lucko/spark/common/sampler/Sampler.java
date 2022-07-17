@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
@@ -33,17 +34,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Abstract superinterface for all sampler implementations.
  */
-public interface Sampler {
-
-    /**
-     * Starts the sampler.
-     */
-    void start();
-
-    /**
-     * Stops the sampler.
-     */
-    void stop();
+public interface Sampler extends Profiler.Sampler {
 
     /**
      * Gets the time when the sampler started (unix timestamp in millis)

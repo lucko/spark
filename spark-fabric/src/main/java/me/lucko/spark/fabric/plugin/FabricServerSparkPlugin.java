@@ -29,11 +29,12 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.fabric.api.permissions.v0.Permissions;
+import me.lucko.spark.api.profiler.dumper.SpecificThreadDumper;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
-import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.api.profiler.dumper.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
@@ -69,7 +70,7 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     public FabricServerSparkPlugin(FabricSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
-        this.gameThreadDumper = new ThreadDumper.Specific(server.getThread());
+        this.gameThreadDumper = new SpecificThreadDumper(server.getThread());
     }
 
     @Override

@@ -20,36 +20,37 @@
 
 package me.lucko.spark.common.sampler;
 
-import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.sampler.async.AsyncProfilerAccess;
-import me.lucko.spark.common.sampler.async.AsyncSampler;
-import me.lucko.spark.common.sampler.java.JavaSampler;
-import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.api.profiler.ProfilerConfiguration;
+import me.lucko.spark.api.profiler.ProfilerConfigurationBuilder;
+import me.lucko.spark.api.profiler.dumper.ThreadDumper;
+import me.lucko.spark.api.profiler.thread.ThreadGrouper;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Builds {@link Sampler} instances.
  */
 @SuppressWarnings("UnusedReturnValue")
-public class SamplerBuilder {
+public class SamplerBuilder implements ProfilerConfigurationBuilder {
 
     private double samplingInterval = 4; // milliseconds
     private boolean ignoreSleeping = false;
     private boolean ignoreNative = false;
     private boolean useAsyncProfiler = true;
-    private long timeout = -1;
+    private Duration duration;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
     private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;
 
-    private int ticksOver = -1;
-    private TickHook tickHook = null;
+    private int minimumTickDuration = -1;
 
     public SamplerBuilder() {
     }
 
     public SamplerBuilder samplingInterval(double samplingInterval) {
-        this.samplingInterval = samplingInterval;
+        this.samplingInterval = samplingInterval <= 0 ? 4 : samplingInterval;
         return this;
     }
 
@@ -57,23 +58,41 @@ public class SamplerBuilder {
         if (timeout <= 0) {
             throw new IllegalArgumentException("timeout > 0");
         }
-        this.timeout = System.currentTimeMillis() + unit.toMillis(timeout);
+        this.duration = Duration.of(timeout, toChronoUnit(unit));
         return this;
     }
 
-    public SamplerBuilder threadDumper(ThreadDumper threadDumper) {
+    private static ChronoUnit toChronoUnit(TimeUnit unit) {
+        switch (unit) {
+            case NANOSECONDS:  return ChronoUnit.NANOS;
+            case MICROSECONDS: return ChronoUnit.MICROS;
+            case MILLISECONDS: return ChronoUnit.MILLIS;
+            case SECONDS:      return ChronoUnit.SECONDS;
+            case MINUTES:      return ChronoUnit.MINUTES;
+            case HOURS:        return ChronoUnit.HOURS;
+            case DAYS:         return ChronoUnit.DAYS;
+            default: throw new AssertionError();
+        }
+    }
+
+    @Override
+    public SamplerBuilder duration(Duration duration) {
+        return completeAfter(duration.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    public SamplerBuilder dumper(ThreadDumper threadDumper) {
         this.threadDumper = threadDumper;
         return this;
     }
 
-    public SamplerBuilder threadGrouper(ThreadGrouper threadGrouper) {
+    public SamplerBuilder grouper(ThreadGrouper threadGrouper) {
         this.threadGrouper = threadGrouper;
         return this;
     }
 
-    public SamplerBuilder ticksOver(int ticksOver, TickHook tickHook) {
-        this.ticksOver = ticksOver;
-        this.tickHook = tickHook;
+    @Override
+    public SamplerBuilder minimumTickDuration(int duration) {
+        this.minimumTickDuration = duration;
         return this;
     }
 
@@ -82,30 +101,72 @@ public class SamplerBuilder {
         return this;
     }
 
+    @Override
+    public SamplerBuilder ignoreSleeping() {
+        return ignoreSleeping(true);
+    }
+
     public SamplerBuilder ignoreNative(boolean ignoreNative) {
         this.ignoreNative = ignoreNative;
         return this;
+    }
+    @Override
+    public SamplerBuilder ignoreNative() {
+        return ignoreNative(true);
     }
 
     public SamplerBuilder forceJavaSampler(boolean forceJavaSampler) {
         this.useAsyncProfiler = !forceJavaSampler;
         return this;
     }
+    @Override
+    public SamplerBuilder forceJavaSampler() {
+        return forceJavaSampler(true);
+    }
 
-    public Sampler start(SparkPlatform platform) {
-        int intervalMicros = (int) (this.samplingInterval * 1000d);
+    @Override
+    public ProfilerConfiguration build() {
+        return new ProfilerConfiguration() {
+            @Override
+            public double interval() {
+                return samplingInterval;
+            }
 
-        Sampler sampler;
-        if (this.ticksOver != -1 && this.tickHook != null) {
-            sampler = new JavaSampler(platform, intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
-        } else if (this.useAsyncProfiler && !(this.threadDumper instanceof ThreadDumper.Regex) && AsyncProfilerAccess.INSTANCE.checkSupported(platform)) {
-            sampler = new AsyncSampler(platform, intervalMicros, this.threadDumper, this.threadGrouper, this.timeout);
-        } else {
-            sampler = new JavaSampler(platform, intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
-        }
+            @Override
+            public boolean ignoreSleeping() {
+                return ignoreSleeping;
+            }
 
-        sampler.start();
-        return sampler;
+            @Override
+            public boolean ignoreNative() {
+                return ignoreNative;
+            }
+
+            @Override
+            public boolean forceJavaSampler() {
+                return !useAsyncProfiler;
+            }
+
+            @Override
+            public int minimumTickDuration() {
+                return minimumTickDuration;
+            }
+
+            @Override
+            public @Nullable Duration duration() {
+                return duration;
+            }
+
+            @Override
+            public @Nullable ThreadDumper dumper() {
+                return threadDumper;
+            }
+
+            @Override
+            public @Nullable ThreadGrouper grouper() {
+                return threadGrouper;
+            }
+        };
     }
 
 }

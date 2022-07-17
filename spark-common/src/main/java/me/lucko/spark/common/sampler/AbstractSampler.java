@@ -20,7 +20,11 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.api.profiler.dumper.ThreadDumper;
+import me.lucko.spark.api.profiler.report.ProfilerReport;
+import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
@@ -29,12 +33,20 @@ import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.util.MethodDisambiguator;
+import me.lucko.spark.proto.SparkSamplerProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
+import net.kyori.adventure.text.Component;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -109,15 +121,75 @@ public abstract class AbstractSampler implements Sampler {
         }
     }
 
-    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender creator, String comment, DataAggregator dataAggregator) {
+    @Override
+    public ProfilerReport dumpReport(ReportConfiguration configuration) {
+        return createReport(configuration);
+    }
+
+    private ProfilerReport createReport(ReportConfiguration configuration) {
+        final MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
+        final ReportConfiguration.Sender rSender = configuration.sender();
+        final CommandSender sender = rSender == null ? null : new CommandSender() {
+            @Override
+            public String getName() {
+                return rSender.name;
+            }
+
+            @Override
+            public UUID getUniqueId() {
+                return rSender.uuid;
+            }
+
+            @Override
+            public void sendMessage(Component message) {
+
+            }
+
+            @Override
+            public boolean hasPermission(String permission) {
+                return true;
+            }
+        };
+        return new ProfilerReport() {
+            final SparkSamplerProtos.SamplerData data = toProto(platform, sender, configuration.threadOrder()::compare, configuration.comment(), configuration.separateParentCalls() ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator), platform.createClassSourceLookup());
+
+            String uploadedUrl;
+
+            @Override
+            public String upload() throws IOException {
+                if (uploadedUrl == null)
+                    uploadedUrl = SamplerModule.postData(platform, data);
+                return uploadedUrl;
+            }
+
+            @Override
+            public SparkSamplerProtos.SamplerData data() {
+                return data;
+            }
+
+            @Override
+            public Path saveToFile(Path path) throws IOException {
+                return Files.write(path, data.toByteArray());
+            }
+        };
+    }
+
+    @Override
+    public CompletableFuture<ProfilerReport> whenDone(ReportConfiguration configuration) {
+        return getFuture().thenApply(samp -> createReport(configuration));
+    }
+
+    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, @Nullable CommandSender creator, @Nullable String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setCreator(creator.toData().toProto())
                 .setStartTime(this.startTime)
                 .setEndTime(System.currentTimeMillis())
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())
                 .setDataAggregator(dataAggregator.getMetadata());
+
+        if (creator != null)
+             metadata.setCreator(creator.toData().toProto());
 
         if (comment != null) {
             metadata.setComment(comment);

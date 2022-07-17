@@ -123,7 +123,7 @@ public class SparkPlatform {
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
 
         this.commandModules = ImmutableList.of(
-                new SamplerModule(),
+                new SamplerModule(this),
                 new HealthModule(),
                 new TickMonitoringModule(),
                 new GcMonitoringModule(),

@@ -1,16 +1,14 @@
 plugins {
     id 'maven-publish'
+    id 'com.google.protobuf' version '0.8.16'
 }
 
 version = api_version
 group = 'me.lucko.spark'
-archivesBaseName = 'api'
+archivesBaseName = 'proto'
 
 dependencies {
-    api project(':spark-proto')
-    compileOnly 'org.jetbrains:annotations:23.0.0'
-    compileOnly 'org.checkerframework:checker-qual:3.22.1'
-    compileOnly 'com.google.errorprone:error_prone_annotations:2.6.0'
+    api 'com.google.protobuf:protobuf-javalite:3.15.6'
 }
 
 license {
@@ -37,4 +35,27 @@ publishing {
             }
         }
     }
+}
+
+protobuf {
+    protoc {
+        if (System.getProperty("os.name") == "Mac OS X" && System.getProperty("os.arch") == "aarch64") {
+            path = '/opt/homebrew/bin/protoc'
+        } else {
+            artifact = 'com.google.protobuf:protoc:3.15.6'
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option 'lite'
+                }
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    tasks.generateProto.group = 'proto'
 }
