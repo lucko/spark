@@ -17,6 +17,9 @@ license {
     header = project.file('HEADER.txt')
 }
 
+java.withSourcesJar()
+java.withJavadocJar()
+
 jar {
     manifest.attributes([
             "Specification-Title"     : 'SparkAPI',

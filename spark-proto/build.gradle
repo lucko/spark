@@ -1,18 +1,48 @@
 plugins {
     id 'maven-publish'
     id 'com.google.protobuf' version '0.8.16'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
 version = api_version
 group = 'me.lucko.spark'
 archivesBaseName = 'proto'
 
+configurations {
+    shade
+    api.extendsFrom shade
+}
+
 dependencies {
-    api 'com.google.protobuf:protobuf-javalite:3.15.6'
+    shade 'com.google.protobuf:protobuf-javalite:3.15.6'
+}
+
+jar {
+    classifier 'lite'
+}
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    exclude 'module-info.class'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/proguard/**'
+
+    classifier ''
 }
 
 license {
     header = project.file('HEADER.txt')
+}
+
+java.withSourcesJar()
+java.withJavadocJar()
+
+components.java.withVariantsFromConfiguration(configurations.runtimeElements) {
+    skip()
+}
+components.java.withVariantsFromConfiguration(configurations.apiElements) {
+    skip()
 }
 
 publishing {
@@ -27,7 +57,9 @@ publishing {
     }
     publications {
         mavenJava(MavenPublication) {
-            from components.java
+            artifacts = [
+                    shadowJar, javadocJar, sourcesJar
+            ]
             pom {
                 name = 'spark'
                 description = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
