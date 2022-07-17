@@ -25,11 +25,8 @@ processResources {
 shadowJar {
     archiveName = "spark-${project.pluginVersion}-nukkit.jar"
 
-    relocate 'okio', 'me.lucko.spark.lib.okio'
-    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
-    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'

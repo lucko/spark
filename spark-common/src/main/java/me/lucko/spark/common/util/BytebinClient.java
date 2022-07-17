@@ -22,73 +22,66 @@ package me.lucko.spark.common.util;
 
 import com.google.protobuf.AbstractMessageLite;
 
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
 
 /**
  * Utility for posting content to bytebin.
  */
-public class BytebinClient extends AbstractHttpClient {
+public class BytebinClient {
 
     /** The bytebin URL */
     private final String url;
     /** The client user agent */
     private final String userAgent;
 
-    /**
-     * Creates a new bytebin instance
-     *
-     * @param url the bytebin url
-     * @param userAgent the client user agent string
-     */
-    public BytebinClient(OkHttpClient okHttpClient, String url, String userAgent) {
-        super(okHttpClient);
+    public BytebinClient(String url, String userAgent) {
         this.url = url + (url.endsWith("/") ? "" : "/");
         this.userAgent = userAgent;
     }
 
-    /**
-     * POSTs GZIP compressed content to bytebin.
-     *
-     * @param buf the compressed content
-     * @param contentType the type of the content
-     * @return the key of the resultant content
-     * @throws IOException if an error occurs
-     */
-    public Content postContent(byte[] buf, MediaType contentType) throws IOException {
-        RequestBody body = RequestBody.create(contentType, buf);
+    private Content postContent(String contentType, Consumer<OutputStream> consumer) throws IOException {
+        URL url = new URL(this.url + "post");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        try {
+            connection.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(10));
+            connection.setReadTimeout((int) TimeUnit.SECONDS.toMillis(10));
 
-        Request.Builder requestBuilder = new Request.Builder()
-                .url(this.url + "post")
-                .header("User-Agent", this.userAgent)
-                .header("Content-Encoding", "gzip");
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", contentType);
+            connection.setRequestProperty("User-Agent", this.userAgent);
+            connection.setRequestProperty("Content-Encoding", "gzip");
 
-        Request request = requestBuilder.post(body).build();
-        try (Response response = makeHttpRequest(request)) {
-            String key = response.header("Location");
+            connection.connect();
+            try (OutputStream output = connection.getOutputStream()) {
+                consumer.accept(output);
+            }
+
+            String key = connection.getHeaderField("Location");
             if (key == null) {
                 throw new IllegalStateException("Key not returned");
             }
             return new Content(key);
+        } finally {
+            connection.getInputStream().close();
+            connection.disconnect();
         }
     }
 
-    public Content postContent(AbstractMessageLite<?, ?> proto, MediaType contentType) throws IOException {
-        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-        try (OutputStream out = new GZIPOutputStream(byteOut)) {
-            proto.writeTo(out);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return postContent(byteOut.toByteArray(), contentType);
+    public Content postContent(AbstractMessageLite<?, ?> proto, String contentType) throws IOException {
+        return postContent(contentType, outputStream -> {
+            try (OutputStream out = new GZIPOutputStream(outputStream)) {
+                proto.writeTo(out);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public static final class Content {
