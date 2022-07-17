@@ -84,7 +84,8 @@ public interface Profiler {
         CompletableFuture<ProfilerReport> whenDone(ReportConfiguration configuration);
 
         /**
-         * Dumps the report of the sampler.
+         * Dumps the report of the sampler. <br>
+         * Note: make sure to {@link #stop() stop} the sampler before generating the report.
          *
          * @param configuration the configuration to use for generating the report
          * @return the report of the sampler

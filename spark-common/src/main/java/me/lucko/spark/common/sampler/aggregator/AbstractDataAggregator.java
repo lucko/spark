@@ -55,7 +55,7 @@ public abstract class AbstractDataAggregator implements DataAggregator {
     public List<ThreadNode> exportData() {
         List<ThreadNode> data = new ArrayList<>(this.threadData.values());
         for (ThreadNode node : data) {
-            node.setThreadLabel(this.threadGrouper.getLabel(node.getThreadGroup()));
+            node.setThreadLabel(this.threadGrouper.getLabel(node.getGroup()));
         }
         return data;
     }

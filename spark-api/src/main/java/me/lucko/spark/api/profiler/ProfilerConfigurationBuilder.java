@@ -26,6 +26,7 @@
 package me.lucko.spark.api.profiler;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.CheckReturnValue;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.profiler.dumper.ThreadDumper;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
@@ -109,5 +110,6 @@ public interface ProfilerConfigurationBuilder {
      *
      * @return the built configuration
      */
+    @CheckReturnValue
     ProfilerConfiguration build();
 }
