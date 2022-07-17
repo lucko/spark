@@ -54,7 +54,7 @@ public class ProfilerService implements Profiler {
         Duration duration = configuration.duration();
         if (duration == null)
             duration = Duration.of(MINIMUM_DURATION, ChronoUnit.SECONDS);
-        if (duration.getSeconds() <= MINIMUM_DURATION) {
+        if (duration.getSeconds() < MINIMUM_DURATION) {
             err.accept("A profiler needs to run for at least " + MINIMUM_DURATION + " seconds!");
             return null;
         }

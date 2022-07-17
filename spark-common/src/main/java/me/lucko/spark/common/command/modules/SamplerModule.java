@@ -191,7 +191,6 @@ public class SamplerModule implements CommandModule {
         if (ticksOver != -1) {
             builder.minimumTickDuration(ticksOver);
         }
-        final ProfilerService service = new ProfilerService(platform);
         final Sampler sampler = service.create(builder.build(), e -> resp.replyPrefixed(text(e, RED)));
         if (sampler == null) // Feedback is handled in the consumer
             return;
@@ -224,7 +223,6 @@ public class SamplerModule implements CommandModule {
         if (timeoutSeconds != -1) {
             ThreadOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadOrder.BY_TIME : ThreadOrder.BY_NAME;
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
-            MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
             boolean sepPar = arguments.boolFlag("separate-parent-calls");
             boolean saveToFile = arguments.boolFlag("save-to-file");
             future.thenAcceptAsync(s -> {
