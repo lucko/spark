@@ -76,10 +76,24 @@ public interface ThreadDumper {
      * the game (server/client) thread.
      */
     final class GameThread implements Supplier<ThreadDumper> {
+        private Supplier<Thread> threadSupplier;
         private Specific dumper = null;
+
+        public GameThread() {
+
+        }
+
+        public GameThread(Supplier<Thread> threadSupplier) {
+            this.threadSupplier = threadSupplier;
+        }
 
         @Override
         public ThreadDumper get() {
+            if (this.dumper == null) {
+                setThread(this.threadSupplier.get());
+                this.threadSupplier = null;
+            }
+
             return Objects.requireNonNull(this.dumper, "dumper");
         }
 

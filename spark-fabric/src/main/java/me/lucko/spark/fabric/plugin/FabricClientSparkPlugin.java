@@ -59,12 +59,12 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     }
 
     private final MinecraftClient minecraft;
-    private final ThreadDumper gameThreadDumper;
+    private final ThreadDumper.GameThread gameThreadDumper;
 
     public FabricClientSparkPlugin(FabricSparkMod mod, MinecraftClient minecraft) {
         super(mod);
         this.minecraft = minecraft;
-        this.gameThreadDumper = new ThreadDumper.Specific(((MinecraftClientAccessor) minecraft).getThread());
+        this.gameThreadDumper = new ThreadDumper.GameThread(() -> ((MinecraftClientAccessor) minecraft).getThread());
     }
 
     @Override
@@ -124,7 +124,7 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return this.gameThreadDumper;
+        return this.gameThreadDumper.get();
     }
 
     @Override
