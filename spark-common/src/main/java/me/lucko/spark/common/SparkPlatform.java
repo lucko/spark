@@ -54,8 +54,6 @@ import me.lucko.spark.common.util.TemporaryFiles;
 
 import net.kyori.adventure.text.event.ClickEvent;
 
-import okhttp3.OkHttpClient;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -93,7 +91,6 @@ public class SparkPlatform {
     private final SparkPlugin plugin;
     private final Configuration configuration;
     private final String viewerUrl;
-    private final OkHttpClient httpClient;
     private final BytebinClient bytebinClient;
     private final boolean disableResponseBroadcast;
     private final List<CommandModule> commandModules;
@@ -116,9 +113,7 @@ public class SparkPlatform {
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
         String bytebinUrl = this.configuration.getString("bytebinUrl", "https://bytebin.lucko.me/");
-
-        this.httpClient = new OkHttpClient();
-        this.bytebinClient = new BytebinClient(this.httpClient, bytebinUrl, "spark-plugin");
+        this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
 
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
 
@@ -198,11 +193,6 @@ public class SparkPlatform {
         SparkApi.unregister();
 
         TemporaryFiles.deleteTemporaryFiles();
-
-        // shutdown okhttp
-        // see: https://github.com/square/okhttp/issues/4029
-        this.httpClient.dispatcher().executorService().shutdown();
-        this.httpClient.connectionPool().evictAll();
     }
 
     public SparkPlugin getPlugin() {

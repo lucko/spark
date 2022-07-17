@@ -20,10 +20,6 @@
 
 package me.lucko.spark.common.util;
 
-import org.tukaani.xz.LZMA2Options;
-import org.tukaani.xz.LZMAOutputStream;
-import org.tukaani.xz.XZOutputStream;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -46,35 +42,35 @@ public enum Compression {
             }
             return compressedFile;
         }
-    },
-    XZ {
-        @Override
-        public Path compress(Path file, LongConsumer progressHandler) throws IOException {
-            Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".xz");
-            try (InputStream in = Files.newInputStream(file)) {
-                try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                    try (XZOutputStream compressionOut = new XZOutputStream(out, new LZMA2Options())) {
-                        copy(in, compressionOut, progressHandler);
-                    }
-                }
-            }
-            return compressedFile;
-        }
-    },
-    LZMA {
-        @Override
-        public Path compress(Path file, LongConsumer progressHandler) throws IOException {
-            Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".lzma");
-            try (InputStream in = Files.newInputStream(file)) {
-                try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                    try (LZMAOutputStream compressionOut = new LZMAOutputStream(out, new LZMA2Options(), true)) {
-                        copy(in, compressionOut, progressHandler);
-                    }
-                }
-            }
-            return compressedFile;
-        }
     };
+    // XZ {
+    //     @Override
+    //     public Path compress(Path file, LongConsumer progressHandler) throws IOException {
+    //         Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".xz");
+    //         try (InputStream in = Files.newInputStream(file)) {
+    //             try (OutputStream out = Files.newOutputStream(compressedFile)) {
+    //                 try (XZOutputStream compressionOut = new XZOutputStream(out, new LZMA2Options())) {
+    //                     copy(in, compressionOut, progressHandler);
+    //                 }
+    //             }
+    //         }
+    //         return compressedFile;
+    //     }
+    // },
+    // LZMA {
+    //     @Override
+    //     public Path compress(Path file, LongConsumer progressHandler) throws IOException {
+    //         Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".lzma");
+    //         try (InputStream in = Files.newInputStream(file)) {
+    //             try (OutputStream out = Files.newOutputStream(compressedFile)) {
+    //                 try (LZMAOutputStream compressionOut = new LZMAOutputStream(out, new LZMA2Options(), true)) {
+    //                     copy(in, compressionOut, progressHandler);
+    //                 }
+    //             }
+    //         }
+    //         return compressedFile;
+    //     }
+    // };
 
     public abstract Path compress(Path file, LongConsumer progressHandler) throws IOException;
 

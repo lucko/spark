@@ -152,6 +152,8 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
                 .add("level-seed")
                 .add("world-settings.*.feature-seeds")
                 .add("world-settings.*.seed-*")
+                .add("feature-seeds")
+                .add("seed-*")
                 .addAll(getTimingsHiddenConfigs())
                 .addAll(getSystemPropertyList("spark.serverconfigs.hiddenpaths"));
 

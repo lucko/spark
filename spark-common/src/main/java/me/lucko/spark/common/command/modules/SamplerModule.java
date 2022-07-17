@@ -44,7 +44,6 @@ import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import net.kyori.adventure.text.event.ClickEvent;
-import okhttp3.MediaType;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -65,7 +64,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
 
 public class SamplerModule implements CommandModule {
-    private static final MediaType SPARK_SAMPLER_MEDIA_TYPE = MediaType.parse("application/x-spark-sampler");
+    private static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
 
     private final ProfilerService service;
 

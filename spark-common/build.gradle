@@ -6,10 +6,7 @@ dependencies {
     api project(':spark-api')
     implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.1'
     implementation 'org.ow2.asm:asm:9.1'
-    implementation 'com.squareup.okhttp3:okhttp:3.14.1'
-    implementation 'com.squareup.okio:okio:1.17.3'
     implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
-    implementation 'org.tukaani:xz:1.8'
     api('net.kyori:adventure-api:4.11.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'checker-qual')
