@@ -37,6 +37,18 @@ publishing {
     }
 }
 
+jar {
+    manifest.attributes([
+            "Specification-Title"     : 'SparkProto',
+            "Specification-Vendor"    : 'Lucko',
+            "Specification-Version"   : '1', // We are version 1 of ourselves
+            "Implementation-Title"    : 'SparkProto',
+            "Implementation-Version"  : api_version,
+            "Implementation-Vendor"   : 'Lucko',
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+    ])
+}
+
 protobuf {
     protoc {
         if (System.getProperty("os.name") == "Mac OS X" && System.getProperty("os.arch") == "aarch64") {

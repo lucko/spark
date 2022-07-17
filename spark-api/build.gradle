@@ -17,6 +17,18 @@ license {
     header = project.file('HEADER.txt')
 }
 
+jar {
+    manifest.attributes([
+            "Specification-Title"     : 'SparkAPI',
+            "Specification-Vendor"    : 'Lucko',
+            "Specification-Version"   : '1', // We are version 1 of ourselves
+            "Implementation-Title"    : 'SparkAPI',
+            "Implementation-Version"  : api_version,
+            "Implementation-Vendor"   : 'Lucko',
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+    ])
+}
+
 publishing {
     repositories {
         maven {
