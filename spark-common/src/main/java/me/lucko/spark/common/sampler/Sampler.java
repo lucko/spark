@@ -37,20 +37,6 @@ import java.util.concurrent.CompletableFuture;
 public interface Sampler extends Profiler.Sampler {
 
     /**
-     * Gets the time when the sampler started (unix timestamp in millis)
-     *
-     * @return the start time
-     */
-    long getStartTime();
-
-    /**
-     * Gets the time when the sampler should automatically stop (unix timestamp in millis)
-     *
-     * @return the end time, or -1 if undefined
-     */
-    long getAutoEndTime();
-
-    /**
      * Gets a future to encapsulate the completion of the sampler
      *
      * @return a future
