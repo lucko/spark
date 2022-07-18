@@ -27,6 +27,7 @@ package me.lucko.spark.api.profiler.report;
 
 import me.lucko.spark.api.profiler.thread.ThreadNode;
 import me.lucko.spark.api.profiler.thread.ThreadOrder;
+import me.lucko.spark.proto.SparkProtos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -73,11 +74,35 @@ public interface ReportConfiguration {
 
     class Sender {
         public final String name;
+        /**
+         * The UUID of the sender. May be {@code null} if it wasn't sent by a player.
+         */
+        @Nullable
         public final UUID uuid;
 
-        public Sender(String name, UUID uuid) {
+        public Sender(String name, @Nullable UUID uuid) {
             this.name = name;
             this.uuid = uuid;
+        }
+
+        /**
+         * Checks if this sender is a player.
+         * @return if this sender is a player
+         */
+        public boolean isPlayer() {
+            return uuid != null;
+        }
+
+        public SparkProtos.CommandSenderMetadata toProto() {
+            SparkProtos.CommandSenderMetadata.Builder proto = SparkProtos.CommandSenderMetadata.newBuilder()
+                    .setType(isPlayer() ? SparkProtos.CommandSenderMetadata.Type.PLAYER : SparkProtos.CommandSenderMetadata.Type.OTHER)
+                    .setName(this.name);
+
+            if (this.uuid != null) {
+                proto.setUniqueId(this.uuid.toString());
+            }
+
+            return proto.build();
         }
     }
 }

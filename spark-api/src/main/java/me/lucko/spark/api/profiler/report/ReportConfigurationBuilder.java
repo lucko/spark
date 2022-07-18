@@ -55,7 +55,7 @@ public class ReportConfigurationBuilder {
         return this;
     }
 
-    public ReportConfigurationBuilder sender(@NonNull String name, @NonNull UUID uuid) {
+    public ReportConfigurationBuilder sender(@NonNull String name, @Nullable UUID uuid) {
         return sender(new ReportConfiguration.Sender(name, uuid));
     }
 

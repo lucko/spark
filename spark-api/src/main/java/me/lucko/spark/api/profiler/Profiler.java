@@ -33,7 +33,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
- * A profilers used for sampling.
+ * A profiler used for sampling.
  */
 public interface Profiler {
     /**
@@ -76,12 +76,23 @@ public interface Profiler {
         long getAutoEndTime();
 
         /**
-         * Gets a future to encapsulate the completion of the sampler, containing the report.
+         * Gets a future that encapsulates the completion of the sampler, containing the report. <br>
+         * Note: this future will not be completed unless this sampler is configured to automatically stop.
          *
          * @param configuration the configuration to use for generating the report
          * @return a future
+         * @see #onCompleted()
          */
-        CompletableFuture<ProfilerReport> whenDone(ReportConfiguration configuration);
+        CompletableFuture<ProfilerReport> onCompleted(ReportConfiguration configuration);
+
+        /**
+         * Gets a future that encapsulates the completion of the sampler, containing the sampler.
+         * Note: this future will not be completed unless this sampler is configured to automatically stop.
+         *
+         * @return a future
+         * @see #onCompleted(ReportConfiguration)
+         */
+        CompletableFuture<Sampler> onCompleted();
 
         /**
          * Dumps the report of the sampler. <br>
@@ -91,5 +102,12 @@ public interface Profiler {
          * @return the report of the sampler
          */
         ProfilerReport dumpReport(ReportConfiguration configuration);
+
+        /**
+         * Checks if this sampler is an async sampler.
+         *
+         * @return if this sampler is an async sampler
+         */
+        boolean isAsync();
     }
 }

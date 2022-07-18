@@ -21,6 +21,7 @@
 package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
+import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.dumper.RegexThreadDumper;
 import me.lucko.spark.api.profiler.dumper.SpecificThreadDumper;
 import me.lucko.spark.api.profiler.dumper.ThreadDumper;
@@ -34,14 +35,11 @@ import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.sampler.ProfilerService;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.SamplerBuilder;
-import me.lucko.spark.common.sampler.async.AsyncSampler;
-import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -95,7 +93,7 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("stop --comment", "comment")
                 .argumentUsage("stop --order-by-time", null)
                 .argumentUsage("stop --save-to-file", null)
-                .executor(this::profiler)
+                .executor((platform, sender, resp, args) -> profiler(platform, resp, args))
                 .tabCompleter((platform, sender, arguments) -> {
                     if (arguments.contains("--info") || arguments.contains("--cancel")) {
                         return Collections.emptyList();
@@ -119,7 +117,7 @@ public class SamplerModule implements CommandModule {
         );
     }
 
-    private void profiler(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+    private void profiler(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
         if (arguments.boolFlag("info")) {
             profilerInfo(resp);
             return;
@@ -131,14 +129,14 @@ public class SamplerModule implements CommandModule {
         }
 
         if (arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
-            profilerStop(platform, sender, resp, arguments);
+            profilerStop(platform, resp, arguments);
             return;
         }
 
-        profilerStart(platform, sender, resp, arguments);
+        profilerStart(platform, resp, arguments);
     }
 
-    private void profilerStart(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+    private void profilerStart(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
         resp.broadcastPrefixed(text("Initializing a new profiler, please wait..."));
         
         int timeoutSeconds = arguments.intFlag("timeout");
@@ -200,7 +198,7 @@ public class SamplerModule implements CommandModule {
         resp.broadcastPrefixed(text()
                 .append(text("Profiler now active!", GOLD))
                 .append(space())
-                .append(text("(" + (sampler instanceof AsyncSampler ? "async" : "built-in java") + ")", DARK_GRAY))
+                .append(text("(" + (sampler.isAsync() ? "async" : "built-in java") + ")", DARK_GRAY))
                 .build()
         );
         if (timeoutSeconds == -1) {
@@ -209,7 +207,7 @@ public class SamplerModule implements CommandModule {
             resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
         }
 
-        final CompletableFuture<Sampler> future = sampler.getFuture();
+        final CompletableFuture<Profiler.Sampler> future = sampler.onCompleted();
 
         // send message if profiling fails
         future.whenCompleteAsync((s, throwable) -> {
@@ -225,9 +223,9 @@ public class SamplerModule implements CommandModule {
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
             boolean sepPar = arguments.boolFlag("separate-parent-calls");
             boolean saveToFile = arguments.boolFlag("save-to-file");
-            future.thenAcceptAsync(s -> {
+            sampler.onCompleted(configuration(resp, comment, sepPar, threadOrder)).thenAcceptAsync(report -> {
                 resp.broadcastPrefixed(text("The active profiler has completed! Uploading results..."));
-                handleUpload(platform, resp, s, threadOrder, comment, sepPar, saveToFile);
+                handleUpload(platform, resp, report, saveToFile);
             });
         }
     }
@@ -259,7 +257,7 @@ public class SamplerModule implements CommandModule {
         }
     }
 
-    private void profilerStop(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+    private void profilerStop(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
         final Sampler sampler = service.active();
         if (sampler == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
@@ -270,7 +268,7 @@ public class SamplerModule implements CommandModule {
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
             boolean sepParentCalls = arguments.boolFlag("separate-parent-calls");
             boolean saveToFile = arguments.boolFlag("save-to-file");
-            handleUpload(platform, resp, sampler, threadOrder, comment, sepParentCalls, saveToFile);
+            handleUpload(platform, resp, sampler.dumpReport(configuration(resp, comment, sepParentCalls, threadOrder)), saveToFile);
             service.clear();
         }
     }
@@ -280,14 +278,16 @@ public class SamplerModule implements CommandModule {
         return platform.getViewerUrl() + key;
     }
 
-    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadOrder threadOrder, String comment, boolean separateParentCalls, boolean saveToFileFlag) {
-        final ProfilerReport report = sampler.dumpReport(ReportConfiguration.builder()
-                .order(threadOrder)
+    private ReportConfiguration configuration(CommandResponseHandler resp, String comment, boolean separateParentCalls, ThreadOrder order) {
+        return ReportConfiguration.builder()
+                .order(order)
                 .comment(comment)
                 .separateParentCalls(separateParentCalls)
-                .sender(resp.sender().getName(), resp.sender().getUniqueId())
-                .build());
+                .sender(resp.sender().asSender())
+                .build();
+    }
 
+    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, ProfilerReport report, boolean saveToFileFlag) {
         boolean saveToFile = false;
         if (saveToFileFlag) {
             saveToFile = true;

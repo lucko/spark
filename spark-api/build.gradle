@@ -21,6 +21,7 @@ java.withSourcesJar()
 java.withJavadocJar()
 
 jar {
+    from file('LICENSE.txt')
     manifest.attributes([
             "Specification-Title"     : 'SparkAPI',
             "Specification-Vendor"    : 'Lucko',

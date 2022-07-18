@@ -47,6 +47,7 @@ public final class SparkProvider {
         return instance;
     }
 
+    @SuppressWarnings("unused")
     static void set(Spark impl) {
         SparkProvider.instance = impl;
     }

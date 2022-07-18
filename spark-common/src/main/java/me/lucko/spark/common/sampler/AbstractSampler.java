@@ -20,15 +20,16 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.dumper.ThreadDumper;
 import me.lucko.spark.api.profiler.report.ProfilerReport;
 import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.modules.SamplerModule;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
+import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
@@ -37,7 +38,7 @@ import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
-import net.kyori.adventure.text.Component;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
@@ -46,7 +47,6 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -73,7 +73,7 @@ public abstract class AbstractSampler implements Sampler {
     protected final long autoEndTime; // -1 for nothing
 
     /** A future to encapsulate the completion of this sampler instance */
-    protected final CompletableFuture<Sampler> future = new CompletableFuture<>();
+    protected final CompletableFuture<Profiler.Sampler> future = new CompletableFuture<>();
 
     /** The garbage collector statistics when profiling started */
     protected Map<String, GarbageCollectorStatistics> initialGcStats;
@@ -96,11 +96,6 @@ public abstract class AbstractSampler implements Sampler {
     @Override
     public long getAutoEndTime() {
         return this.autoEndTime;
-    }
-
-    @Override
-    public CompletableFuture<Sampler> getFuture() {
-        return this.future;
     }
 
     protected void recordInitialGcStats() {
@@ -128,30 +123,8 @@ public abstract class AbstractSampler implements Sampler {
 
     private ProfilerReport createReport(ReportConfiguration configuration) {
         final MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
-        final ReportConfiguration.Sender rSender = configuration.sender();
-        final CommandSender sender = rSender == null ? null : new CommandSender() {
-            @Override
-            public String getName() {
-                return rSender.name;
-            }
-
-            @Override
-            public UUID getUniqueId() {
-                return rSender.uuid;
-            }
-
-            @Override
-            public void sendMessage(Component message) {
-
-            }
-
-            @Override
-            public boolean hasPermission(String permission) {
-                return true;
-            }
-        };
         return new ProfilerReport() {
-            final SparkSamplerProtos.SamplerData data = toProto(platform, sender, configuration.threadOrder()::compare, configuration.comment(), configuration.separateParentCalls() ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator), platform.createClassSourceLookup());
+            final SparkSamplerProtos.SamplerData data = toProto(platform, configuration.sender(), configuration.threadOrder()::compare, configuration.comment(), configuration.separateParentCalls() ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator), platform.createClassSourceLookup());
 
             String uploadedUrl;
 
@@ -175,11 +148,17 @@ public abstract class AbstractSampler implements Sampler {
     }
 
     @Override
-    public CompletableFuture<ProfilerReport> whenDone(ReportConfiguration configuration) {
-        return getFuture().thenApply(samp -> createReport(configuration));
+    public CompletableFuture<ProfilerReport> onCompleted(ReportConfiguration configuration) {
+        return onCompleted().thenApply(samp -> createReport(configuration));
     }
 
-    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, @Nullable CommandSender creator, @Nullable String comment, DataAggregator dataAggregator) {
+    @NonNull
+    @Override
+    public CompletableFuture<Profiler.Sampler> onCompleted() {
+        return future;
+    }
+
+    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, ReportConfiguration.Sender creator, @Nullable String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
                 .setStartTime(this.startTime)
@@ -189,7 +168,7 @@ public abstract class AbstractSampler implements Sampler {
                 .setDataAggregator(dataAggregator.getMetadata());
 
         if (creator != null)
-             metadata.setCreator(creator.toData().toProto());
+             metadata.setCreator(creator.toProto());
 
         if (comment != null) {
             metadata.setComment(comment);
@@ -239,5 +218,10 @@ public abstract class AbstractSampler implements Sampler {
         if (classSourceVisitor.hasMappings()) {
             proto.putAllClassSources(classSourceVisitor.getMapping());
         }
+    }
+
+    @Override
+    public boolean isAsync() {
+        return this instanceof AsyncSampler;
     }
 }

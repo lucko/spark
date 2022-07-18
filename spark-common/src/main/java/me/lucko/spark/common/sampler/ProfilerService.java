@@ -28,6 +28,7 @@ import me.lucko.spark.common.sampler.async.AsyncProfilerAccess;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.java.JavaSampler;
 import me.lucko.spark.common.tick.TickHook;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -52,9 +53,7 @@ public class ProfilerService implements Profiler {
         }
 
         Duration duration = configuration.duration();
-        if (duration == null)
-            duration = Duration.of(MINIMUM_DURATION, ChronoUnit.SECONDS);
-        if (duration.getSeconds() < MINIMUM_DURATION) {
+        if (duration != null && duration.getSeconds() < MINIMUM_DURATION) {
             err.accept("A profiler needs to run for at least " + MINIMUM_DURATION + " seconds!");
             return null;
         }
@@ -86,7 +85,7 @@ public class ProfilerService implements Profiler {
             sampler = new JavaSampler(platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative());
         }
         // set activeSampler to null when complete.
-        sampler.getFuture().whenCompleteAsync((s, throwable) -> {
+        sampler.onCompleted().whenCompleteAsync((s, throwable) -> {
             if (sampler == this.active) {
                 this.active = null;
             }
@@ -110,7 +109,9 @@ public class ProfilerService implements Profiler {
         }
     }
 
-    private static long computeTimeout(Duration duration) {
+    private static long computeTimeout(@Nullable Duration duration) {
+        if (duration == null)
+            return -1;
         return System.currentTimeMillis() + duration.toMillis();
     }
 }

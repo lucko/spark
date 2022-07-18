@@ -21,29 +21,21 @@
 package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.api.profiler.Profiler;
+import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.util.Comparator;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Abstract superinterface for all sampler implementations.
  */
 public interface Sampler extends Profiler.Sampler {
 
-    /**
-     * Gets a future to encapsulate the completion of the sampler
-     *
-     * @return a future
-     */
-    CompletableFuture<Sampler> getFuture();
-
     // Methods used to export the sampler data to the web viewer.
-    SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
+    SamplerData toProto(SparkPlatform platform, ReportConfiguration.Sender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
 
 }
