@@ -104,12 +104,12 @@ public interface Spark {
 
     /**
      * Creates a new {@link Profiler profiler}.
-     * Note: this method creates a new profiler every time. Each profiler can only
-     * manage a sampler at a time.
      *
+     * @param maxSamplers the maximum amount of active samplers the profiler can manage
      * @return the profiler
+     * @throws IllegalArgumentException if {@code maxSamplers} <= 0
      */
-    @NonNull Profiler profiler();
+    @NonNull Profiler profiler(int maxSamplers);
 
     /**
      * Gets the {@link ThreadGrouper} associated with a Proto {@link DataAggregator.ThreadGrouper}.

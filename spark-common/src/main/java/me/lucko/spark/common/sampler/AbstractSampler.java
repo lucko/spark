@@ -48,14 +48,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 /**
  * Base implementation class for {@link Sampler}s.
  */
 public abstract class AbstractSampler implements Sampler {
 
-    protected final Consumer<Sampler> whenStopped;
+    /** The manager associated with this sampler */
+    protected final SamplerManager manager;
 
     /** The spark platform instance */
     protected final SparkPlatform platform;
@@ -81,8 +81,8 @@ public abstract class AbstractSampler implements Sampler {
     /** The garbage collector statistics when profiling started */
     protected Map<String, GarbageCollectorStatistics> initialGcStats;
 
-    protected AbstractSampler(Consumer<Sampler> whenStopped, SparkPlatform platform, int interval, ThreadDumper threadDumper, long autoEndTime) {
-        this.whenStopped = whenStopped;
+    protected AbstractSampler(SamplerManager manager, SparkPlatform platform, int interval, ThreadDumper threadDumper, long autoEndTime) {
+        this.manager = manager;
         this.platform = platform;
         this.interval = interval;
         this.threadDumper = threadDumper;
@@ -112,11 +112,12 @@ public abstract class AbstractSampler implements Sampler {
 
     @Override
     public void stop() {
-        whenStopped.accept(this);
+        manager.markStopped(this);
     }
 
     @Override
     public void start() {
+        manager.markStarted(this);
         this.startTime = System.currentTimeMillis();
 
         TickHook tickHook = this.platform.getTickHook();

@@ -28,18 +28,20 @@ package me.lucko.spark.api.profiler;
 import me.lucko.spark.api.profiler.report.ProfilerReport;
 import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
- * A profiler used for sampling. <br>
- * A profiler can only manage one sampler at a time.
+ * A profiler used for sampling.
  */
 public interface Profiler {
     /**
      * Generates a new {@link Sampler}. <br>
-     * Note: <strong>the sampler is not started by default</strong>, use {@link Sampler#start()}
+     * Note: <strong>the sampler is not started by default</strong>, use {@link Sampler#start()}. <br>
+     * This method is thread-safe.
      *
      * @param configuration the configuration to use for the profiler
      * @param errorReporter a consumer that reports any errors encountered in the creation of the sampler
@@ -49,11 +51,23 @@ public interface Profiler {
     Sampler createSampler(ProfilerConfiguration configuration, Consumer<String> errorReporter);
 
     /**
-     * Gets the active sampler of this profiler.
-     * @return the active sampler, or {@code null} if one isn't active
+     * Gets the active samplers of this profiler.
+     *
+     * @return the active samplers
      */
-    @Nullable
-    Sampler activeSampler();
+    @Unmodifiable List<Sampler> activeSamplers();
+
+    /**
+     * Gets the maximum amount of samplers managed by this profiler.
+     *
+     * @return the maximum amount of samplers
+     */
+    int maxSamplers();
+
+    /**
+     * Stops this profiler and any {@link #activeSamplers() active children}. <br>
+     */
+    void stop();
 
     /**
      * Represents a sampler used for profiling.

@@ -21,6 +21,7 @@
 package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
+import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.dumper.RegexThreadDumper;
 import me.lucko.spark.api.profiler.dumper.SpecificThreadDumper;
@@ -63,17 +64,15 @@ import static net.kyori.adventure.text.format.NamedTextColor.RED;
 public class SamplerModule implements CommandModule {
     private static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
 
-    private final Profiler service;
+    private final Profiler profiler;
 
     public SamplerModule(SparkPlatform platform) {
-        service = new ProfilerService(platform);
+        profiler = new ProfilerService(platform, 1);
     }
 
     @Override
     public void close() {
-        final Profiler.Sampler active = service.activeSampler();
-        if (active != null)
-            active.stop();
+        profiler.stop();
     }
 
     @Override
@@ -190,7 +189,7 @@ public class SamplerModule implements CommandModule {
         if (ticksOver != -1) {
             builder.minimumTickDuration(ticksOver);
         }
-        final Profiler.Sampler sampler = service.createSampler(builder.build(), e -> resp.replyPrefixed(text(e, RED)));
+        final Profiler.Sampler sampler = profiler.createSampler(builder.build(), e -> resp.replyPrefixed(text(e, RED)));
         if (sampler == null) // Feedback is handled in the consumer
             return;
 
@@ -232,7 +231,7 @@ public class SamplerModule implements CommandModule {
     }
 
     private void profilerInfo(CommandResponseHandler resp) {
-        final Profiler.Sampler active = service.activeSampler();
+        final Profiler.Sampler active = activeSampler();
         if (active == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
@@ -250,7 +249,7 @@ public class SamplerModule implements CommandModule {
     }
 
     private void profilerCancel(CommandResponseHandler resp) {
-        if (service.activeSampler() == null) {
+        if (activeSampler() == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
             close();
@@ -259,7 +258,7 @@ public class SamplerModule implements CommandModule {
     }
 
     private void profilerStop(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
-        final Profiler.Sampler sampler = service.activeSampler();
+        final Profiler.Sampler sampler = activeSampler();
         if (sampler == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
@@ -271,6 +270,11 @@ public class SamplerModule implements CommandModule {
             boolean saveToFile = arguments.boolFlag("save-to-file");
             handleUpload(platform, resp, sampler.dumpReport(configuration(resp, comment, sepParentCalls, threadOrder)), saveToFile);
         }
+    }
+    
+    private Profiler.Sampler activeSampler() {
+        if (profiler.activeSamplers().isEmpty()) return null;
+        return profiler.activeSamplers().get(0);
     }
 
     public static String postData(SparkPlatform platform, SparkSamplerProtos.SamplerData output) throws IOException {

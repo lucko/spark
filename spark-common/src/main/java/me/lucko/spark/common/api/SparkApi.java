@@ -211,8 +211,8 @@ public class SparkApi implements Spark {
     }
 
     @Override
-    public @NonNull Profiler profiler() {
-        return new ProfilerService(platform);
+    public @NonNull Profiler profiler(int maxSamplers) {
+        return new ProfilerService(platform, maxSamplers);
     }
 
     @Override
