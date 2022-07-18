@@ -94,7 +94,7 @@ public interface ProfilerConfiguration {
     ThreadDumper dumper();
 
     /**
-     * Get the choice of which thread grouper (AS_ONE, BY_NAME, BY_POOL) to use for this profiler.
+     * Get the choice of which thread grouper ({@link ThreadGrouper#AS_ONE}, {@link ThreadGrouper#BY_NAME}, {@link ThreadGrouper#BY_POOL}) to use for this profiler.
      * If the grouper is null, BY_POOL is used.
      *
      * @return the thread grouper choice
