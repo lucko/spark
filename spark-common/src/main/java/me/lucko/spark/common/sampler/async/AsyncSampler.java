@@ -27,6 +27,7 @@ import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
+import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -64,8 +66,8 @@ public class AsyncSampler extends AbstractSampler {
     /** The executor used for timeouts */
     private ScheduledExecutorService timeoutExecutor;
 
-    public AsyncSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
-        super(platform, interval, threadDumper, endTime);
+    public AsyncSampler(Consumer<Sampler> whenStopped, SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
+        super(whenStopped, platform, interval, threadDumper, endTime);
         this.profiler = AsyncProfilerAccess.INSTANCE.getProfiler();
         this.dataAggregator = new AsyncDataAggregator(threadGrouper);
     }
@@ -143,6 +145,7 @@ public class AsyncSampler extends AbstractSampler {
      */
     @Override
     public void stop() {
+        super.stop();
         try {
             this.profiler.stop();
         } catch (IllegalStateException e) {

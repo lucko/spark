@@ -31,7 +31,6 @@ import me.lucko.spark.common.tick.TickHook;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.function.Consumer;
 
 public class ProfilerService implements Profiler {
@@ -77,19 +76,18 @@ public class ProfilerService implements Profiler {
         final int intervalMicros = (int) (interval * 1000d);
         final long timeout = computeTimeout(duration);
         me.lucko.spark.common.sampler.Sampler sampler;
-        if (minimum >= 1) {
-            sampler = new JavaSampler(platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative(), hook, configuration.minimumTickDuration());
-        } else if (!configuration.forceJavaSampler() && !(configuration.dumper() instanceof RegexThreadDumper) && AsyncProfilerAccess.INSTANCE.checkSupported(platform)) {
-            sampler = new AsyncSampler(platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout);
-        } else {
-            sampler = new JavaSampler(platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative());
-        }
-        // set activeSampler to null when complete.
-        sampler.onCompleted().whenCompleteAsync((s, throwable) -> {
-            if (sampler == this.active) {
+        // set activeSampler to null when stopped.
+        final Consumer<me.lucko.spark.common.sampler.Sampler> whenStopped = s -> {
+            if (s == this.active)
                 this.active = null;
-            }
-        });
+        };
+        if (minimum >= 1) {
+            sampler = new JavaSampler(whenStopped, platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative(), hook, configuration.minimumTickDuration());
+        } else if (!configuration.forceJavaSampler() && !(configuration.dumper() instanceof RegexThreadDumper) && AsyncProfilerAccess.INSTANCE.checkSupported(platform)) {
+            sampler = new AsyncSampler(whenStopped, platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout);
+        } else {
+            sampler = new JavaSampler(whenStopped, platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative());
+        }
 
         return active = sampler;
     }

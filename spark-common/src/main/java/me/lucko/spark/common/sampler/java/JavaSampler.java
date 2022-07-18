@@ -26,6 +26,7 @@ import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
+import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;
@@ -41,6 +42,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * A sampler implementation using Java (WarmRoast).
@@ -62,13 +64,13 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     /** Responsible for aggregating and then outputting collected sampling data */
     private final JavaDataAggregator dataAggregator;
     
-    public JavaSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative) {
-        super(platform, interval, threadDumper, endTime);
+    public JavaSampler(Consumer<Sampler> whenStopped, SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative) {
+        super(whenStopped, platform, interval, threadDumper, endTime);
         this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
     }
 
-    public JavaSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
-        super(platform, interval, threadDumper, endTime);
+    public JavaSampler(Consumer<Sampler> whenStopped, SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
+        super(whenStopped, platform, interval, threadDumper, endTime);
         this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
     }
 
@@ -80,6 +82,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
 
     @Override
     public void stop() {
+        super.stop();
         this.task.cancel(false);
     }
 

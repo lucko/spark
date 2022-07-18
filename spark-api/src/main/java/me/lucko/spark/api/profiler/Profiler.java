@@ -33,7 +33,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 /**
- * A profiler used for sampling.
+ * A profiler used for sampling. <br>
+ * A profiler can only manage one sampler at a time.
  */
 public interface Profiler {
     /**

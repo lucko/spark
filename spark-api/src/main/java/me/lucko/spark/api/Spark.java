@@ -104,6 +104,8 @@ public interface Spark {
 
     /**
      * Creates a new {@link Profiler profiler}.
+     * Note: this method creates a new profiler every time. Each profiler can only
+     * manage a sampler at a time.
      *
      * @return the profiler
      */
