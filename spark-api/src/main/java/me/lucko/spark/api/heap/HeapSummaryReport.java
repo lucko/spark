@@ -23,22 +23,21 @@
  *  SOFTWARE.
  */
 
-package me.lucko.spark.api.profiler.report;
+package me.lucko.spark.api.heap;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import me.lucko.spark.proto.SparkSamplerProtos;
+import me.lucko.spark.proto.SparkHeapProtos;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Represents the result of a profiler.
+ * Represents the result of a heap summary.
  *
- * @see me.lucko.spark.api.profiler.Profiler.Sampler#dumpReport(ReportConfiguration)
- * @see me.lucko.spark.api.profiler.Profiler.Sampler#onCompleted(ReportConfiguration)
+ * @see HeapAnalysis#summary()
  */
-public interface ProfilerReport {
+public interface HeapSummaryReport {
     /**
      * Uploads this report online.
      *
@@ -53,7 +52,7 @@ public interface ProfilerReport {
      * @return the data
      */
     @NotNull
-    SparkSamplerProtos.SamplerData data();
+    SparkHeapProtos.HeapData data();
 
     /**
      * Saves this report to a local file.

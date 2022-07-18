@@ -26,6 +26,7 @@
 package me.lucko.spark.api;
 
 import me.lucko.spark.api.gc.GarbageCollector;
+import me.lucko.spark.api.heap.HeapAnalysis;
 import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.ProfilerConfigurationBuilder;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
@@ -119,4 +120,11 @@ public interface Spark {
      * @throws AssertionError if the type is {@link DataAggregator.ThreadGrouper#UNRECOGNIZED unknown}.
      */
     @NonNull ThreadGrouper getGrouper(DataAggregator.ThreadGrouper type);
+
+    /**
+     * Gets a {@link HeapAnalysis} instance.
+     *
+     * @return the heap analysis instance
+     */
+    @NonNull HeapAnalysis heapAnalysis();
 }

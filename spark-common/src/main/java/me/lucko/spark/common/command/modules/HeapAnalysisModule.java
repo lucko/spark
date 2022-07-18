@@ -73,6 +73,11 @@ public class HeapAnalysisModule implements CommandModule {
         );
     }
 
+    public static String upload(SparkPlatform platform, SparkHeapProtos.HeapData output) throws IOException {
+        String key = platform.getBytebinClient().postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
+        return platform.getViewerUrl() + key;
+    }
+
     private static void heapSummary(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         if (arguments.boolFlag("run-gc-before")) {
             resp.broadcastPrefixed(text("Running garbage collector..."));
@@ -90,17 +95,16 @@ public class HeapAnalysisModule implements CommandModule {
             return;
         }
 
-        SparkHeapProtos.HeapData output = heapDump.toProto(platform, sender);
+        SparkHeapProtos.HeapData output = heapDump.toProto(platform, sender.asSender());
 
         boolean saveToFile = false;
         if (arguments.boolFlag("save-to-file")) {
             saveToFile = true;
         } else {
             try {
-                String key = platform.getBytebinClient().postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
-                String url = platform.getViewerUrl() + key;
+                final String url = upload(platform, output);
 
-                resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));
+                resp.broadcastPrefixed(text("Heap dump summary output:", GOLD));
                 resp.broadcast(text()
                         .content(url)
                         .color(GRAY)

@@ -27,4 +27,5 @@ dependencies {
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
     compileOnly 'org.checkerframework:checker-qual:3.8.0'
+    compileOnly 'org.jetbrains:annotations:23.0.0'
 }

@@ -20,12 +20,14 @@
 
 package me.lucko.spark.common.heapdump;
 
+import me.lucko.spark.api.util.Sender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.proto.SparkHeapProtos.HeapData;
 import me.lucko.spark.proto.SparkHeapProtos.HeapEntry;
 import me.lucko.spark.proto.SparkHeapProtos.HeapMetadata;
 
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Type;
 
 import java.lang.management.ManagementFactory;
@@ -125,10 +127,13 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
-    public HeapData toProto(SparkPlatform platform, CommandSender creator) {
+    public HeapData toProto(SparkPlatform platform, @Nullable Sender creator) {
         HeapMetadata.Builder metadata = HeapMetadata.newBuilder()
-                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setCreator(creator.toData().toProto());
+                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto());
+        if (creator != null) {
+            metadata.setCreator(creator.toProto());
+        }
+
         try {
             metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null));
         } catch (Exception e) {

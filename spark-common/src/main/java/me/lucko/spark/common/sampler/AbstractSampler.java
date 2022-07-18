@@ -24,6 +24,7 @@ import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.dumper.ThreadDumper;
 import me.lucko.spark.api.profiler.report.ProfilerReport;
 import me.lucko.spark.api.profiler.report.ReportConfiguration;
+import me.lucko.spark.api.util.Sender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
@@ -40,6 +41,7 @@ import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -139,6 +141,7 @@ public abstract class AbstractSampler implements Sampler {
             String uploadedUrl;
 
             @Override
+            @NonNull
             public String upload() throws IOException {
                 if (uploadedUrl == null)
                     uploadedUrl = SamplerModule.postData(platform, data);
@@ -146,11 +149,13 @@ public abstract class AbstractSampler implements Sampler {
             }
 
             @Override
+            @NotNull
             public SparkSamplerProtos.SamplerData data() {
                 return data;
             }
 
             @Override
+            @NotNull
             public Path saveToFile(Path path) throws IOException {
                 return Files.write(path, data.toByteArray());
             }
@@ -168,7 +173,7 @@ public abstract class AbstractSampler implements Sampler {
         return future;
     }
 
-    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, ReportConfiguration.Sender creator, @Nullable String comment, DataAggregator dataAggregator) {
+    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, @org.jetbrains.annotations.Nullable Sender creator, @Nullable String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
                 .setStartTime(this.startTime)
@@ -177,8 +182,9 @@ public abstract class AbstractSampler implements Sampler {
                 .setThreadDumper(this.threadDumper.getMetadata())
                 .setDataAggregator(dataAggregator.getMetadata());
 
-        if (creator != null)
-             metadata.setCreator(creator.toProto());
+        if (creator != null) {
+            metadata.setCreator(creator.toProto());
+        }
 
         if (comment != null) {
             metadata.setComment(comment);

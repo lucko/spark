@@ -21,7 +21,7 @@
 package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.api.profiler.Profiler;
-import me.lucko.spark.api.profiler.report.ReportConfiguration;
+import me.lucko.spark.api.util.Sender;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
@@ -36,6 +36,6 @@ import java.util.Comparator;
 public interface Sampler extends Profiler.Sampler {
 
     // Methods used to export the sampler data to the web viewer.
-    SamplerData toProto(SparkPlatform platform, ReportConfiguration.Sender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
+    SamplerData toProto(SparkPlatform platform, Sender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
 
 }

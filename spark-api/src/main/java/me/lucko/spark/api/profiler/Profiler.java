@@ -35,7 +35,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * A profiler used for sampling.
+ * The base interface of profilers. <br>
+ * Profilers monitor the activity of the JVM, using {@link Sampler samplers}.
+ *
+ * @see me.lucko.spark.api.Spark#profiler(int)
  */
 public interface Profiler {
     /**
@@ -55,7 +58,8 @@ public interface Profiler {
      *
      * @return the active samplers
      */
-    @Unmodifiable List<Sampler> activeSamplers();
+    @Unmodifiable
+    List<Sampler> activeSamplers();
 
     /**
      * Gets the maximum amount of samplers managed by this profiler.

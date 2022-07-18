@@ -27,6 +27,7 @@ package me.lucko.spark.api.profiler.report;
 
 import me.lucko.spark.api.profiler.thread.ThreadNode;
 import me.lucko.spark.api.profiler.thread.ThreadOrder;
+import me.lucko.spark.api.util.Sender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,7 @@ import java.util.UUID;
 
 public class ReportConfigurationBuilder {
     private Comparator<ThreadNode> order = ThreadOrder.BY_NAME;
-    private ReportConfiguration.Sender sender;
+    private Sender sender;
     private boolean separateParentCalls;
     private String comment;
 
@@ -50,13 +51,13 @@ public class ReportConfigurationBuilder {
         return this;
     }
 
-    public ReportConfigurationBuilder sender(@Nullable ReportConfiguration.Sender sender) {
+    public ReportConfigurationBuilder sender(@Nullable Sender sender) {
         this.sender = sender;
         return this;
     }
 
     public ReportConfigurationBuilder sender(@NonNull String name, @Nullable UUID uuid) {
-        return sender(new ReportConfiguration.Sender(name, uuid));
+        return sender(new Sender(name, uuid));
     }
 
     public ReportConfigurationBuilder separateParentCalls(boolean separateParentCalls) {

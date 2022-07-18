@@ -24,7 +24,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-import me.lucko.spark.api.profiler.report.ReportConfiguration;
+import me.lucko.spark.api.util.Sender;
 import me.lucko.spark.proto.SparkProtos.CommandSenderMetadata;
 
 import net.kyori.adventure.text.Component;
@@ -45,8 +45,8 @@ public interface CommandSender {
         return new Data(getName(), getUniqueId());
     }
 
-    default ReportConfiguration.Sender asSender() {
-        return new ReportConfiguration.Sender(getName(), getUniqueId());
+    default Sender asSender() {
+        return new Sender(getName(), getUniqueId());
     }
 
     final class Data {

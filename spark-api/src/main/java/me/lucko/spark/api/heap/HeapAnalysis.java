@@ -23,46 +23,39 @@
  *  SOFTWARE.
  */
 
-package me.lucko.spark.api.profiler.report;
+package me.lucko.spark.api.heap;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import me.lucko.spark.proto.SparkSamplerProtos;
+import me.lucko.spark.api.Spark;
+import me.lucko.spark.api.util.Sender;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 /**
- * Represents the result of a profiler.
+ * Utility interface used for heap analysis.
  *
- * @see me.lucko.spark.api.profiler.Profiler.Sampler#dumpReport(ReportConfiguration)
- * @see me.lucko.spark.api.profiler.Profiler.Sampler#onCompleted(ReportConfiguration)
+ * @see Spark#heapAnalysis()
  */
-public interface ProfilerReport {
-    /**
-     * Uploads this report online.
-     *
-     * @return the URL of the uploaded report
-     */
-    @NotNull
-    String upload() throws IOException;
+public interface HeapAnalysis {
 
     /**
-     * Gets the data of this report
+     * Creates a summary of the heap.
      *
-     * @return the data
+     * @param sender the sender of the report
+     * @return the report
      */
     @NotNull
-    SparkSamplerProtos.SamplerData data();
+    HeapSummaryReport summary(@Nullable Sender sender);
 
     /**
-     * Saves this report to a local file.
+     * Creates a heap dump at the given output path.
      *
-     * @param path the path to save to
-     * @return the {@code path}
-     * @throws IOException if an exception occurred
+     * @param outputPath the path to write the snapshot to
+     * @param liveOnly   if true dump only live objects i.e. objects that are reachable from others
      */
     @NotNull
     @CanIgnoreReturnValue
-    Path saveToFile(Path path) throws IOException;
+    Path dumpHeap(Path outputPath, boolean liveOnly) throws Exception;
 }

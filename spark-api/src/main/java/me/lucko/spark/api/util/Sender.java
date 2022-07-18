@@ -23,46 +23,47 @@
  *  SOFTWARE.
  */
 
-package me.lucko.spark.api.profiler.report;
+package me.lucko.spark.api.util;
 
-import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import me.lucko.spark.proto.SparkSamplerProtos;
-import org.jetbrains.annotations.NotNull;
+import me.lucko.spark.proto.SparkProtos;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.nio.file.Path;
+import java.util.UUID;
 
 /**
- * Represents the result of a profiler.
- *
- * @see me.lucko.spark.api.profiler.Profiler.Sampler#dumpReport(ReportConfiguration)
- * @see me.lucko.spark.api.profiler.Profiler.Sampler#onCompleted(ReportConfiguration)
+ * Represents a sender used for online uploading of data.
  */
-public interface ProfilerReport {
+public class Sender {
+    public final String name;
     /**
-     * Uploads this report online.
-     *
-     * @return the URL of the uploaded report
+     * The UUID of the sender. May be {@code null} if it wasn't sent by a player.
      */
-    @NotNull
-    String upload() throws IOException;
+    @Nullable
+    public final UUID uuid;
+
+    public Sender(String name, @Nullable UUID uuid) {
+        this.name = name;
+        this.uuid = uuid;
+    }
 
     /**
-     * Gets the data of this report
+     * Checks if this sender is a player.
      *
-     * @return the data
+     * @return if this sender is a player
      */
-    @NotNull
-    SparkSamplerProtos.SamplerData data();
+    public boolean isPlayer() {
+        return uuid != null;
+    }
 
-    /**
-     * Saves this report to a local file.
-     *
-     * @param path the path to save to
-     * @return the {@code path}
-     * @throws IOException if an exception occurred
-     */
-    @NotNull
-    @CanIgnoreReturnValue
-    Path saveToFile(Path path) throws IOException;
+    public SparkProtos.CommandSenderMetadata toProto() {
+        SparkProtos.CommandSenderMetadata.Builder proto = SparkProtos.CommandSenderMetadata.newBuilder()
+                .setType(isPlayer() ? SparkProtos.CommandSenderMetadata.Type.PLAYER : SparkProtos.CommandSenderMetadata.Type.OTHER)
+                .setName(this.name);
+
+        if (this.uuid != null) {
+            proto.setUniqueId(this.uuid.toString());
+        }
+
+        return proto.build();
+    }
 }

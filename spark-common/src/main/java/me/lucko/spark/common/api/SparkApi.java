@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.gc.GarbageCollector;
+import me.lucko.spark.api.heap.HeapAnalysis;
 import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.ProfilerConfigurationBuilder;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
@@ -32,6 +33,7 @@ import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
 import me.lucko.spark.api.util.StreamSupplier;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.heapdump.HeapAnalysisProvider;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
@@ -68,9 +70,11 @@ public class SparkApi implements Spark {
     }
 
     private final SparkPlatform platform;
+    private final HeapAnalysis heapAnalysis;
 
     public SparkApi(SparkPlatform platform) {
         this.platform = platform;
+        heapAnalysis = new HeapAnalysisProvider(platform);
     }
 
     @Override
@@ -296,5 +300,10 @@ public class SparkApi implements Spark {
             };
             default: throw new AssertionError("Unknown thread grouper!");
         }
+    }
+
+    @Override
+    public @NonNull HeapAnalysis heapAnalysis() {
+        return heapAnalysis;
     }
 }
