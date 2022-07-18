@@ -23,6 +23,7 @@ package me.lucko.spark.common.sampler;
 import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.ProfilerConfiguration;
 import me.lucko.spark.api.profiler.dumper.RegexThreadDumper;
+import me.lucko.spark.api.util.ErrorHandler;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.async.AsyncProfilerAccess;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
@@ -34,7 +35,6 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 
 public class ProfilerService implements Profiler, SamplerManager {
     private final SparkPlatform platform;
@@ -56,7 +56,7 @@ public class ProfilerService implements Profiler, SamplerManager {
     }
 
     @Override
-    public Sampler createSampler(ProfilerConfiguration configuration, Consumer<String> err) {
+    public Sampler createSampler(ProfilerConfiguration configuration, ErrorHandler err) {
         if (active.size() >= maxSamplers) {
             if (maxSamplers == 1) {
                 err.accept("A profiling sampler is already running!");

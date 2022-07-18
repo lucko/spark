@@ -27,12 +27,12 @@ package me.lucko.spark.api.profiler;
 
 import me.lucko.spark.api.profiler.report.ProfilerReport;
 import me.lucko.spark.api.profiler.report.ReportConfiguration;
+import me.lucko.spark.api.util.ErrorHandler;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 /**
  * A profiler used for sampling.
@@ -48,7 +48,7 @@ public interface Profiler {
      * @return the sampler, or if a validation error was caught, {@code null}
      */
     @Nullable
-    Sampler createSampler(ProfilerConfiguration configuration, Consumer<String> errorReporter);
+    Sampler createSampler(ProfilerConfiguration configuration, ErrorHandler errorReporter);
 
     /**
      * Gets the active samplers of this profiler.
