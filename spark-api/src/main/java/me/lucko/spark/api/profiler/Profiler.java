@@ -46,7 +46,14 @@ public interface Profiler {
      * @return the sampler, or if a validation error was caught, {@code null}
      */
     @Nullable
-    Sampler create(ProfilerConfiguration configuration, Consumer<String> errorReporter);
+    Sampler createSampler(ProfilerConfiguration configuration, Consumer<String> errorReporter);
+
+    /**
+     * Gets the active sampler of this profiler.
+     * @return the active sampler, or {@code null} if one isn't active
+     */
+    @Nullable
+    Sampler activeSampler();
 
     /**
      * Represents a sampler used for profiling.

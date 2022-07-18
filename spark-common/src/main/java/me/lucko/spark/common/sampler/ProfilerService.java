@@ -45,7 +45,7 @@ public class ProfilerService implements Profiler {
     }
 
     @Override
-    public me.lucko.spark.common.sampler.Sampler create(ProfilerConfiguration configuration, Consumer<String> err) {
+    public me.lucko.spark.common.sampler.Sampler createSampler(ProfilerConfiguration configuration, Consumer<String> err) {
         if (active != null) {
             err.accept("A profiler is already running!");
             return null;
@@ -92,19 +92,9 @@ public class ProfilerService implements Profiler {
         return active = sampler;
     }
 
-    public me.lucko.spark.common.sampler.Sampler active() {
+    @Override
+    public me.lucko.spark.common.sampler.Sampler activeSampler() {
         return active;
-    }
-    public void clear() {
-        if (active != null) {
-            active = null;
-        }
-    }
-    public void clearAndStop() {
-        if (active != null) {
-            active.stop();
-            active = null;
-        }
     }
 
     private static long computeTimeout(@Nullable Duration duration) {
