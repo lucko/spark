@@ -108,7 +108,7 @@ public interface Spark {
      *
      * @param maxSamplers the maximum amount of active samplers the profiler can manage
      * @return the profiler
-     * @throws IllegalArgumentException if {@code maxSamplers} <= 0
+     * @throws IllegalArgumentException if {@code maxSamplers <= 0}
      */
     @NonNull Profiler profiler(int maxSamplers);
 

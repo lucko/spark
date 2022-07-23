@@ -26,6 +26,7 @@
 package me.lucko.spark.api.heap;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import me.lucko.spark.api.util.Sender;
 import me.lucko.spark.proto.SparkHeapProtos;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ import java.nio.file.Path;
 /**
  * Represents the result of a heap summary.
  *
- * @see HeapAnalysis#summary()
+ * @see HeapAnalysis#summary(Sender)
  */
 public interface HeapSummaryReport {
     /**
