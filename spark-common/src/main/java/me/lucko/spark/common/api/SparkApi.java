@@ -25,6 +25,7 @@ import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.gc.GarbageCollector;
 import me.lucko.spark.api.heap.HeapAnalysis;
+import me.lucko.spark.api.ping.PingStatistics;
 import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.ProfilerConfigurationBuilder;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
@@ -305,5 +306,10 @@ public class SparkApi implements Spark {
     @Override
     public @NonNull HeapAnalysis heapAnalysis() {
         return heapAnalysis;
+    }
+
+    @Override
+    public @Nullable PingStatistics ping() {
+        return platform.getPingStatistics();
     }
 }

@@ -27,6 +27,7 @@ package me.lucko.spark.api;
 
 import me.lucko.spark.api.gc.GarbageCollector;
 import me.lucko.spark.api.heap.HeapAnalysis;
+import me.lucko.spark.api.ping.PingStatistics;
 import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.ProfilerConfigurationBuilder;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
@@ -47,6 +48,7 @@ import static me.lucko.spark.api.statistic.StatisticWindow.TicksPerSecond;
 
 /**
  * The spark API.
+ * @see SparkProvider#get()
  */
 public interface Spark {
 
@@ -127,4 +129,11 @@ public interface Spark {
      * @return the heap analysis instance
      */
     @NonNull HeapAnalysis heapAnalysis();
+
+    /**
+     * Gets a {@link PingStatistics} instance.
+     *
+     * @return the ping statistics instance, or {@code null} if the platform cannot provide that info
+     */
+    @Nullable PingStatistics ping();
 }

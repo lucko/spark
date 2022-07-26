@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
+import me.lucko.spark.api.ping.PlayerPing;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
@@ -33,7 +34,7 @@ import me.lucko.spark.common.monitor.net.Direction;
 import me.lucko.spark.common.monitor.net.NetworkInterfaceAverages;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
-import me.lucko.spark.common.monitor.ping.PingSummary;
+import me.lucko.spark.api.ping.PingSummary;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.RollingAverage;
@@ -150,7 +151,7 @@ public class HealthModule implements CommandModule {
         Set<String> players = arguments.stringFlag("player");
         if (!players.isEmpty()) {
             for (String player : players) {
-                PingStatistics.PlayerPing playerPing = pingStatistics.query(player);
+                PlayerPing playerPing = pingStatistics.query(player);
                 if (playerPing == null) {
                     resp.replyPrefixed(text("Ping data is not available for '" + player + "'."));
                 } else {
