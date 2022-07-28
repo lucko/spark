@@ -1,0 +1,60 @@
+final def cfg = { Project proj ->
+	proj.afterEvaluate {
+        proj.publishing {
+            repositories {
+                maven {
+				    name = 'inquisition'
+                    url = 'https://maven.moddinginquisition.org/snapshots'
+                    credentials {
+                        username = findProperty('inquisitionMavenUser') ?: ''
+                        password = findProperty('inquisitionMavenPassword') ?: ''
+                    }
+                }
+            }
+        }
+	}
+}
+cfg.call(project(':spark-proto'))
+cfg.call(project(':spark-api'))
+project(':spark-forge').apply plugin: 'maven-publish'
+
+project(':spark-forge').afterEvaluate { Project proj ->
+    proj.group = 'me.lucko.spark'
+    def actualVersion = "$api_version"
+    proj.shadowJar {
+        archiveName = "spark-forge-${actualVersion}.jar"
+        configurations = [project.configurations.shade]
+        classifier ''
+        finalizedBy('reobfShadowJar')
+    }
+    proj.jar {
+        classifier 'lite'
+    }
+    proj.publishing {
+        repositories {
+            maven {
+			    name = 'inquisition'
+                url = 'https://maven.moddinginquisition.org/snapshots'
+                credentials {
+                    username = findProperty('inquisitionMavenUser') ?: ''
+                    password = findProperty('inquisitionMavenPassword') ?: ''
+                }
+            }
+        }
+        publications {
+            mavenJava(MavenPublication) {
+                artifacts = [
+                        proj.shadowJar
+                ]
+                group = 'me.lucko.spark'
+                artifactId = 'spark-forge'
+                version = actualVersion
+                pom {
+                    name = 'spark'
+                    description = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
+                    url = 'https://spark.lucko.me/'
+                }
+            }
+        }
+    }
+}

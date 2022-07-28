@@ -56,6 +56,10 @@ public class ReportConfigurationBuilder {
         return this;
     }
 
+    public ReportConfigurationBuilder sender(@NonNull String name) {
+        return sender(new Sender(name, null));
+    }
+
     public ReportConfigurationBuilder sender(@NonNull String name, @Nullable UUID uuid) {
         return sender(new Sender(name, uuid));
     }
@@ -73,12 +77,12 @@ public class ReportConfigurationBuilder {
     public ReportConfiguration build() {
         return new ReportConfiguration() {
             @Override
-            public Comparator<ThreadNode> threadOrder() {
+            public Comparator<ThreadNode> getThreadOrder() {
                 return order;
             }
 
             @Override
-            public @Nullable Sender sender() {
+            public @Nullable Sender getSender() {
                 return sender;
             }
 
@@ -88,7 +92,7 @@ public class ReportConfigurationBuilder {
             }
 
             @Override
-            public @Nullable String comment() {
+            public @Nullable String getComment() {
                 return comment;
             }
         };

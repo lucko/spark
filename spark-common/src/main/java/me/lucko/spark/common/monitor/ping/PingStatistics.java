@@ -105,12 +105,12 @@ public final class PingStatistics implements Runnable, AutoCloseable, me.lucko.s
     }
 
     @Override
-    public @NotNull PingSummary summary() {
+    public @NotNull PingSummary getSummary() {
         return currentSummary();
     }
 
     @Override
-    public @NotNull DoubleAverageInfo average() {
+    public @NotNull DoubleAverageInfo getAverage() {
         return getPingAverage();
     }
 

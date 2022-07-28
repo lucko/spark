@@ -136,7 +136,7 @@ public abstract class AbstractSampler implements Sampler {
     private ProfilerReport createReport(ReportConfiguration configuration) {
         final MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
         return new ProfilerReport() {
-            final SparkSamplerProtos.SamplerData data = toProto(platform, configuration.sender(), configuration.threadOrder()::compare, configuration.comment(), configuration.separateParentCalls() ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator), platform.createClassSourceLookup());
+            final SparkSamplerProtos.SamplerData data = toProto(platform, configuration.getSender(), configuration.getThreadOrder()::compare, configuration.getComment(), configuration.separateParentCalls() ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator), platform.createClassSourceLookup());
 
             String uploadedUrl;
 

@@ -128,7 +128,7 @@ public class SamplerBuilder implements ProfilerConfigurationBuilder {
     public ProfilerConfiguration build() {
         return new ProfilerConfiguration() {
             @Override
-            public double interval() {
+            public double getInterval() {
                 return samplingInterval;
             }
 
@@ -148,22 +148,22 @@ public class SamplerBuilder implements ProfilerConfigurationBuilder {
             }
 
             @Override
-            public int minimumTickDuration() {
+            public int getMinimumTickDuration() {
                 return minimumTickDuration;
             }
 
             @Override
-            public @Nullable Duration duration() {
+            public @Nullable Duration getDuration() {
                 return duration;
             }
 
             @Override
-            public @Nullable ThreadDumper dumper() {
+            public @Nullable ThreadDumper getDumper() {
                 return threadDumper;
             }
 
             @Override
-            public @Nullable ThreadGrouper grouper() {
+            public @Nullable ThreadGrouper getGrouper() {
                 return threadGrouper;
             }
         };

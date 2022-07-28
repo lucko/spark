@@ -45,7 +45,7 @@ public interface ProfilerConfiguration {
      *
      * @return the sample interval
      */
-    double interval();
+    double getInterval();
 
     /**
      * Get if sleeping threads should be ignored.
@@ -74,7 +74,7 @@ public interface ProfilerConfiguration {
      *
      * @return the minimum tick duration
      */
-    int minimumTickDuration();
+    int getMinimumTickDuration();
 
     /**
      * Get how long the profiler should run, if the duration is null, the profiler runs indefinite.
@@ -82,7 +82,7 @@ public interface ProfilerConfiguration {
      * @return duration of the profile or null if indefinite
      */
     @Nullable
-    Duration duration();
+    Duration getDuration();
 
     /**
      * Get the choice of which dumper to use (i.e. ALL, Regex or Specific).
@@ -91,7 +91,7 @@ public interface ProfilerConfiguration {
      * @return the thread dumper choice
      */
     @Nullable
-    ThreadDumper dumper();
+    ThreadDumper getDumper();
 
     /**
      * Get the choice of which thread grouper ({@link ThreadGrouper#AS_ONE}, {@link ThreadGrouper#BY_NAME}, {@link ThreadGrouper#BY_POOL}) to use for this profiler.
@@ -100,5 +100,5 @@ public interface ProfilerConfiguration {
      * @return the thread grouper choice
      */
     @Nullable
-    ThreadGrouper grouper();
+    ThreadGrouper getGrouper();
 }

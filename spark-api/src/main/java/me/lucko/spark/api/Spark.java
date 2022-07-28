@@ -38,6 +38,7 @@ import me.lucko.spark.api.util.StreamSupplier;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata.DataAggregator;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
@@ -115,15 +116,6 @@ public interface Spark {
     @NonNull Profiler profiler(int maxSamplers);
 
     /**
-     * Gets the {@link ThreadGrouper} associated with a Proto {@link DataAggregator.ThreadGrouper}.
-     *
-     * @param type the Proto type
-     * @return the grouper
-     * @throws AssertionError if the type is {@link DataAggregator.ThreadGrouper#UNRECOGNIZED unknown}.
-     */
-    @NonNull ThreadGrouper getGrouper(DataAggregator.ThreadGrouper type);
-
-    /**
      * Gets a {@link HeapAnalysis} instance.
      *
      * @return the heap analysis instance
@@ -136,4 +128,17 @@ public interface Spark {
      * @return the ping statistics instance, or {@code null} if the platform cannot provide that info
      */
     @Nullable PingStatistics ping();
+
+    /**
+     * Gets the {@link ThreadGrouper} associated with a Proto {@link DataAggregator.ThreadGrouper}.
+     *
+     * @param type the Proto type
+     * @return the grouper
+     * @see ThreadGrouper#BY_POOL
+     * @see ThreadGrouper#BY_NAME
+     * @see ThreadGrouper#AS_ONE
+     * @throws AssertionError if the type is {@link DataAggregator.ThreadGrouper#UNRECOGNIZED unknown}.
+     */
+    @ApiStatus.Internal
+    @NonNull ThreadGrouper grouper(DataAggregator.ThreadGrouper type);
 }

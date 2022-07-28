@@ -42,7 +42,7 @@ public interface PingStatistics {
      * @return a summary of current pings
      */
     @NotNull
-    PingSummary summary();
+    PingSummary getSummary();
 
     /**
      * Gets the ping average.
@@ -50,7 +50,7 @@ public interface PingStatistics {
      * @return the average
      */
     @NotNull
-    DoubleAverageInfo average();
+    DoubleAverageInfo getAverage();
 
     /**
      * Queries the ping of a given player.

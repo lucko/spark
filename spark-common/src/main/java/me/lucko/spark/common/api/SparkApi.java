@@ -221,7 +221,7 @@ public class SparkApi implements Spark {
     }
 
     @Override
-    public @NonNull ThreadGrouper getGrouper(SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper type) {
+    public @NonNull ThreadGrouper grouper(SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper type) {
         switch (type) {
             case AS_ONE: return new ThreadGrouper() {
                 private final Set<Long> seen = ConcurrentHashMap.newKeySet();

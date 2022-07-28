@@ -36,7 +36,7 @@ public interface ThreadGrouper {
     /**
      * Implementation of {@link ThreadGrouper} that just groups by thread name.
      */
-    ThreadGrouper BY_NAME = SparkProvider.get().getGrouper(DataAggregator.ThreadGrouper.BY_NAME);
+    ThreadGrouper BY_NAME = SparkProvider.get().grouper(DataAggregator.ThreadGrouper.BY_NAME);
 
     /**
      * Implementation of {@link ThreadGrouper} that attempts to group by the name of the pool
@@ -45,13 +45,13 @@ public interface ThreadGrouper {
      * <p>The regex pattern used to match pools expects a digit at the end of the thread name,
      * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
      */
-    ThreadGrouper BY_POOL = SparkProvider.get().getGrouper(DataAggregator.ThreadGrouper.BY_POOL);
+    ThreadGrouper BY_POOL = SparkProvider.get().grouper(DataAggregator.ThreadGrouper.BY_POOL);
 
     /**
      * Implementation of {@link ThreadGrouper} which groups all threads as one, under
      * the name "All".
      */
-    ThreadGrouper AS_ONE = SparkProvider.get().getGrouper(DataAggregator.ThreadGrouper.AS_ONE);
+    ThreadGrouper AS_ONE = SparkProvider.get().grouper(DataAggregator.ThreadGrouper.AS_ONE);
 
     /**
      * Gets the group for the given thread.

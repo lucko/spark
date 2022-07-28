@@ -28,6 +28,7 @@ package me.lucko.spark.api.profiler.report;
 import me.lucko.spark.api.profiler.thread.ThreadNode;
 import me.lucko.spark.api.profiler.thread.ThreadOrder;
 import me.lucko.spark.api.util.Sender;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -40,13 +41,17 @@ public interface ReportConfiguration {
         return new ReportConfigurationBuilder();
     }
 
+    static ReportConfiguration onlySender(@NotNull Sender sender) {
+        return builder().sender(sender).build();
+    }
+
     /**
      * Gets the ordering used by the report.
      *
      * @return the ordering used by the report
      * @see ThreadOrder
      */
-    Comparator<ThreadNode> threadOrder();
+    Comparator<ThreadNode> getThreadOrder();
 
     /**
      * Gets the sender of the report
@@ -54,7 +59,7 @@ public interface ReportConfiguration {
      * @return the report's sender, or else {@code null}
      */
     @Nullable
-    Sender sender();
+    Sender getSender();
 
     /**
      * If the thread viewer should separate parent calls.
@@ -69,6 +74,6 @@ public interface ReportConfiguration {
      * @return the report's comment
      */
     @Nullable
-    String comment();
+    String getComment();
 
 }

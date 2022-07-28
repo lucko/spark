@@ -66,20 +66,20 @@ public class ProfilerService implements Profiler, SamplerManager {
             return null;
         }
 
-        Duration duration = configuration.duration();
+        Duration duration = configuration.getDuration();
         if (duration != null && duration.getSeconds() < MINIMUM_DURATION) {
             err.accept("A profiler needs to run for at least " + MINIMUM_DURATION + " seconds!");
             return null;
         }
 
-        double interval = configuration.interval();
+        double interval = configuration.getInterval();
         if (interval <= 0) {
             err.accept("Cannot run profiler with negative interval.");
             return null;
         }
 
         TickHook hook = null;
-        int minimum = configuration.minimumTickDuration();
+        int minimum = configuration.getMinimumTickDuration();
         if (minimum >= 0) {
             hook = platform.getTickHook();
             if (hook == null) {
@@ -93,11 +93,11 @@ public class ProfilerService implements Profiler, SamplerManager {
 
         final me.lucko.spark.common.sampler.Sampler sampler;
         if (minimum >= 1) {
-            sampler = new JavaSampler(this, platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative(), hook, configuration.minimumTickDuration());
-        } else if (!configuration.forceJavaSampler() && !(configuration.dumper() instanceof RegexThreadDumper) && AsyncProfilerAccess.INSTANCE.checkSupported(platform)) {
-            sampler = new AsyncSampler(this, platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout);
+            sampler = new JavaSampler(this, platform, intervalMicros, configuration.getDumper(), configuration.getGrouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative(), hook, configuration.getMinimumTickDuration());
+        } else if (!configuration.forceJavaSampler() && !(configuration.getDumper() instanceof RegexThreadDumper) && AsyncProfilerAccess.INSTANCE.checkSupported(platform)) {
+            sampler = new AsyncSampler(this, platform, intervalMicros, configuration.getDumper(), configuration.getGrouper(), timeout);
         } else {
-            sampler = new JavaSampler(this, platform, intervalMicros, configuration.dumper(), configuration.grouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative());
+            sampler = new JavaSampler(this, platform, intervalMicros, configuration.getDumper(), configuration.getGrouper(), timeout, configuration.ignoreSleeping(), configuration.ignoreNative());
         }
 
         return sampler;
