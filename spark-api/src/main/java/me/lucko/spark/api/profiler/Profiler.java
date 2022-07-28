@@ -70,6 +70,9 @@ public interface Profiler {
 
     /**
      * Stops this profiler and any {@link #activeSamplers() active children}. <br>
+     * Note that {@link Sampler#onCompleted() completion callbacks} will not be completed.
+     *
+     * @see Sampler#stop()
      */
     void stop();
 
@@ -78,12 +81,18 @@ public interface Profiler {
      */
     interface Sampler {
         /**
+         * The minimum amount of seconds a sampler may run for.
+         */
+        int MINIMUM_DURATION = 10;
+
+        /**
          * Starts the sampler.
          */
         void start();
 
         /**
-         * Stops the sampler.
+         * Stops the sampler. <br>
+         * Note that {@link #onCompleted() completion callbacks} will not be completed.
          */
         void stop();
 

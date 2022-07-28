@@ -189,7 +189,7 @@ public class SamplerModule implements CommandModule {
         if (ticksOver != -1) {
             builder.minimumTickDuration(ticksOver);
         }
-        final Profiler.Sampler sampler = profiler.createSampler(builder.build(), e -> resp.replyPrefixed(text(e, RED)));
+        final Profiler.Sampler sampler = profiler.createSampler(builder.build(), (e, msg) -> resp.replyPrefixed(text(e.toString() + ": " + msg, RED)));
         if (sampler == null) // Feedback is handled in the consumer
             return;
 
@@ -271,7 +271,7 @@ public class SamplerModule implements CommandModule {
             handleUpload(platform, resp, sampler.dumpReport(configuration(resp, comment, sepParentCalls, threadOrder)), saveToFile);
         }
     }
-    
+
     private Profiler.Sampler activeSampler() {
         if (profiler.activeSamplers().isEmpty()) return null;
         return profiler.activeSamplers().get(0);

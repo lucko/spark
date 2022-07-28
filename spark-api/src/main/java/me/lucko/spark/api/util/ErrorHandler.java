@@ -35,9 +35,44 @@ public interface ErrorHandler {
     /**
      * Accepts and reports an error.
      *
-     * @param error the error to report
+     * @param error   the error to report
+     * @param message a detailed message of the error
      */
-    void accept(String error);
+    void accept(ErrorType error, String message);
+
+    /**
+     * Represents the type of an error.
+     *
+     * @see #accept(ErrorType, String)
+     */
+    enum ErrorType {
+        /**
+         * Indicates that the maximum amount of active samplers the profiler can manage has been reached.
+         */
+        MAX_AMOUNT_REACHED,
+        /**
+         * Indicates that the platform does not support tick counting.
+         */
+        TICK_COUNTING_NOT_SUPPORTED,
+        /**
+         * Indicates that an invalid duration that the sampler should run for has been supplied.
+         *
+         * @see me.lucko.spark.api.profiler.Profiler.Sampler#MINIMUM_DURATION
+         */
+        INVALID_DURATION,
+
+        /**
+         * A more general error; indicates that an invalid argument for constructing the sampler has been provided. <br>
+         * The message will include more information.
+         */
+        INVALID_ARGUMENT,
+
+        /**
+         * Represents an 'unknown' error type. <br>
+         * The message will include more information.
+         */
+        UNKNOWN
+    }
 
     /**
      * Creates an {@link ErrorHandler} that throws exceptions.
@@ -46,8 +81,8 @@ public interface ErrorHandler {
      * @param <T>      the type of the exception
      * @return the handler
      */
-    static <T extends Throwable> ErrorHandler throwing(Function<String, T> supplier) throws T {
-        return e -> throwAsUnchecked(supplier.apply(e));
+    static <T extends Throwable> ErrorHandler throwing(Function<String, T> supplier) {
+        return (e, msg) -> throwAsUnchecked(supplier.apply(e.toString() + ": " + msg));
     }
 
     @SuppressWarnings("unchecked")

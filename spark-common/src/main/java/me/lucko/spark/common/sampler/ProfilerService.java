@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.sampler;
 
+import com.google.common.collect.Lists;
 import me.lucko.spark.api.profiler.Profiler;
 import me.lucko.spark.api.profiler.ProfilerConfiguration;
 import me.lucko.spark.api.profiler.dumper.RegexThreadDumper;
@@ -36,10 +37,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static me.lucko.spark.api.profiler.Profiler.Sampler.MINIMUM_DURATION;
+
 public class ProfilerService implements Profiler, SamplerManager {
     private final SparkPlatform platform;
-
-    public static final int MINIMUM_DURATION = 10;
 
     private final int maxSamplers;
     private final List<Sampler> active;
@@ -59,22 +60,22 @@ public class ProfilerService implements Profiler, SamplerManager {
     public Sampler createSampler(ProfilerConfiguration configuration, ErrorHandler err) {
         if (active.size() >= maxSamplers) {
             if (maxSamplers == 1) {
-                err.accept("A profiling sampler is already running!");
+                err.accept(ErrorHandler.ErrorType.MAX_AMOUNT_REACHED, "A profiling sampler is already running!");
             } else {
-                err.accept(String.format("Maximum amount of %s profiling samplers are already running!", active.size()));
+                err.accept(ErrorHandler.ErrorType.MAX_AMOUNT_REACHED, String.format("Maximum amount of %s profiling samplers are already running!", active.size()));
             }
             return null;
         }
 
         Duration duration = configuration.getDuration();
         if (duration != null && duration.getSeconds() < MINIMUM_DURATION) {
-            err.accept("A profiler needs to run for at least " + MINIMUM_DURATION + " seconds!");
+            err.accept(ErrorHandler.ErrorType.INVALID_DURATION, "A profiler needs to run for at least " + MINIMUM_DURATION + " seconds!");
             return null;
         }
 
         double interval = configuration.getInterval();
         if (interval <= 0) {
-            err.accept("Cannot run profiler with negative interval.");
+            err.accept(ErrorHandler.ErrorType.INVALID_ARGUMENT, "Cannot run profiler with negative interval.");
             return null;
         }
 
@@ -83,7 +84,7 @@ public class ProfilerService implements Profiler, SamplerManager {
         if (minimum >= 0) {
             hook = platform.getTickHook();
             if (hook == null) {
-                err.accept("Tick counting is not supported!");
+                err.accept(ErrorHandler.ErrorType.TICK_COUNTING_NOT_SUPPORTED, "Tick counting is not supported!");
                 return null;
             }
         }
@@ -115,11 +116,9 @@ public class ProfilerService implements Profiler, SamplerManager {
 
     @Override
     public void stop() {
-        // Prevent concurrent modifications
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < active.size(); i++) {
-            active.get(i).stop();
-        }
+        // Copy the list of active samplers before stopping them, so we make sure we stop all of them
+        final List<Sampler> copy = Lists.newArrayList(active);
+        copy.forEach(Sampler::stop);
     }
 
     private static long computeTimeout(@Nullable Duration duration) {
