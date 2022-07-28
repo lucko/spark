@@ -25,6 +25,9 @@
 
 package me.lucko.spark.api.util;
 
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.function.Function;
 
 /**
@@ -81,10 +84,12 @@ public interface ErrorHandler {
      * @param <T>      the type of the exception
      * @return the handler
      */
-    static <T extends Throwable> ErrorHandler throwing(Function<String, T> supplier) {
+    @NotNull
+    static <T extends Throwable> ErrorHandler throwing(@NotNull Function<String, T> supplier) {
         return (e, msg) -> throwAsUnchecked(supplier.apply(e.toString() + ": " + msg));
     }
 
+    @ApiStatus.Internal
     @SuppressWarnings("unchecked")
     static <E extends Throwable> void throwAsUnchecked(Throwable exception) throws E {
         throw (E) exception;

@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.UUID;
 
 /**
  * Configuration for {@link ProfilerReport reports}.
@@ -43,6 +44,12 @@ public interface ReportConfiguration {
 
     static ReportConfiguration onlySender(@NotNull Sender sender) {
         return builder().sender(sender).build();
+    }
+    static ReportConfiguration onlySender(@NotNull String sender) {
+        return onlySender(new Sender(sender, null));
+    }
+    static ReportConfiguration onlySender(@NotNull String sender, @Nullable UUID uuid) {
+        return onlySender(new Sender(sender, uuid));
     }
 
     /**

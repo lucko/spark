@@ -45,6 +45,9 @@ public class Sender {
         this.name = name;
         this.uuid = uuid;
     }
+    public Sender(String name) {
+        this(name, null);
+    }
 
     /**
      * Checks if this sender is a player.

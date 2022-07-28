@@ -157,6 +157,9 @@ public abstract class AbstractSampler implements Sampler {
             @Override
             @NotNull
             public Path saveToFile(Path path) throws IOException {
+                if (path.getParent() != null)
+                    Files.createDirectories(path.getParent());
+                Files.deleteIfExists(path);
                 return Files.write(path, data.toByteArray());
             }
         };

@@ -41,6 +41,11 @@ public interface ProfilerConfiguration {
     }
 
     /**
+     * The default profiler configuration
+     */
+    ProfilerConfiguration DEFAULT = builder().build();
+
+    /**
      * Get the interval (in millis) of when the profiler should take samples.
      *
      * @return the sample interval

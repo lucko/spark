@@ -27,11 +27,16 @@ package me.lucko.spark.api;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+
 /**
  * Singleton provider for {@link Spark}.
  */
 public final class SparkProvider {
 
+    private static final List<Consumer<Spark>> WHEN_LOADED = new CopyOnWriteArrayList<>();
     private static Spark instance;
 
     /**
@@ -47,9 +52,19 @@ public final class SparkProvider {
         return instance;
     }
 
+    /**
+     * Registers a listener called when spark is loaded.
+     *
+     * @param listener the listener
+     */
+    public static void whenLoaded(Consumer<Spark> listener) {
+        WHEN_LOADED.add(listener);
+    }
+
     @SuppressWarnings("unused")
     static void set(Spark impl) {
         SparkProvider.instance = impl;
+        WHEN_LOADED.forEach(cons -> cons.accept(impl));
     }
 
     private SparkProvider() {
