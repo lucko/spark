@@ -188,22 +188,6 @@ public class SparkApi implements Spark {
         return ImmutableMap.copyOf(map);
     }
 
-    public static void register(Spark spark) {
-        try {
-            SINGLETON_SET_METHOD.invoke(null, spark);
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void unregister() {
-        try {
-            SINGLETON_SET_METHOD.invoke(null, new Object[]{null});
-        } catch (ReflectiveOperationException e) {
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public @NonNull StreamSupplier<Thread> threadFinder() {
         final ThreadFinder finder = new ThreadFinder();
@@ -311,5 +295,21 @@ public class SparkApi implements Spark {
     @Override
     public @Nullable PingStatistics ping() {
         return platform.getPingStatistics();
+    }
+
+    public static void register(Spark spark) {
+        try {
+            SINGLETON_SET_METHOD.invoke(null, spark);
+        } catch (ReflectiveOperationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void unregister() {
+        try {
+            SINGLETON_SET_METHOD.invoke(null, new Object[]{null});
+        } catch (ReflectiveOperationException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -37,6 +37,7 @@ import java.util.function.Consumer;
 public final class SparkProvider {
 
     private static final List<Consumer<Spark>> WHEN_LOADED = new CopyOnWriteArrayList<>();
+    private static final List<Runnable> WHEN_UNLOADED = new CopyOnWriteArrayList<>();
     private static Spark instance;
 
     /**
@@ -61,10 +62,26 @@ public final class SparkProvider {
         WHEN_LOADED.add(listener);
     }
 
+    /**
+     * Registers a listener called when spark is unloaded.
+     *
+     * @param listener the listener
+     */
+    public static void whenUnloaded(Runnable listener) {
+        WHEN_UNLOADED.add(listener);
+    }
+
     @SuppressWarnings("unused")
     static void set(Spark impl) {
         SparkProvider.instance = impl;
-        WHEN_LOADED.forEach(cons -> cons.accept(impl));
+        // If null, we are unregistered
+        if (impl == null) {
+            WHEN_UNLOADED.forEach(Runnable::run);
+        }
+        // If non-null we are registered
+        else {
+            WHEN_LOADED.forEach(cons -> cons.accept(impl));
+        }
     }
 
     private SparkProvider() {
