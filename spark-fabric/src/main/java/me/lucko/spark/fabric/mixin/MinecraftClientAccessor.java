@@ -18,29 +18,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.fabric.mixin;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import net.minecraft.client.MinecraftClient;
 
-import java.io.IOException;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-public class AbstractHttpClient {
+@Mixin(MinecraftClient.class)
+public interface MinecraftClientAccessor {
 
-    /** The http client */
-    protected final OkHttpClient okHttp;
+    @Accessor
+    Thread getThread();
 
-    public AbstractHttpClient(OkHttpClient okHttp) {
-        this.okHttp = okHttp;
-    }
-
-    protected Response makeHttpRequest(Request request) throws IOException {
-        Response response = this.okHttp.newCall(request).execute();
-        if (!response.isSuccessful()) {
-            response.close();
-            throw new RuntimeException("Request was unsuccessful: " + response.code() + " - " + response.message());
-        }
-        return response;
-    }
 }

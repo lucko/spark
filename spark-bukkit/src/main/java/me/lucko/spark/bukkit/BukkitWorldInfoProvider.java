@@ -31,7 +31,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class BukkitWorldInfoProvider implements WorldInfoProvider {

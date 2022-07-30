@@ -73,9 +73,9 @@ public class Sponge7SparkPlugin implements SparkPlugin {
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
     private final SpongeExecutorService syncExecutor;
+    private final ThreadDumper.GameThread gameThreadDumper = new ThreadDumper.GameThread();
 
     private SparkPlatform platform;
-    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
     public Sponge7SparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory, @AsynchronousExecutor SpongeExecutorService asyncExecutor, @SynchronousExecutor SpongeExecutorService syncExecutor) {
@@ -85,6 +85,8 @@ public class Sponge7SparkPlugin implements SparkPlugin {
         this.configDirectory = configDirectory;
         this.asyncExecutor = asyncExecutor;
         this.syncExecutor = syncExecutor;
+
+        this.syncExecutor.execute(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
     }
 
     @Listener
@@ -151,7 +153,7 @@ public class Sponge7SparkPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return this.threadDumper.get();
+        return this.gameThreadDumper.get();
     }
 
     @Override
@@ -201,7 +203,6 @@ public class Sponge7SparkPlugin implements SparkPlugin {
 
         @Override
         public CommandResult process(CommandSource source, String arguments) {
-            this.plugin.threadDumper.ensureSetup();
             this.plugin.platform.executeCommand(new Sponge7CommandSender(source), arguments.split(" "));
             return CommandResult.empty();
         }

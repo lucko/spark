@@ -29,6 +29,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
@@ -58,10 +59,12 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     private final Minecraft minecraft;
+    private final ThreadDumper gameThreadDumper;
 
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
+        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.gameThread);
     }
 
     @Override
@@ -84,7 +87,6 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
             return 0;
         }
 
-        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new ForgeCommandSender(context.getSource().getEntity(), this), args);
         return Command.SINGLE_SUCCESS;
     }
@@ -112,6 +114,11 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public void executeSync(Runnable task) {
         this.minecraft.executeIfPossible(task);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper;
     }
 
     @Override

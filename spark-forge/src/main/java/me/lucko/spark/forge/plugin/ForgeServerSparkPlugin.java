@@ -33,6 +33,7 @@ import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
@@ -75,11 +76,13 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     private final MinecraftServer server;
+    private final ThreadDumper gameThreadDumper;
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
 
     public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
+        this.gameThreadDumper = new ThreadDumper.Specific(server.getRunningThread());
     }
 
     @Override
@@ -146,7 +149,6 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             return 0;
         }
 
-        this.threadDumper.ensureSetup();
         CommandSource source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
         this.platform.executeCommand(new ForgeCommandSender(source, this), args);
         return Command.SINGLE_SUCCESS;
@@ -190,6 +192,11 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public void executeSync(Runnable task) {
         this.server.executeIfPossible(task);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper;
     }
 
     @Override

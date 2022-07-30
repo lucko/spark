@@ -8,13 +8,10 @@ license {
 
 dependencies {
     api project(':spark-api')
-    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.7'
+    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.1'
     implementation 'org.ow2.asm:asm:9.1'
     implementation 'com.google.protobuf:protobuf-javalite:3.15.6'
-    implementation 'com.squareup.okhttp3:okhttp:3.14.1'
-    implementation 'com.squareup.okio:okio:1.17.3'
     implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
-    implementation 'org.tukaani:xz:1.8'
     api('net.kyori:adventure-api:4.11.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'checker-qual')
@@ -35,13 +32,6 @@ dependencies {
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
     compileOnly 'org.checkerframework:checker-qual:3.8.0'
-}
-
-processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        include 'spark/linux/libasyncProfiler.so'
-        include 'spark/macosx/libasyncProfiler.so'
-    }
 }
 
 protobuf {

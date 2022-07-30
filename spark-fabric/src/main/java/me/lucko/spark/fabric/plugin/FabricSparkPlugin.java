@@ -34,7 +34,6 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.fabric.FabricClassSourceLookup;
@@ -59,7 +58,6 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
     protected final ScheduledExecutorService scheduler;
 
     protected SparkPlatform platform;
-    protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected FabricSparkPlugin(FabricSparkMod mod) {
         this.mod = mod;
@@ -105,11 +103,6 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
         } else {
             throw new IllegalArgumentException(level.getName());
         }
-    }
-
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return this.threadDumper.get();
     }
 
     @Override

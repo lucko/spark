@@ -36,8 +36,6 @@ import me.lucko.spark.proto.SparkHeapProtos;
 
 import net.kyori.adventure.text.event.ClickEvent;
 
-import okhttp3.MediaType;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,7 +52,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.GREEN;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
 
 public class HeapAnalysisModule implements CommandModule {
-    private static final MediaType SPARK_HEAP_MEDIA_TYPE = MediaType.parse("application/x-spark-heap");
+    private static final String SPARK_HEAP_MEDIA_TYPE = "application/x-spark-heap";
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
