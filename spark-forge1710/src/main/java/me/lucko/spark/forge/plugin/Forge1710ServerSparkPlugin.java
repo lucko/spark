@@ -27,6 +27,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.*;
@@ -42,6 +43,8 @@ import java.util.stream.Stream;
 
 public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
     private final Queue<Runnable> scheduledServerTasks = Queues.newArrayDeque();
+
+    private final ThreadDumper.GameThread gameThreadDumper;
 
     public static Forge1710ServerSparkPlugin register(Forge1710SparkMod mod, FMLServerStartingEvent event) {
         Forge1710ServerSparkPlugin plugin = new Forge1710ServerSparkPlugin(mod, event.getServer());
@@ -72,6 +75,13 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
     public Forge1710ServerSparkPlugin(Forge1710SparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
+        this.gameThreadDumper = new ThreadDumper.GameThread();
+        this.scheduledServerTasks.add(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper.get();
     }
 
     @Override

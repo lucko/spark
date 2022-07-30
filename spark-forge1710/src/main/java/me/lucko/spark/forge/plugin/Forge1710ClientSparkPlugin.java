@@ -23,6 +23,7 @@ package me.lucko.spark.forge.plugin;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.*;
@@ -47,10 +48,17 @@ public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
     }
 
     private final Minecraft minecraft;
+    private final ThreadDumper gameThreadDumper;
 
     public Forge1710ClientSparkPlugin(Forge1710SparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
+        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.mcThread);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper;
     }
 
     @Override
