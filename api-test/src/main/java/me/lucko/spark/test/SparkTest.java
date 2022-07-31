@@ -84,16 +84,14 @@ public class SparkTest {
         final var source = ctx.getSource();
         source.sendFailure(Component.literal("Building sampler... stand by."));
         // Create the sampler
-        final Profiler.Sampler sampler = profiler.createSampler(ProfilerConfiguration.builder()
+        final Profiler.Sampler sampler = profiler.createSamplerThrowing(ProfilerConfiguration.builder()
                 .dumper(new SpecificThreadDumper(ServerLifecycleHooks.getCurrentServer().getRunningThread()))
                 .grouper(ThreadGrouper.BY_NAME)
                 .ignoreSleeping()
                 .samplingInterval(12)
                 .forceJavaSampler()
                 .duration(Duration.ofSeconds(20))
-                .build(), ErrorHandler.throwingConcat(IllegalArgumentException::new));
-        if (sampler == null)
-            return;
+                .build());
 
         sampler.start(); // Start the sampler
 
@@ -125,13 +123,11 @@ public class SparkTest {
         final var source = context.getSource();
         source.sendFailure(Component.literal("Building sampler... Please stand by."));
         // Create the sampler
-        final Profiler.Sampler sampler = profiler.createSampler(ProfilerConfiguration.builder()
+        final Profiler.Sampler sampler = profiler.createSamplerThrowing(ProfilerConfiguration.builder()
                 .dumper(ThreadDumper.ALL)
                 .grouper(ThreadGrouper.AS_ONE)
                 .ignoreNative()
-                .build(), ErrorHandler.throwingConcat(IllegalArgumentException::new));
-        if (sampler == null)
-            return;
+                .build());
 
         sampler.start(); // Start the profiler
         source.sendSuccess(Component.literal("Profiler started..."), true);

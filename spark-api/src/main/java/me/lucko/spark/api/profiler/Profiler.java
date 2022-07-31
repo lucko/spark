@@ -28,6 +28,7 @@ package me.lucko.spark.api.profiler;
 import me.lucko.spark.api.profiler.report.ProfilerReport;
 import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.api.util.ErrorHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -44,7 +45,12 @@ public interface Profiler {
     /**
      * Generates a new {@link Sampler}. <br>
      * Note: <strong>the sampler is not started by default</strong>, use {@link Sampler#start()}. <br>
-     * This method is thread-safe.
+     * This method is thread-safe. <br><br>
+     *
+     * Contracts:
+     * <ul>
+     *     <li>If this method returns {@code null}, then the {@code errorReporter} <strong>must</strong> have an error reported. Moreover, the error will be reported <i>before</i> the method finishes its execution.</li>
+     * </ul>
      *
      * @param configuration the configuration to use for the profiler
      * @param errorReporter a consumer that reports any errors encountered in the creation of the sampler
@@ -52,6 +58,19 @@ public interface Profiler {
      */
     @Nullable
     Sampler createSampler(ProfilerConfiguration configuration, ErrorHandler errorReporter);
+
+    /**
+     * Generates a new {@link Sampler}, throwing a {@link CreationException} if an error occurred creating the sampler.
+     * @see #createSampler(ProfilerConfiguration, ErrorHandler)
+     * @param configuration the configuration to use for the profiler
+     * @return the sampler
+     */
+    @NotNull
+    @SuppressWarnings("RedundantThrows")
+    default Sampler createSamplerThrowing(ProfilerConfiguration configuration) throws CreationException {
+        // noinspection ConstantConditions Exception will be thrown before method finishes execution
+        return createSampler(configuration, ErrorHandler.throwing(CreationException::new));
+    }
 
     /**
      * Gets the active samplers of this profiler.
@@ -144,5 +163,31 @@ public interface Profiler {
          * @return if this sampler is an async sampler
          */
         boolean isAsync();
+    }
+
+    /**
+     * Represents an exception that may occur during the creation of a {@link Sampler}.
+     * @see #createSamplerThrowing(ProfilerConfiguration)
+     */
+    class CreationException extends Exception {
+        private final ErrorHandler.ErrorType type;
+
+        public CreationException(ErrorHandler.ErrorType type, String message) {
+            super(message);
+            this.type = type;
+        }
+
+        @Override
+        public String getMessage() {
+            return type + ": " + super.getMessage();
+        }
+
+        /**
+         * Gets the type of this exception.
+         * @return the type of this exception
+         */
+        public ErrorHandler.ErrorType getType() {
+            return type;
+        }
     }
 }
