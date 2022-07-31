@@ -25,6 +25,7 @@ import me.lucko.spark.api.profiler.dumper.ThreadDumper;
 import me.lucko.spark.api.profiler.report.ProfilerReport;
 import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.api.util.Sender;
+import me.lucko.spark.api.util.UploadResult;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
@@ -138,14 +139,14 @@ public abstract class AbstractSampler implements Sampler {
         return new ProfilerReport() {
             final SparkSamplerProtos.SamplerData data = toProto(platform, configuration.getSender(), configuration.getThreadOrder()::compare, configuration.getComment(), configuration.separateParentCalls() ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator), platform.createClassSourceLookup());
 
-            String uploadedUrl;
+            UploadResult uploadResult;
 
             @Override
             @NonNull
-            public String upload() throws IOException {
-                if (uploadedUrl == null)
-                    uploadedUrl = SamplerModule.postData(platform, data);
-                return uploadedUrl;
+            public UploadResult upload() throws IOException {
+                if (uploadResult == null)
+                    uploadResult = SamplerModule.postData(platform, data);
+                return uploadResult;
             }
 
             @Override

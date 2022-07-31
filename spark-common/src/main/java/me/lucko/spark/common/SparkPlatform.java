@@ -91,6 +91,7 @@ public class SparkPlatform {
     private final SparkPlugin plugin;
     private final Configuration configuration;
     private final String viewerUrl;
+    private final String bytebinUrl;
     private final BytebinClient bytebinClient;
     private final boolean disableResponseBroadcast;
     private final List<CommandModule> commandModules;
@@ -112,7 +113,7 @@ public class SparkPlatform {
         this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
-        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://bytebin.lucko.me/");
+        this.bytebinUrl = this.configuration.getString("bytebinUrl", "https://bytebin.lucko.me/");
         this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
 
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
@@ -205,6 +206,10 @@ public class SparkPlatform {
 
     public String getViewerUrl() {
         return this.viewerUrl;
+    }
+
+    public String getBytebinUrl() {
+        return this.bytebinUrl;
     }
 
     public BytebinClient getBytebinClient() {

@@ -30,6 +30,7 @@ import me.lucko.spark.api.profiler.report.ProfilerReport;
 import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
 import me.lucko.spark.api.profiler.thread.ThreadOrder;
+import me.lucko.spark.api.util.UploadResult;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
@@ -40,6 +41,7 @@ import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.sampler.ProfilerService;
 import me.lucko.spark.common.sampler.SamplerBuilder;
+import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -277,9 +279,9 @@ public class SamplerModule implements CommandModule {
         return profiler.activeSamplers().get(0);
     }
 
-    public static String postData(SparkPlatform platform, SparkSamplerProtos.SamplerData output) throws IOException {
-        String key = platform.getBytebinClient().postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
-        return platform.getViewerUrl() + key;
+    public static UploadResult postData(SparkPlatform platform, SparkSamplerProtos.SamplerData output) throws IOException {
+        final String key = platform.getBytebinClient().postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
+        return new UploadResult(FormatUtil.getBaseDomainUrl(platform.getViewerUrl()) + key, FormatUtil.getBaseDomainUrl(platform.getBytebinUrl()) + key);
     }
 
     private ReportConfiguration configuration(CommandResponseHandler resp, String comment, boolean separateParentCalls, ThreadOrder order) {
@@ -297,7 +299,7 @@ public class SamplerModule implements CommandModule {
             saveToFile = true;
         } else {
             try {
-                final String url = report.upload();
+                final String url = report.upload().getViewerUrl();
 
                 resp.broadcastPrefixed(text("Profiler results:", GOLD));
                 resp.broadcast(text()

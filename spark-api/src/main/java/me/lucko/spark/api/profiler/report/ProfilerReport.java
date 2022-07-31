@@ -26,6 +26,7 @@
 package me.lucko.spark.api.profiler.report;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import me.lucko.spark.api.util.UploadResult;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,10 +43,10 @@ public interface ProfilerReport {
     /**
      * Uploads this report online.
      *
-     * @return the URL of the uploaded report
+     * @return the result of the upload
      */
     @NotNull
-    String upload() throws IOException;
+    UploadResult upload() throws IOException;
 
     /**
      * Gets the data of this report

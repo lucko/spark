@@ -23,6 +23,7 @@ package me.lucko.spark.common.heapdump;
 import me.lucko.spark.api.heap.HeapAnalysis;
 import me.lucko.spark.api.heap.HeapSummaryReport;
 import me.lucko.spark.api.util.Sender;
+import me.lucko.spark.api.util.UploadResult;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.modules.HeapAnalysisModule;
 import me.lucko.spark.proto.SparkHeapProtos;
@@ -44,14 +45,14 @@ public class HeapAnalysisProvider implements HeapAnalysis {
     public @NotNull HeapSummaryReport summary(Sender sender) {
         final SparkHeapProtos.HeapData data = HeapDumpSummary.createNew().toProto(platform, sender);
         return new HeapSummaryReport() {
-            String uploadedUrl;
+            UploadResult uploadResult;
 
             @Override
             @NonNull
-            public String upload() throws IOException {
-                if (uploadedUrl == null)
-                    uploadedUrl = HeapAnalysisModule.upload(platform, data);
-                return uploadedUrl;
+            public UploadResult upload() throws IOException {
+                if (uploadResult == null)
+                    uploadResult = HeapAnalysisModule.upload(platform, data);
+                return uploadResult;
             }
 
             @NotNull
