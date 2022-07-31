@@ -34,6 +34,7 @@ import java.util.function.Consumer;
 /**
  * Singleton provider for {@link Spark}.
  */
+@SuppressWarnings("unused")
 public final class SparkProvider {
 
     private static final List<Consumer<Spark>> WHEN_LOADED = new CopyOnWriteArrayList<>();
@@ -71,7 +72,6 @@ public final class SparkProvider {
         WHEN_UNLOADED.add(listener);
     }
 
-    @SuppressWarnings("unused")
     static void set(Spark impl) {
         SparkProvider.instance = impl;
         // If null, we are unregistered

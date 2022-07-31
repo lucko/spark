@@ -49,9 +49,19 @@ import static me.lucko.spark.api.statistic.StatisticWindow.TicksPerSecond;
 
 /**
  * The spark API.
- * @see SparkProvider#get()
+ * @see #get()
  */
 public interface Spark {
+
+    /**
+     * Gets the singleton spark API instance.
+     *
+     * @return the spark API instance
+     * @see SparkProvider#get()
+     */
+    static @NonNull Spark get() {
+        return SparkProvider.get();
+    }
 
     /**
      * Gets the CPU usage statistic for the current process.
