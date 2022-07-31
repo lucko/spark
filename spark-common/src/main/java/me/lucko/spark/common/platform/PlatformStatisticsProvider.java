@@ -28,6 +28,7 @@ import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.memory.MemoryInfo;
 import me.lucko.spark.common.monitor.net.NetworkInterfaceAverages;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
+import me.lucko.spark.common.monitor.os.OperatingSystemInfo;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -87,8 +88,8 @@ public class PlatformStatisticsProvider {
                 )
                 .setOs(SystemStatistics.Os.newBuilder()
                         .setArch(System.getProperty("os.arch"))
-                        .setName(System.getProperty("os.name"))
-                        .setVersion(System.getProperty("os.version"))
+                        .setName(OperatingSystemInfo.getName())
+                        .setVersion(OperatingSystemInfo.getVersion())
                         .build()
                 )
                 .setJava(SystemStatistics.Java.newBuilder()
