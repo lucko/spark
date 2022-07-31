@@ -20,6 +20,7 @@
 
 package me.lucko.spark.test;
 
+import com.google.protobuf.CodedInputStream;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import cpw.mods.modlauncher.api.LamdbaExceptionUtils;
@@ -32,6 +33,7 @@ import me.lucko.spark.api.profiler.report.ProfilerReport;
 import me.lucko.spark.api.profiler.report.ReportConfiguration;
 import me.lucko.spark.api.profiler.thread.ThreadGrouper;
 import me.lucko.spark.api.util.ErrorHandler;
+import me.lucko.spark.api.util.UploadResult;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import net.minecraft.commands.CommandRuntimeException;
@@ -45,6 +47,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -137,11 +140,18 @@ public class SparkTest {
         // Dump the report
         final ProfilerReport report = sampler.dumpReport(ReportConfiguration.onlySender("My test"));
         final Path saveFile = report.saveToFile(savePath.resolve("test2.sparkprofile")); // Save the report
-        try (final var localIs = Files.newInputStream(saveFile)) {
+        final UploadResult uploadResult = report.upload();
+        try (final var localIs = Files.newInputStream(saveFile);
+                final var onlineIs = URI.create(uploadResult.getBytebinUrl()).toURL().openStream()) {
             final SamplerData data = report.data();
-            final SamplerData fromLocal = SamplerData.parseFrom(localIs);
-            if (data.equals(fromLocal)) {
-                source.sendSuccess(Component.literal("Results from local file and memory are equal!"), false);
+            final CodedInputStream localCd = CodedInputStream.newInstance(localIs);
+            localCd.setRecursionLimit(Integer.MAX_VALUE);
+            final SamplerData fromLocal = SamplerData.parseFrom(localCd);
+            final CodedInputStream onlineCd = CodedInputStream.newInstance(onlineIs);
+            onlineCd.setRecursionLimit(Integer.MAX_VALUE);
+            final SamplerData fromOnline = SamplerData.parseFrom(onlineCd);
+            if (data.equals(fromLocal) && fromLocal.equals(fromOnline)) {
+                source.sendSuccess(Component.literal("Results from local file, memory and Bytebin are equal!"), false);
             } else {
                 source.sendFailure(Component.literal("Results do not match!"));
             }
