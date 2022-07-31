@@ -45,7 +45,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -92,7 +91,7 @@ public class SparkTest {
                 .samplingInterval(12)
                 .forceJavaSampler()
                 .duration(Duration.ofSeconds(20))
-                .build(), ErrorHandler.throwing(IllegalArgumentException::new));
+                .build(), ErrorHandler.throwingConcat(IllegalArgumentException::new));
         if (sampler == null)
             return;
 
@@ -130,7 +129,7 @@ public class SparkTest {
                 .dumper(ThreadDumper.ALL)
                 .grouper(ThreadGrouper.AS_ONE)
                 .ignoreNative()
-                .build(), ErrorHandler.throwing(IllegalArgumentException::new));
+                .build(), ErrorHandler.throwingConcat(IllegalArgumentException::new));
         if (sampler == null)
             return;
 

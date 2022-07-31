@@ -28,6 +28,7 @@ package me.lucko.spark.api.util;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -85,8 +86,22 @@ public interface ErrorHandler {
      * @return the handler
      */
     @NotNull
-    static <T extends Throwable> ErrorHandler throwing(@NotNull Function<String, T> supplier) {
-        return (e, msg) -> throwAsUnchecked(supplier.apply(e.toString() + ": " + msg));
+    static <T extends Throwable> ErrorHandler throwing(@NotNull BiFunction<ErrorType, String, T> supplier) {
+        return (e, msg) -> throwAsUnchecked(supplier.apply(e, msg));
+    }
+
+    /**
+     * Creates an {@link ErrorHandler} that throws exceptions. <br>
+     * Note: the message passed in the {@code supplier} is obtained in the following way:
+     * {@code errorType + ": " + message}
+     *
+     * @param supplier a factory to use for creating the exceptions
+     * @param <T>      the type of the exception
+     * @return the handler
+     */
+    @NotNull
+    static <T extends Throwable> ErrorHandler throwingConcat(@NotNull Function<String, T> supplier) {
+        return throwing((e, msg) -> supplier.apply(e + ": " + msg));
     }
 
     @ApiStatus.Internal
