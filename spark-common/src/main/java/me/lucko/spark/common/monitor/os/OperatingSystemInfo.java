@@ -53,7 +53,7 @@ public enum OperatingSystemInfo {
             for (final String line : LinuxProc.OSINFO.read()) {
                 if (line.startsWith("PRETTY_NAME")) {
                     try {
-                        name = line.substring(12).trim();
+                        name = line.substring(13).replace('"', ' ').trim();
                     } catch (final IndexOutOfBoundsException e) {
                         // ignore
                     }
