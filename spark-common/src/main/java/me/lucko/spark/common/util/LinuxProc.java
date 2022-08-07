@@ -49,7 +49,12 @@ public enum LinuxProc {
     /**
      * Information about the system network usage.
      */
-    NET_DEV("/proc/net/dev");
+    NET_DEV("/proc/net/dev"),
+
+    /**
+     * Information about the operating system distro.
+     */
+    OSINFO("/etc/os-release");
 
     private final Path path;
 
