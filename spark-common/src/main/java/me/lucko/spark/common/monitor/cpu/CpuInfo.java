@@ -22,10 +22,13 @@ package me.lucko.spark.common.monitor.cpu;
 
 import me.lucko.spark.common.util.LinuxProc;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.regex.Pattern;
 
 /**
- * Small utility to query the CPU model on Linux systems.
+ * Small utility to query the CPU model on Linux and Windows systems.
  */
 public enum CpuInfo {
     ;
@@ -38,11 +41,25 @@ public enum CpuInfo {
      * @return the cpu model
      */
     public static String queryCpuModel() {
-        for (String line : LinuxProc.CPUINFO.read()) {
-            String[] splitLine = SPACE_COLON_SPACE_PATTERN.split(line);
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            final String[] args = { "wmic", "cpu", "get", "name", "/FORMAT:list" };
+            try (final BufferedReader buf = new BufferedReader(new InputStreamReader(new ProcessBuilder(args).redirectErrorStream(true).start().getInputStream()))) {
+                String line;
+                while ((line = buf.readLine()) != null) {
+                    if (line.startsWith("Name")) {
+                        return line.substring(5).trim();
+                    }
+                }
+            } catch (final IOException e) {
+                return "";
+            }
+        } else {
+            for (String line : LinuxProc.CPUINFO.read()) {
+                String[] splitLine = SPACE_COLON_SPACE_PATTERN.split(line);
 
-            if (splitLine[0].equals("model name") || splitLine[0].equals("Processor")) {
-                return splitLine[1];
+                if (splitLine[0].equals("model name") || splitLine[0].equals("Processor")) {
+                    return splitLine[1];
+                }
             }
         }
         return "";
