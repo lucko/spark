@@ -22,7 +22,7 @@ package me.lucko.spark.common.monitor.net;
 
 import com.google.common.collect.ImmutableMap;
 
-import me.lucko.spark.common.util.LinuxProc;
+import me.lucko.spark.common.monitor.LinuxProc;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 

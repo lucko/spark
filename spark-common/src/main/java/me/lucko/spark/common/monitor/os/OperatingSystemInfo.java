@@ -20,59 +20,67 @@
 
 package me.lucko.spark.common.monitor.os;
 
-import me.lucko.spark.common.util.LinuxProc;
+import me.lucko.spark.common.monitor.LinuxProc;
+import me.lucko.spark.common.monitor.WindowsWmic;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+/**
+ * Small utility to query the operating system name & version.
+ */
+public final class OperatingSystemInfo {
+    private final String name;
+    private final String version;
+    private final String arch;
 
-public enum OperatingSystemInfo {
-    ;
+    public OperatingSystemInfo(String name, String version, String arch) {
+        this.name = name;
+        this.version = version;
+        this.arch = arch;
+    }
 
-    private static String name = null;
-    private static String version = null;
+    public String name() {
+        return this.name;
+    }
 
-    static {
-        final String osNameJavaProp = System.getProperty("os.name");
+    public String version() {
+        return this.version;
+    }
 
-        if (osNameJavaProp.startsWith("Windows")) {
-            final String[] args = { "wmic", "os", "get", "caption,version", "/FORMAT:list" };
-            try (final BufferedReader buf = new BufferedReader(new InputStreamReader(new ProcessBuilder(args).redirectErrorStream(true).start().getInputStream()))) {
-                String line;
-                while ((line = buf.readLine()) != null) {
-                    if (line.startsWith("Caption")) {
-                        name = line.substring(18).trim();
-                    } else if (line.startsWith("Version")) {
-                        version = line.substring(8).trim();
-                    }
-                }
-            } catch (final IOException | IndexOutOfBoundsException e) {
-                // ignore
-            }
-        } else {
-            for (final String line : LinuxProc.OSINFO.read()) {
-                if (line.startsWith("PRETTY_NAME")) {
-                    try {
-                        name = line.substring(13).replace('"', ' ').trim();
-                    } catch (final IndexOutOfBoundsException e) {
-                        // ignore
-                    }
-                }
+    public String arch() {
+        return this.arch;
+    }
+
+    public static OperatingSystemInfo poll() {
+        String name = null;
+        String version = null;
+
+        for (String line : LinuxProc.OSINFO.read()) {
+            if (line.startsWith("PRETTY_NAME") && line.length() > 13) {
+                name = line.substring(13).replace('"', ' ').trim();
             }
         }
 
-        if (name == null)
-            name = osNameJavaProp;
+        for (String line : WindowsWmic.OS_GET_CAPTION_AND_VERSION.read()) {
+            if (line.startsWith("Caption") && line.length() > 18) {
+                // Caption=Microsoft Windows something
+                // \----------------/ = 18 chars
+                name = line.substring(18).trim();
+            } else if (line.startsWith("Version")) {
+                // Version=10.0.something
+                // \------/ = 8 chars
+                version = line.substring(8).trim();
+            }
+        }
 
-        if (version == null)
+        if (name == null) {
+            name = System.getProperty("os.name");
+        }
+
+        if (version == null) {
             version = System.getProperty("os.version");
-    }
+        }
 
-    public static String getName() {
-        return name;
-    }
+        String arch = System.getProperty("os.arch");
 
-    public static String getVersion() {
-        return version;
+        return new OperatingSystemInfo(name, version, arch);
     }
 }

@@ -51,6 +51,7 @@ public class PlatformStatisticsProvider {
 
     public SystemStatistics getSystemStatistics() {
         RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
+        OperatingSystemInfo osInfo = OperatingSystemInfo.poll();
 
         SystemStatistics.Builder builder = SystemStatistics.newBuilder()
                 .setCpu(SystemStatistics.Cpu.newBuilder()
@@ -87,9 +88,9 @@ public class PlatformStatisticsProvider {
                         .build()
                 )
                 .setOs(SystemStatistics.Os.newBuilder()
-                        .setArch(System.getProperty("os.arch"))
-                        .setName(OperatingSystemInfo.getName())
-                        .setVersion(OperatingSystemInfo.getVersion())
+                        .setArch(osInfo.arch())
+                        .setName(osInfo.name())
+                        .setVersion(osInfo.version())
                         .build()
                 )
                 .setJava(SystemStatistics.Java.newBuilder()
