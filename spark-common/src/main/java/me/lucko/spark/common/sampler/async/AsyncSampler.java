@@ -185,8 +185,19 @@ public class AsyncSampler extends AbstractSampler {
         // read the jfr file produced by async-profiler
         try (JfrReader reader = new JfrReader(this.outputFile)) {
             readSegments(reader, threadFilter);
-        } catch (IOException e) {
-            throw new RuntimeException("Read error", e);
+        } catch (Exception e) {
+            boolean fileExists;
+            try {
+                fileExists = Files.exists(this.outputFile) && Files.size(this.outputFile) != 0;
+            } catch (IOException ex) {
+                fileExists = false;
+            }
+
+            if (fileExists) {
+                throw new JfrParsingException("Error parsing JFR data from profiler output", e);
+            } else {
+                throw new JfrParsingException("Error parsing JFR data from profiler output - file " + this.outputFile + " does not exist!", e);
+            }
         }
 
         // delete the output file after reading
@@ -267,5 +278,11 @@ public class AsyncSampler extends AbstractSampler {
 
         reader.stackFrames.put(methodId, result);
         return result;
+    }
+
+    private static final class JfrParsingException extends RuntimeException {
+        public JfrParsingException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 }
