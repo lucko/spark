@@ -49,7 +49,9 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
 
             List<BukkitChunkInfo> list = new ArrayList<>(chunks.length);
             for (Chunk chunk : chunks) {
-                list.add(new BukkitChunkInfo(chunk));
+                if (chunk != null) {
+                    list.add(new BukkitChunkInfo(chunk));
+                }
             }
 
             data.put(world.getName(), list);
@@ -66,7 +68,9 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
 
             this.entityCounts = new CountMap.EnumKeyed<>(EntityType.class);
             for (Entity entity : chunk.getEntities()) {
-                this.entityCounts.increment(entity.getType());
+                if (entity != null) {
+                    this.entityCounts.increment(entity.getType());
+                }
             }
         }
 
