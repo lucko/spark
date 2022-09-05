@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.sampler.async;
 
-import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.api.profiler.thread.ThreadGrouper;
 import me.lucko.spark.common.sampler.aggregator.AbstractDataAggregator;
 import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;

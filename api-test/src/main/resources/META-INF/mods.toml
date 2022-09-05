@@ -1,0 +1,10 @@
+modLoader="javafml"
+loaderVersion="[34,)"
+authors="Luck"
+license="GPLv3"
+
+[[mods]]
+modId="sparktest"
+displayName="sparktest"
+version="1.0.0"
+description="Spark testing"

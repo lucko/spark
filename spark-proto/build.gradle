@@ -1,0 +1,105 @@
+plugins {
+    id 'maven-publish'
+    id 'com.google.protobuf' version '0.8.16'
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+}
+
+version = api_version
+group = 'me.lucko.spark'
+archivesBaseName = 'proto'
+
+configurations {
+    shade
+    api.extendsFrom shade
+}
+
+dependencies {
+    shade 'com.google.protobuf:protobuf-javalite:3.15.6'
+}
+
+jar {
+    classifier 'lite'
+}
+
+shadowJar {
+    configurations = [project.configurations.shade]
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    exclude 'module-info.class'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/proguard/**'
+
+    classifier ''
+}
+
+license {
+    header = project.file('HEADER.txt')
+}
+
+java.withSourcesJar()
+java.withJavadocJar()
+
+components.java.withVariantsFromConfiguration(configurations.runtimeElements) {
+    skip()
+}
+components.java.withVariantsFromConfiguration(configurations.apiElements) {
+    skip()
+}
+
+publishing {
+    repositories {
+        maven {
+            url = 'https://oss.sonatype.org/content/repositories/snapshots'
+            credentials {
+                username = findProperty('sonatypeUsername') ?: ''
+                password = findProperty('sonatypePassword') ?: ''
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            artifacts = [
+                    shadowJar, javadocJar, sourcesJar
+            ]
+            pom {
+                name = 'spark'
+                description = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
+                url = 'https://spark.lucko.me/'
+            }
+        }
+    }
+}
+
+jar {
+    manifest.attributes([
+            "Specification-Title"     : 'SparkProto',
+            "Specification-Vendor"    : 'Lucko',
+            "Specification-Version"   : '1', // We are version 1 of ourselves
+            "Implementation-Title"    : 'SparkProto',
+            "Implementation-Version"  : api_version,
+            "Implementation-Vendor"   : 'Lucko',
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+    ])
+}
+
+protobuf {
+    protoc {
+        if (System.getProperty("os.name") == "Mac OS X" && System.getProperty("os.arch") == "aarch64") {
+            path = '/opt/homebrew/bin/protoc'
+        } else {
+            artifact = 'com.google.protobuf:protoc:3.15.6'
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option 'lite'
+                }
+            }
+        }
+    }
+}
+
+afterEvaluate {
+    tasks.generateProto.group = 'proto'
+}

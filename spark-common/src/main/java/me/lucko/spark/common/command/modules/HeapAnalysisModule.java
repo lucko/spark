@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
+import me.lucko.spark.api.util.UploadResult;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
@@ -73,6 +74,11 @@ public class HeapAnalysisModule implements CommandModule {
         );
     }
 
+    public static UploadResult upload(SparkPlatform platform, SparkHeapProtos.HeapData output) throws IOException {
+        final String key = platform.getBytebinClient().postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
+        return new UploadResult(FormatUtil.getBaseDomainUrl(platform.getViewerUrl()) + key, FormatUtil.getBaseDomainUrl(platform.getBytebinUrl()) + key);
+    }
+
     private static void heapSummary(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         if (arguments.boolFlag("run-gc-before")) {
             resp.broadcastPrefixed(text("Running garbage collector..."));
@@ -90,17 +96,16 @@ public class HeapAnalysisModule implements CommandModule {
             return;
         }
 
-        SparkHeapProtos.HeapData output = heapDump.toProto(platform, sender);
+        SparkHeapProtos.HeapData output = heapDump.toProto(platform, sender.asSender());
 
         boolean saveToFile = false;
         if (arguments.boolFlag("save-to-file")) {
             saveToFile = true;
         } else {
             try {
-                String key = platform.getBytebinClient().postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
-                String url = platform.getViewerUrl() + key;
+                final String url = upload(platform, output).getViewerUrl();
 
-                resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));
+                resp.broadcastPrefixed(text("Heap dump summary output:", GOLD));
                 resp.broadcast(text()
                         .content(url)
                         .color(GRAY)

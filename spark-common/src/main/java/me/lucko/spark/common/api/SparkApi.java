@@ -21,24 +21,38 @@
 package me.lucko.spark.common.api;
 
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.gc.GarbageCollector;
+import me.lucko.spark.api.heap.HeapAnalysis;
+import me.lucko.spark.api.ping.PingStatistics;
+import me.lucko.spark.api.profiler.Profiler;
+import me.lucko.spark.api.profiler.ProfilerConfigurationBuilder;
+import me.lucko.spark.api.profiler.thread.ThreadGrouper;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
+import me.lucko.spark.api.util.StreamSupplier;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.heapdump.HeapAnalysisProvider;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-
+import me.lucko.spark.common.sampler.SamplerBuilder;
+import me.lucko.spark.common.sampler.ProfilerService;
+import me.lucko.spark.common.util.ThreadFinder;
+import me.lucko.spark.proto.SparkSamplerProtos;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static me.lucko.spark.api.statistic.StatisticWindow.CpuUsage;
 import static me.lucko.spark.api.statistic.StatisticWindow.MillisPerTick;
@@ -57,9 +71,11 @@ public class SparkApi implements Spark {
     }
 
     private final SparkPlatform platform;
+    private final HeapAnalysis heapAnalysis;
 
     public SparkApi(SparkPlatform platform) {
         this.platform = platform;
+        heapAnalysis = new HeapAnalysisProvider(platform);
     }
 
     @Override
@@ -170,6 +186,115 @@ public class SparkApi implements Spark {
             map.put(entry.getKey(), new GarbageCollectorInfo(entry.getKey(), entry.getValue(), serverUptime));
         }
         return ImmutableMap.copyOf(map);
+    }
+
+    @Override
+    public @NonNull StreamSupplier<Thread> threadFinder() {
+        final ThreadFinder finder = new ThreadFinder();
+        return finder::getThreads;
+    }
+
+    @Override
+    public @NonNull ProfilerConfigurationBuilder configurationBuilder() {
+        return new SamplerBuilder();
+    }
+
+    @Override
+    public @NonNull Profiler profiler(int maxSamplers) {
+        return new ProfilerService(platform, maxSamplers);
+    }
+
+    @Override
+    public @NonNull ThreadGrouper grouper(SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper type) {
+        switch (type) {
+            case AS_ONE: return new ThreadGrouper() {
+                private final Set<Long> seen = ConcurrentHashMap.newKeySet();
+
+                @Override
+                public String getGroup(long threadId, String threadName) {
+                    this.seen.add(threadId);
+                    return "root";
+                }
+
+                @Override
+                public String getLabel(String group) {
+                    return "All (x" + this.seen.size() + ")";
+                }
+
+                @Override
+                public SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
+                    return SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper.AS_ONE;
+                }
+            };
+            case BY_NAME: return new ThreadGrouper() {
+                @Override
+                public String getGroup(long threadId, String threadName) {
+                    return threadName;
+                }
+
+                @Override
+                public String getLabel(String group) {
+                    return group;
+                }
+
+                @Override
+                public SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
+                    return SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper.BY_NAME;
+                }
+            };
+            case BY_POOL: //noinspection EnumSwitchStatementWhichMissesCases
+                return new ThreadGrouper() {
+                private /* static */ final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
+
+                // thread id -> group
+                private final Map<Long, String> cache = new ConcurrentHashMap<>();
+                // group -> thread ids
+                private final Map<String, Set<Long>> seen = new ConcurrentHashMap<>();
+
+                @Override
+                public String getGroup(long threadId, String threadName) {
+                    String cached = this.cache.get(threadId);
+                    if (cached != null) {
+                        return cached;
+                    }
+
+                    Matcher matcher = this.pattern.matcher(threadName);
+                    if (!matcher.matches()) {
+                        return threadName;
+                    }
+
+                    String group = matcher.group(1).trim();
+                    this.cache.put(threadId, group);
+                    this.seen.computeIfAbsent(group, g -> ConcurrentHashMap.newKeySet()).add(threadId);
+                    return group;
+                }
+
+                @Override
+                public String getLabel(String group) {
+                    int count = this.seen.getOrDefault(group, Collections.emptySet()).size();
+                    if (count == 0) {
+                        return group;
+                    }
+                    return group + " (x" + count + ")";
+                }
+
+                @Override
+                public SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
+                    return SparkSamplerProtos.SamplerMetadata.DataAggregator.ThreadGrouper.BY_POOL;
+                }
+            };
+            default: throw new AssertionError("Unknown thread grouper!");
+        }
+    }
+
+    @Override
+    public @NonNull HeapAnalysis heapAnalysis() {
+        return heapAnalysis;
+    }
+
+    @Override
+    public @Nullable PingStatistics ping() {
+        return platform.getPingStatistics();
     }
 
     public static void register(Spark spark) {

@@ -25,7 +25,7 @@ import me.lucko.spark.proto.SparkSamplerProtos;
 /**
  * The root of a sampling stack for a given thread / thread group.
  */
-public final class ThreadNode extends AbstractNode {
+public final class ThreadNode extends AbstractNode implements me.lucko.spark.api.profiler.thread.ThreadNode {
 
     /**
      * The name of this thread / thread group
@@ -41,12 +41,14 @@ public final class ThreadNode extends AbstractNode {
         this.name = name;
     }
 
-    public String getThreadLabel() {
+    @Override
+    public String getLabel() {
         return this.label != null ? this.label : this.name;
     }
 
-    public String getThreadGroup() {
-        return this.name;
+    @Override
+    public String getGroup() {
+        return name;
     }
 
     public void setThreadLabel(String label) {
@@ -55,7 +57,7 @@ public final class ThreadNode extends AbstractNode {
 
     public SparkSamplerProtos.ThreadNode toProto(MergeMode mergeMode) {
         SparkSamplerProtos.ThreadNode.Builder proto = SparkSamplerProtos.ThreadNode.newBuilder()
-                .setName(getThreadLabel())
+                .setName(getLabel())
                 .setTime(getTotalTime());
 
         for (StackTraceNode child : exportChildren(mergeMode)) {

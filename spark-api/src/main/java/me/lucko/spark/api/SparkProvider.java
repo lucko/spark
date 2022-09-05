@@ -27,11 +27,18 @@ package me.lucko.spark.api;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+
 /**
  * Singleton provider for {@link Spark}.
  */
+@SuppressWarnings("unused")
 public final class SparkProvider {
 
+    private static final List<Consumer<Spark>> WHEN_LOADED = new CopyOnWriteArrayList<>();
+    private static final List<Runnable> WHEN_UNLOADED = new CopyOnWriteArrayList<>();
     private static Spark instance;
 
     /**
@@ -47,8 +54,34 @@ public final class SparkProvider {
         return instance;
     }
 
+    /**
+     * Registers a listener called when spark is loaded.
+     *
+     * @param listener the listener
+     */
+    public static void whenLoaded(Consumer<Spark> listener) {
+        WHEN_LOADED.add(listener);
+    }
+
+    /**
+     * Registers a listener called when spark is unloaded.
+     *
+     * @param listener the listener
+     */
+    public static void whenUnloaded(Runnable listener) {
+        WHEN_UNLOADED.add(listener);
+    }
+
     static void set(Spark impl) {
         SparkProvider.instance = impl;
+        // If null, we are unregistered
+        if (impl == null) {
+            WHEN_UNLOADED.forEach(Runnable::run);
+        }
+        // If non-null we are registered
+        else {
+            WHEN_LOADED.forEach(cons -> cons.accept(impl));
+        }
     }
 
     private SparkProvider() {

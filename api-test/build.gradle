@@ -1,0 +1,45 @@
+plugins {
+    id 'net.minecraftforge.gradle' version '5.1.+'
+}
+
+tasks.withType(JavaCompile) {
+    // override, compile targeting J17
+    options.release = 17
+}
+
+configurations {
+    library
+    implementation.extendsFrom library
+}
+
+minecraft.runs.all {
+    lazyToken('minecraft_classpath') {
+        configurations.library.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
+    }
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.19'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.enabledGameTestNamespaces', 'sparktest'
+            mods {
+                sparktest {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${rootProject.forge_version}"
+
+    compileOnly project(':spark-api')
+    compileOnly project(':spark-proto')
+
+    library project(':spark-common')
+    runtimeOnly project(':spark-forge')
+}

@@ -21,31 +21,31 @@
 package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
-
+import me.lucko.spark.api.SparkProvider;
+import me.lucko.spark.api.profiler.Profiler;
+import me.lucko.spark.api.profiler.dumper.RegexThreadDumper;
+import me.lucko.spark.api.profiler.dumper.SpecificThreadDumper;
+import me.lucko.spark.api.profiler.dumper.ThreadDumper;
+import me.lucko.spark.api.profiler.report.ProfilerReport;
+import me.lucko.spark.api.profiler.report.ReportConfiguration;
+import me.lucko.spark.api.profiler.thread.ThreadGrouper;
+import me.lucko.spark.api.profiler.thread.ThreadOrder;
+import me.lucko.spark.api.util.UploadResult;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
-import me.lucko.spark.common.sampler.Sampler;
+import me.lucko.spark.common.sampler.ProfilerService;
 import me.lucko.spark.common.sampler.SamplerBuilder;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.ThreadNodeOrder;
-import me.lucko.spark.common.sampler.async.AsyncSampler;
-import me.lucko.spark.common.sampler.node.MergeMode;
-import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.common.util.MethodDisambiguator;
+import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.proto.SparkSamplerProtos;
-
 import net.kyori.adventure.text.event.ClickEvent;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,15 +66,15 @@ import static net.kyori.adventure.text.format.NamedTextColor.RED;
 public class SamplerModule implements CommandModule {
     private static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
 
-    /** The sampler instance currently running, if any */
-    private Sampler activeSampler = null;
+    private final Profiler profiler;
+
+    public SamplerModule(SparkPlatform platform) {
+        profiler = new ProfilerService(platform, 1);
+    }
 
     @Override
     public void close() {
-        if (this.activeSampler != null) {
-            this.activeSampler.stop();
-            this.activeSampler = null;
-        }
+        profiler.stop();
     }
 
     @Override
@@ -95,7 +95,7 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("stop --comment", "comment")
                 .argumentUsage("stop --order-by-time", null)
                 .argumentUsage("stop --save-to-file", null)
-                .executor(this::profiler)
+                .executor((platform, sender, resp, args) -> profiler(platform, resp, args))
                 .tabCompleter((platform, sender, arguments) -> {
                     if (arguments.contains("--info") || arguments.contains("--cancel")) {
                         return Collections.emptyList();
@@ -119,7 +119,7 @@ public class SamplerModule implements CommandModule {
         );
     }
 
-    private void profiler(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+    private void profiler(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
         if (arguments.boolFlag("info")) {
             profilerInfo(resp);
             return;
@@ -131,26 +131,17 @@ public class SamplerModule implements CommandModule {
         }
 
         if (arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
-            profilerStop(platform, sender, resp, arguments);
+            profilerStop(platform, resp, arguments);
             return;
         }
 
-        profilerStart(platform, sender, resp, arguments);
+        profilerStart(platform, resp, arguments);
     }
 
-    private void profilerStart(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+    private void profilerStart(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
+        resp.broadcastPrefixed(text("Initializing a new profiler, please wait..."));
+        
         int timeoutSeconds = arguments.intFlag("timeout");
-        if (timeoutSeconds != -1 && timeoutSeconds <= 10) {
-            resp.replyPrefixed(text("The specified timeout is not long enough for accurate results to be formed. " +
-                    "Please choose a value greater than 10.", RED));
-            return;
-        }
-
-        if (timeoutSeconds != -1 && timeoutSeconds < 30) {
-            resp.replyPrefixed(text("The accuracy of the output will significantly improve when the profiler is able to run for longer periods. " +
-                    "Consider setting a timeout value over 30 seconds."));
-        }
-
         double intervalMillis = arguments.doubleFlag("interval");
         if (intervalMillis <= 0) {
             intervalMillis = 4;
@@ -169,10 +160,10 @@ public class SamplerModule implements CommandModule {
             threadDumper = ThreadDumper.ALL;
         } else {
             if (arguments.boolFlag("regex")) {
-                threadDumper = new ThreadDumper.Regex(threads);
+                threadDumper = new RegexThreadDumper(threads);
             } else {
                 // specific matches
-                threadDumper = new ThreadDumper.Specific(threads);
+                threadDumper = new SpecificThreadDumper(threads);
             }
         }
 
@@ -186,25 +177,10 @@ public class SamplerModule implements CommandModule {
         }
 
         int ticksOver = arguments.intFlag("only-ticks-over");
-        TickHook tickHook = null;
-        if (ticksOver != -1) {
-            tickHook = platform.getTickHook();
-            if (tickHook == null) {
-                resp.replyPrefixed(text("Tick counting is not supported!", RED));
-                return;
-            }
-        }
-
-        if (this.activeSampler != null) {
-            resp.replyPrefixed(text("An active profiler is already running."));
-            return;
-        }
-
-        resp.broadcastPrefixed(text("Initializing a new profiler, please wait..."));
 
         SamplerBuilder builder = new SamplerBuilder();
-        builder.threadDumper(threadDumper);
-        builder.threadGrouper(threadGrouper);
+        builder.dumper(threadDumper);
+        builder.grouper(threadGrouper);
         if (timeoutSeconds != -1) {
             builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
         }
@@ -213,14 +189,18 @@ public class SamplerModule implements CommandModule {
         builder.ignoreNative(ignoreNative);
         builder.forceJavaSampler(forceJavaSampler);
         if (ticksOver != -1) {
-            builder.ticksOver(ticksOver, tickHook);
+            builder.minimumTickDuration(ticksOver);
         }
-        Sampler sampler = this.activeSampler = builder.start(platform);
+        final Profiler.Sampler sampler = profiler.createSampler(builder.build(), (e, msg) -> resp.replyPrefixed(text(e.toString() + ": " + msg, RED)));
+        if (sampler == null) // Feedback is handled in the consumer
+            return;
+
+        sampler.start();
 
         resp.broadcastPrefixed(text()
                 .append(text("Profiler now active!", GOLD))
                 .append(space())
-                .append(text("(" + (sampler instanceof AsyncSampler ? "async" : "built-in java") + ")", DARK_GRAY))
+                .append(text("(" + (sampler.isAsync() ? "async" : "built-in java") + ")", DARK_GRAY))
                 .build()
         );
         if (timeoutSeconds == -1) {
@@ -229,42 +209,35 @@ public class SamplerModule implements CommandModule {
             resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
         }
 
-        CompletableFuture<Sampler> future = this.activeSampler.getFuture();
+        final CompletableFuture<Profiler.Sampler> future = sampler.onCompleted();
 
         // send message if profiling fails
         future.whenCompleteAsync((s, throwable) -> {
             if (throwable != null) {
-                resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable.toString(), RED));
+                resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable, RED));
                 throwable.printStackTrace();
-            }
-        });
-
-        // set activeSampler to null when complete.
-        future.whenCompleteAsync((s, throwable) -> {
-            if (sampler == this.activeSampler) {
-                this.activeSampler = null;
             }
         });
 
         // await the result
         if (timeoutSeconds != -1) {
-            ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
+            ThreadOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadOrder.BY_TIME : ThreadOrder.BY_NAME;
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
-            MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
-            MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
+            boolean sepPar = arguments.boolFlag("separate-parent-calls");
             boolean saveToFile = arguments.boolFlag("save-to-file");
-            future.thenAcceptAsync(s -> {
+            sampler.onCompleted(configuration(resp, comment, sepPar, threadOrder)).thenAcceptAsync(report -> {
                 resp.broadcastPrefixed(text("The active profiler has completed! Uploading results..."));
-                handleUpload(platform, resp, s, threadOrder, comment, mergeMode, saveToFile);
+                handleUpload(platform, resp, report, saveToFile);
             });
         }
     }
 
     private void profilerInfo(CommandResponseHandler resp) {
-        if (this.activeSampler == null) {
+        final Profiler.Sampler active = activeSampler();
+        if (active == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
-            long timeout = this.activeSampler.getAutoEndTime();
+            long timeout = active.getAutoEndTime();
             if (timeout == -1) {
                 resp.replyPrefixed(text("There is an active profiler currently running, with no defined timeout."));
             } else {
@@ -272,13 +245,13 @@ public class SamplerModule implements CommandModule {
                 resp.replyPrefixed(text("There is an active profiler currently running, due to timeout in " + timeoutDiff + " seconds."));
             }
 
-            long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
+            long runningTime = (System.currentTimeMillis() - active.getStartTime()) / 1000L;
             resp.replyPrefixed(text("It has been profiling for " + runningTime + " seconds so far."));
         }
     }
 
     private void profilerCancel(CommandResponseHandler resp) {
-        if (this.activeSampler == null) {
+        if (activeSampler() == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
             close();
@@ -286,32 +259,47 @@ public class SamplerModule implements CommandModule {
         }
     }
 
-    private void profilerStop(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
-        if (this.activeSampler == null) {
+    private void profilerStop(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
+        final Profiler.Sampler sampler = activeSampler();
+        if (sampler == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
-            this.activeSampler.stop();
+            sampler.stop();
             resp.broadcastPrefixed(text("The active profiler has been stopped! Uploading results..."));
-            ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
+            final ThreadOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadOrder.BY_TIME : ThreadOrder.BY_NAME;
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
-            MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
-            MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
+            boolean sepParentCalls = arguments.boolFlag("separate-parent-calls");
             boolean saveToFile = arguments.boolFlag("save-to-file");
-            handleUpload(platform, resp, this.activeSampler, threadOrder, comment, mergeMode, saveToFile);
-            this.activeSampler = null;
+            handleUpload(platform, resp, sampler.dumpReport(configuration(resp, comment, sepParentCalls, threadOrder)), saveToFile);
         }
     }
 
-    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, String comment, MergeMode mergeMode, boolean saveToFileFlag) {
-        SparkSamplerProtos.SamplerData output = sampler.toProto(platform, resp.sender(), threadOrder, comment, mergeMode, platform.createClassSourceLookup());
+    private Profiler.Sampler activeSampler() {
+        if (profiler.activeSamplers().isEmpty()) return null;
+        return profiler.activeSamplers().get(0);
+    }
 
+    public static UploadResult postData(SparkPlatform platform, SparkSamplerProtos.SamplerData output) throws IOException {
+        final String key = platform.getBytebinClient().postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
+        return new UploadResult(FormatUtil.getBaseDomainUrl(platform.getViewerUrl()) + key, FormatUtil.getBaseDomainUrl(platform.getBytebinUrl()) + key);
+    }
+
+    private ReportConfiguration configuration(CommandResponseHandler resp, String comment, boolean separateParentCalls, ThreadOrder order) {
+        return ReportConfiguration.builder()
+                .order(order)
+                .comment(comment)
+                .separateParentCalls(separateParentCalls)
+                .sender(resp.sender().asSender())
+                .build();
+    }
+
+    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, ProfilerReport report, boolean saveToFileFlag) {
         boolean saveToFile = false;
         if (saveToFileFlag) {
             saveToFile = true;
         } else {
             try {
-                String key = platform.getBytebinClient().postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
-                String url = platform.getViewerUrl() + key;
+                final String url = report.upload().getViewerUrl();
 
                 resp.broadcastPrefixed(text("Profiler results:", GOLD));
                 resp.broadcast(text()
@@ -332,7 +320,7 @@ public class SamplerModule implements CommandModule {
         if (saveToFile) {
             Path file = platform.resolveSaveFile("profile", "sparkprofile");
             try {
-                Files.write(file, output.toByteArray());
+                report.saveToFile(file);
 
                 resp.broadcastPrefixed(text()
                         .content("Profile written to: ")

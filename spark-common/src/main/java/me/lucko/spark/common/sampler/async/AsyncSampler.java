@@ -21,19 +21,19 @@
 package me.lucko.spark.common.sampler.async;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
+import me.lucko.spark.api.profiler.dumper.SpecificThreadDumper;
+import me.lucko.spark.api.profiler.dumper.ThreadDumper;
+import me.lucko.spark.api.profiler.thread.ThreadGrouper;
+import me.lucko.spark.api.util.Sender;
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.SamplerManager;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
-
 import one.profiler.AsyncProfiler;
 
 import java.io.IOException;
@@ -65,8 +65,8 @@ public class AsyncSampler extends AbstractSampler {
     /** The executor used for timeouts */
     private ScheduledExecutorService timeoutExecutor;
 
-    public AsyncSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
-        super(platform, interval, threadDumper, endTime);
+    public AsyncSampler(SamplerManager manager, SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
+        super(manager, platform, interval, threadDumper, endTime);
         this.profiler = AsyncProfilerAccess.INSTANCE.getProfiler();
         this.dataAggregator = new AsyncDataAggregator(threadGrouper);
     }
@@ -98,8 +98,8 @@ public class AsyncSampler extends AbstractSampler {
             throw new RuntimeException("Unable to create temporary output file", e);
         }
 
-        String command = "start,event=" + AsyncProfilerAccess.INSTANCE.getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
+        String command = "start,event=" + AsyncProfilerAccess.INSTANCE.getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile;
+        if (this.threadDumper instanceof SpecificThreadDumper) {
             command += ",filter";
         }
 
@@ -108,8 +108,8 @@ public class AsyncSampler extends AbstractSampler {
             throw new RuntimeException("Unexpected response: " + resp);
         }
 
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            ThreadDumper.Specific threadDumper = (ThreadDumper.Specific) this.threadDumper;
+        if (this.threadDumper instanceof SpecificThreadDumper) {
+            SpecificThreadDumper threadDumper = (SpecificThreadDumper) this.threadDumper;
             for (Thread thread : threadDumper.getThreads()) {
                 this.profiler.addThread(thread);
             }
@@ -144,6 +144,7 @@ public class AsyncSampler extends AbstractSampler {
      */
     @Override
     public void stop() {
+        super.stop();
         try {
             this.profiler.stop();
         } catch (IllegalStateException e) {
@@ -160,7 +161,7 @@ public class AsyncSampler extends AbstractSampler {
     }
 
     @Override
-    public SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    public SamplerData toProto(SparkPlatform platform, Sender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
         SamplerData.Builder proto = SamplerData.newBuilder();
         writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
         aggregateOutput();
@@ -175,8 +176,8 @@ public class AsyncSampler extends AbstractSampler {
         this.outputComplete = true;
 
         Predicate<String> threadFilter;
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            ThreadDumper.Specific threadDumper = (ThreadDumper.Specific) this.threadDumper;
+        if (this.threadDumper instanceof SpecificThreadDumper) {
+            SpecificThreadDumper threadDumper = (SpecificThreadDumper) this.threadDumper;
             threadFilter = n -> threadDumper.getThreadNames().contains(n.toLowerCase());
         } else {
             threadFilter = n -> true;

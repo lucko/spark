@@ -20,53 +20,22 @@
 
 package me.lucko.spark.common.sampler;
 
+import me.lucko.spark.api.profiler.Profiler;
+import me.lucko.spark.api.util.Sender;
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.util.Comparator;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Abstract superinterface for all sampler implementations.
  */
-public interface Sampler {
-
-    /**
-     * Starts the sampler.
-     */
-    void start();
-
-    /**
-     * Stops the sampler.
-     */
-    void stop();
-
-    /**
-     * Gets the time when the sampler started (unix timestamp in millis)
-     *
-     * @return the start time
-     */
-    long getStartTime();
-
-    /**
-     * Gets the time when the sampler should automatically stop (unix timestamp in millis)
-     *
-     * @return the end time, or -1 if undefined
-     */
-    long getAutoEndTime();
-
-    /**
-     * Gets a future to encapsulate the completion of the sampler
-     *
-     * @return a future
-     */
-    CompletableFuture<Sampler> getFuture();
+public interface Sampler extends Profiler.Sampler {
 
     // Methods used to export the sampler data to the web viewer.
-    SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
+    SamplerData toProto(SparkPlatform platform, Sender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
 
 }

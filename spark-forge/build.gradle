@@ -1,18 +1,7 @@
-buildscript {
-    repositories {
-        maven { url = "https://maven.minecraftforge.net" }
-        mavenCentral()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-    }
-}
-
 plugins {
     id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'net.minecraftforge.gradle' version '5.1.+'
 }
-
-apply plugin: 'net.minecraftforge.gradle'
 
 tasks.withType(JavaCompile) {
     // override, compile targeting J17
@@ -30,7 +19,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19.2-43.0.0'
+    minecraft "net.minecraftforge:forge:${rootProject.forge_version}"
     shade project(':spark-common')
 }
 

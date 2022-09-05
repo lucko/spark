@@ -2,27 +2,47 @@ plugins {
     id 'maven-publish'
 }
 
-version = '0.1-SNAPSHOT'
+version = api_version
+group = 'me.lucko.spark'
+archivesBaseName = 'api'
 
 dependencies {
-    compileOnly 'org.checkerframework:checker-qual:3.8.0'
-    compileOnly 'org.jetbrains:annotations:20.1.0'
+    api project(':spark-proto')
+    compileOnly 'org.jetbrains:annotations:23.0.0'
+    compileOnly 'org.checkerframework:checker-qual:3.22.1'
+    compileOnly 'com.google.errorprone:error_prone_annotations:2.6.0'
 }
 
 license {
     header = project.file('HEADER.txt')
 }
 
+java.withSourcesJar()
+java.withJavadocJar()
+
+jar {
+    from file('LICENSE.txt')
+    manifest.attributes([
+            "Specification-Title"     : 'SparkAPI',
+            "Specification-Vendor"    : 'Lucko',
+            "Specification-Version"   : '1', // We are version 1 of ourselves
+            "Implementation-Title"    : 'SparkAPI',
+            "Implementation-Version"  : api_version,
+            "Implementation-Vendor"   : 'Lucko',
+            "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+    ])
+}
+
 publishing {
-    //repositories {
-    //    maven {
-    //        url = 'https://oss.sonatype.org/content/repositories/snapshots'
-    //        credentials {
-    //            username = sonatypeUsername
-    //            password = sonatypePassword
-    //        }
-    //    }
-    //}
+    repositories {
+        maven {
+            url = 'https://oss.sonatype.org/content/repositories/snapshots'
+            credentials {
+                username = findProperty('sonatypeUsername') ?: ''
+                password = findProperty('sonatypePassword') ?: ''
+            }
+        }
+    }
     publications {
         mavenJava(MavenPublication) {
             from components.java

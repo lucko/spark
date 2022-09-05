@@ -21,6 +21,7 @@
 package me.lucko.spark.bukkit;
 
 import me.lucko.spark.api.Spark;
+import me.lucko.spark.api.profiler.dumper.SpecificThreadDumper;
 import me.lucko.spark.bukkit.placeholder.SparkMVdWPlaceholders;
 import me.lucko.spark.bukkit.placeholder.SparkPlaceholderApi;
 import me.lucko.spark.common.SparkPlatform;
@@ -29,7 +30,7 @@ import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
-import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.api.profiler.dumper.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.ClassSourceLookup;
@@ -59,7 +60,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     @Override
     public void onEnable() {
         this.audienceFactory = BukkitAudiences.create(this);
-        this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
+        this.gameThreadDumper = new SpecificThreadDumper(Thread.currentThread());
 
         this.platform = new SparkPlatform(this);
         this.platform.enable();

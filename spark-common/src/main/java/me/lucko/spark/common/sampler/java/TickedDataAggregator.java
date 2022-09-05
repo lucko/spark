@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.sampler.java;
 
-import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.api.profiler.thread.ThreadGrouper;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.tick.TickHook;

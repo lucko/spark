@@ -23,12 +23,13 @@ package me.lucko.spark.sponge;
 import com.google.inject.Inject;
 
 import me.lucko.spark.api.Spark;
+import me.lucko.spark.api.profiler.dumper.GameThreadDumper;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
-import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.api.profiler.dumper.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.ClassSourceLookup;
 
@@ -73,7 +74,7 @@ public class Sponge7SparkPlugin implements SparkPlugin {
     private final Path configDirectory;
     private final SpongeExecutorService asyncExecutor;
     private final SpongeExecutorService syncExecutor;
-    private final ThreadDumper.GameThread gameThreadDumper = new ThreadDumper.GameThread();
+    private final GameThreadDumper gameThreadDumper = new GameThreadDumper();
 
     private SparkPlatform platform;
 

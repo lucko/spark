@@ -4,12 +4,17 @@ pluginManagement {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
+        maven {
+            name = 'Forge'
+            url = "https://maven.minecraftforge.net"
+        }
         gradlePluginPortal()
     }
 }
 
 rootProject.name = 'spark'
 include (
+        'spark-proto',
         'spark-api',
         'spark-common',
         'spark-bukkit',
@@ -22,5 +27,8 @@ include (
         'spark-fabric',
         'spark-nukkit',
         'spark-waterdog',
-        'spark-minestom'
+        'spark-minestom',
+
+        // A Forge project for testing the API
+        'api-test'
 )

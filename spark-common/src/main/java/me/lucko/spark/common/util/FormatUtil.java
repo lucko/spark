@@ -62,4 +62,9 @@ public enum FormatUtil {
                 .append(Component.text(unit))
                 .build();
     }
+
+    public static String getBaseDomainUrl(String input) {
+        if (input.endsWith("/")) return input;
+        return input + "/";
+    }
 }

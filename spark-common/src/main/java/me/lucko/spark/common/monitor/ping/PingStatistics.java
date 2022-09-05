@@ -20,10 +20,14 @@
 
 package me.lucko.spark.common.monitor.ping;
 
+import me.lucko.spark.api.ping.PingSummary;
+import me.lucko.spark.api.ping.PlayerPing;
+import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.util.RollingAverage;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -33,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Provides statistics for player ping RTT to the server.
  */
-public final class PingStatistics implements Runnable, AutoCloseable {
+public final class PingStatistics implements Runnable, AutoCloseable, me.lucko.spark.api.ping.PingStatistics {
     private static final int QUERY_RATE_SECONDS = 10;
     private static final int WINDOW_SIZE_SECONDS = (int) TimeUnit.MINUTES.toSeconds(15); // 900
     private static final int WINDOW_SIZE = WINDOW_SIZE_SECONDS / QUERY_RATE_SECONDS; // 90
@@ -100,6 +104,16 @@ public final class PingStatistics implements Runnable, AutoCloseable {
                 : new PingSummary(values);
     }
 
+    @Override
+    public @NotNull PingSummary getSummary() {
+        return currentSummary();
+    }
+
+    @Override
+    public @NotNull DoubleAverageInfo getAverage() {
+        return getPingAverage();
+    }
+
     /**
      * Queries the ping of a given player.
      *
@@ -126,24 +140,6 @@ public final class PingStatistics implements Runnable, AutoCloseable {
         }
 
         return null;
-    }
-
-    public static final class PlayerPing {
-        private final String name;
-        private final int ping;
-
-        PlayerPing(String name, int ping) {
-            this.name = name;
-            this.ping = ping;
-        }
-
-        public String name() {
-            return this.name;
-        }
-
-        public int ping() {
-            return this.ping;
-        }
     }
 
 }

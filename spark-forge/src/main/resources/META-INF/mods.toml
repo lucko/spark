@@ -15,3 +15,9 @@ description="${pluginDescription}"
     versionRange="[34,)"
     ordering="NONE"
     side="BOTH"
+[[dependencies.spark]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.19,)"
+    ordering="NONE"
+    side="BOTH"
