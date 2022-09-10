@@ -24,8 +24,10 @@ import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.objectweb.asm.Type;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -51,6 +53,11 @@ public interface ClassSourceLookup {
      * @return the source of the class
      */
     @Nullable String identify(Class<?> clazz) throws Exception;
+
+    @Nullable
+    default String identify(String className, String methodName, String desc, int lineNumber) throws Exception {
+        return null;
+    }
 
     /**
      * A no-operation {@link ClassSourceLookup}.
@@ -159,6 +166,10 @@ public interface ClassSourceLookup {
         boolean hasMappings();
 
         Map<String, String> getMapping();
+
+        boolean hasMethodSourceMappings();
+
+        Map<String, String> getMethodSourceMapping();
     }
 
     static Visitor createVisitor(ClassSourceLookup lookup) {
@@ -185,6 +196,16 @@ public interface ClassSourceLookup {
         public Map<String, String> getMapping() {
             return Collections.emptyMap();
         }
+
+        @Override
+        public boolean hasMethodSourceMappings() {
+            return false;
+        }
+
+        @Override
+        public Map<String, String> getMethodSourceMapping() {
+            return Collections.emptyMap();
+        }
     }
 
     /**
@@ -196,6 +217,7 @@ public interface ClassSourceLookup {
 
         // class name --> identifier (plugin name)
         private final Map<String, String> map = new HashMap<>();
+        private final Map<String, String> methodSources = new HashMap<>();
 
         VisitorImpl(ClassSourceLookup lookup) {
             this.lookup = lookup;
@@ -219,6 +241,17 @@ public interface ClassSourceLookup {
             return this.map;
         }
 
+        @Override
+        public boolean hasMethodSourceMappings() {
+            return !this.methodSources.isEmpty();
+        }
+
+        @Override
+        public Map<String, String> getMethodSourceMapping() {
+            this.methodSources.values().removeIf(Objects::isNull);
+            return this.methodSources;
+        }
+
         private void visitStackNode(StackTraceNode node) {
             String className = node.getClassName();
             if (!this.map.containsKey(className)) {
@@ -228,6 +261,18 @@ public interface ClassSourceLookup {
                     this.map.put(className, this.lookup.identify(clazz));
                 } catch (Throwable e) {
                     this.map.put(className, null);
+                }
+            }
+
+            if (node.getMethodDescription() != null) { // only for async profiler
+                final String key = node.getClassName() + ";" + node.getMethodName() + ";" + node.getMethodDescription();
+                if (!this.methodSources.containsKey(key)) {
+                    try {
+                        this.methodSources.put(key, this.lookup.identify(node.getClassName(), node.getMethodName(), node.getMethodDescription(), node.getLineNumber()));
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                        this.methodSources.put(key, null);
+                    }
                 }
             }
 
