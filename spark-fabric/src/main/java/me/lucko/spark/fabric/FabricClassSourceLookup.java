@@ -28,6 +28,7 @@ import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.fabric.smap.SMAPSourceDebugExtension;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.impl.ModContainerImpl;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.FabricUtil;
@@ -36,11 +37,11 @@ import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
 
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -124,7 +125,19 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
             if (mixin.getClassName().equals(mixinName)) {
                 final String modId = mixin.getConfig().getDecoration(FabricUtil.KEY_MOD_ID);
                 if (modId != null) {
-                    return modId;
+                    final Optional<ModContainer> optional = FabricLoader.getInstance().getModContainer(modId);
+                    if (optional.isPresent() && optional.get() instanceof ModContainerImpl container) {
+                        for (Path path : container.getCodeSourcePaths()) {
+                            if (Files.isRegularFile(path)) {
+                                final String name = path.getFileName().toString();
+                                if (name.endsWith(".jar")) {
+                                    return name.substring(0, name.length() - ".jar".length());
+                                }
+                            }
+                        }
+                    } else {
+                        return modId;
+                    }
                 }
             }
         }
