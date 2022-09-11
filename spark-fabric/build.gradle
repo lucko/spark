@@ -67,7 +67,7 @@ processResources {
 }
 
 license {
-    exclude '**/smap/SMAPSourceDebugExtension.java'
+    exclude '**/smap/SourceMap.java'
 }
 
 shadowJar {

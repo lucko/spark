@@ -25,10 +25,13 @@ import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.util.ClassFinder;
 import me.lucko.spark.common.util.ClassSourceLookup;
 
-import me.lucko.spark.fabric.smap.SMAPSourceDebugExtension;
+import me.lucko.spark.fabric.smap.MixinUtils;
+import me.lucko.spark.fabric.smap.SourceMap;
+import me.lucko.spark.fabric.smap.SourceMapProvider;
+
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.impl.ModContainerImpl;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.FabricUtil;
@@ -36,19 +39,21 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
 
     private final ClassFinder classFinder = new ClassFinder();
-    private final Map<String, SMAPSourceDebugExtension> smapCache = new HashMap<>();
+    private final SourceMapProvider smapProvider = new SourceMapProvider();
 
     private final Path modsDirectory;
     private final Map<Path, String> pathToModMap;
@@ -74,75 +79,101 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     }
 
     @Override
-    public @Nullable String identify(String className, String methodName, String desc, int lineNumber) throws Exception {
-        if (methodName.equals("<init>") || methodName.equals("<clinit>")) return null;
+    public @Nullable String identify(MethodCall methodCall) throws Exception {
+        String className = methodCall.getClassName();
+        String methodName = methodCall.getMethodName();
+        String methodDesc = methodCall.getMethodDescriptor();
 
-        Set<IMixinInfo> mixinInfoSet = null;
-        String mixinName = null;
-
-        if (desc != null) { // identify by descriptor
-            Class<?> clazz = this.classFinder.findClass(className);
-            if (clazz == null) return null;
-            final Type methodType = Type.getMethodType(desc);
-            Class<?>[] params = new Class[methodType.getArgumentTypes().length];
-            Type[] argumentTypes = methodType.getArgumentTypes();
-            for (int i = 0, argumentTypesLength = argumentTypes.length; i < argumentTypesLength; i++) {
-                Type argumentType = argumentTypes[i];
-                params[i] = getClassFromType(argumentType);
-            }
-            Method reflectMethod = clazz.getDeclaredMethod(methodName, params);
-
-            if (reflectMethod == null) return null;
-
-            final MixinMerged annotation = reflectMethod.getDeclaredAnnotation(MixinMerged.class);
-            if (annotation == null) return null;
-//        System.out.println("Found annotation " + annotation);
-            mixinName = annotation.mixin();
-
-            final ClassInfo classInfo = ClassInfo.forName(className);
-//        final ClassInfo.Method method = classInfo.findMethod(methodName, desc, ClassInfo.INCLUDE_ALL);
-
-            try {
-                Method getMixins = ClassInfo.class.getDeclaredMethod("getMixins");
-                getMixins.setAccessible(true);
-                mixinInfoSet = (Set<IMixinInfo>) getMixins.invoke(classInfo);
-            } catch (Exception e) {
-                // Fabric loader >=0.12.0 proguards out this method; use the field instead
-                var mixinsField = ClassInfo.class.getDeclaredField("mixins");
-                mixinsField.setAccessible(true);
-                mixinInfoSet = (Set<IMixinInfo>) mixinsField.get(classInfo);
-            }
-        } else { // identify by debug information
-            final IMixinInfo config = SMAPSourceDebugExtension.getMixinConfigFor(className, lineNumber, smapCache);
-            if (config == null) return null;
-            mixinName = config.getClassName();
-            mixinInfoSet = Set.of(config);
+        if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+            return null;
         }
 
-        if (mixinInfoSet == null || mixinName == null) return null;
+        Class<?> clazz = this.classFinder.findClass(className);
+        if (clazz == null) {
+            return null;
+        }
 
-        for (IMixinInfo mixin : mixinInfoSet) {
-            if (mixin.getClassName().equals(mixinName)) {
+        Class<?>[] params = getParameterTypesForMethodDesc(methodDesc);
+        Method reflectMethod = clazz.getDeclaredMethod(methodName, params);
+
+        final MixinMerged mixinMarker = reflectMethod.getDeclaredAnnotation(MixinMerged.class);
+        if (mixinMarker == null) {
+            return null;
+        }
+
+        String mixinClassName = mixinMarker.mixin();
+        Set<IMixinInfo> mixins = MixinUtils.getMixins(ClassInfo.forName(className));
+
+        for (IMixinInfo mixin : mixins) {
+            if (mixin.getClassName().equals(mixinClassName)) {
                 final String modId = mixin.getConfig().getDecoration(FabricUtil.KEY_MOD_ID);
                 if (modId != null) {
-                    final Optional<ModContainer> optional = FabricLoader.getInstance().getModContainer(modId);
-                    if (optional.isPresent() && optional.get() instanceof ModContainerImpl container) {
-                        for (Path path : container.getCodeSourcePaths()) {
-                            if (Files.isRegularFile(path)) {
-                                final String name = path.getFileName().toString();
-                                if (name.endsWith(".jar")) {
-                                    return name.substring(0, name.length() - ".jar".length());
-                                }
-                            }
-                        }
-                    } else {
-                        return modId;
-                    }
+                    return modId;
                 }
             }
         }
 
         return null;
+    }
+
+    @Override
+    public @Nullable String identify(MethodCallByLine methodCall) throws Exception {
+        String className = methodCall.getClassName();
+        String methodName = methodCall.getMethodName();
+        int lineNumber = methodCall.getLineNumber();
+
+        if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+            return null;
+        }
+
+        SourceMap smap = this.smapProvider.getSourceMap(className);
+        if (smap == null) {
+            return null;
+        }
+
+        int[] inputLineInfo = smap.getReverseLineMapping().get(lineNumber);
+        if (inputLineInfo == null || inputLineInfo.length == 0) {
+            return null;
+        }
+
+        SourceMap.FileInfo inputFileInfo = smap.getFileInfo().get(inputLineInfo[0]);
+        if (inputFileInfo == null) {
+            return null;
+        }
+
+        IMixinInfo config = getMixinConfigFromPath(inputFileInfo.path());
+        if (config == null) {
+            return null;
+        }
+
+        return config.getConfig().getDecoration(FabricUtil.KEY_MOD_ID);
+    }
+
+    private static IMixinInfo getMixinConfigFromPath(String path) {
+        if (path != null && path.endsWith(".java")) {
+            ClassInfo info = ClassInfo.fromCache(path.substring(0, path.length() - 5));
+
+            if (info != null && info.isMixin()) {
+                Iterator<IMixinInfo> iterator = info.getAppliedMixins().iterator();
+                if (iterator.hasNext()) {
+                    return iterator.next();
+                }
+            }
+        }
+        return null;
+    }
+
+    private Class<?>[] getParameterTypesForMethodDesc(String methodDesc) {
+        Type methodType = Type.getMethodType(methodDesc);
+        Class<?>[] params = new Class[methodType.getArgumentTypes().length];
+        Type[] argumentTypes = methodType.getArgumentTypes();
+
+        for (int i = 0, argumentTypesLength = argumentTypes.length; i < argumentTypesLength; i++) {
+            Type argumentType = argumentTypes[i];
+            params[i] = getClassFromType(argumentType);
+        }
+
+        return params;
     }
 
     private Class<?> getClassFromType(Type type) {

@@ -38,9 +38,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * A function which defines the source of given {@link Class}es.
+ * A function which defines the source of given {@link Class}es or (Mixin) method calls.
  */
 public interface ClassSourceLookup {
 
@@ -52,8 +54,23 @@ public interface ClassSourceLookup {
      */
     @Nullable String identify(Class<?> clazz) throws Exception;
 
-    @Nullable
-    default String identify(String className, String methodName, String desc, int lineNumber) throws Exception {
+    /**
+     * Identify the given method call.
+     *
+     * @param methodCall the method call info
+     * @return the source of the method call
+     */
+    default @Nullable String identify(MethodCall methodCall) throws Exception {
+        return null;
+    }
+
+    /**
+     * Identify the given method call.
+     *
+     * @param methodCall the method call info
+     * @return the source of the method call
+     */
+    default @Nullable String identify(MethodCallByLine methodCall) throws Exception {
         return null;
     }
 
@@ -221,20 +238,15 @@ public interface ClassSourceLookup {
     }
 
     /**
-     * Visitor which scans {@link StackTraceNode}s and accumulates class identities.
+     * Visitor which scans {@link StackTraceNode}s and accumulates class/method call identities.
      */
     class VisitorImpl implements Visitor {
         private final ClassSourceLookup lookup;
         private final ClassFinder classFinder = new ClassFinder();
 
-        // class name --> identifier (plugin name)
-        private final Map<String, String> classSources = new HashMap<>();
-
-        // full method descriptor --> identifier
-        private final Map<String, String> methodSources = new HashMap<>();
-
-        // class name + line number --> identifier
-        private final Map<String, String> lineSources = new HashMap<>();
+        private final SourcesMap<String> classSources = new SourcesMap<>(Function.identity());
+        private final SourcesMap<MethodCall> methodSources = new SourcesMap<>(MethodCall::toString);
+        private final SourcesMap<MethodCallByLine> lineSources = new SourcesMap<>(MethodCallByLine::toString);
 
         VisitorImpl(ClassSourceLookup lookup) {
             this.lookup = lookup;
@@ -247,69 +259,191 @@ public interface ClassSourceLookup {
             }
         }
 
-        @Override
-        public boolean hasClassSourceMappings() {
-            return !this.classSources.isEmpty();
-        }
-
-        @Override
-        public Map<String, String> getClassSourceMapping() {
-            this.classSources.values().removeIf(Objects::isNull);
-            return this.classSources;
-        }
-
-        @Override
-        public boolean hasMethodSourceMappings() {
-            return !this.methodSources.isEmpty();
-        }
-
-        @Override
-        public Map<String, String> getMethodSourceMapping() {
-            this.methodSources.values().removeIf(Objects::isNull);
-            return this.methodSources;
-        }
-
-        @Override
-        public boolean hasLineSourceMappings() {
-            return !this.lineSources.isEmpty();
-        }
-
-        @Override
-        public Map<String, String> getLineSourceMapping() {
-            this.lineSources.values().removeIf(Objects::isNull);
-            return this.lineSources;
-        }
-
         private void visitStackNode(StackTraceNode node) {
-            String className = node.getClassName();
-            if (!this.classSources.containsKey(className)) {
-                try {
-                    Class<?> clazz = this.classFinder.findClass(className);
-                    Objects.requireNonNull(clazz);
-                    this.classSources.put(className, this.lookup.identify(clazz));
-                } catch (Throwable e) {
-                    this.classSources.put(className, null);
-                }
-            }
+            this.classSources.computeIfAbsent(
+                    node.getClassName(),
+                    className -> {
+                        Class<?> clazz = this.classFinder.findClass(className);
+                        Objects.requireNonNull(clazz);
+                        return this.lookup.identify(clazz);
+                    });
 
-            final String key = node.getMethodDescription() != null
-                    ? node.getClassName() + ";" + node.getMethodName() + ";" + node.getMethodDescription()
-                    : node.getClassName() + ":" + node.getLineNumber();
-
-            final Map<String, String> sources = node.getMethodDescription() != null ? this.methodSources : this.lineSources;
-            if (!sources.containsKey(key)) {
-                try {
-                    sources.put(key, this.lookup.identify(node.getClassName(), node.getMethodName(), node.getMethodDescription(), node.getLineNumber()));
-                } catch (Throwable e) {
-                    e.printStackTrace();
-                    sources.put(key, null);
-                }
+            if (node.getMethodDescription() != null) {
+                MethodCall methodCall = new MethodCall(node.getClassName(), node.getMethodName(), node.getMethodDescription());
+                this.methodSources.computeIfAbsent(methodCall, this.lookup::identify);
+            } else {
+                MethodCallByLine methodCall = new MethodCallByLine(node.getClassName(), node.getMethodName(), node.getLineNumber());
+                this.lineSources.computeIfAbsent(methodCall, this.lookup::identify);
             }
 
             // recursively
             for (StackTraceNode child : node.getChildren()) {
                 visitStackNode(child);
             }
+        }
+
+        @Override
+        public boolean hasClassSourceMappings() {
+            return this.classSources.hasMappings();
+        }
+
+        @Override
+        public Map<String, String> getClassSourceMapping() {
+            return this.classSources.export();
+        }
+
+        @Override
+        public boolean hasMethodSourceMappings() {
+            return this.methodSources.hasMappings();
+        }
+
+        @Override
+        public Map<String, String> getMethodSourceMapping() {
+            return this.methodSources.export();
+        }
+
+        @Override
+        public boolean hasLineSourceMappings() {
+            return this.lineSources.hasMappings();
+        }
+
+        @Override
+        public Map<String, String> getLineSourceMapping() {
+            return this.lineSources.export();
+        }
+    }
+
+    final class SourcesMap<T> {
+        // <key> --> identifier (plugin name)
+        private final Map<T, String> map = new HashMap<>();
+        private final Function<? super T, String> keyToStringFunction;
+
+        private SourcesMap(Function<? super T, String> keyToStringFunction) {
+            this.keyToStringFunction = keyToStringFunction;
+        }
+
+        public void computeIfAbsent(T key, ComputeSourceFunction<T> function) {
+            if (!this.map.containsKey(key)) {
+                try {
+                    this.map.put(key, function.compute(key));
+                } catch (Throwable e) {
+                    this.map.put(key, null);
+                }
+            }
+        }
+
+        public boolean hasMappings() {
+            this.map.values().removeIf(Objects::isNull);
+            return !this.map.isEmpty();
+        }
+
+        public Map<String, String> export() {
+            this.map.values().removeIf(Objects::isNull);
+            if (this.keyToStringFunction.equals(Function.identity())) {
+                //noinspection unchecked
+                return (Map<String, String>) this.map;
+            } else {
+                return this.map.entrySet().stream().collect(Collectors.toMap(
+                        e -> this.keyToStringFunction.apply(e.getKey()),
+                        Map.Entry::getValue
+                ));
+            }
+        }
+
+        private interface ComputeSourceFunction<T> {
+            String compute(T key) throws Exception;
+        }
+    }
+
+    /**
+     * Encapsulates information about a given method call using the name + method description.
+     */
+    final class MethodCall {
+        private final String className;
+        private final String methodName;
+        private final String methodDescriptor;
+
+        public MethodCall(String className, String methodName, String methodDescriptor) {
+            this.className = className;
+            this.methodName = methodName;
+            this.methodDescriptor = methodDescriptor;
+        }
+
+        public String getClassName() {
+            return this.className;
+        }
+
+        public String getMethodName() {
+            return this.methodName;
+        }
+
+        public String getMethodDescriptor() {
+            return this.methodDescriptor;
+        }
+
+        @Override
+        public String toString() {
+            return this.className + ";" + this.methodName + ";" + this.methodDescriptor;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof MethodCall)) return false;
+            MethodCall that = (MethodCall) o;
+            return this.className.equals(that.className) &&
+                    this.methodName.equals(that.methodName) &&
+                    this.methodDescriptor.equals(that.methodDescriptor);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.className, this.methodName, this.methodDescriptor);
+        }
+    }
+
+    /**
+     * Encapsulates information about a given method call using the name + line number.
+     */
+    final class MethodCallByLine {
+        private final String className;
+        private final String methodName;
+        private final int lineNumber;
+
+        public MethodCallByLine(String className, String methodName, int lineNumber) {
+            this.className = className;
+            this.methodName = methodName;
+            this.lineNumber = lineNumber;
+        }
+
+        public String getClassName() {
+            return this.className;
+        }
+
+        public String getMethodName() {
+            return this.methodName;
+        }
+
+        public int getLineNumber() {
+            return this.lineNumber;
+        }
+
+        @Override
+        public String toString() {
+            return this.className + ";" + this.lineNumber;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof MethodCallByLine)) return false;
+            MethodCallByLine that = (MethodCallByLine) o;
+            return this.lineNumber == that.lineNumber && this.className.equals(that.className);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.className, this.lineNumber);
         }
     }
 
