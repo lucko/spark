@@ -145,7 +145,13 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
             case Type.DOUBLE -> double.class;
             case Type.ARRAY -> {
                 final Class<?> classFromType = getClassFromType(type.getElementType());
-                yield classFromType != null ? classFromType.arrayType() : null;
+                Class<?> result = classFromType;
+                if (classFromType != null) {
+                    for (int i = 0; i < type.getDimensions(); i++) {
+                        result = result.arrayType();
+                    }
+                }
+                yield result;
             }
             case Type.OBJECT -> this.classFinder.findClass(type.getClassName());
             default -> null;
