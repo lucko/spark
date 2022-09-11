@@ -34,6 +34,7 @@ public class AsyncDataAggregator extends AbstractDataAggregator {
     /** A describer for async-profiler stack trace elements. */
     private static final StackTraceNode.Describer<AsyncStackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) ->
             new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getMethodDescription());
+
     protected AsyncDataAggregator(ThreadGrouper threadGrouper) {
         super(threadGrouper);
     }

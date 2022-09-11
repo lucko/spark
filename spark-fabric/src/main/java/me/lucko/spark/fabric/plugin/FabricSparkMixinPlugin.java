@@ -20,6 +20,9 @@
 
 package me.lucko.spark.fabric.plugin;
 
+import me.lucko.spark.fabric.smap.SMAPPool;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -36,15 +39,17 @@ import java.util.List;
 import java.util.Set;
 
 public class FabricSparkMixinPlugin implements IMixinConfigPlugin, IExtension {
+
+    private static final Logger LOGGER = LogManager.getLogger("spark");
+
     @Override
     public void onLoad(String mixinPackage) {
-        Object transformer = MixinEnvironment.getCurrentEnvironment().getActiveTransformer();
-        if (!(transformer instanceof IMixinTransformer)) throw new IllegalStateException("Running with an odd transformer: " + transformer);
-
-        IExtensionRegistry extensions = ((IMixinTransformer) transformer).getExtensions();
-        if (!(extensions instanceof Extensions)) throw new IllegalStateException("Running with odd extensions: " + extensions);
-
-        ((Extensions) extensions).add(this);
+        if (MixinEnvironment.getCurrentEnvironment().getActiveTransformer() instanceof IMixinTransformer transformer &&
+                transformer.getExtensions() instanceof Extensions extensions) {
+            extensions.add(this);
+        } else {
+            LOGGER.error("Failed to initialize SMAP parser for spark sampler, mod information for mixin injected methods is now only available with async profiler. ");
+        }
     }
 
     @Override
@@ -94,12 +99,6 @@ public class FabricSparkMixinPlugin implements IMixinConfigPlugin, IExtension {
 
     @Override
     public void export(MixinEnvironment env, String name, boolean force, ClassNode classNode) {
-        for (MethodNode method : classNode.methods) {
-            for (AnnotationNode annotationNode : method.visibleAnnotations) {
-
-            }
-
-        }
-
+        SMAPPool.add(name, classNode.sourceDebug);
     }
 }

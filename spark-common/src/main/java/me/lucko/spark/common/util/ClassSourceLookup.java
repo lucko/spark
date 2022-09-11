@@ -24,10 +24,8 @@ import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.objectweb.asm.Type;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -163,13 +161,17 @@ public interface ClassSourceLookup {
     interface Visitor {
         void visit(ThreadNode node);
 
-        boolean hasMappings();
+        boolean hasClassSourceMappings();
 
-        Map<String, String> getMapping();
+        Map<String, String> getClassSourceMapping();
 
         boolean hasMethodSourceMappings();
 
         Map<String, String> getMethodSourceMapping();
+
+        boolean hasLineSourceMappings();
+
+        Map<String, String> getLineSourceMapping();
     }
 
     static Visitor createVisitor(ClassSourceLookup lookup) {
@@ -188,12 +190,12 @@ public interface ClassSourceLookup {
         }
 
         @Override
-        public boolean hasMappings() {
+        public boolean hasClassSourceMappings() {
             return false;
         }
 
         @Override
-        public Map<String, String> getMapping() {
+        public Map<String, String> getClassSourceMapping() {
             return Collections.emptyMap();
         }
 
@@ -206,6 +208,16 @@ public interface ClassSourceLookup {
         public Map<String, String> getMethodSourceMapping() {
             return Collections.emptyMap();
         }
+
+        @Override
+        public boolean hasLineSourceMappings() {
+            return false;
+        }
+
+        @Override
+        public Map<String, String> getLineSourceMapping() {
+            return Collections.emptyMap();
+        }
     }
 
     /**
@@ -216,8 +228,13 @@ public interface ClassSourceLookup {
         private final ClassFinder classFinder = new ClassFinder();
 
         // class name --> identifier (plugin name)
-        private final Map<String, String> map = new HashMap<>();
+        private final Map<String, String> classSources = new HashMap<>();
+
+        // full method descriptor --> identifier
         private final Map<String, String> methodSources = new HashMap<>();
+
+        // class name + line number --> identifier
+        private final Map<String, String> lineSources = new HashMap<>();
 
         VisitorImpl(ClassSourceLookup lookup) {
             this.lookup = lookup;
@@ -231,14 +248,14 @@ public interface ClassSourceLookup {
         }
 
         @Override
-        public boolean hasMappings() {
-            return !this.map.isEmpty();
+        public boolean hasClassSourceMappings() {
+            return !this.classSources.isEmpty();
         }
 
         @Override
-        public Map<String, String> getMapping() {
-            this.map.values().removeIf(Objects::isNull);
-            return this.map;
+        public Map<String, String> getClassSourceMapping() {
+            this.classSources.values().removeIf(Objects::isNull);
+            return this.classSources;
         }
 
         @Override
@@ -252,27 +269,40 @@ public interface ClassSourceLookup {
             return this.methodSources;
         }
 
+        @Override
+        public boolean hasLineSourceMappings() {
+            return !this.lineSources.isEmpty();
+        }
+
+        @Override
+        public Map<String, String> getLineSourceMapping() {
+            this.lineSources.values().removeIf(Objects::isNull);
+            return this.lineSources;
+        }
+
         private void visitStackNode(StackTraceNode node) {
             String className = node.getClassName();
-            if (!this.map.containsKey(className)) {
+            if (!this.classSources.containsKey(className)) {
                 try {
                     Class<?> clazz = this.classFinder.findClass(className);
                     Objects.requireNonNull(clazz);
-                    this.map.put(className, this.lookup.identify(clazz));
+                    this.classSources.put(className, this.lookup.identify(clazz));
                 } catch (Throwable e) {
-                    this.map.put(className, null);
+                    this.classSources.put(className, null);
                 }
             }
 
-            if (node.getMethodDescription() != null) { // only for async profiler
-                final String key = node.getClassName() + ";" + node.getMethodName() + ";" + node.getMethodDescription();
-                if (!this.methodSources.containsKey(key)) {
-                    try {
-                        this.methodSources.put(key, this.lookup.identify(node.getClassName(), node.getMethodName(), node.getMethodDescription(), node.getLineNumber()));
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                        this.methodSources.put(key, null);
-                    }
+            final String key = node.getMethodDescription() != null
+                    ? node.getClassName() + ";" + node.getMethodName() + ";" + node.getMethodDescription()
+                    : node.getClassName() + ":" + node.getLineNumber();
+
+            final Map<String, String> sources = node.getMethodDescription() != null ? this.methodSources : this.lineSources;
+            if (!sources.containsKey(key)) {
+                try {
+                    sources.put(key, this.lookup.identify(node.getClassName(), node.getMethodName(), node.getMethodDescription(), node.getLineNumber()));
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                    sources.put(key, null);
                 }
             }
 

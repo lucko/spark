@@ -66,6 +66,10 @@ processResources {
     }
 }
 
+license {
+    exclude '**/smap/SMAPSourceDebugExtension.java'
+}
+
 shadowJar {
     archiveFileName = "spark-fabric-${project.pluginVersion}-dev.jar"
     configurations = [project.configurations.shade]
@@ -74,12 +78,16 @@ shadowJar {
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
-    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+//    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
 
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+
+    dependencies {
+        exclude(dependency('org.ow2.asm::'))
+    }
 }
 
 task remappedShadowJar(type: RemapJarTask) {

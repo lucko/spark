@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.util.ClassFinder;
 import me.lucko.spark.common.util.ClassSourceLookup;
 
+import me.lucko.spark.fabric.smap.SMAPSourceDebugExtension;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -37,6 +38,7 @@ import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -45,6 +47,7 @@ import java.util.Set;
 public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
 
     private final ClassFinder classFinder = new ClassFinder();
+    private final Map<String, SMAPSourceDebugExtension> smapCache = new HashMap<>();
 
     private final Path modsDirectory;
     private final Map<Path, String> pathToModMap;
@@ -72,8 +75,11 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     @Override
     public @Nullable String identify(String className, String methodName, String desc, int lineNumber) throws Exception {
         if (methodName.equals("<init>") || methodName.equals("<clinit>")) return null;
-        Method reflectMethod = null;
-        if (desc != null) {
+
+        Set<IMixinInfo> mixinInfoSet = null;
+        String mixinName = null;
+
+        if (desc != null) { // identify by descriptor
             Class<?> clazz = this.classFinder.findClass(className);
             if (clazz == null) return null;
             final Type methodType = Type.getMethodType(desc);
@@ -83,34 +89,39 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
                 Type argumentType = argumentTypes[i];
                 params[i] = getClassFromType(argumentType);
             }
-            reflectMethod = clazz.getDeclaredMethod(methodName, params);
-        }
-        if (reflectMethod == null) return null;
+            Method reflectMethod = clazz.getDeclaredMethod(methodName, params);
 
-        final MixinMerged annotation = reflectMethod.getDeclaredAnnotation(MixinMerged.class);
-        if (annotation == null) return null;
+            if (reflectMethod == null) return null;
+
+            final MixinMerged annotation = reflectMethod.getDeclaredAnnotation(MixinMerged.class);
+            if (annotation == null) return null;
 //        System.out.println("Found annotation " + annotation);
+            mixinName = annotation.mixin();
 
-        final ClassInfo classInfo = ClassInfo.forName(className);
+            final ClassInfo classInfo = ClassInfo.forName(className);
 //        final ClassInfo.Method method = classInfo.findMethod(methodName, desc, ClassInfo.INCLUDE_ALL);
 
-        Set<IMixinInfo> mixinInfoSet;
-
-        try {
-            Method getMixins = ClassInfo.class.getDeclaredMethod("getMixins");
-            getMixins.setAccessible(true);
-            mixinInfoSet = (Set<IMixinInfo>) getMixins.invoke(classInfo);
-        } catch (Exception e) {
-            // Fabric loader >=0.12.0 proguards out this method; use the field instead
-            var mixinsField = ClassInfo.class.getDeclaredField("mixins");
-            mixinsField.setAccessible(true);
-            mixinInfoSet = (Set<IMixinInfo>) mixinsField.get(classInfo);
+            try {
+                Method getMixins = ClassInfo.class.getDeclaredMethod("getMixins");
+                getMixins.setAccessible(true);
+                mixinInfoSet = (Set<IMixinInfo>) getMixins.invoke(classInfo);
+            } catch (Exception e) {
+                // Fabric loader >=0.12.0 proguards out this method; use the field instead
+                var mixinsField = ClassInfo.class.getDeclaredField("mixins");
+                mixinsField.setAccessible(true);
+                mixinInfoSet = (Set<IMixinInfo>) mixinsField.get(classInfo);
+            }
+        } else { // identify by debug information
+            final IMixinInfo config = SMAPSourceDebugExtension.getMixinConfigFor(className, lineNumber, smapCache);
+            if (config == null) return null;
+            mixinName = config.getClassName();
+            mixinInfoSet = Set.of(config);
         }
 
-        if (mixinInfoSet == null) return null;
+        if (mixinInfoSet == null || mixinName == null) return null;
 
         for (IMixinInfo mixin : mixinInfoSet) {
-            if (mixin.getClassName().equals(annotation.mixin())) {
+            if (mixin.getClassName().equals(mixinName)) {
                 final String modId = mixin.getConfig().getDecoration(FabricUtil.KEY_MOD_ID);
                 if (modId != null) {
                     return modId;
