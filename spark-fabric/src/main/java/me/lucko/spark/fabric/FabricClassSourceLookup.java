@@ -32,6 +32,7 @@ import me.lucko.spark.fabric.smap.SourceMapProvider;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
+import net.fabricmc.loader.impl.ModContainerImpl;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.FabricUtil;
@@ -39,16 +40,14 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.transformer.ClassInfo;
 import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
 
@@ -108,7 +107,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
             if (mixin.getClassName().equals(mixinClassName)) {
                 final String modId = mixin.getConfig().getDecoration(FabricUtil.KEY_MOD_ID);
                 if (modId != null) {
-                    return modId;
+                    return getBestNameFromModId(modId);
                 }
             }
         }
@@ -146,7 +145,26 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
             return null;
         }
 
-        return config.getConfig().getDecoration(FabricUtil.KEY_MOD_ID);
+        return getBestNameFromModId(config.getConfig().getDecoration(FabricUtil.KEY_MOD_ID));
+    }
+
+    private static String getBestNameFromModId(String modId) {
+        try {
+            final Optional<ModContainer> optional = FabricLoader.getInstance().getModContainer(modId);
+            if (optional.isPresent()) {
+                if (optional.get() instanceof ModContainerImpl container) {
+                    for (Path path : container.getCodeSourcePaths()) {
+                        if (Files.isRegularFile(path)) {
+                            final String fileName = path.getFileName().toString();
+                            return fileName.endsWith(".jar") ? fileName.substring(0, fileName.length() - ".jar".length()) : fileName;
+                        }
+                    }
+                }
+            }
+            return modId;
+        } catch (Exception ex) {
+            return modId;
+        }
     }
 
     private static IMixinInfo getMixinConfigFromPath(String path) {
@@ -206,7 +224,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
         ImmutableMap.Builder<Path, String> builder = ImmutableMap.builder();
         for (ModContainer mod : mods) {
             for (Path path : mod.getRootPaths()) {
-                builder.put(path.toAbsolutePath().normalize(), mod.getMetadata().getId());
+                builder.put(path.toAbsolutePath().normalize(), getBestNameFromModId(mod.getMetadata().getId()));
             }
         }
         return builder.build();
