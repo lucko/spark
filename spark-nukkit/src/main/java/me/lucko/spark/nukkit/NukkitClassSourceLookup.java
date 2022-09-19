@@ -20,7 +20,7 @@
 
 package me.lucko.spark.nukkit;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import cn.nukkit.plugin.PluginClassLoader;
 

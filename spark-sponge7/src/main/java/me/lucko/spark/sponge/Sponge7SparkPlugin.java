@@ -29,8 +29,8 @@ import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.common.util.ClassSourceLookup;
 
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;

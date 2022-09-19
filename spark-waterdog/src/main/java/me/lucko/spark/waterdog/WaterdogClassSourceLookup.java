@@ -20,7 +20,7 @@
 
 package me.lucko.spark.waterdog;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.plugin.Plugin;

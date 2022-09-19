@@ -18,10 +18,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.sampler.source;
 
+import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.util.ClassFinder;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -84,6 +86,15 @@ public interface ClassSourceLookup {
         }
     };
 
+    static ClassSourceLookup create(SparkPlatform platform) {
+        try {
+            return platform.createClassSourceLookup();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return NO_OP;
+        }
+    }
+
     /**
      * A {@link ClassSourceLookup} which identifies classes based on their {@link ClassLoader}.
      */
@@ -140,7 +151,7 @@ public interface ClassSourceLookup {
     /**
      * A {@link ClassSourceLookup} which identifies classes based on the first URL in a {@link URLClassLoader}.
      */
-    class ByFirstUrlSource extends ByClassLoader implements ByUrl {
+    class ByFirstUrlSource extends ClassSourceLookup.ByClassLoader implements ClassSourceLookup.ByUrl {
         @Override
         public @Nullable String identify(ClassLoader loader) throws IOException, URISyntaxException {
             if (loader instanceof URLClassLoader) {
@@ -158,7 +169,7 @@ public interface ClassSourceLookup {
     /**
      * A {@link ClassSourceLookup} which identifies classes based on their {@link ProtectionDomain#getCodeSource()}.
      */
-    class ByCodeSource implements ClassSourceLookup, ByUrl {
+    class ByCodeSource implements ClassSourceLookup, ClassSourceLookup.ByUrl {
         @Override
         public @Nullable String identify(Class<?> clazz) throws URISyntaxException, MalformedURLException {
             ProtectionDomain protectionDomain = clazz.getProtectionDomain();

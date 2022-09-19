@@ -20,7 +20,7 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import org.bukkit.plugin.java.JavaPlugin;
 

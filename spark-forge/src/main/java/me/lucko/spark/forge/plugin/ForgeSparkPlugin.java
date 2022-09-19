@@ -34,18 +34,22 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
 
 import net.minecraft.commands.CommandSource;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.forgespi.language.IModInfo;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -108,6 +112,16 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new ForgeClassSourceLookup();
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                ModList.get().getMods(),
+                IModInfo::getModId,
+                mod -> mod.getVersion().toString(),
+                mod -> null // ?
+        );
     }
 
     protected CompletableFuture<Suggestions> generateSuggestions(CommandSender sender, String[] args, SuggestionsBuilder builder) {

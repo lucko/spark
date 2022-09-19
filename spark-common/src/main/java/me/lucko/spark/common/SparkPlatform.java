@@ -45,10 +45,10 @@ import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
-import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.TemporaryFiles;
 

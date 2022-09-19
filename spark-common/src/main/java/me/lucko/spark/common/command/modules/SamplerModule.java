@@ -38,6 +38,7 @@ import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.ThreadNodeOrder;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
@@ -303,7 +304,7 @@ public class SamplerModule implements CommandModule {
     }
 
     private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, String comment, MergeMode mergeMode, boolean saveToFileFlag) {
-        SparkSamplerProtos.SamplerData output = sampler.toProto(platform, resp.sender(), threadOrder, comment, mergeMode, platform.createClassSourceLookup());
+        SparkSamplerProtos.SamplerData output = sampler.toProto(platform, resp.sender(), threadOrder, comment, mergeMode, ClassSourceLookup.create(platform));
 
         boolean saveToFile = false;
         if (saveToFileFlag) {

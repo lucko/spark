@@ -24,7 +24,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.util.Comparator;

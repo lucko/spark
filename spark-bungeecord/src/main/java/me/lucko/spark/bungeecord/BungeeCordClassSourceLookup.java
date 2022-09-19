@@ -20,7 +20,7 @@
 
 package me.lucko.spark.bungeecord;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import net.md_5.bungee.api.plugin.PluginDescription;
 

@@ -28,6 +28,7 @@ message SamplerMetadata {
   map<string, string> server_configurations = 10;
   int64 end_time = 11;
   int32 number_of_ticks = 12;
+  map<string, SourceMetadata> sources = 13;
 
   message ThreadDumper {
     Type type = 1;
@@ -57,6 +58,11 @@ message SamplerMetadata {
       BY_POOL = 1;
       AS_ONE = 2;
     }
+  }
+
+  message SourceMetadata {
+    string name = 1;
+    string version = 2;
   }
 }
 

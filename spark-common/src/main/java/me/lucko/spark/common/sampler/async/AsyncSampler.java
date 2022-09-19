@@ -30,7 +30,7 @@ import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 

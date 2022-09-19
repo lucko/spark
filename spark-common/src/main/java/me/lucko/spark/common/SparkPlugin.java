@@ -27,11 +27,14 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.common.util.ClassSourceLookup;
 
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -130,6 +133,15 @@ public interface SparkPlugin {
      */
     default ClassSourceLookup createClassSourceLookup() {
         return ClassSourceLookup.NO_OP;
+    }
+
+    /**
+     * Gets a list of known sources (plugins/mods) on the platform.
+     *
+     * @return a list of sources
+     */
+    default Collection<SourceMetadata> getKnownSources() {
+        return Collections.emptyList();
     }
 
     /**

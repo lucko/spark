@@ -20,7 +20,7 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import cpw.mods.modlauncher.TransformingClassLoader;
 

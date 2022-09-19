@@ -27,13 +27,16 @@ import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -148,6 +151,11 @@ public abstract class AbstractSampler implements Sampler {
             metadata.putAllServerConfigurations(serverConfigProvider.exportServerConfigurations());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+
+        Collection<SourceMetadata> knownSources = platform.getPlugin().getKnownSources();
+        for (SourceMetadata source : knownSources) {
+            metadata.putSources(source.getName().toLowerCase(Locale.ROOT), source.toProto());
         }
 
         proto.setMetadata(metadata);

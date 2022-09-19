@@ -23,7 +23,7 @@ package me.lucko.spark.velocity;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginManager;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
