@@ -264,7 +264,9 @@ public interface ClassSourceLookup {
                     node.getClassName(),
                     className -> {
                         Class<?> clazz = this.classFinder.findClass(className);
-                        Objects.requireNonNull(clazz);
+                        if (clazz == null) {
+                            return null;
+                        }
                         return this.lookup.identify(clazz);
                     });
 

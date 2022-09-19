@@ -20,66 +20,33 @@
 
 package me.lucko.spark.fabric.smap;
 
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-import org.spongepowered.asm.mixin.transformer.ClassInfo;
+import org.spongepowered.asm.mixin.transformer.Config;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Set;
-import java.util.function.Function;
+import java.util.HashMap;
+import java.util.Map;
 
 public enum MixinUtils {
     ;
 
-    private static final Function<ClassInfo, Set<IMixinInfo>> GET_MIXINS_FUNCTION;
+    private static final Map<String, Config> MIXIN_CONFIGS;
 
     static {
-        Function<ClassInfo, Set<IMixinInfo>> getMixinsFunction = null;
-
+        Map<String, Config> configs;
         try {
-            Method getMixins = ClassInfo.class.getDeclaredMethod("getMixins");
-            getMixins.setAccessible(true);
+            Field allConfigsField = Config.class.getDeclaredField("allConfigs");
+            allConfigsField.setAccessible(true);
 
-            getMixinsFunction = classInfo -> {
-                try {
-                    //noinspection unchecked
-                    return (Set<IMixinInfo>) getMixins.invoke(classInfo);
-                } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException(e);
-                }
-            };
+            //noinspection unchecked
+            configs = (Map<String, Config>) allConfigsField.get(null);
         } catch (Exception e) {
-            // ignore
+            e.printStackTrace();
+            configs = new HashMap<>();
         }
-
-        if (getMixinsFunction == null) {
-            try {
-                // Fabric loader >=0.12.0 proguards out the method; use the field instead
-                Field mixinsField = ClassInfo.class.getDeclaredField("mixins");
-                mixinsField.setAccessible(true);
-
-                getMixinsFunction = classInfo -> {
-                    try {
-                        //noinspection unchecked
-                        return (Set<IMixinInfo>) mixinsField.get(classInfo);
-                    } catch (ReflectiveOperationException e) {
-                        throw new RuntimeException(e);
-                    }
-                };
-            } catch (Exception e) {
-                // ignore
-            }
-        }
-
-        if (getMixinsFunction == null) {
-            getMixinsFunction = classInfo -> Collections.emptySet();
-        }
-
-        GET_MIXINS_FUNCTION = getMixinsFunction;
+        MIXIN_CONFIGS = configs;
     }
 
-    public static Set<IMixinInfo> getMixins(ClassInfo classInfo) {
-        return GET_MIXINS_FUNCTION.apply(classInfo);
+    public static Map<String, Config> getMixinConfigs() {
+        return MIXIN_CONFIGS;
     }
 }

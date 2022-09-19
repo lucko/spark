@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 
 import me.lucko.spark.common.util.ClassFinder;
 import me.lucko.spark.common.util.ClassSourceLookup;
-
 import me.lucko.spark.fabric.smap.MixinUtils;
 import me.lucko.spark.fabric.smap.SourceMap;
 import me.lucko.spark.fabric.smap.SourceMapProvider;
@@ -32,22 +31,18 @@ import me.lucko.spark.fabric.smap.SourceMapProvider;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
-import net.fabricmc.loader.impl.ModContainerImpl;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.FabricUtil;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
-import org.spongepowered.asm.mixin.transformer.ClassInfo;
+import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
+import org.spongepowered.asm.mixin.transformer.Config;
 import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
 
 import java.lang.reflect.Method;
-import java.nio.file.Files;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
 
@@ -55,7 +50,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     private final SourceMapProvider smapProvider = new SourceMapProvider();
 
     private final Path modsDirectory;
-    private final Map<Path, String> pathToModMap;
+    private final Map<String, String> pathToModMap;
 
     public FabricClassSourceLookup() {
         FabricLoader loader = FabricLoader.getInstance();
@@ -65,7 +60,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
 
     @Override
     public String identifyFile(Path path) {
-        String id = this.pathToModMap.get(path);
+        String id = this.pathToModMap.get(path.toAbsolutePath().normalize().toString());
         if (id != null) {
             return id;
         }
@@ -83,7 +78,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
         String methodName = methodCall.getMethodName();
         String methodDesc = methodCall.getMethodDescriptor();
 
-        if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+        if (className.equals("native") || methodName.equals("<init>") || methodName.equals("<clinit>")) {
             return null;
         }
 
@@ -95,24 +90,12 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
         Class<?>[] params = getParameterTypesForMethodDesc(methodDesc);
         Method reflectMethod = clazz.getDeclaredMethod(methodName, params);
 
-        final MixinMerged mixinMarker = reflectMethod.getDeclaredAnnotation(MixinMerged.class);
+        MixinMerged mixinMarker = reflectMethod.getDeclaredAnnotation(MixinMerged.class);
         if (mixinMarker == null) {
             return null;
         }
 
-        String mixinClassName = mixinMarker.mixin();
-        Set<IMixinInfo> mixins = MixinUtils.getMixins(ClassInfo.forName(className));
-
-        for (IMixinInfo mixin : mixins) {
-            if (mixin.getClassName().equals(mixinClassName)) {
-                final String modId = mixin.getConfig().getDecoration(FabricUtil.KEY_MOD_ID);
-                if (modId != null) {
-                    return getBestNameFromModId(modId);
-                }
-            }
-        }
-
-        return null;
+        return modIdFromMixinClass(mixinMarker.mixin());
     }
 
     @Override
@@ -121,7 +104,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
         String methodName = methodCall.getMethodName();
         int lineNumber = methodCall.getLineNumber();
 
-        if (methodName.equals("<init>") || methodName.equals("<clinit>")) {
+        if (className.equals("native") || methodName.equals("<init>") || methodName.equals("<clinit>")) {
             return null;
         }
 
@@ -135,47 +118,33 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
             return null;
         }
 
-        SourceMap.FileInfo inputFileInfo = smap.getFileInfo().get(inputLineInfo[0]);
-        if (inputFileInfo == null) {
-            return null;
-        }
-
-        IMixinInfo config = getMixinConfigFromPath(inputFileInfo.path());
-        if (config == null) {
-            return null;
-        }
-
-        return getBestNameFromModId(config.getConfig().getDecoration(FabricUtil.KEY_MOD_ID));
-    }
-
-    private static String getBestNameFromModId(String modId) {
-        try {
-            final Optional<ModContainer> optional = FabricLoader.getInstance().getModContainer(modId);
-            if (optional.isPresent()) {
-                if (optional.get() instanceof ModContainerImpl container) {
-                    for (Path path : container.getCodeSourcePaths()) {
-                        if (Files.isRegularFile(path)) {
-                            final String fileName = path.getFileName().toString();
-                            return fileName.endsWith(".jar") ? fileName.substring(0, fileName.length() - ".jar".length()) : fileName;
-                        }
-                    }
-                }
+        for (int fileInfoIds : inputLineInfo) {
+            SourceMap.FileInfo inputFileInfo = smap.getFileInfo().get(fileInfoIds);
+            if (inputFileInfo == null) {
+                continue;
             }
-            return modId;
-        } catch (Exception ex) {
-            return modId;
+
+            String path = inputFileInfo.path();
+            if (path.endsWith(".java")) {
+                path = path.substring(0, path.length() - 5);
+            }
+
+            String possibleMixinClassName = path.replace('/', '.');
+            if (possibleMixinClassName.equals(className)) {
+                continue;
+            }
+
+            return modIdFromMixinClass(possibleMixinClassName);
         }
+
+        return null;
     }
 
-    private static IMixinInfo getMixinConfigFromPath(String path) {
-        if (path != null && path.endsWith(".java")) {
-            ClassInfo info = ClassInfo.fromCache(path.substring(0, path.length() - 5));
-
-            if (info != null && info.isMixin()) {
-                Iterator<IMixinInfo> iterator = info.getAppliedMixins().iterator();
-                if (iterator.hasNext()) {
-                    return iterator.next();
-                }
+    private static String modIdFromMixinClass(String mixinClassName) {
+        for (Config config : MixinUtils.getMixinConfigs().values()) {
+            IMixinConfig mixinConfig = config.getConfig();
+            if (mixinClassName.startsWith(mixinConfig.getMixinPackage())) {
+                return mixinConfig.getDecoration(FabricUtil.KEY_MOD_ID);
             }
         }
         return null;
@@ -220,11 +189,23 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
         };
     }
 
-    private static Map<Path, String> constructPathToModIdMap(Collection<ModContainer> mods) {
-        ImmutableMap.Builder<Path, String> builder = ImmutableMap.builder();
+    private static Map<String, String> constructPathToModIdMap(Collection<ModContainer> mods) {
+        ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
         for (ModContainer mod : mods) {
+            String modId = mod.getMetadata().getId();
+            if (modId.equals("java")) {
+                continue;
+            }
+
             for (Path path : mod.getRootPaths()) {
-                builder.put(path.toAbsolutePath().normalize(), getBestNameFromModId(mod.getMetadata().getId()));
+                URI uri = path.toUri();
+                if (uri.getScheme().equals("jar") && path.toString().equals("/")) { // ZipFileSystem
+                    String zipFilePath = path.getFileSystem().toString();
+                    builder.put(zipFilePath, modId);
+                } else {
+                    builder.put(path.toAbsolutePath().normalize().toString(), modId);
+                }
+
             }
         }
         return builder.build();

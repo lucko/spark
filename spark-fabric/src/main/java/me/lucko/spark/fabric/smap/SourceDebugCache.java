@@ -38,21 +38,20 @@ public enum SourceDebugCache {
     ;
 
     // class name -> smap
-    private static final Map<String, Optional<String>> CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, SmapValue> CACHE = new ConcurrentHashMap<>();
 
     public static void put(String className, ClassNode node) {
         if (className == null || node == null) {
             return;
         }
-
-        CACHE.put(className, Optional.ofNullable(node.sourceDebug));
+        className = className.replace('/', '.');
+        CACHE.put(className, SmapValue.of(node.sourceDebug));
     }
 
-    @SuppressWarnings("OptionalAssignedToNull")
     public static String getSourceDebugInfo(String className) {
-        Optional<String> cached = CACHE.get(className);
+        SmapValue cached = CACHE.get(className);
         if (cached != null) {
-            return cached.orElse(null);
+            return cached.value();
         }
 
         try {
@@ -68,8 +67,21 @@ public enum SourceDebugCache {
             // ignore
         }
 
-        CACHE.put(className, Optional.empty());
+        CACHE.put(className, SmapValue.NULL);
         return null;
+    }
+
+    private record SmapValue(String value) {
+        static final SmapValue NULL = new SmapValue(null);
+
+        static SmapValue of(String value) {
+            if (value == null) {
+                return NULL;
+            } else {
+                return new SmapValue(value);
+            }
+        }
+
     }
 
 }
