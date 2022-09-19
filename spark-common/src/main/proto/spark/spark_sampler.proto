@@ -11,6 +11,8 @@ message SamplerData {
   SamplerMetadata metadata = 1;
   repeated ThreadNode threads = 2;
   map<string, string> class_sources = 3; // optional
+  map<string, string> method_sources = 4; // optional
+  map<string, string> line_sources = 5; // optional
 }
 
 message SamplerMetadata {

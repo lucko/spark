@@ -164,8 +164,16 @@ public abstract class AbstractSampler implements Sampler {
             classSourceVisitor.visit(entry);
         }
 
-        if (classSourceVisitor.hasMappings()) {
-            proto.putAllClassSources(classSourceVisitor.getMapping());
+        if (classSourceVisitor.hasClassSourceMappings()) {
+            proto.putAllClassSources(classSourceVisitor.getClassSourceMapping());
+        }
+
+        if (classSourceVisitor.hasMethodSourceMappings()) {
+            proto.putAllMethodSources(classSourceVisitor.getMethodSourceMapping());
+        }
+
+        if (classSourceVisitor.hasLineSourceMappings()) {
+            proto.putAllLineSources(classSourceVisitor.getLineSourceMapping());
         }
     }
 }
