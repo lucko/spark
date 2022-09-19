@@ -22,9 +22,9 @@ package me.lucko.spark.common.sampler.async;
 
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
+import com.google.common.io.ByteStreams;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.util.TemporaryFiles;
 
 import one.profiler.AsyncProfiler;
 import one.profiler.Events;
@@ -32,19 +32,29 @@ import one.profiler.Events;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
  * Provides a bridge between spark and async-profiler.
  */
-public enum AsyncProfilerAccess {
-    INSTANCE;
+public class AsyncProfilerAccess {
+    private static AsyncProfilerAccess instance;
+
+    // singleton, needs a SparkPlatform for first init
+    public static synchronized AsyncProfilerAccess getInstance(SparkPlatform platform) {
+        if (instance == null) {
+            Objects.requireNonNull(platform, "platform");
+            instance = new AsyncProfilerAccess(platform);
+        }
+        return instance;
+    }
 
     /** An instance of the async-profiler Java API. */
     private final AsyncProfiler profiler;
@@ -55,13 +65,13 @@ public enum AsyncProfilerAccess {
     /** If profiler is null, contains the reason why setup failed */
     private final Exception setupException;
 
-    AsyncProfilerAccess() {
+    AsyncProfilerAccess(SparkPlatform platform) {
         AsyncProfiler profiler;
         ProfilingEvent profilingEvent = null;
         Exception setupException = null;
 
         try {
-            profiler = load();
+            profiler = load(platform);
             if (isEventSupported(profiler, ProfilingEvent.CPU, false)) {
                 profilingEvent = ProfilingEvent.CPU;
             } else if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
@@ -106,7 +116,7 @@ public enum AsyncProfilerAccess {
         return this.profiler != null;
     }
 
-    private static AsyncProfiler load() throws Exception {
+    private static AsyncProfiler load(SparkPlatform platform) throws Exception {
         // check compatibility
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
         String arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
@@ -135,10 +145,10 @@ public enum AsyncProfilerAccess {
             throw new IllegalStateException("Could not find " + resource + " in spark jar file");
         }
 
-        Path extractPath = TemporaryFiles.create("spark-", "-libasyncProfiler.so.tmp");
+        Path extractPath = platform.getTemporaryFiles().create("spark-", "-libasyncProfiler.so.tmp");
 
-        try (InputStream in = profilerResource.openStream()) {
-            Files.copy(in, extractPath, StandardCopyOption.REPLACE_EXISTING);
+        try (InputStream in = profilerResource.openStream(); OutputStream out = Files.newOutputStream(extractPath)) {
+            ByteStreams.copy(in, out);
         }
 
         // get an instance of async-profiler

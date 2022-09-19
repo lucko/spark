@@ -89,6 +89,7 @@ public class SparkPlatform {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
 
     private final SparkPlugin plugin;
+    private final TemporaryFiles temporaryFiles;
     private final Configuration configuration;
     private final String viewerUrl;
     private final BytebinClient bytebinClient;
@@ -109,6 +110,7 @@ public class SparkPlatform {
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
 
+        this.temporaryFiles = new TemporaryFiles(this.plugin.getPluginDirectory().resolve("tmp"));
         this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
@@ -192,11 +194,15 @@ public class SparkPlatform {
 
         SparkApi.unregister();
 
-        TemporaryFiles.deleteTemporaryFiles();
+        this.temporaryFiles.deleteTemporaryFiles();
     }
 
     public SparkPlugin getPlugin() {
         return this.plugin;
+    }
+
+    public TemporaryFiles getTemporaryFiles() {
+        return this.temporaryFiles;
     }
 
     public Configuration getConfiguration() {

@@ -31,7 +31,6 @@ import me.lucko.spark.common.sampler.async.jfr.JfrReader;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import one.profiler.AsyncProfiler;
@@ -67,7 +66,7 @@ public class AsyncSampler extends AbstractSampler {
 
     public AsyncSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
         super(platform, interval, threadDumper, endTime);
-        this.profiler = AsyncProfilerAccess.INSTANCE.getProfiler();
+        this.profiler = AsyncProfilerAccess.getInstance(platform).getProfiler();
         this.dataAggregator = new AsyncDataAggregator(threadGrouper);
     }
 
@@ -93,12 +92,12 @@ public class AsyncSampler extends AbstractSampler {
         super.start();
 
         try {
-            this.outputFile = TemporaryFiles.create("spark-profile-", ".jfr.tmp");
+            this.outputFile = this.platform.getTemporaryFiles().create("spark-", "-profile-data.jfr.tmp");
         } catch (IOException e) {
             throw new RuntimeException("Unable to create temporary output file", e);
         }
 
-        String command = "start,event=" + AsyncProfilerAccess.INSTANCE.getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
+        String command = "start,event=" + AsyncProfilerAccess.getInstance(this.platform).getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
         if (this.threadDumper instanceof ThreadDumper.Specific) {
             command += ",filter";
         }
