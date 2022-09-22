@@ -20,37 +20,57 @@
 
 package me.lucko.spark.common.platform.serverconfig;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 
+import me.lucko.spark.common.platform.MetadataProvider;
+
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Function to export server configuration files for access within the spark viewer.
+ * Abstract implementation of {@link MetadataProvider} which
+ * provides server configuration data.
+ *
+ * <p>This implementation is able to delete hidden paths from
+ * the configurations before they are sent to the viewer.</p>
  */
-@FunctionalInterface
-public interface ServerConfigProvider {
+public abstract class ServerConfigProvider implements MetadataProvider {
+    private final Map<String, ConfigParser> files;
+    private final ExcludedConfigFilter hiddenPathFilters;
 
-    /**
-     * Loads a map of the server configuration files.
-     *
-     * <p>The key is the name of the file and the value is a
-     * {@link JsonElement} of the contents.</p>
-     *
-     * @return the exported server configurations
-     */
-    Map<String, JsonElement> loadServerConfigurations();
-
-    default Map<String, String> exportServerConfigurations() {
-        Map<String, String> map = new LinkedHashMap<>();
-        loadServerConfigurations().forEach((key, value) -> map.put(key, value.toString()));
-        return map;
+    protected ServerConfigProvider(Map<String, ConfigParser> files, Collection<String> hiddenPaths) {
+        this.files = files;
+        this.hiddenPathFilters = new ExcludedConfigFilter(hiddenPaths);
     }
 
-    /**
-     * A no-op implementation
-     */
-    ServerConfigProvider NO_OP = Collections::emptyMap;
+    @Override
+    public final Map<String, JsonElement> get() {
+        ImmutableMap.Builder<String, JsonElement> builder = ImmutableMap.builder();
+
+        this.files.forEach((path, parser) -> {
+            try {
+                JsonElement json = parser.load(path, this.hiddenPathFilters);
+                if (json == null) {
+                    return;
+                }
+                builder.put(path, json);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        return builder.build();
+    }
+
+    protected static List<String> getSystemPropertyList(String property) {
+        String value = System.getProperty(property);
+        return value == null
+                ? Collections.emptyList()
+                : Arrays.asList(value.split(","));
+    }
 
 }

@@ -23,6 +23,7 @@ package me.lucko.spark.common;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -161,7 +162,16 @@ public interface SparkPlugin {
      * @return the server config provider function
      */
     default ServerConfigProvider createServerConfigProvider() {
-        return ServerConfigProvider.NO_OP;
+        return null;
+    }
+
+    /**
+     * Creates a metadata provider for the platform.
+     *
+     * @return the platform extra metadata provider
+     */
+    default MetadataProvider createExtraMetadataProvider() {
+        return null;
     }
 
     /**

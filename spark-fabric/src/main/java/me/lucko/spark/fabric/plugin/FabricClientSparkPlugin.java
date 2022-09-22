@@ -28,12 +28,14 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
+import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
+import me.lucko.spark.fabric.FabricExtraMetadataProvider;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
@@ -135,6 +137,11 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public TickReporter createTickReporter() {
         return new FabricTickReporter.Client();
+    }
+
+    @Override
+    public MetadataProvider createExtraMetadataProvider() {
+        return new FabricExtraMetadataProvider(this.minecraft.getResourcePackManager());
     }
 
     @Override
