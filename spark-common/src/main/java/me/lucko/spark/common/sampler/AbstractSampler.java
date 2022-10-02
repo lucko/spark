@@ -156,7 +156,9 @@ public abstract class AbstractSampler implements Sampler {
 
         try {
             MetadataProvider extraMetadataProvider = platform.getPlugin().createExtraMetadataProvider();
-            metadata.putAllExtraPlatformMetadata(extraMetadataProvider.export());
+            if (extraMetadataProvider != null) {
+                metadata.putAllExtraPlatformMetadata(extraMetadataProvider.export());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
