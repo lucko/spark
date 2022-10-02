@@ -35,7 +35,6 @@ import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.SamplerBuilder;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.ThreadNodeOrder;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
@@ -94,7 +93,6 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("not-combined", null)
                 .argumentUsage("force-java-sampler", null)
                 .argumentUsage("stop --comment", "comment")
-                .argumentUsage("stop --order-by-time", null)
                 .argumentUsage("stop --save-to-file", null)
                 .executor(this::profiler)
                 .tabCompleter((platform, sender, arguments) -> {
@@ -103,7 +101,7 @@ public class SamplerModule implements CommandModule {
                     }
 
                     if (arguments.contains("--stop") || arguments.contains("--upload")) {
-                        return TabCompleter.completeForOpts(arguments, "--order-by-time", "--comment", "--save-to-file");
+                        return TabCompleter.completeForOpts(arguments, "--comment", "--save-to-file");
                     }
 
                     List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
@@ -249,14 +247,13 @@ public class SamplerModule implements CommandModule {
 
         // await the result
         if (timeoutSeconds != -1) {
-            ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
             MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
             MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
             boolean saveToFile = arguments.boolFlag("save-to-file");
             future.thenAcceptAsync(s -> {
                 resp.broadcastPrefixed(text("The active profiler has completed! Uploading results..."));
-                handleUpload(platform, resp, s, threadOrder, comment, mergeMode, saveToFile);
+                handleUpload(platform, resp, s, comment, mergeMode, saveToFile);
             });
         }
     }
@@ -293,18 +290,17 @@ public class SamplerModule implements CommandModule {
         } else {
             this.activeSampler.stop();
             resp.broadcastPrefixed(text("The active profiler has been stopped! Uploading results..."));
-            ThreadNodeOrder threadOrder = arguments.boolFlag("order-by-time") ? ThreadNodeOrder.BY_TIME : ThreadNodeOrder.BY_NAME;
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
             MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
             MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
             boolean saveToFile = arguments.boolFlag("save-to-file");
-            handleUpload(platform, resp, this.activeSampler, threadOrder, comment, mergeMode, saveToFile);
+            handleUpload(platform, resp, this.activeSampler, comment, mergeMode, saveToFile);
             this.activeSampler = null;
         }
     }
 
-    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, ThreadNodeOrder threadOrder, String comment, MergeMode mergeMode, boolean saveToFileFlag) {
-        SparkSamplerProtos.SamplerData output = sampler.toProto(platform, resp.sender(), threadOrder, comment, mergeMode, ClassSourceLookup.create(platform));
+    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, String comment, MergeMode mergeMode, boolean saveToFileFlag) {
+        SparkSamplerProtos.SamplerData output = sampler.toProto(platform, resp.sender(), comment, mergeMode, ClassSourceLookup.create(platform));
 
         boolean saveToFile = false;
         if (saveToFileFlag) {

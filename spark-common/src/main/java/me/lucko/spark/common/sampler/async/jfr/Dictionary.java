@@ -37,6 +37,10 @@ public class Dictionary<T> {
         size = 0;
     }
 
+    public int size() {
+        return this.size;
+    }
+
     public void put(long key, T value) {
         if (key == 0) {
             throw new IllegalArgumentException("Zero key not allowed");

@@ -18,35 +18,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler;
+package me.lucko.spark.common.sampler.window;
 
-import me.lucko.spark.common.sampler.node.ThreadNode;
-
-import java.util.Comparator;
-
-/**
- * Methods of ordering {@link ThreadNode}s in the output data.
- */
-public enum ThreadNodeOrder implements Comparator<ThreadNode> {
+public enum ProfilingWindowUtils {
+    ;
 
     /**
-     * Order by the name of the thread (alphabetically)
+     * Gets the profiling window for the given time in unix-millis.
+     *
+     * @param time the time in milliseconds
+     * @return the window
      */
-    BY_NAME {
-        @Override
-        public int compare(ThreadNode o1, ThreadNode o2) {
-            return o1.getThreadLabel().compareTo(o2.getThreadLabel());
-        }
-    },
-
-    /**
-     * Order by the time taken by the thread (most time taken first)
-     */
-    BY_TIME {
-        @Override
-        public int compare(ThreadNode o1, ThreadNode o2) {
-            return -Double.compare(o1.getTotalTime(), o2.getTotalTime());
-        }
+    public static int unixMillisToWindow(long time) {
+        // one window per minute
+        return (int) (time / 60_000);
     }
-
 }
