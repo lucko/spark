@@ -152,6 +152,15 @@ message WorldStatistics {
   }
 }
 
+message WindowStatistics {
+  int32 ticks = 1;
+  double cpu_process = 2;
+  double cpu_system = 3;
+  double tps = 4;
+  double mspt_median = 5;
+  double mspt_max = 6;
+}
+
 message RollingAverageValues {
   double mean = 1;
   double max = 2;

@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.sampler.node;
 
+import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
 /**
@@ -53,13 +54,46 @@ public final class ThreadNode extends AbstractNode {
         this.label = label;
     }
 
-    public SparkSamplerProtos.ThreadNode toProto(MergeMode mergeMode) {
+    /**
+     * Logs the given stack trace against this node and its children.
+     *
+     * @param describer the function that describes the elements of the stack
+     * @param stack the stack
+     * @param time the total time to log
+     * @param window the window
+     * @param <T> the stack trace element type
+     */
+    public <T> void log(StackTraceNode.Describer<T> describer, T[] stack, long time, int window) {
+        if (stack.length == 0) {
+            return;
+        }
+
+        getTimeAccumulator(window).add(time);
+
+        AbstractNode node = this;
+        T previousElement = null;
+
+        for (int offset = 0; offset < Math.min(MAX_STACK_DEPTH, stack.length); offset++) {
+            T element = stack[(stack.length - 1) - offset];
+
+            node = node.resolveChild(describer.describe(element, previousElement));
+            node.getTimeAccumulator(window).add(time);
+
+            previousElement = element;
+        }
+    }
+
+    public SparkSamplerProtos.ThreadNode toProto(MergeMode mergeMode, ProtoTimeEncoder timeEncoder) {
         SparkSamplerProtos.ThreadNode.Builder proto = SparkSamplerProtos.ThreadNode.newBuilder()
-                .setName(getThreadLabel())
-                .setTime(getTotalTime());
+                .setName(getThreadLabel());
+
+        double[] times = encodeTimesForProto(timeEncoder);
+        for (double time : times) {
+            proto.addTimes(time);
+        }
 
         for (StackTraceNode child : exportChildren(mergeMode)) {
-            proto.addChildren(child.toProto(mergeMode));
+            proto.addChildren(child.toProto(mergeMode, timeEncoder));
         }
 
         return proto.build();

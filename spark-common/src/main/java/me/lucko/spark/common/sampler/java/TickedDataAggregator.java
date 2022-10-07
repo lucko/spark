@@ -23,6 +23,7 @@ package me.lucko.spark.common.sampler.java;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
@@ -31,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implementation of {@link DataAggregator} which supports only including sampling data from "ticks"
@@ -48,14 +48,15 @@ public class TickedDataAggregator extends JavaDataAggregator {
     /** The expected number of samples in each tick */
     private final int expectedSize;
 
-    /** The number of ticks aggregated so far */
-    private final AtomicInteger numberOfTicks = new AtomicInteger();
-
-    private final Object mutex = new Object();
+    /** Counts the number of ticks aggregated */
+    private WindowStatisticsCollector.ExplicitTickCounter tickCounter;
 
     // state
     private int currentTick = -1;
-    private TickList currentData = new TickList(0);
+    private TickList currentData = null;
+
+    // guards currentData
+    private final Object mutex = new Object();
 
     public TickedDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
         super(workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
@@ -66,29 +67,34 @@ public class TickedDataAggregator extends JavaDataAggregator {
         this.expectedSize = (int) ((50 / intervalMilliseconds) + 10);
     }
 
+    public void setTickCounter(WindowStatisticsCollector.ExplicitTickCounter tickCounter) {
+        this.tickCounter = tickCounter;
+    }
+
     @Override
     public SamplerMetadata.DataAggregator getMetadata() {
         // push the current tick (so numberOfTicks is accurate)
         synchronized (this.mutex) {
             pushCurrentTick();
+            this.currentData = null;
         }
 
         return SamplerMetadata.DataAggregator.newBuilder()
                 .setType(SamplerMetadata.DataAggregator.Type.TICKED)
                 .setThreadGrouper(this.threadGrouper.asProto())
                 .setTickLengthThreshold(this.tickLengthThreshold)
-                .setNumberOfIncludedTicks(this.numberOfTicks.get())
+                .setNumberOfIncludedTicks(this.tickCounter.getTotalCountedTicks())
                 .build();
     }
 
     @Override
-    public void insertData(ThreadInfo threadInfo) {
+    public void insertData(ThreadInfo threadInfo, int window) {
         synchronized (this.mutex) {
             int tick = this.tickHook.getCurrentTick();
-            if (this.currentTick != tick) {
+            if (this.currentTick != tick || this.currentData == null) {
                 pushCurrentTick();
                 this.currentTick = tick;
-                this.currentData = new TickList(this.expectedSize);
+                this.currentData = new TickList(this.expectedSize, window);
             }
 
             this.currentData.addData(threadInfo);
@@ -98,6 +104,9 @@ public class TickedDataAggregator extends JavaDataAggregator {
     // guarded by 'mutex'
     private void pushCurrentTick() {
         TickList currentData = this.currentData;
+        if (currentData == null) {
+            return;
+        }
 
         // approximate how long the tick lasted
         int tickLengthMicros = currentData.getList().size() * this.interval;
@@ -107,8 +116,8 @@ public class TickedDataAggregator extends JavaDataAggregator {
             return;
         }
 
-        this.numberOfTicks.incrementAndGet();
         this.workerPool.submit(currentData);
+        this.tickCounter.increment();
     }
 
     @Override
@@ -121,21 +130,19 @@ public class TickedDataAggregator extends JavaDataAggregator {
         return super.exportData();
     }
 
-    public int getNumberOfTicks() {
-        return this.numberOfTicks.get();
-    }
-
     private final class TickList implements Runnable {
         private final List<ThreadInfo> list;
+        private final int window;
 
-        TickList(int expectedSize) {
+        TickList(int expectedSize, int window) {
             this.list = new ArrayList<>(expectedSize);
+            this.window = window;
         }
 
         @Override
         public void run() {
             for (ThreadInfo data : this.list) {
-                writeData(data);
+                writeData(data, this.window);
             }
         }
 

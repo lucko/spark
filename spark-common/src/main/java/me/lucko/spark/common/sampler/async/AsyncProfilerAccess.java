@@ -87,11 +87,11 @@ public class AsyncProfilerAccess {
         this.setupException = setupException;
     }
 
-    public AsyncProfiler getProfiler() {
+    public AsyncProfilerJob startNewProfilerJob() {
         if (this.profiler == null) {
             throw new UnsupportedOperationException("async-profiler not supported", this.setupException);
         }
-        return this.profiler;
+        return AsyncProfilerJob.createNew(this, this.profiler);
     }
 
     public ProfilingEvent getProfilingEvent() {

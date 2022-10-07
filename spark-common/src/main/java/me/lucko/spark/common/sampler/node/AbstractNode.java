@@ -20,6 +20,9 @@
 
 package me.lucko.spark.common.sampler.node;
 
+import me.lucko.spark.common.sampler.async.jfr.Dictionary;
+import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,62 +30,63 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.IntStream;
 
 /**
  * Encapsulates a timed node in the sampling stack.
  */
 public abstract class AbstractNode {
 
-    private static final int MAX_STACK_DEPTH = 300;
+    protected static final int MAX_STACK_DEPTH = 300;
 
     /** A map of the nodes children */
     private final Map<StackTraceNode.Description, StackTraceNode> children = new ConcurrentHashMap<>();
 
     /** The accumulated sample time for this node, measured in microseconds */
-    private final LongAdder totalTime = new LongAdder();
+    // long key = the window (effectively System.currentTimeMillis() / 60_000)
+    // LongAdder value = accumulated time in microseconds
+    private final Dictionary<LongAdder> times = new Dictionary<>();
 
     /**
-     * Gets the total sample time logged for this node in milliseconds.
+     * Gets the time accumulator for a given window
      *
-     * @return the total time
+     * @param window the window
+     * @return the accumulator
      */
-    public double getTotalTime() {
-        return this.totalTime.longValue() / 1000d;
+    protected LongAdder getTimeAccumulator(int window) {
+        LongAdder adder = this.times.get(window);
+        if (adder == null) {
+            adder = new LongAdder();
+            this.times.put(window, adder);
+        }
+        return adder;
+    }
+
+    /**
+     * Gets the time windows that have been logged for this node.
+     *
+     * @return the time windows
+     */
+    public IntStream getTimeWindows() {
+        IntStream.Builder keys = IntStream.builder();
+        this.times.forEach((key, value) -> keys.add((int) key));
+        return keys.build();
+    }
+
+    /**
+     * Gets the encoded total sample times logged for this node in milliseconds.
+     *
+     * @return the total times
+     */
+    protected double[] encodeTimesForProto(ProtoTimeEncoder encoder) {
+        return encoder.encode(this.times);
     }
 
     public Collection<StackTraceNode> getChildren() {
         return this.children.values();
     }
 
-    /**
-     * Logs the given stack trace against this node and its children.
-     *
-     * @param describer the function that describes the elements of the stack
-     * @param stack the stack
-     * @param time the total time to log
-     * @param <T> the stack trace element type
-     */
-    public <T> void log(StackTraceNode.Describer<T> describer, T[] stack, long time) {
-        if (stack.length == 0) {
-            return;
-        }
-
-        this.totalTime.add(time);
-
-        AbstractNode node = this;
-        T previousElement = null;
-
-        for (int offset = 0; offset < Math.min(MAX_STACK_DEPTH, stack.length); offset++) {
-            T element = stack[(stack.length - 1) - offset];
-
-            node = node.resolveChild(describer.describe(element, previousElement));
-            node.totalTime.add(time);
-
-            previousElement = element;
-        }
-    }
-
-    private StackTraceNode resolveChild(StackTraceNode.Description description) {
+    protected StackTraceNode resolveChild(StackTraceNode.Description description) {
         StackTraceNode result = this.children.get(description); // fast path
         if (result != null) {
             return result;
@@ -96,7 +100,7 @@ public abstract class AbstractNode {
      * @param other the other node
      */
     protected void merge(AbstractNode other) {
-        this.totalTime.add(other.totalTime.longValue());
+        other.times.forEach((key, value) -> getTimeAccumulator((int) key).add(value.longValue()));
         for (Map.Entry<StackTraceNode.Description, StackTraceNode> child : other.children.entrySet()) {
             resolveChild(child.getKey()).merge(child.getValue());
         }
@@ -123,7 +127,7 @@ public abstract class AbstractNode {
             list.add(child);
         }
 
-        list.sort(null);
+        //list.sort(null);
         return list;
     }
 

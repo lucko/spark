@@ -30,7 +30,10 @@ import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
+import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
+import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
@@ -58,11 +61,11 @@ public abstract class AbstractSampler implements Sampler {
     /** The time when sampling first began */
     protected long startTime = -1;
 
-    /** The game tick when sampling first began */
-    protected int startTick = -1;
-
     /** The unix timestamp (in millis) when this sampler should automatically complete. */
     protected final long autoEndTime; // -1 for nothing
+
+    /** Collects statistics for each window in the sample */
+    protected final WindowStatisticsCollector windowStatisticsCollector;
 
     /** A future to encapsulate the completion of this sampler instance */
     protected final CompletableFuture<Sampler> future = new CompletableFuture<>();
@@ -75,6 +78,7 @@ public abstract class AbstractSampler implements Sampler {
         this.interval = interval;
         this.threadDumper = threadDumper;
         this.autoEndTime = autoEndTime;
+        this.windowStatisticsCollector = new WindowStatisticsCollector(platform);
     }
 
     @Override
@@ -106,11 +110,11 @@ public abstract class AbstractSampler implements Sampler {
     @Override
     public void start() {
         this.startTime = System.currentTimeMillis();
+    }
 
-        TickHook tickHook = this.platform.getTickHook();
-        if (tickHook != null) {
-            this.startTick = tickHook.getCurrentTick();
-        }
+    @Override
+    public void stop() {
+        this.windowStatisticsCollector.stop();
     }
 
     protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender creator, String comment, DataAggregator dataAggregator) {
@@ -127,12 +131,9 @@ public abstract class AbstractSampler implements Sampler {
             metadata.setComment(comment);
         }
 
-        if (this.startTick != -1) {
-            TickHook tickHook = this.platform.getTickHook();
-            if (tickHook != null) {
-                int numberOfTicks = tickHook.getCurrentTick() - this.startTick;
-                metadata.setNumberOfTicks(numberOfTicks);
-            }
+        int totalTicks = this.windowStatisticsCollector.getTotalTicks();
+        if (totalTicks != -1) {
+            metadata.setNumberOfTicks(totalTicks);
         }
 
         try {
@@ -171,14 +172,23 @@ public abstract class AbstractSampler implements Sampler {
         proto.setMetadata(metadata);
     }
 
-    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, Comparator<ThreadNode> outputOrder, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
         List<ThreadNode> data = dataAggregator.exportData();
-        data.sort(outputOrder);
+        data.sort(Comparator.comparing(ThreadNode::getThreadLabel));
 
         ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
 
+        ProtoTimeEncoder timeEncoder = new ProtoTimeEncoder(data);
+        int[] timeWindows = timeEncoder.getKeys();
+        for (int timeWindow : timeWindows) {
+            proto.addTimeWindows(timeWindow);
+        }
+
+        this.windowStatisticsCollector.ensureHasStatisticsForAllWindows(timeWindows);
+        proto.putAllTimeWindowStatistics(this.windowStatisticsCollector.export());
+
         for (ThreadNode entry : data) {
-            proto.addThreads(entry.toProto(mergeMode));
+            proto.addThreads(entry.toProto(mergeMode, timeEncoder));
             classSourceVisitor.visit(entry);
         }
 
