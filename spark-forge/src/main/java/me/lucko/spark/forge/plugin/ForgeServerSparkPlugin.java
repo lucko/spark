@@ -66,6 +66,7 @@ import net.minecraftforge.server.permission.nodes.PermissionTypes;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -127,7 +128,18 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
         // register permissions with forge & keep a copy for lookup
         ImmutableMap.Builder<String, PermissionNode<Boolean>> builder = ImmutableMap.builder();
+
+        Set<String> alreadyRegistered = e.getNodes().stream()
+                .map(PermissionNode::getNodeName)
+                .collect(Collectors.toSet());
+
         for (String permission : permissions) {
+            // there's a weird bug where it seems that this listener can be called twice, causing an
+            // IllegalArgumentException to be thrown the second time e.addNodes is called.
+            if (alreadyRegistered.contains("spark." + permission)) {
+                continue;
+            }
+
             PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, defaultValue);
             e.addNodes(node);
             builder.put("spark." + permission, node);
