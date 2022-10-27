@@ -52,6 +52,7 @@ import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.TemporaryFiles;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 
 import java.io.IOException;
@@ -78,7 +79,6 @@ import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
 import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
-import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
 /**
  * Abstract spark implementation used by all platforms.
@@ -362,14 +362,15 @@ public class SparkPlatform {
                     .append(text("v" + getPlugin().getVersion(), GRAY))
                     .build()
             );
+
+            String helpCmd = "/" + getPlugin().getCommandName() + " help";
             resp.replyPrefixed(text()
                     .color(GRAY)
-                    .append(text("Use "))
+                    .append(text("Run "))
                     .append(text()
-                            .content("/" + getPlugin().getCommandName() + " help")
+                            .content(helpCmd)
                             .color(WHITE)
-                            .decoration(UNDERLINED, true)
-                            .clickEvent(ClickEvent.runCommand("/" + getPlugin().getCommandName() + " help"))
+                            .clickEvent(ClickEvent.runCommand(helpCmd))
                             .build()
                     )
                     .append(text(" to view usage information."))
@@ -462,6 +463,18 @@ public class SparkPlatform {
                 }
             }
         }
+
+        sender.reply(Component.empty());
+        sender.replyPrefixed(text()
+                .append(text("For full usage information, please go to: "))
+                .append(text()
+                        .content("https://spark.lucko.me/docs/Command-Usage")
+                        .color(WHITE)
+                        .clickEvent(ClickEvent.openUrl("https://spark.lucko.me/docs/Command-Usage"))
+                        .build()
+                )
+                .build()
+        );
     }
 
 }

@@ -42,6 +42,7 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 
 import java.io.IOException;
@@ -62,6 +63,7 @@ import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
 import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
+import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
 
 public class SamplerModule implements CommandModule {
     private static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
@@ -83,17 +85,11 @@ public class SamplerModule implements CommandModule {
                 .aliases("profiler", "sampler")
                 .argumentUsage("info", null)
                 .argumentUsage("stop", null)
-                .argumentUsage("cancel", null)
-                .argumentUsage("interval", "interval millis")
+                .argumentUsage("timeout", "timeout seconds")
+                .argumentUsage("thread *", null)
                 .argumentUsage("thread", "thread name")
                 .argumentUsage("only-ticks-over", "tick length millis")
-                .argumentUsage("timeout", "timeout seconds")
-                .argumentUsage("regex --thread", "thread regex")
-                .argumentUsage("combine-all", null)
-                .argumentUsage("not-combined", null)
-                .argumentUsage("force-java-sampler", null)
-                .argumentUsage("stop --comment", "comment")
-                .argumentUsage("stop --save-to-file", null)
+                .argumentUsage("interval", "interval millis")
                 .executor(this::profiler)
                 .tabCompleter((platform, sender, arguments) -> {
                     if (arguments.contains("--info") || arguments.contains("--cancel")) {
@@ -120,7 +116,7 @@ public class SamplerModule implements CommandModule {
 
     private void profiler(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         if (arguments.boolFlag("info")) {
-            profilerInfo(resp);
+            profilerInfo(platform, resp);
             return;
         }
 
@@ -138,6 +134,11 @@ public class SamplerModule implements CommandModule {
     }
 
     private void profilerStart(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+        if (this.activeSampler != null) {
+            profilerInfo(platform, resp);
+            return;
+        }
+
         int timeoutSeconds = arguments.intFlag("timeout");
         if (timeoutSeconds != -1 && timeoutSeconds <= 10) {
             resp.replyPrefixed(text("The specified timeout is not long enough for accurate results to be formed. " +
@@ -194,12 +195,7 @@ public class SamplerModule implements CommandModule {
             }
         }
 
-        if (this.activeSampler != null) {
-            resp.replyPrefixed(text("An active profiler is already running."));
-            return;
-        }
-
-        resp.broadcastPrefixed(text("Initializing a new profiler, please wait..."));
+        resp.broadcastPrefixed(text("Starting a new profiler, please wait..."));
 
         SamplerBuilder builder = new SamplerBuilder();
         builder.threadDumper(threadDumper);
@@ -217,13 +213,16 @@ public class SamplerModule implements CommandModule {
         Sampler sampler = this.activeSampler = builder.start(platform);
 
         resp.broadcastPrefixed(text()
-                .append(text("Profiler now active!", GOLD))
+                .append(text("Profiler is now running!", GOLD))
                 .append(space())
                 .append(text("(" + (sampler instanceof AsyncSampler ? "async" : "built-in java") + ")", DARK_GRAY))
                 .build()
         );
+
         if (timeoutSeconds == -1) {
-            resp.broadcastPrefixed(text("Use '/" + platform.getPlugin().getCommandName() + " profiler --stop' to stop profiling and upload the results."));
+            resp.broadcastPrefixed(text("It will run in the background until it is stopped by an admin."));
+            resp.broadcastPrefixed(text("To stop the profiler and upload the results, run:"));
+            resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler --stop"));
         } else {
             resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
         }
@@ -258,20 +257,28 @@ public class SamplerModule implements CommandModule {
         }
     }
 
-    private void profilerInfo(CommandResponseHandler resp) {
+    private void profilerInfo(SparkPlatform platform, CommandResponseHandler resp) {
         if (this.activeSampler == null) {
-            resp.replyPrefixed(text("There isn't an active profiler running."));
+            resp.replyPrefixed(text("The profiler isn't running!"));
+            resp.replyPrefixed(text("To start a new one, run:"));
+            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler"));
         } else {
-            long timeout = this.activeSampler.getAutoEndTime();
-            if (timeout == -1) {
-                resp.replyPrefixed(text("There is an active profiler currently running, with no defined timeout."));
-            } else {
-                long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
-                resp.replyPrefixed(text("There is an active profiler currently running, due to timeout in " + timeoutDiff + " seconds."));
-            }
+            resp.replyPrefixed(text("Profiler is already running!", GOLD));
 
             long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
-            resp.replyPrefixed(text("It has been profiling for " + runningTime + " seconds so far."));
+            resp.replyPrefixed(text("So far, it has profiled for " + runningTime + " seconds."));
+
+            long timeout = this.activeSampler.getAutoEndTime();
+            if (timeout == -1) {
+                resp.replyPrefixed(text("To stop the profiler and upload the results, run:"));
+                resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler --stop"));
+            } else {
+                long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
+                resp.replyPrefixed(text("It is due to complete automatically and upload results in " + timeoutDiff + " seconds."));
+            }
+
+            resp.replyPrefixed(text("To cancel the profiler without uploading the results, run:"));
+            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler --cancel"));
         }
     }
 
@@ -280,7 +287,7 @@ public class SamplerModule implements CommandModule {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
             close();
-            resp.broadcastPrefixed(text("The active profiler has been cancelled.", GOLD));
+            resp.broadcastPrefixed(text("Profiler has been cancelled.", GOLD));
         }
     }
 
@@ -289,11 +296,17 @@ public class SamplerModule implements CommandModule {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
             this.activeSampler.stop();
-            resp.broadcastPrefixed(text("The active profiler has been stopped! Uploading results..."));
+
+            boolean saveToFile = arguments.boolFlag("save-to-file");
+            if (saveToFile) {
+                resp.broadcastPrefixed(text("Stopping the profiler & saving results, please wait..."));
+            } else {
+                resp.broadcastPrefixed(text("Stopping the profiler & uploading results, please wait..."));
+            }
+
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
             MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
             MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
-            boolean saveToFile = arguments.boolFlag("save-to-file");
             handleUpload(platform, resp, this.activeSampler, comment, mergeMode, saveToFile);
             this.activeSampler = null;
         }
@@ -310,7 +323,7 @@ public class SamplerModule implements CommandModule {
                 String key = platform.getBytebinClient().postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
                 String url = platform.getViewerUrl() + key;
 
-                resp.broadcastPrefixed(text("Profiler results:", GOLD));
+                resp.broadcastPrefixed(text("Profiler stopped & upload complete!", GOLD));
                 resp.broadcast(text()
                         .content(url)
                         .color(GRAY)
@@ -331,13 +344,9 @@ public class SamplerModule implements CommandModule {
             try {
                 Files.write(file, output.toByteArray());
 
-                resp.broadcastPrefixed(text()
-                        .content("Profile written to: ")
-                        .color(GOLD)
-                        .append(text(file.toString(), GRAY))
-                        .build()
-                );
-                resp.broadcastPrefixed(text("You can read the profile file using the viewer web-app - " + platform.getViewerUrl(), GRAY));
+                resp.broadcastPrefixed(text("Profiler stopped & save complete!", GOLD));
+                resp.broadcastPrefixed(text("Data has been written to: " + file));
+                resp.broadcastPrefixed(text("You can view the profile file using the web app @ " + platform.getViewerUrl(), GRAY));
 
                 platform.getActivityLog().addToLog(Activity.fileActivity(resp.sender(), System.currentTimeMillis(), "Profiler", file.toString()));
             } catch (IOException e) {
@@ -345,5 +354,17 @@ public class SamplerModule implements CommandModule {
                 e.printStackTrace();
             }
         }
+    }
+
+    private static Component cmdPrompt(String cmd) {
+        return text()
+                .append(text("  "))
+                .append(text()
+                        .content(cmd)
+                        .color(WHITE)
+                        .clickEvent(ClickEvent.runCommand(cmd))
+                        .build()
+                )
+                .build();
     }
 }
