@@ -76,15 +76,20 @@ public class AsyncSampler extends AbstractSampler {
             this.windowStatisticsCollector.startCountingTicks(tickHook);
         }
 
-        int window = ProfilingWindowUtils.unixMillisToWindow(System.currentTimeMillis());
+        int window = ProfilingWindowUtils.windowNow();
 
         AsyncProfilerJob job = this.profilerAccess.startNewProfilerJob();
         job.init(this.platform, this.interval, this.threadDumper, window);
         job.start();
         this.currentJob = job;
 
-        // rotate the sampler job every minute to put data into a new window
-        this.scheduler.scheduleAtFixedRate(this::rotateProfilerJob, 1, 1, TimeUnit.MINUTES);
+        // rotate the sampler job to put data into a new window
+        this.scheduler.scheduleAtFixedRate(
+                this::rotateProfilerJob,
+                ProfilingWindowUtils.WINDOW_SIZE_SECONDS,
+                ProfilingWindowUtils.WINDOW_SIZE_SECONDS,
+                TimeUnit.SECONDS
+        );
 
         recordInitialGcStats();
         scheduleTimeout();
@@ -117,6 +122,9 @@ public class AsyncSampler extends AbstractSampler {
 
                 // aggregate the output of the previous job
                 previousJob.aggregate(this.dataAggregator);
+
+                // prune data older than the history size
+                this.dataAggregator.pruneData(ProfilingWindowUtils.keepHistoryBefore(window));
             }
         } catch (Throwable e) {
             e.printStackTrace();

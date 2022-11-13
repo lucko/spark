@@ -20,17 +20,18 @@
 
 package me.lucko.spark.common.sampler.node;
 
-import me.lucko.spark.common.sampler.async.jfr.Dictionary;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.stream.IntStream;
+import java.util.function.IntPredicate;
 
 /**
  * Encapsulates a timed node in the sampling stack.
@@ -43,9 +44,9 @@ public abstract class AbstractNode {
     private final Map<StackTraceNode.Description, StackTraceNode> children = new ConcurrentHashMap<>();
 
     /** The accumulated sample time for this node, measured in microseconds */
-    // long key = the window (effectively System.currentTimeMillis() / 60_000)
+    // Integer key = the window (effectively System.currentTimeMillis() / 60_000)
     // LongAdder value = accumulated time in microseconds
-    private final Dictionary<LongAdder> times = new Dictionary<>();
+    private final Map<Integer, LongAdder> times = new HashMap<>();
 
     /**
      * Gets the time accumulator for a given window
@@ -67,10 +68,18 @@ public abstract class AbstractNode {
      *
      * @return the time windows
      */
-    public IntStream getTimeWindows() {
-        IntStream.Builder keys = IntStream.builder();
-        this.times.forEach((key, value) -> keys.add((int) key));
-        return keys.build();
+    public Set<Integer> getTimeWindows() {
+        return this.times.keySet();
+    }
+
+    /**
+     * Removes time windows from this node if they pass the given {@code predicate} test.
+     *
+     * @param predicate the predicate
+     * @return true if any time windows were removed
+     */
+    public boolean removeTimeWindows(IntPredicate predicate) {
+        return this.times.keySet().removeIf(predicate::test);
     }
 
     /**
@@ -100,7 +109,7 @@ public abstract class AbstractNode {
      * @param other the other node
      */
     protected void merge(AbstractNode other) {
-        other.times.forEach((key, value) -> getTimeAccumulator((int) key).add(value.longValue()));
+        other.times.forEach((key, value) -> getTimeAccumulator(key).add(value.longValue()));
         for (Map.Entry<StackTraceNode.Description, StackTraceNode> child : other.children.entrySet()) {
             resolveChild(child.getKey()).merge(child.getValue());
         }
@@ -127,7 +136,6 @@ public abstract class AbstractNode {
             list.add(child);
         }
 
-        //list.sort(null);
         return list;
     }
 

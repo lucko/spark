@@ -21,7 +21,6 @@
 package me.lucko.spark.common.sampler.window;
 
 import me.lucko.spark.common.sampler.async.jfr.Dictionary;
-import me.lucko.spark.common.sampler.node.AbstractNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import java.util.HashMap;
@@ -42,7 +41,7 @@ public class ProtoTimeEncoder {
     public ProtoTimeEncoder(List<ThreadNode> sourceData) {
         // get an array of all keys that show up in the source data
         this.keys = sourceData.stream()
-                .map(AbstractNode::getTimeWindows)
+                .map(n -> n.getTimeWindows().stream().mapToInt(i -> i))
                 .reduce(IntStream.empty(), IntStream::concat)
                 .distinct()
                 .sorted()
@@ -70,14 +69,14 @@ public class ProtoTimeEncoder {
      * @param times a dictionary of times (unix-time millis -> duration in microseconds)
      * @return the times encoded as a double array
      */
-    public double[] encode(Dictionary<LongAdder> times) {
+    public double[] encode(Map<Integer, LongAdder> times) {
         // construct an array of values - length needs to exactly match the
         // number of keys, even if some values are zero.
         double[] array = new double[this.keys.length];
 
         times.forEach((key, value) -> {
             // get the index for the given key
-            Integer idx = this.keysToIndex.get((int) key);
+            Integer idx = this.keysToIndex.get(key);
             if (idx == null) {
                 throw new RuntimeException("No index for key " + key + " in " + this.keysToIndex.keySet());
             }

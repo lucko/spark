@@ -25,9 +25,13 @@ import me.lucko.spark.common.util.IndexedListBuilder;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.function.IntPredicate;
 
 /**
  * The root of a sampling stack for a given thread / thread group.
@@ -87,6 +91,46 @@ public final class ThreadNode extends AbstractNode {
 
             previousElement = element;
         }
+    }
+
+    /**
+     * Removes time windows that match the given {@code predicate}.
+     *
+     * @param predicate the predicate to use to test the time windows
+     * @return true if this node is now empty
+     */
+    public boolean removeTimeWindowsRecursively(IntPredicate predicate) {
+        Queue<AbstractNode> queue = new ArrayDeque<>();
+        queue.add(this);
+
+        while (!queue.isEmpty()) {
+            AbstractNode node = queue.remove();
+            Collection<StackTraceNode> children = node.getChildren();
+
+            boolean needToProcessChildren = false;
+
+            for (Iterator<StackTraceNode> it = children.iterator(); it.hasNext(); ) {
+                StackTraceNode child = it.next();
+
+                boolean windowsWereRemoved = child.removeTimeWindows(predicate);
+                boolean childIsNowEmpty = child.getTimeWindows().isEmpty();
+
+                if (childIsNowEmpty) {
+                    it.remove();
+                    continue;
+                }
+
+                if (windowsWereRemoved) {
+                    needToProcessChildren = true;
+                }
+            }
+
+            if (needToProcessChildren) {
+                queue.addAll(children);
+            }
+        }
+
+        return getTimeWindows().isEmpty();
     }
 
     public SparkSamplerProtos.ThreadNode toProto(MergeMode mergeMode, ProtoTimeEncoder timeEncoder) {

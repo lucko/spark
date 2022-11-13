@@ -45,6 +45,7 @@ import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
+import me.lucko.spark.common.sampler.SamplerContainer;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
@@ -98,6 +99,7 @@ public class SparkPlatform {
     private final List<Command> commands;
     private final ReentrantLock commandExecuteLock = new ReentrantLock(true);
     private final ActivityLog activityLog;
+    private final SamplerContainer samplerContainer;
     private final TickHook tickHook;
     private final TickReporter tickReporter;
     private final TickStatistics tickStatistics;
@@ -136,6 +138,8 @@ public class SparkPlatform {
 
         this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
         this.activityLog.load();
+
+        this.samplerContainer = new SamplerContainer();
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
@@ -227,6 +231,10 @@ public class SparkPlatform {
 
     public ActivityLog getActivityLog() {
         return this.activityLog;
+    }
+
+    public SamplerContainer getSamplerContainer() {
+        return this.samplerContainer;
     }
 
     public TickHook getTickHook() {

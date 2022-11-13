@@ -34,8 +34,6 @@ import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
@@ -145,10 +143,15 @@ public class JavaSampler extends AbstractSampler implements Runnable {
                 JavaSampler.this.dataAggregator.insertData(threadInfo, this.window);
             }
 
-            // if we have just stepped over into a new window, collect statistics for the previous window
+            // if we have just stepped over into a new window...
             int previousWindow = JavaSampler.this.lastWindow.getAndSet(this.window);
             if (previousWindow != 0 && previousWindow != this.window) {
+
+                // collect statistics for the previous window
                 JavaSampler.this.windowStatisticsCollector.measureNow(previousWindow);
+
+                // prune data older than the history size
+                JavaSampler.this.dataAggregator.pruneData(ProfilingWindowUtils.keepHistoryBefore(this.window));
             }
         }
     }
