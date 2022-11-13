@@ -122,7 +122,7 @@ public class SamplerModule implements CommandModule {
             return;
         }
 
-        if (subCommand.equals("stop") || arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
+        if (subCommand.equals("stop") || subCommand.equals("upload") || arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
             profilerStop(platform, sender, resp, arguments);
             return;
         }
