@@ -25,8 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
@@ -42,6 +41,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntPredicate;
 
 /**
  * A sampler implementation using Java (WarmRoast).
@@ -66,14 +66,14 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     /** The last window that was profiled */
     private final AtomicInteger lastWindow = new AtomicInteger();
     
-    public JavaSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative) {
-        super(platform, interval, threadDumper, endTime);
-        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
+    public JavaSampler(SparkPlatform platform, SamplerSettings settings, boolean ignoreSleeping, boolean ignoreNative) {
+        super(platform, settings);
+        this.dataAggregator = new SimpleDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), ignoreSleeping, ignoreNative);
     }
 
-    public JavaSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
-        super(platform, interval, threadDumper, endTime);
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
+    public JavaSampler(SparkPlatform platform, SamplerSettings settings, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
+        super(platform, settings);
+        this.dataAggregator = new TickedDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
     }
 
     @Override
@@ -151,7 +151,9 @@ public class JavaSampler extends AbstractSampler implements Runnable {
                 JavaSampler.this.windowStatisticsCollector.measureNow(previousWindow);
 
                 // prune data older than the history size
-                JavaSampler.this.dataAggregator.pruneData(ProfilingWindowUtils.keepHistoryBefore(this.window));
+                IntPredicate predicate = ProfilingWindowUtils.keepHistoryBefore(this.window);
+                JavaSampler.this.dataAggregator.pruneData(predicate);
+                JavaSampler.this.windowStatisticsCollector.pruneStatistics(predicate);
             }
         }
     }

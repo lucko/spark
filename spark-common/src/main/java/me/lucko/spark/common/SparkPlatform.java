@@ -45,7 +45,10 @@ import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
+import me.lucko.spark.common.sampler.Sampler;
+import me.lucko.spark.common.sampler.SamplerBuilder;
 import me.lucko.spark.common.sampler.SamplerContainer;
+import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
@@ -64,6 +67,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,7 +78,6 @@ import java.util.stream.Collectors;
 
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
 import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
@@ -139,7 +142,7 @@ public class SparkPlatform {
         this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
         this.activityLog.load();
 
-        this.samplerContainer = new SamplerContainer();
+        this.samplerContainer = new SamplerContainer(this.configuration.getBoolean("backgroundProfiler", true));
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
@@ -179,6 +182,16 @@ public class SparkPlatform {
         SparkApi api = new SparkApi(this);
         this.plugin.registerApi(api);
         SparkApi.register(api);
+
+        if (this.samplerContainer.isBackgroundProfilerEnabled()) {
+            this.plugin.log(Level.INFO, "Starting background profiler...");
+            try {
+                startBackgroundProfiler();
+                this.plugin.log(Level.INFO, "... done!");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void disable() {
@@ -195,6 +208,8 @@ public class SparkPlatform {
         for (CommandModule module : this.commandModules) {
             module.close();
         }
+
+        this.samplerContainer.close();
 
         SparkApi.unregister();
 
@@ -267,6 +282,17 @@ public class SparkPlatform {
 
     public long getServerNormalOperationStartTime() {
         return this.serverNormalOperationStartTime;
+    }
+
+    public void startBackgroundProfiler() {
+        Sampler sampler = new SamplerBuilder()
+                .background(true)
+                .threadDumper(this.plugin.getDefaultThreadDumper())
+                .threadGrouper(ThreadGrouper.BY_POOL)
+                .samplingInterval(this.configuration.getInteger("backgroundProfilerInterval", 10))
+                .start(this);
+
+        this.samplerContainer.setActiveSampler(sampler);
     }
 
     public Path resolveSaveFile(String prefix, String extension) {
@@ -394,7 +420,7 @@ public class SparkPlatform {
             if (command.aliases().contains(alias)) {
                 resp.setCommandPrimaryAlias(command.primaryAlias());
                 try {
-                    command.executor().execute(this, sender, resp, new Arguments(rawArgs));
+                    command.executor().execute(this, sender, resp, new Arguments(rawArgs, command.allowSubCommand()));
                 } catch (Arguments.ParseException e) {
                     resp.replyPrefixed(text(e.getMessage(), RED));
                 }
@@ -442,32 +468,38 @@ public class SparkPlatform {
         );
         for (Command command : commands) {
             String usage = "/" + getPlugin().getCommandName() + " " + command.primaryAlias();
-            ClickEvent clickEvent = ClickEvent.suggestCommand(usage);
-            sender.reply(text()
-                    .append(text(">", GOLD, BOLD))
-                    .append(space())
-                    .append(text().content(usage).color(GRAY).clickEvent(clickEvent).build())
-                    .build()
-            );
-            for (Command.ArgumentInfo arg : command.arguments()) {
-                if (arg.requiresParameter()) {
+
+            if (command.allowSubCommand()) {
+                Map<String, List<Command.ArgumentInfo>> argumentsBySubCommand = command.arguments().stream()
+                        .collect(Collectors.groupingBy(Command.ArgumentInfo::subCommandName, LinkedHashMap::new, Collectors.toList()));
+
+                argumentsBySubCommand.forEach((subCommand, arguments) -> {
+                    String subCommandUsage = usage + " " + subCommand;
+
                     sender.reply(text()
-                            .content("       ")
-                            .append(text("[", DARK_GRAY))
-                            .append(text("--" + arg.argumentName(), GRAY))
+                            .append(text(">", GOLD, BOLD))
                             .append(space())
-                            .append(text("<" + arg.parameterDescription() + ">", DARK_GRAY))
-                            .append(text("]", DARK_GRAY))
+                            .append(text().content(subCommandUsage).color(GRAY).clickEvent(ClickEvent.suggestCommand(subCommandUsage)).build())
                             .build()
                     );
-                } else {
-                    sender.reply(text()
-                            .content("       ")
-                            .append(text("[", DARK_GRAY))
-                            .append(text("--" + arg.argumentName(), GRAY))
-                            .append(text("]", DARK_GRAY))
-                            .build()
-                    );
+
+                    for (Command.ArgumentInfo arg : arguments) {
+                        if (arg.argumentName().isEmpty()) {
+                            continue;
+                        }
+                        sender.reply(arg.toComponent("      "));
+                    }
+                });
+            } else {
+                sender.reply(text()
+                        .append(text(">", GOLD, BOLD))
+                        .append(space())
+                        .append(text().content(usage).color(GRAY).clickEvent(ClickEvent.suggestCommand(usage)).build())
+                        .build()
+                );
+
+                for (Command.ArgumentInfo arg : command.arguments()) {
+                    sender.reply(arg.toComponent("    "));
                 }
             }
         }

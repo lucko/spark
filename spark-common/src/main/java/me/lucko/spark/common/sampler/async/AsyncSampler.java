@@ -25,8 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
@@ -36,6 +35,7 @@ import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.IntPredicate;
 
 /**
  * A sampler implementation using async-profiler.
@@ -55,10 +55,10 @@ public class AsyncSampler extends AbstractSampler {
     /** The executor used for scheduling and management */
     private ScheduledExecutorService scheduler;
 
-    public AsyncSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
-        super(platform, interval, threadDumper, endTime);
+    public AsyncSampler(SparkPlatform platform, SamplerSettings settings) {
+        super(platform, settings);
         this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
-        this.dataAggregator = new AsyncDataAggregator(threadGrouper);
+        this.dataAggregator = new AsyncDataAggregator(settings.threadGrouper());
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactoryBuilder().setNameFormat("spark-asyncsampler-worker-thread").build()
         );
@@ -124,7 +124,9 @@ public class AsyncSampler extends AbstractSampler {
                 previousJob.aggregate(this.dataAggregator);
 
                 // prune data older than the history size
-                this.dataAggregator.pruneData(ProfilingWindowUtils.keepHistoryBefore(window));
+                IntPredicate predicate = ProfilingWindowUtils.keepHistoryBefore(window);
+                this.dataAggregator.pruneData(predicate);
+                this.windowStatisticsCollector.pruneStatistics(predicate);
             }
         } catch (Throwable e) {
             e.printStackTrace();

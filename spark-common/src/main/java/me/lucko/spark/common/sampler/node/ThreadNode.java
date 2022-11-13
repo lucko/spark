@@ -130,6 +130,7 @@ public final class ThreadNode extends AbstractNode {
             }
         }
 
+        removeTimeWindows(predicate);
         return getTimeWindows().isEmpty();
     }
 

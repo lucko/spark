@@ -32,8 +32,6 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
-import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
@@ -64,6 +62,9 @@ public abstract class AbstractSampler implements Sampler {
     /** The unix timestamp (in millis) when this sampler should automatically complete. */
     protected final long autoEndTime; // -1 for nothing
 
+    /** If the sampler is running in the background */
+    protected boolean background;
+
     /** Collects statistics for each window in the sample */
     protected final WindowStatisticsCollector windowStatisticsCollector;
 
@@ -73,11 +74,12 @@ public abstract class AbstractSampler implements Sampler {
     /** The garbage collector statistics when profiling started */
     protected Map<String, GarbageCollectorStatistics> initialGcStats;
 
-    protected AbstractSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, long autoEndTime) {
+    protected AbstractSampler(SparkPlatform platform, SamplerSettings settings) {
         this.platform = platform;
-        this.interval = interval;
-        this.threadDumper = threadDumper;
-        this.autoEndTime = autoEndTime;
+        this.interval = settings.interval();
+        this.threadDumper = settings.threadDumper();
+        this.autoEndTime = settings.autoEndTime();
+        this.background = settings.runningInBackground();
         this.windowStatisticsCollector = new WindowStatisticsCollector(platform);
     }
 
@@ -92,6 +94,11 @@ public abstract class AbstractSampler implements Sampler {
     @Override
     public long getAutoEndTime() {
         return this.autoEndTime;
+    }
+
+    @Override
+    public boolean isRunningInBackground() {
+        return this.background;
     }
 
     @Override

@@ -30,6 +30,7 @@ import me.lucko.spark.proto.SparkProtos;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntPredicate;
 
 /**
  * Collects statistics for each profiling window.
@@ -114,6 +115,10 @@ public class WindowStatisticsCollector {
         for (int window : windows) {
             this.stats.computeIfAbsent(window, w -> ZERO);
         }
+    }
+
+    public void pruneStatistics(IntPredicate predicate) {
+        this.stats.keySet().removeIf(predicate::test);
     }
 
     public Map<Integer, SparkProtos.WindowStatistics> export() {
