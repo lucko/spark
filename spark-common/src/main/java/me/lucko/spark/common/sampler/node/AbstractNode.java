@@ -37,7 +37,7 @@ import java.util.stream.IntStream;
  */
 public abstract class AbstractNode {
 
-    protected static final int MAX_STACK_DEPTH = 300;
+    protected static final int MAX_STACK_DEPTH = Integer.getInteger("spark.maxStackDepth", 300);
 
     /** A map of the nodes children */
     private final Map<StackTraceNode.Description, StackTraceNode> children = new ConcurrentHashMap<>();
