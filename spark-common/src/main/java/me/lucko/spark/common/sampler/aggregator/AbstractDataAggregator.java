@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.IntPredicate;
 
 /**
  * Abstract implementation of {@link DataAggregator}.
@@ -49,6 +50,11 @@ public abstract class AbstractDataAggregator implements DataAggregator {
             return node;
         }
         return this.threadData.computeIfAbsent(group, ThreadNode::new);
+    }
+
+    @Override
+    public void pruneData(IntPredicate timeWindowPredicate) {
+        this.threadData.values().removeIf(node -> node.removeTimeWindowsRecursively(timeWindowPredicate));
     }
 
     @Override

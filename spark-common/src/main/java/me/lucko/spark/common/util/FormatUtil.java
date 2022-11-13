@@ -62,4 +62,24 @@ public enum FormatUtil {
                 .append(Component.text(unit))
                 .build();
     }
+
+    public static String formatSeconds(long seconds) {
+        if (seconds <= 0) {
+            return "0s";
+        }
+
+        long second = seconds;
+        long minute = second / 60;
+        second = second % 60;
+
+        StringBuilder sb = new StringBuilder();
+        if (minute != 0) {
+            sb.append(minute).append("m ");
+        }
+        if (second != 0) {
+            sb.append(second).append("s ");
+        }
+
+        return sb.toString().trim();
+    }
 }

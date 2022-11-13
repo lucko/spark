@@ -67,4 +67,14 @@ public final class Configuration {
         return val.isBoolean() ? val.getAsBoolean() : def;
     }
 
+    public int getInteger(String path, int def) {
+        JsonElement el = this.root.get(path);
+        if (el == null || !el.isJsonPrimitive()) {
+            return def;
+        }
+
+        JsonPrimitive val = el.getAsJsonPrimitive();
+        return val.isBoolean() ? val.getAsInt() : def;
+    }
+
 }

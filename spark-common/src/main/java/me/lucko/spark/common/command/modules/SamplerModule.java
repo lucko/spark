@@ -39,6 +39,7 @@ import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
@@ -68,46 +69,40 @@ import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
 public class SamplerModule implements CommandModule {
     private static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
 
-    /** The sampler instance currently running, if any */
-    private Sampler activeSampler = null;
-
-    @Override
-    public void close() {
-        if (this.activeSampler != null) {
-            this.activeSampler.stop();
-            this.activeSampler = null;
-        }
-    }
-
     @Override
     public void registerCommands(Consumer<Command> consumer) {
         consumer.accept(Command.builder()
                 .aliases("profiler", "sampler")
-                .argumentUsage("info", null)
-                .argumentUsage("stop", null)
-                .argumentUsage("timeout", "timeout seconds")
-                .argumentUsage("thread *", null)
-                .argumentUsage("thread", "thread name")
-                .argumentUsage("only-ticks-over", "tick length millis")
-                .argumentUsage("interval", "interval millis")
+                .allowSubCommand(true)
+                .argumentUsage("info", "", null)
+                .argumentUsage("start", "timeout", "timeout seconds")
+                .argumentUsage("start", "thread *", null)
+                .argumentUsage("start", "thread", "thread name")
+                .argumentUsage("start", "only-ticks-over", "tick length millis")
+                .argumentUsage("start", "interval", "interval millis")
+                .argumentUsage("stop", "", null)
+                .argumentUsage("cancel", "", null)
                 .executor(this::profiler)
                 .tabCompleter((platform, sender, arguments) -> {
-                    if (arguments.contains("--info") || arguments.contains("--cancel")) {
-                        return Collections.emptyList();
-                    }
+                    List<String> opts = Collections.emptyList();
 
-                    if (arguments.contains("--stop") || arguments.contains("--upload")) {
-                        return TabCompleter.completeForOpts(arguments, "--comment", "--save-to-file");
+                    if (arguments.size() > 0) {
+                        String subCommand = arguments.get(0);
+                        if (subCommand.equals("stop") || subCommand.equals("upload")) {
+                            opts = new ArrayList<>(Arrays.asList("--comment", "--save-to-file"));
+                            opts.removeAll(arguments);
+                        }
+                        if (subCommand.equals("start")) {
+                            opts = new ArrayList<>(Arrays.asList("--timeout", "--regex", "--combine-all",
+                                    "--not-combined", "--interval", "--only-ticks-over", "--force-java-sampler"));
+                            opts.removeAll(arguments);
+                            opts.add("--thread"); // allowed multiple times
+                        }
                     }
-
-                    List<String> opts = new ArrayList<>(Arrays.asList("--info", "--stop", "--cancel",
-                            "--timeout", "--regex", "--combine-all", "--not-combined", "--interval",
-                            "--only-ticks-over", "--force-java-sampler"));
-                    opts.removeAll(arguments);
-                    opts.add("--thread"); // allowed multiple times
 
                     return TabCompleter.create()
-                            .from(0, CompletionSupplier.startsWith(opts))
+                            .at(0, CompletionSupplier.startsWith(Arrays.asList("info", "start", "stop", "cancel")))
+                            .from(1, CompletionSupplier.startsWith(opts))
                             .complete(arguments);
                 })
                 .build()
@@ -115,28 +110,48 @@ public class SamplerModule implements CommandModule {
     }
 
     private void profiler(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
-        if (arguments.boolFlag("info")) {
+        String subCommand = arguments.subCommand() == null ? "" : arguments.subCommand();
+
+        if (subCommand.equals("info") || arguments.boolFlag("info")) {
             profilerInfo(platform, resp);
             return;
         }
 
-        if (arguments.boolFlag("cancel")) {
-            profilerCancel(resp);
+        if (subCommand.equals("cancel") || arguments.boolFlag("cancel")) {
+            profilerCancel(platform, resp);
             return;
         }
 
-        if (arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
+        if (subCommand.equals("stop") || arguments.boolFlag("stop") || arguments.boolFlag("upload")) {
             profilerStop(platform, sender, resp, arguments);
             return;
         }
 
-        profilerStart(platform, sender, resp, arguments);
+        if (subCommand.equals("start") || arguments.boolFlag("start")) {
+            profilerStart(platform, sender, resp, arguments);
+            return;
+        }
+
+        if (arguments.raw().isEmpty()) {
+            profilerInfo(platform, resp);
+        } else {
+            profilerStart(platform, sender, resp, arguments);
+        }
     }
 
     private void profilerStart(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
-        if (this.activeSampler != null) {
-            profilerInfo(platform, resp);
-            return;
+        Sampler previousSampler = platform.getSamplerContainer().getActiveSampler();
+        if (previousSampler != null) {
+            if (previousSampler.isRunningInBackground()) {
+                // there is a background profiler running - stop that first
+                resp.replyPrefixed(text("Stopping the background profiler before starting... please wait"));
+                previousSampler.stop();
+                platform.getSamplerContainer().unsetActiveSampler(previousSampler);
+            } else {
+                // there is a non-background profiler running - tell the user
+                profilerInfo(platform, resp);
+                return;
+            }
         }
 
         int timeoutSeconds = arguments.intFlag("timeout");
@@ -210,7 +225,8 @@ public class SamplerModule implements CommandModule {
         if (ticksOver != -1) {
             builder.ticksOver(ticksOver, tickHook);
         }
-        Sampler sampler = this.activeSampler = builder.start(platform);
+        Sampler sampler = builder.start(platform);
+        platform.getSamplerContainer().setActiveSampler(sampler);
 
         resp.broadcastPrefixed(text()
                 .append(text("Profiler is now running!", GOLD))
@@ -222,12 +238,12 @@ public class SamplerModule implements CommandModule {
         if (timeoutSeconds == -1) {
             resp.broadcastPrefixed(text("It will run in the background until it is stopped by an admin."));
             resp.broadcastPrefixed(text("To stop the profiler and upload the results, run:"));
-            resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler --stop"));
+            resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler stop"));
         } else {
-            resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + timeoutSeconds + " seconds."));
+            resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + FormatUtil.formatSeconds(timeoutSeconds) + "."));
         }
 
-        CompletableFuture<Sampler> future = this.activeSampler.getFuture();
+        CompletableFuture<Sampler> future = sampler.getFuture();
 
         // send message if profiling fails
         future.whenCompleteAsync((s, throwable) -> {
@@ -238,11 +254,7 @@ public class SamplerModule implements CommandModule {
         });
 
         // set activeSampler to null when complete.
-        future.whenCompleteAsync((s, throwable) -> {
-            if (sampler == this.activeSampler) {
-                this.activeSampler = null;
-            }
-        });
+        sampler.getFuture().whenCompleteAsync((s, throwable) -> platform.getSamplerContainer().unsetActiveSampler(s));
 
         // await the result
         if (timeoutSeconds != -1) {
@@ -258,44 +270,59 @@ public class SamplerModule implements CommandModule {
     }
 
     private void profilerInfo(SparkPlatform platform, CommandResponseHandler resp) {
-        if (this.activeSampler == null) {
+        Sampler sampler = platform.getSamplerContainer().getActiveSampler();
+        if (sampler == null) {
             resp.replyPrefixed(text("The profiler isn't running!"));
             resp.replyPrefixed(text("To start a new one, run:"));
-            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler"));
+            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler start"));
         } else {
             resp.replyPrefixed(text("Profiler is already running!", GOLD));
 
-            long runningTime = (System.currentTimeMillis() - this.activeSampler.getStartTime()) / 1000L;
-            resp.replyPrefixed(text("So far, it has profiled for " + runningTime + " seconds."));
+            long runningTime = (System.currentTimeMillis() - sampler.getStartTime()) / 1000L;
 
-            long timeout = this.activeSampler.getAutoEndTime();
+            if (sampler.isRunningInBackground()) {
+                resp.replyPrefixed(text()
+                        .append(text("It was started "))
+                        .append(text("automatically", WHITE))
+                        .append(text(" when spark enabled and has been running in the background for " + FormatUtil.formatSeconds(runningTime) + "."))
+                        .build()
+                );
+            } else {
+                resp.replyPrefixed(text("So far, it has profiled for " + FormatUtil.formatSeconds(runningTime) + "."));
+            }
+
+            long timeout = sampler.getAutoEndTime();
             if (timeout == -1) {
                 resp.replyPrefixed(text("To stop the profiler and upload the results, run:"));
-                resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler --stop"));
+                resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler stop"));
             } else {
                 long timeoutDiff = (timeout - System.currentTimeMillis()) / 1000L;
-                resp.replyPrefixed(text("It is due to complete automatically and upload results in " + timeoutDiff + " seconds."));
+                resp.replyPrefixed(text("It is due to complete automatically and upload results in " + FormatUtil.formatSeconds(timeoutDiff) + "."));
             }
 
             resp.replyPrefixed(text("To cancel the profiler without uploading the results, run:"));
-            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler --cancel"));
+            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler cancel"));
         }
     }
 
-    private void profilerCancel(CommandResponseHandler resp) {
-        if (this.activeSampler == null) {
+    private void profilerCancel(SparkPlatform platform, CommandResponseHandler resp) {
+        Sampler sampler = platform.getSamplerContainer().getActiveSampler();
+        if (sampler == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
-            close();
+            platform.getSamplerContainer().stopActiveSampler();
             resp.broadcastPrefixed(text("Profiler has been cancelled.", GOLD));
         }
     }
 
     private void profilerStop(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
-        if (this.activeSampler == null) {
+        Sampler sampler = platform.getSamplerContainer().getActiveSampler();
+
+        if (sampler == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
-            this.activeSampler.stop();
+            platform.getSamplerContainer().unsetActiveSampler(sampler);
+            sampler.stop();
 
             boolean saveToFile = arguments.boolFlag("save-to-file");
             if (saveToFile) {
@@ -307,8 +334,18 @@ public class SamplerModule implements CommandModule {
             String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
             MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
             MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
-            handleUpload(platform, resp, this.activeSampler, comment, mergeMode, saveToFile);
-            this.activeSampler = null;
+            handleUpload(platform, resp, sampler, comment, mergeMode, saveToFile);
+
+            // if the previous sampler was running in the background, create a new one
+            if (platform.getSamplerContainer().isBackgroundProfilerEnabled()) {
+                platform.startBackgroundProfiler();
+
+                resp.broadcastPrefixed(text()
+                        .append(text("Restarted the background profiler. "))
+                        .append(text("(If you don't want this to happen, run: /" + platform.getPlugin().getCommandName() + " profiler cancel)", DARK_GRAY))
+                        .build()
+                );
+            }
         }
     }
 

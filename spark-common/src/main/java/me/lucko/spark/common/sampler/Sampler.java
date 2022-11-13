@@ -58,6 +58,13 @@ public interface Sampler {
     long getAutoEndTime();
 
     /**
+     * If this sampler is running in the background. (wasn't started by a specific user)
+     *
+     * @return true if the sampler is running in the background
+     */
+    boolean isRunningInBackground();
+
+    /**
      * Gets a future to encapsulate the completion of the sampler
      *
      * @return a future
