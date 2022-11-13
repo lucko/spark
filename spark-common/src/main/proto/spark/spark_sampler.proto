@@ -78,18 +78,19 @@ message ThreadNode {
 
   repeated StackTraceNode children = 3;
   repeated double times = 4;
+  repeated int32 children_refs = 5;
 }
 
 message StackTraceNode {
   // replaced
-  reserved 1;
-  reserved "time";
+  reserved 1, 2;
+  reserved "time", "children";
 
-  repeated StackTraceNode children = 2;
   string class_name = 3;
   string method_name = 4;
   int32 parent_line_number = 5; // optional
   int32 line_number = 6; // optional
   string method_desc = 7; // optional
   repeated double times = 8;
+  repeated int32 children_refs = 9;
 }

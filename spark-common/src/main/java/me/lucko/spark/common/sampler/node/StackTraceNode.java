@@ -65,7 +65,7 @@ public final class StackTraceNode extends AbstractNode {
         return this.description.parentLineNumber;
     }
 
-    public SparkSamplerProtos.StackTraceNode toProto(MergeMode mergeMode, ProtoTimeEncoder timeEncoder) {
+    public SparkSamplerProtos.StackTraceNode toProto(MergeMode mergeMode, ProtoTimeEncoder timeEncoder, Iterable<Integer> childrenRefs) {
         SparkSamplerProtos.StackTraceNode.Builder proto = SparkSamplerProtos.StackTraceNode.newBuilder()
                 .setClassName(this.description.className)
                 .setMethodName(this.description.methodName);
@@ -91,9 +91,7 @@ public final class StackTraceNode extends AbstractNode {
                     .ifPresent(proto::setMethodDesc);
         }
 
-        for (StackTraceNode child : exportChildren(mergeMode)) {
-            proto.addChildren(child.toProto(mergeMode, timeEncoder));
-        }
+        proto.addAllChildrenRefs(childrenRefs);
 
         return proto.build();
     }
