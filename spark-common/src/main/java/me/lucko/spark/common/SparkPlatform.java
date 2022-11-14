@@ -187,7 +187,6 @@ public class SparkPlatform {
             this.plugin.log(Level.INFO, "Starting background profiler...");
             try {
                 startBackgroundProfiler();
-                this.plugin.log(Level.INFO, "... done!");
             } catch (Exception e) {
                 e.printStackTrace();
             }

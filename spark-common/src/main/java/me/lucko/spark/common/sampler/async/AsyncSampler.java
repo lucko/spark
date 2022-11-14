@@ -79,7 +79,7 @@ public class AsyncSampler extends AbstractSampler {
         int window = ProfilingWindowUtils.windowNow();
 
         AsyncProfilerJob job = this.profilerAccess.startNewProfilerJob();
-        job.init(this.platform, this.interval, this.threadDumper, window);
+        job.init(this.platform, this.interval, this.threadDumper, window, this.background);
         job.start();
         this.currentJob = job;
 
@@ -116,7 +116,7 @@ public class AsyncSampler extends AbstractSampler {
                 // start a new job
                 int window = previousJob.getWindow() + 1;
                 AsyncProfilerJob newJob = this.profilerAccess.startNewProfilerJob();
-                newJob.init(this.platform, this.interval, this.threadDumper, window);
+                newJob.init(this.platform, this.interval, this.threadDumper, window, this.background);
                 newJob.start();
                 this.currentJob = newJob;
 

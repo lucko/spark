@@ -83,6 +83,8 @@ public class AsyncProfilerJob {
     private ThreadDumper threadDumper;
     /** The profiling window */
     private int window;
+    /** If the profiler should run in quiet mode */
+    private boolean quiet;
 
     /** The file used by async-profiler to output data */
     private Path outputFile;
@@ -116,11 +118,12 @@ public class AsyncProfilerJob {
     }
 
     // Initialise the job
-    public void init(SparkPlatform platform, int interval, ThreadDumper threadDumper, int window) {
+    public void init(SparkPlatform platform, int interval, ThreadDumper threadDumper, int window, boolean quiet) {
         this.platform = platform;
         this.interval = interval;
         this.threadDumper = threadDumper;
         this.window = window;
+        this.quiet = quiet;
     }
 
     /**
@@ -139,6 +142,9 @@ public class AsyncProfilerJob {
 
             // construct a command to send to async-profiler
             String command = "start,event=" + this.access.getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
+            if (this.quiet) {
+                command += ",loglevel=NONE";
+            }
             if (this.threadDumper instanceof ThreadDumper.Specific) {
                 command += ",filter";
             }
