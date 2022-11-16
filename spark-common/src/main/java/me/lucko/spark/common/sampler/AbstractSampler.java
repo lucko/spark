@@ -157,7 +157,9 @@ public abstract class AbstractSampler implements Sampler {
 
         try {
             ServerConfigProvider serverConfigProvider = platform.getPlugin().createServerConfigProvider();
-            metadata.putAllServerConfigurations(serverConfigProvider.export());
+            if (serverConfigProvider != null) {
+                metadata.putAllServerConfigurations(serverConfigProvider.export());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
