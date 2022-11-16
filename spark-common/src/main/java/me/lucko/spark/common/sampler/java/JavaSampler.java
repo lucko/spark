@@ -144,7 +144,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             }
 
             // if we have just stepped over into a new window...
-            int previousWindow = JavaSampler.this.lastWindow.getAndSet(this.window);
+            int previousWindow = JavaSampler.this.lastWindow.getAndUpdate(previous -> Math.max(this.window, previous));
             if (previousWindow != 0 && previousWindow != this.window) {
 
                 // collect statistics for the previous window

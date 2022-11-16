@@ -25,7 +25,6 @@ import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +45,7 @@ public abstract class AbstractNode {
     /** The accumulated sample time for this node, measured in microseconds */
     // Integer key = the window (effectively System.currentTimeMillis() / 60_000)
     // LongAdder value = accumulated time in microseconds
-    private final Map<Integer, LongAdder> times = new HashMap<>();
+    private final Map<Integer, LongAdder> times = new ConcurrentHashMap<>();
 
     /**
      * Gets the time accumulator for a given window
