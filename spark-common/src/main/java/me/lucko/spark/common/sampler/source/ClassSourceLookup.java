@@ -36,10 +36,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -265,8 +267,10 @@ public interface ClassSourceLookup {
 
         @Override
         public void visit(ThreadNode node) {
-            for (StackTraceNode child : node.getChildren()) {
-                visitStackNode(child);
+            Queue<StackTraceNode> queue = new ArrayDeque<>(node.getChildren());
+            for (StackTraceNode n = queue.poll(); n != null; n = queue.poll()) {
+                visitStackNode(n);
+                queue.addAll(n.getChildren());
             }
         }
 
@@ -287,11 +291,6 @@ public interface ClassSourceLookup {
             } else {
                 MethodCallByLine methodCall = new MethodCallByLine(node.getClassName(), node.getMethodName(), node.getLineNumber());
                 this.lineSources.computeIfAbsent(methodCall, this.lookup::identify);
-            }
-
-            // recursively
-            for (StackTraceNode child : node.getChildren()) {
-                visitStackNode(child);
             }
         }
 
