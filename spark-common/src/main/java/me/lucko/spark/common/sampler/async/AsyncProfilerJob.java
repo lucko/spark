@@ -249,7 +249,7 @@ public class AsyncProfilerJob {
                 duration = TimeUnit.NANOSECONDS.toMicros(sample.time - samples.get(i - 1).time);
             }
 
-            String threadName = reader.threads.get(sample.tid);
+            String threadName = reader.threads.get((long) sample.tid);
             if (threadName == null) {
                 continue;
             }
