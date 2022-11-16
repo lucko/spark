@@ -250,6 +250,10 @@ public class AsyncProfilerJob {
             }
 
             String threadName = reader.threads.get(sample.tid);
+            if (threadName == null) {
+                continue;
+            }
+
             if (!threadFilter.test(threadName)) {
                 continue;
             }
