@@ -44,6 +44,7 @@ import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.SamplerBuilder;
@@ -142,7 +143,10 @@ public class SparkPlatform {
         this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
         this.activityLog.load();
 
-        this.samplerContainer = new SamplerContainer(this.configuration.getBoolean("backgroundProfiler", true));
+        this.samplerContainer = new SamplerContainer(this.configuration.getBoolean(
+                "backgroundProfiler",
+                plugin.getPlatformInfo().getType() == PlatformInfo.Type.SERVER
+        ));
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
@@ -187,7 +191,7 @@ public class SparkPlatform {
             this.plugin.log(Level.INFO, "Starting background profiler...");
             try {
                 startBackgroundProfiler();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
         }
