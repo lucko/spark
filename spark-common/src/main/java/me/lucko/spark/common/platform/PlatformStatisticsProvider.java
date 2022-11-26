@@ -31,7 +31,7 @@ import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.os.OperatingSystemInfo;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldStatisticsProvider;
 import me.lucko.spark.proto.SparkProtos.PlatformStatistics;
 import me.lucko.spark.proto.SparkProtos.SystemStatistics;
@@ -188,8 +188,9 @@ public class PlatformStatisticsProvider {
         }
 
         try {
-            WorldInfoProvider worldInfo = this.platform.getPlugin().createWorldInfoProvider();
-            WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(this.platform, worldInfo);
+            WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
+                    new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
+            );
             WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
             if (worldStatistics != null) {
                 builder.setWorld(worldStatistics);

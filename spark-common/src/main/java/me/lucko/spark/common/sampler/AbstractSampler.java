@@ -120,7 +120,7 @@ public abstract class AbstractSampler implements Sampler {
     }
 
     @Override
-    public void stop() {
+    public void stop(boolean cancelled) {
         this.windowStatisticsCollector.stop();
     }
 

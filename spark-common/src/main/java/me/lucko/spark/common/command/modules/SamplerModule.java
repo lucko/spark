@@ -145,7 +145,7 @@ public class SamplerModule implements CommandModule {
             if (previousSampler.isRunningInBackground()) {
                 // there is a background profiler running - stop that first
                 resp.replyPrefixed(text("Stopping the background profiler before starting... please wait"));
-                previousSampler.stop();
+                previousSampler.stop(true);
                 platform.getSamplerContainer().unsetActiveSampler(previousSampler);
             } else {
                 // there is a non-background profiler running - tell the user
@@ -310,7 +310,7 @@ public class SamplerModule implements CommandModule {
         if (sampler == null) {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
-            platform.getSamplerContainer().stopActiveSampler();
+            platform.getSamplerContainer().stopActiveSampler(true);
             resp.broadcastPrefixed(text("Profiler has been cancelled.", GOLD));
         }
     }
@@ -322,7 +322,7 @@ public class SamplerModule implements CommandModule {
             resp.replyPrefixed(text("There isn't an active profiler running."));
         } else {
             platform.getSamplerContainer().unsetActiveSampler(sampler);
-            sampler.stop();
+            sampler.stop(false);
 
             boolean saveToFile = arguments.boolFlag("save-to-file");
             if (saveToFile) {

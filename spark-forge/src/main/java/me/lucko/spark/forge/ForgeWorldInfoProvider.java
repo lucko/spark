@@ -34,6 +34,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.entity.EntityLookup;
 import net.minecraft.world.level.entity.EntitySection;
 import net.minecraft.world.level.entity.EntitySectionStorage;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
@@ -68,8 +69,25 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
         }
 
         @Override
-        public Result<ForgeChunkInfo> poll() {
-            Result<ForgeChunkInfo> data = new Result<>();
+        public CountsResult pollCounts() {
+            int players = this.server.getPlayerCount();
+            int entities = 0;
+            int chunks = 0;
+
+            for (ServerLevel level : this.server.getAllLevels()) {
+                PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
+                EntityLookup<Entity> entityIndex = entityManager.visibleEntityStorage;
+
+                entities += entityIndex.count();
+                chunks += level.getChunkSource().getLoadedChunksCount();
+            }
+
+            return new CountsResult(players, entities, -1, chunks);
+        }
+
+        @Override
+        public ChunksResult<ForgeChunkInfo> pollChunks() {
+            ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
             for (ServerLevel level : this.server.getAllLevels()) {
                 PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
@@ -91,8 +109,24 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
         }
 
         @Override
-        public Result<ForgeChunkInfo> poll() {
-            Result<ForgeChunkInfo> data = new Result<>();
+        public CountsResult pollCounts() {
+            ClientLevel level = this.client.level;
+            if (level == null) {
+                return null;
+            }
+
+            TransientEntitySectionManager<Entity> entityManager = level.entityStorage;
+            EntityLookup<Entity> entityIndex = entityManager.entityStorage;
+
+            int entities = entityIndex.count();
+            int chunks = level.getChunkSource().getLoadedChunksCount();
+
+            return new CountsResult(-1, entities, -1, chunks);
+        }
+
+        @Override
+        public ChunksResult<ForgeChunkInfo> pollChunks() {
+            ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
             ClientLevel level = this.client.level;
             if (level == null) {

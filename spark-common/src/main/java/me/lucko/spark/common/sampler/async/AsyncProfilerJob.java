@@ -224,13 +224,15 @@ public class AsyncProfilerJob {
             }
         }
 
-        // delete the output file after reading
+        deleteOutputFile();
+    }
+
+    public void deleteOutputFile() {
         try {
             Files.deleteIfExists(this.outputFile);
         } catch (IOException e) {
             // ignore
         }
-
     }
 
     private void readSegments(JfrReader reader, Predicate<String> threadFilter, AsyncDataAggregator dataAggregator, int window) throws IOException {

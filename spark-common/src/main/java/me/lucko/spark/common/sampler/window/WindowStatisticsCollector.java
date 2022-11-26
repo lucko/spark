@@ -23,6 +23,8 @@ package me.lucko.spark.common.sampler.window;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.proto.SparkProtos;
@@ -151,6 +153,19 @@ public class WindowStatisticsCollector {
 
         builder.setCpuProcess(CpuMonitor.processLoad1MinAvg());
         builder.setCpuSystem(CpuMonitor.systemLoad1MinAvg());
+
+        try {
+            AsyncWorldInfoProvider worldInfoProvider = new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider());
+            WorldInfoProvider.CountsResult counts = worldInfoProvider.getCounts();
+            if (counts != null) {
+                builder.setPlayers(counts.players());
+                builder.setEntities(counts.entities());
+                builder.setTileEntities(counts.tileEntities());
+                builder.setChunks(counts.chunks());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return builder.build();
     }

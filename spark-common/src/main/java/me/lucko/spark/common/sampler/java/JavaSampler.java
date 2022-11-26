@@ -94,13 +94,15 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     }
 
     @Override
-    public void stop() {
-        super.stop();
+    public void stop(boolean cancelled) {
+        super.stop(cancelled);
 
         this.task.cancel(false);
 
-        // collect statistics for the final window
-        this.windowStatisticsCollector.measureNow(this.lastWindow.get());
+        if (!cancelled) {
+            // collect statistics for the final window
+            this.windowStatisticsCollector.measureNow(this.lastWindow.get());
+        }
     }
 
     @Override
@@ -111,7 +113,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             long time = System.currentTimeMillis();
 
             if (this.autoEndTime != -1 && this.autoEndTime <= time) {
-                stop();
+                stop(false);
                 this.future.complete(this);
                 return;
             }
@@ -120,7 +122,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             ThreadInfo[] threadDumps = this.threadDumper.dumpThreads(this.threadBean);
             this.workerPool.execute(new InsertDataTask(threadDumps, window));
         } catch (Throwable t) {
-            stop();
+            stop(false);
             this.future.completeExceptionally(t);
         }
     }

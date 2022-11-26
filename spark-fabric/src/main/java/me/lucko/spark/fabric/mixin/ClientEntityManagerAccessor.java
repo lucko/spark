@@ -22,6 +22,7 @@ package me.lucko.spark.fabric.mixin;
 
 import net.minecraft.client.world.ClientEntityManager;
 import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.EntityIndex;
 import net.minecraft.world.entity.SectionedEntityCache;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,5 +33,8 @@ public interface ClientEntityManagerAccessor {
 
     @Accessor
     SectionedEntityCache<Entity> getCache();
+
+    @Accessor
+    EntityIndex<?> getIndex();
 
 }

@@ -34,6 +34,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BukkitWorldInfoProvider implements WorldInfoProvider {
+    private static final boolean SUPPORTS_PAPER_COUNT_METHODS;
+
+    static {
+        boolean supportsPaperCountMethods = false;
+        try {
+            World.class.getMethod("getEntityCount");
+            World.class.getMethod("getTileEntityCount");
+            World.class.getMethod("getChunkCount");
+            supportsPaperCountMethods = true;
+        } catch (Exception e) {
+            // ignored
+        }
+        SUPPORTS_PAPER_COUNT_METHODS = supportsPaperCountMethods;
+    }
+
     private final Server server;
 
     public BukkitWorldInfoProvider(Server server) {
@@ -41,8 +56,33 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
     }
 
     @Override
-    public Result<BukkitChunkInfo> poll() {
-        Result<BukkitChunkInfo> data = new Result<>();
+    public CountsResult pollCounts() {
+        int players = this.server.getOnlinePlayers().size();
+        int entities = 0;
+        int tileEntities = 0;
+        int chunks = 0;
+
+        for (World world : this.server.getWorlds()) {
+            if (SUPPORTS_PAPER_COUNT_METHODS) {
+                entities += world.getEntityCount();
+                tileEntities += world.getTileEntityCount();
+                chunks += world.getChunkCount();
+            } else {
+                entities += world.getEntities().size();
+                Chunk[] chunksArray = world.getLoadedChunks();
+                for (Chunk chunk : chunksArray) {
+                    tileEntities += chunk.getTileEntities().length;
+                }
+                chunks += chunksArray.length;
+            }
+        }
+
+        return new CountsResult(players, entities, tileEntities, chunks);
+    }
+
+    @Override
+    public ChunksResult<BukkitChunkInfo> pollChunks() {
+        ChunksResult<BukkitChunkInfo> data = new ChunksResult<>();
 
         for (World world : this.server.getWorlds()) {
             Chunk[] chunks = world.getLoadedChunks();

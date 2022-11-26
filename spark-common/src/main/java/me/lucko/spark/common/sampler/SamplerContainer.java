@@ -66,10 +66,10 @@ public class SamplerContainer implements AutoCloseable {
     /**
      * Stops the active sampler, if there is one.
      */
-    public void stopActiveSampler() {
+    public void stopActiveSampler(boolean cancelled) {
         Sampler sampler = this.activeSampler.getAndSet(null);
         if (sampler != null) {
-            sampler.stop();
+            sampler.stop(cancelled);
         }
     }
 
@@ -79,7 +79,7 @@ public class SamplerContainer implements AutoCloseable {
 
     @Override
     public void close() {
-        stopActiveSampler();
+        stopActiveSampler(true);
     }
 
 }

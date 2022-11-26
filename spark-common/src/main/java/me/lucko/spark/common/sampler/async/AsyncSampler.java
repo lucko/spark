@@ -144,7 +144,7 @@ public class AsyncSampler extends AbstractSampler {
         }
 
         this.scheduler.schedule(() -> {
-            stop();
+            stop(false);
             this.future.complete(this);
         }, delay, TimeUnit.MILLISECONDS);
     }
@@ -153,13 +153,17 @@ public class AsyncSampler extends AbstractSampler {
      * Stops the profiler.
      */
     @Override
-    public void stop() {
-        super.stop();
+    public void stop(boolean cancelled) {
+        super.stop(cancelled);
 
         synchronized (this.currentJobMutex) {
             this.currentJob.stop();
-            this.windowStatisticsCollector.measureNow(this.currentJob.getWindow());
-            this.currentJob.aggregate(this.dataAggregator);
+            if (!cancelled) {
+                this.windowStatisticsCollector.measureNow(this.currentJob.getWindow());
+                this.currentJob.aggregate(this.dataAggregator);
+            } else {
+                this.currentJob.deleteOutputFile();
+            }
             this.currentJob = null;
         }
 

@@ -41,7 +41,7 @@ public interface Sampler {
     /**
      * Stops the sampler.
      */
-    void stop();
+    void stop(boolean cancelled);
 
     /**
      * Gets the time when the sampler started (unix timestamp in millis)

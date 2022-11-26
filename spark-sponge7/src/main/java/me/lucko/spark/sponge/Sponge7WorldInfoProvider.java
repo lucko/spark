@@ -20,6 +20,7 @@
 
 package me.lucko.spark.sponge;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
@@ -44,8 +45,24 @@ public class Sponge7WorldInfoProvider implements WorldInfoProvider {
     }
 
     @Override
-    public Result<Sponge7ChunkInfo> poll() {
-        Result<Sponge7ChunkInfo> data = new Result<>();
+    public CountsResult pollCounts() {
+        int players = this.server.getOnlinePlayers().size();
+        int entities = 0;
+        int tileEntities = 0;
+        int chunks = 0;
+
+        for (World world : this.server.getWorlds()) {
+            entities += world.getEntities().size();
+            tileEntities += world.getTileEntities().size();
+            chunks += Iterables.size(world.getLoadedChunks());
+        }
+
+        return new CountsResult(players, entities, tileEntities, chunks);
+    }
+
+    @Override
+    public ChunksResult<Sponge7ChunkInfo> pollChunks() {
+        ChunksResult<Sponge7ChunkInfo> data = new ChunksResult<>();
 
         for (World world : this.server.getWorlds()) {
             List<Chunk> chunks = Lists.newArrayList(world.getLoadedChunks());
