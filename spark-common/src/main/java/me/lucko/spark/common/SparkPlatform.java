@@ -44,12 +44,9 @@ import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
-import me.lucko.spark.common.sampler.Sampler;
-import me.lucko.spark.common.sampler.SamplerBuilder;
+import me.lucko.spark.common.sampler.BackgroundSamplerManager;
 import me.lucko.spark.common.sampler.SamplerContainer;
-import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
@@ -104,6 +101,7 @@ public class SparkPlatform {
     private final ReentrantLock commandExecuteLock = new ReentrantLock(true);
     private final ActivityLog activityLog;
     private final SamplerContainer samplerContainer;
+    private final BackgroundSamplerManager backgroundSamplerManager;
     private final TickHook tickHook;
     private final TickReporter tickReporter;
     private final TickStatistics tickStatistics;
@@ -143,10 +141,8 @@ public class SparkPlatform {
         this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
         this.activityLog.load();
 
-        this.samplerContainer = new SamplerContainer(this.configuration.getBoolean(
-                "backgroundProfiler",
-                plugin.getPlatformInfo().getType() == PlatformInfo.Type.SERVER
-        ));
+        this.samplerContainer = new SamplerContainer();
+        this.backgroundSamplerManager = new BackgroundSamplerManager(this, this.configuration);
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
@@ -187,14 +183,7 @@ public class SparkPlatform {
         this.plugin.registerApi(api);
         SparkApi.register(api);
 
-        if (this.samplerContainer.isBackgroundProfilerEnabled()) {
-            this.plugin.log(Level.INFO, "Starting background profiler...");
-            try {
-                startBackgroundProfiler();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-        }
+        this.backgroundSamplerManager.initialise();
     }
 
     public void disable() {
@@ -255,6 +244,10 @@ public class SparkPlatform {
         return this.samplerContainer;
     }
 
+    public BackgroundSamplerManager getBackgroundSamplerManager() {
+        return this.backgroundSamplerManager;
+    }
+
     public TickHook getTickHook() {
         return this.tickHook;
     }
@@ -285,17 +278,6 @@ public class SparkPlatform {
 
     public long getServerNormalOperationStartTime() {
         return this.serverNormalOperationStartTime;
-    }
-
-    public void startBackgroundProfiler() {
-        Sampler sampler = new SamplerBuilder()
-                .background(true)
-                .threadDumper(this.plugin.getDefaultThreadDumper())
-                .threadGrouper(ThreadGrouper.BY_POOL)
-                .samplingInterval(this.configuration.getInteger("backgroundProfilerInterval", 10))
-                .start(this);
-
-        this.samplerContainer.setActiveSampler(sampler);
     }
 
     public Path resolveSaveFile(String prefix, String extension) {

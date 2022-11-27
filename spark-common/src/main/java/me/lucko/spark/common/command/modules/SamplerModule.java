@@ -337,9 +337,7 @@ public class SamplerModule implements CommandModule {
             handleUpload(platform, resp, sampler, comment, mergeMode, saveToFile);
 
             // if the previous sampler was running in the background, create a new one
-            if (platform.getSamplerContainer().isBackgroundProfilerEnabled()) {
-                platform.startBackgroundProfiler();
-
+            if (platform.getBackgroundSamplerManager().restartBackgroundSampler()) {
                 resp.broadcastPrefixed(text()
                         .append(text("Restarted the background profiler. "))
                         .append(text("(If you don't want this to happen, run: /" + platform.getPlugin().getCommandName() + " profiler cancel)", DARK_GRAY))

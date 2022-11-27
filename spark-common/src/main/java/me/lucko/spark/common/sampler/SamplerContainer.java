@@ -28,11 +28,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SamplerContainer implements AutoCloseable {
 
     private final AtomicReference<Sampler> activeSampler = new AtomicReference<>();
-    private final boolean backgroundProfilerEnabled;
-
-    public SamplerContainer(boolean backgroundProfilerEnabled) {
-        this.backgroundProfilerEnabled = backgroundProfilerEnabled;
-    }
 
     /**
      * Gets the active sampler, or null if a sampler is not active.
@@ -71,10 +66,6 @@ public class SamplerContainer implements AutoCloseable {
         if (sampler != null) {
             sampler.stop(cancelled);
         }
-    }
-
-    public boolean isBackgroundProfilerEnabled() {
-        return this.backgroundProfilerEnabled;
     }
 
     @Override
