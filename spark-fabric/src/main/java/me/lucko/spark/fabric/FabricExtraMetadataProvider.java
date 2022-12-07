@@ -60,13 +60,13 @@ public class FabricExtraMetadataProvider implements MetadataProvider {
     }
 
     private static String resourcePackSource(ResourcePackSource source) {
-        if (source == ResourcePackSource.PACK_SOURCE_NONE) {
+        if (source == ResourcePackSource.NONE) {
             return "none";
-        } else if (source == ResourcePackSource.PACK_SOURCE_BUILTIN) {
+        } else if (source == ResourcePackSource.BUILTIN) {
             return "builtin";
-        } else if (source == ResourcePackSource.PACK_SOURCE_WORLD) {
+        } else if (source == ResourcePackSource.WORLD) {
             return "world";
-        } else if (source == ResourcePackSource.PACK_SOURCE_SERVER) {
+        } else if (source == ResourcePackSource.SERVER) {
             return "server";
         } else {
             return "unknown";
