@@ -41,10 +41,9 @@ public class BackgroundSamplerManager {
     public BackgroundSamplerManager(SparkPlatform platform, Configuration configuration) {
         this.platform = platform;
         this.configuration = configuration;
-        this.enabled = this.configuration.getBoolean(
-                OPTION_ENABLED,
-                this.platform.getPlugin().getPlatformInfo().getType() == PlatformInfo.Type.SERVER
-        );
+
+        PlatformInfo.Type type = this.platform.getPlugin().getPlatformInfo().getType();
+        this.enabled = type != PlatformInfo.Type.CLIENT && this.configuration.getBoolean(OPTION_ENABLED, type == PlatformInfo.Type.SERVER);
     }
 
     public void initialise() {
