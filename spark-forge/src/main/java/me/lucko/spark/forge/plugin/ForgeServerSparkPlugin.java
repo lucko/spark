@@ -78,6 +78,19 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         plugin.enable();
     }
 
+    private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
+        if (player == null) {
+            return false;
+        }
+
+        MinecraftServer server = player.getServer();
+        if (server != null && server.isSingleplayerOwner(player.getGameProfile())) {
+            return true;
+        }
+
+        return player.hasPermissions(4);
+    };
+
     private final MinecraftServer server;
     private final ThreadDumper gameThreadDumper;
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
@@ -116,8 +129,6 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @SubscribeEvent
     public void onPermissionGather(PermissionGatherEvent.Nodes e) {
-        PermissionResolver<Boolean> defaultValue = (player, playerUUID, context) -> player != null && player.hasPermissions(4);
-
         // collect all possible permissions
         List<String> permissions = this.platform.getCommands().stream()
                 .map(me.lucko.spark.common.command.Command::primaryAlias)
@@ -143,7 +154,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
                 continue;
             }
 
-            PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, defaultValue);
+            PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, DEFAULT_PERMISSION_VALUE);
             e.addNodes(node);
             builder.put(permissionString, node);
         }

@@ -119,8 +119,15 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
     @Override
     public boolean hasPermission(CommandOutput sender, String permission) {
-        if (sender instanceof PlayerEntity) {
-            return Permissions.check(((PlayerEntity) sender), permission, 4);
+        if (sender instanceof PlayerEntity player) {
+            return Permissions.getPermissionValue(player, permission).orElseGet(() -> {
+                MinecraftServer server = player.getServer();
+                if (server != null && server.isHost(player.getGameProfile())) {
+                    return true;
+                }
+
+                return player.hasPermissionLevel(4);
+            });
         } else {
             return true;
         }
