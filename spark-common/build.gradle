@@ -1,16 +1,24 @@
+import org.cadixdev.gradle.licenser.LicenseExtension
+
 plugins {
-    id 'com.google.protobuf' version '0.8.16'
+    id 'com.google.protobuf' version '0.9.1'
 }
 
 license {
     exclude '**/sampler/async/jfr/**'
 }
 
+extensions.configure(LicenseExtension.class) {
+    it.exclude {
+        it.file.toString().startsWith(buildDir.toString())
+    }
+}
+
 dependencies {
     api project(':spark-api')
     implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.3'
     implementation 'org.ow2.asm:asm:9.1'
-    implementation 'com.google.protobuf:protobuf-javalite:3.15.6'
+    implementation 'com.google.protobuf:protobuf-javalite:3.21.11'
     implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
     api('net.kyori:adventure-api:4.11.0') {
         exclude(module: 'adventure-bom')
@@ -36,11 +44,7 @@ dependencies {
 
 protobuf {
     protoc {
-        if (System.getProperty("os.name") == "Mac OS X" && System.getProperty("os.arch") == "aarch64") {
-            path = '/opt/homebrew/bin/protoc'
-        } else {
-            artifact = 'com.google.protobuf:protoc:3.15.6'
-        }
+        artifact = 'com.google.protobuf:protoc:3.21.11'
     }
     generateProtoTasks {
         all().each { task ->
