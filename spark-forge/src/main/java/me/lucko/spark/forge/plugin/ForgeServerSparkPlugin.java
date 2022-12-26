@@ -30,6 +30,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -37,6 +38,7 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
+import me.lucko.spark.forge.ForgeExtraMetadataProvider;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgePlayerPingProvider;
 import me.lucko.spark.forge.ForgeServerConfigProvider;
@@ -65,6 +67,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -74,6 +77,19 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
     }
+
+    private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
+        if (player == null) {
+            return false;
+        }
+
+        MinecraftServer server = player.getServer();
+        if (server != null && server.isSingleplayerOwner(player.getGameProfile())) {
+            return true;
+        }
+
+        return player.hasPermissions(4);
+    };
 
     private final MinecraftServer server;
     private final ThreadDumper gameThreadDumper;
@@ -113,8 +129,6 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @SubscribeEvent
     public void onPermissionGather(PermissionGatherEvent.Nodes e) {
-        PermissionResolver<Boolean> defaultValue = (player, playerUUID, context) -> player != null && player.hasPermissions(4);
-
         // collect all possible permissions
         List<String> permissions = this.platform.getCommands().stream()
                 .map(me.lucko.spark.common.command.Command::primaryAlias)
@@ -125,10 +139,24 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
         // register permissions with forge & keep a copy for lookup
         ImmutableMap.Builder<String, PermissionNode<Boolean>> builder = ImmutableMap.builder();
+
+        Map<String, PermissionNode<?>> alreadyRegistered = e.getNodes().stream().collect(Collectors.toMap(PermissionNode::getNodeName, Function.identity()));
+
         for (String permission : permissions) {
-            PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, defaultValue);
+            String permissionString = "spark." + permission;
+
+            // there's a weird bug where it seems that this listener can be called twice, causing an
+            // IllegalArgumentException to be thrown the second time e.addNodes is called.
+            PermissionNode<?> existing = alreadyRegistered.get(permissionString);
+            if (existing != null) {
+                //noinspection unchecked
+                builder.put(permissionString, (PermissionNode<Boolean>) existing);
+                continue;
+            }
+
+            PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, DEFAULT_PERMISSION_VALUE);
             e.addNodes(node);
-            builder.put("spark." + permission, node);
+            builder.put(permissionString, node);
         }
         this.registeredPermissions = builder.build();
     }
@@ -217,6 +245,11 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public ServerConfigProvider createServerConfigProvider() {
         return new ForgeServerConfigProvider();
+    }
+
+    @Override
+    public MetadataProvider createExtraMetadataProvider() {
+        return new ForgeExtraMetadataProvider(this.server.getPackRepository());
     }
 
     @Override

@@ -28,9 +28,10 @@ import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.memory.MemoryInfo;
 import me.lucko.spark.common.monitor.net.NetworkInterfaceAverages;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
+import me.lucko.spark.common.monitor.os.OperatingSystemInfo;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldStatisticsProvider;
 import me.lucko.spark.proto.SparkProtos.PlatformStatistics;
 import me.lucko.spark.proto.SparkProtos.SystemStatistics;
@@ -50,6 +51,7 @@ public class PlatformStatisticsProvider {
 
     public SystemStatistics getSystemStatistics() {
         RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
+        OperatingSystemInfo osInfo = OperatingSystemInfo.poll();
 
         SystemStatistics.Builder builder = SystemStatistics.newBuilder()
                 .setCpu(SystemStatistics.Cpu.newBuilder()
@@ -86,9 +88,9 @@ public class PlatformStatisticsProvider {
                         .build()
                 )
                 .setOs(SystemStatistics.Os.newBuilder()
-                        .setArch(System.getProperty("os.arch"))
-                        .setName(System.getProperty("os.name"))
-                        .setVersion(System.getProperty("os.version"))
+                        .setArch(osInfo.arch())
+                        .setName(osInfo.name())
+                        .setVersion(osInfo.version())
                         .build()
                 )
                 .setJava(SystemStatistics.Java.newBuilder()
@@ -186,8 +188,9 @@ public class PlatformStatisticsProvider {
         }
 
         try {
-            WorldInfoProvider worldInfo = this.platform.getPlugin().createWorldInfoProvider();
-            WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(this.platform, worldInfo);
+            WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
+                    new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
+            );
             WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
             if (worldStatistics != null) {
                 builder.setWorld(worldStatistics);

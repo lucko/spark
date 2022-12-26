@@ -25,23 +25,23 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.ThreadGrouper;
+import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.node.MergeMode;
-import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
+import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.Comparator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntPredicate;
 
 /**
  * A sampler implementation using Java (WarmRoast).
@@ -62,26 +62,47 @@ public class JavaSampler extends AbstractSampler implements Runnable {
 
     /** Responsible for aggregating and then outputting collected sampling data */
     private final JavaDataAggregator dataAggregator;
+
+    /** The last window that was profiled */
+    private final AtomicInteger lastWindow = new AtomicInteger();
     
-    public JavaSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative) {
-        super(platform, interval, threadDumper, endTime);
-        this.dataAggregator = new SimpleDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
+    public JavaSampler(SparkPlatform platform, SamplerSettings settings, boolean ignoreSleeping, boolean ignoreNative) {
+        super(platform, settings);
+        this.dataAggregator = new SimpleDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), ignoreSleeping, ignoreNative);
     }
 
-    public JavaSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
-        super(platform, interval, threadDumper, endTime);
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
+    public JavaSampler(SparkPlatform platform, SamplerSettings settings, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
+        super(platform, settings);
+        this.dataAggregator = new TickedDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
     }
 
     @Override
     public void start() {
         super.start();
+
+        TickHook tickHook = this.platform.getTickHook();
+        if (tickHook != null) {
+            if (this.dataAggregator instanceof TickedDataAggregator) {
+                WindowStatisticsCollector.ExplicitTickCounter counter = this.windowStatisticsCollector.startCountingTicksExplicit(tickHook);
+                ((TickedDataAggregator) this.dataAggregator).setTickCounter(counter);
+            } else {
+                this.windowStatisticsCollector.startCountingTicks(tickHook);
+            }
+        }
+
         this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
     }
 
     @Override
-    public void stop() {
+    public void stop(boolean cancelled) {
+        super.stop(cancelled);
+
         this.task.cancel(false);
+
+        if (!cancelled) {
+            // collect statistics for the final window
+            this.windowStatisticsCollector.measureNow(this.lastWindow.get());
+        }
     }
 
     @Override
@@ -89,27 +110,30 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         // this is effectively synchronized, the worker pool will not allow this task
         // to concurrently execute.
         try {
-            if (this.autoEndTime != -1 && this.autoEndTime <= System.currentTimeMillis()) {
+            long time = System.currentTimeMillis();
+
+            if (this.autoEndTime != -1 && this.autoEndTime <= time) {
+                stop(false);
                 this.future.complete(this);
-                stop();
                 return;
             }
 
+            int window = ProfilingWindowUtils.unixMillisToWindow(time);
             ThreadInfo[] threadDumps = this.threadDumper.dumpThreads(this.threadBean);
-            this.workerPool.execute(new InsertDataTask(this.dataAggregator, threadDumps));
+            this.workerPool.execute(new InsertDataTask(threadDumps, window));
         } catch (Throwable t) {
+            stop(false);
             this.future.completeExceptionally(t);
-            stop();
         }
     }
 
-    private static final class InsertDataTask implements Runnable {
-        private final JavaDataAggregator dataAggregator;
+    private final class InsertDataTask implements Runnable {
         private final ThreadInfo[] threadDumps;
+        private final int window;
 
-        InsertDataTask(JavaDataAggregator dataAggregator, ThreadInfo[] threadDumps) {
-            this.dataAggregator = dataAggregator;
+        InsertDataTask(ThreadInfo[] threadDumps, int window) {
             this.threadDumps = threadDumps;
+            this.window = window;
         }
 
         @Override
@@ -118,16 +142,29 @@ public class JavaSampler extends AbstractSampler implements Runnable {
                 if (threadInfo.getThreadName() == null || threadInfo.getStackTrace() == null) {
                     continue;
                 }
-                this.dataAggregator.insertData(threadInfo);
+                JavaSampler.this.dataAggregator.insertData(threadInfo, this.window);
+            }
+
+            // if we have just stepped over into a new window...
+            int previousWindow = JavaSampler.this.lastWindow.getAndUpdate(previous -> Math.max(this.window, previous));
+            if (previousWindow != 0 && previousWindow != this.window) {
+
+                // collect statistics for the previous window
+                JavaSampler.this.windowStatisticsCollector.measureNow(previousWindow);
+
+                // prune data older than the history size
+                IntPredicate predicate = ProfilingWindowUtils.keepHistoryBefore(this.window);
+                JavaSampler.this.dataAggregator.pruneData(predicate);
+                JavaSampler.this.windowStatisticsCollector.pruneStatistics(predicate);
             }
         }
     }
 
     @Override
-    public SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    public SamplerData toProto(SparkPlatform platform, CommandSender creator, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
         SamplerData.Builder proto = SamplerData.newBuilder();
         writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
-        writeDataToProto(proto, this.dataAggregator, outputOrder, mergeMode, classSourceLookup);
+        writeDataToProto(proto, this.dataAggregator, mergeMode, classSourceLookup);
         return proto.build();
     }
 

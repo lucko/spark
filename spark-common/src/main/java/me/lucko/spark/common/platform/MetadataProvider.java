@@ -18,35 +18,30 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler;
+package me.lucko.spark.common.platform;
 
-import me.lucko.spark.common.sampler.node.ThreadNode;
+import com.google.gson.JsonElement;
 
-import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
- * Methods of ordering {@link ThreadNode}s in the output data.
+ * Function to export dynamic metadata to be displayed within the spark viewer.
  */
-public enum ThreadNodeOrder implements Comparator<ThreadNode> {
+@FunctionalInterface
+public interface MetadataProvider {
 
     /**
-     * Order by the name of the thread (alphabetically)
+     * Produces a map of the metadata.
+     *
+     * @return the metadata
      */
-    BY_NAME {
-        @Override
-        public int compare(ThreadNode o1, ThreadNode o2) {
-            return o1.getThreadLabel().compareTo(o2.getThreadLabel());
-        }
-    },
+    Map<String, JsonElement> get();
 
-    /**
-     * Order by the time taken by the thread (most time taken first)
-     */
-    BY_TIME {
-        @Override
-        public int compare(ThreadNode o1, ThreadNode o2) {
-            return -Double.compare(o1.getTotalTime(), o2.getTotalTime());
-        }
+    default Map<String, String> export() {
+        Map<String, String> map = new LinkedHashMap<>();
+        get().forEach((key, value) -> map.put(key, value.toString()));
+        return map;
     }
 
 }

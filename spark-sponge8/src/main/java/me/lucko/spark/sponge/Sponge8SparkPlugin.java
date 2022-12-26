@@ -30,8 +30,9 @@ import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.kyori.adventure.text.Component;
 
@@ -52,8 +53,10 @@ import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.event.lifecycle.StoppingEngineEvent;
 import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.builtin.jvm.Plugin;
+import org.spongepowered.plugin.metadata.model.PluginContributor;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -175,6 +178,18 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new Sponge8ClassSourceLookup(this.game);
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                this.game.pluginManager().plugins(),
+                plugin -> plugin.metadata().id(),
+                plugin -> plugin.metadata().version().toString(),
+                plugin -> plugin.metadata().contributors().stream()
+                        .map(PluginContributor::name)
+                        .collect(Collectors.joining(", "))
+        );
     }
 
     @Override

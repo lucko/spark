@@ -30,6 +30,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -37,6 +38,7 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
+import me.lucko.spark.fabric.FabricExtraMetadataProvider;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricPlayerPingProvider;
 import me.lucko.spark.fabric.FabricServerConfigProvider;
@@ -117,8 +119,15 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
     @Override
     public boolean hasPermission(CommandOutput sender, String permission) {
-        if (sender instanceof PlayerEntity) {
-            return Permissions.check(((PlayerEntity) sender), permission, 4);
+        if (sender instanceof PlayerEntity player) {
+            return Permissions.getPermissionValue(player, permission).orElseGet(() -> {
+                MinecraftServer server = player.getServer();
+                if (server != null && server.isHost(player.getGameProfile())) {
+                    return true;
+                }
+
+                return player.hasPermissionLevel(4);
+            });
         } else {
             return true;
         }
@@ -160,6 +169,11 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public ServerConfigProvider createServerConfigProvider() {
         return new FabricServerConfigProvider();
+    }
+
+    @Override
+    public MetadataProvider createExtraMetadataProvider() {
+        return new FabricExtraMetadataProvider(this.server.getDataPackManager());
     }
 
     @Override

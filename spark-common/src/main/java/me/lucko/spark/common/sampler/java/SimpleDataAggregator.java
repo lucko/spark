@@ -44,8 +44,8 @@ public class SimpleDataAggregator extends JavaDataAggregator {
     }
 
     @Override
-    public void insertData(ThreadInfo threadInfo) {
-        writeData(threadInfo);
+    public void insertData(ThreadInfo threadInfo, int window) {
+        writeData(threadInfo, window);
     }
 
 }

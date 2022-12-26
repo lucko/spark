@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = 'me.lucko'
-    version = '1.9-SNAPSHOT'
+    version = '1.10-SNAPSHOT'
 
     configurations {
         compileClasspath // Fabric-loom needs this for remap jar for some reason
@@ -18,7 +18,7 @@ subprojects {
     apply plugin: 'org.cadixdev.licenser'
 
     ext {
-        baseVersion = '1.9'
+        baseVersion = '1.10'
         patchVersion = determinePatchVersion()
         pluginVersion = baseVersion + '.' + patchVersion
         pluginDescription = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'

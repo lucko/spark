@@ -23,14 +23,14 @@ package me.lucko.spark.fabric;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import me.lucko.spark.common.platform.serverconfig.AbstractServerConfigProvider;
 import me.lucko.spark.common.platform.serverconfig.ConfigParser;
 import me.lucko.spark.common.platform.serverconfig.PropertiesConfigParser;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 
 import java.util.Collection;
 import java.util.Map;
 
-public class FabricServerConfigProvider extends AbstractServerConfigProvider {
+public class FabricServerConfigProvider extends ServerConfigProvider {
 
     /** A map of provided files and their type */
     private static final Map<String, ConfigParser> FILES;

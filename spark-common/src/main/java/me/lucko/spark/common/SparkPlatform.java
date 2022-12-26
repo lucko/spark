@@ -45,13 +45,16 @@ import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
+import me.lucko.spark.common.sampler.BackgroundSamplerManager;
+import me.lucko.spark.common.sampler.SamplerContainer;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
-import me.lucko.spark.common.util.ClassSourceLookup;
 import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.TemporaryFiles;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 
 import java.io.IOException;
@@ -62,6 +65,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -72,13 +76,11 @@ import java.util.stream.Collectors;
 
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
-import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
 import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
 import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
 import static net.kyori.adventure.text.format.TextDecoration.BOLD;
-import static net.kyori.adventure.text.format.TextDecoration.UNDERLINED;
 
 /**
  * Abstract spark implementation used by all platforms.
@@ -89,6 +91,7 @@ public class SparkPlatform {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss");
 
     private final SparkPlugin plugin;
+    private final TemporaryFiles temporaryFiles;
     private final Configuration configuration;
     private final String viewerUrl;
     private final BytebinClient bytebinClient;
@@ -97,6 +100,8 @@ public class SparkPlatform {
     private final List<Command> commands;
     private final ReentrantLock commandExecuteLock = new ReentrantLock(true);
     private final ActivityLog activityLog;
+    private final SamplerContainer samplerContainer;
+    private final BackgroundSamplerManager backgroundSamplerManager;
     private final TickHook tickHook;
     private final TickReporter tickReporter;
     private final TickStatistics tickStatistics;
@@ -109,6 +114,7 @@ public class SparkPlatform {
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
 
+        this.temporaryFiles = new TemporaryFiles(this.plugin.getPluginDirectory().resolve("tmp"));
         this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
@@ -134,6 +140,9 @@ public class SparkPlatform {
 
         this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
         this.activityLog.load();
+
+        this.samplerContainer = new SamplerContainer();
+        this.backgroundSamplerManager = new BackgroundSamplerManager(this, this.configuration);
 
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
@@ -173,6 +182,8 @@ public class SparkPlatform {
         SparkApi api = new SparkApi(this);
         this.plugin.registerApi(api);
         SparkApi.register(api);
+
+        this.backgroundSamplerManager.initialise();
     }
 
     public void disable() {
@@ -190,13 +201,19 @@ public class SparkPlatform {
             module.close();
         }
 
+        this.samplerContainer.close();
+
         SparkApi.unregister();
 
-        TemporaryFiles.deleteTemporaryFiles();
+        this.temporaryFiles.deleteTemporaryFiles();
     }
 
     public SparkPlugin getPlugin() {
         return this.plugin;
+    }
+
+    public TemporaryFiles getTemporaryFiles() {
+        return this.temporaryFiles;
     }
 
     public Configuration getConfiguration() {
@@ -221,6 +238,14 @@ public class SparkPlatform {
 
     public ActivityLog getActivityLog() {
         return this.activityLog;
+    }
+
+    public SamplerContainer getSamplerContainer() {
+        return this.samplerContainer;
+    }
+
+    public BackgroundSamplerManager getBackgroundSamplerManager() {
+        return this.backgroundSamplerManager;
     }
 
     public TickHook getTickHook() {
@@ -356,14 +381,15 @@ public class SparkPlatform {
                     .append(text("v" + getPlugin().getVersion(), GRAY))
                     .build()
             );
+
+            String helpCmd = "/" + getPlugin().getCommandName() + " help";
             resp.replyPrefixed(text()
                     .color(GRAY)
-                    .append(text("Use "))
+                    .append(text("Run "))
                     .append(text()
-                            .content("/" + getPlugin().getCommandName() + " help")
+                            .content(helpCmd)
                             .color(WHITE)
-                            .decoration(UNDERLINED, true)
-                            .clickEvent(ClickEvent.runCommand("/" + getPlugin().getCommandName() + " help"))
+                            .clickEvent(ClickEvent.runCommand(helpCmd))
                             .build()
                     )
                     .append(text(" to view usage information."))
@@ -379,7 +405,7 @@ public class SparkPlatform {
             if (command.aliases().contains(alias)) {
                 resp.setCommandPrimaryAlias(command.primaryAlias());
                 try {
-                    command.executor().execute(this, sender, resp, new Arguments(rawArgs));
+                    command.executor().execute(this, sender, resp, new Arguments(rawArgs, command.allowSubCommand()));
                 } catch (Arguments.ParseException e) {
                     resp.replyPrefixed(text(e.getMessage(), RED));
                 }
@@ -427,35 +453,53 @@ public class SparkPlatform {
         );
         for (Command command : commands) {
             String usage = "/" + getPlugin().getCommandName() + " " + command.primaryAlias();
-            ClickEvent clickEvent = ClickEvent.suggestCommand(usage);
-            sender.reply(text()
-                    .append(text(">", GOLD, BOLD))
-                    .append(space())
-                    .append(text().content(usage).color(GRAY).clickEvent(clickEvent).build())
-                    .build()
-            );
-            for (Command.ArgumentInfo arg : command.arguments()) {
-                if (arg.requiresParameter()) {
+
+            if (command.allowSubCommand()) {
+                Map<String, List<Command.ArgumentInfo>> argumentsBySubCommand = command.arguments().stream()
+                        .collect(Collectors.groupingBy(Command.ArgumentInfo::subCommandName, LinkedHashMap::new, Collectors.toList()));
+
+                argumentsBySubCommand.forEach((subCommand, arguments) -> {
+                    String subCommandUsage = usage + " " + subCommand;
+
                     sender.reply(text()
-                            .content("       ")
-                            .append(text("[", DARK_GRAY))
-                            .append(text("--" + arg.argumentName(), GRAY))
+                            .append(text(">", GOLD, BOLD))
                             .append(space())
-                            .append(text("<" + arg.parameterDescription() + ">", DARK_GRAY))
-                            .append(text("]", DARK_GRAY))
+                            .append(text().content(subCommandUsage).color(GRAY).clickEvent(ClickEvent.suggestCommand(subCommandUsage)).build())
                             .build()
                     );
-                } else {
-                    sender.reply(text()
-                            .content("       ")
-                            .append(text("[", DARK_GRAY))
-                            .append(text("--" + arg.argumentName(), GRAY))
-                            .append(text("]", DARK_GRAY))
-                            .build()
-                    );
+
+                    for (Command.ArgumentInfo arg : arguments) {
+                        if (arg.argumentName().isEmpty()) {
+                            continue;
+                        }
+                        sender.reply(arg.toComponent("      "));
+                    }
+                });
+            } else {
+                sender.reply(text()
+                        .append(text(">", GOLD, BOLD))
+                        .append(space())
+                        .append(text().content(usage).color(GRAY).clickEvent(ClickEvent.suggestCommand(usage)).build())
+                        .build()
+                );
+
+                for (Command.ArgumentInfo arg : command.arguments()) {
+                    sender.reply(arg.toComponent("    "));
                 }
             }
         }
+
+        sender.reply(Component.empty());
+        sender.replyPrefixed(text()
+                .append(text("For full usage information, please go to: "))
+                .append(text()
+                        .content("https://spark.lucko.me/docs/Command-Usage")
+                        .color(WHITE)
+                        .clickEvent(ClickEvent.openUrl("https://spark.lucko.me/docs/Command-Usage"))
+                        .build()
+                )
+                .build()
+        );
     }
 
 }

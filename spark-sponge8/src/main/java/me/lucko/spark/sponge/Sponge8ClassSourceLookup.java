@@ -22,7 +22,7 @@ package me.lucko.spark.sponge;
 
 import com.google.common.collect.ImmutableMap;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import org.spongepowered.api.Game;
 import org.spongepowered.plugin.PluginCandidate;

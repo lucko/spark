@@ -20,8 +20,6 @@
 
 package me.lucko.spark.common.platform.world;
 
-import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.proto.SparkProtos.WorldStatistics;
 
 import java.util.ArrayList;
@@ -30,46 +28,17 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 
 public class WorldStatisticsProvider {
-    private final SparkPlatform platform;
-    private final WorldInfoProvider provider;
+    private final AsyncWorldInfoProvider provider;
 
-    public WorldStatisticsProvider(SparkPlatform platform, WorldInfoProvider provider) {
-        this.platform = platform;
+    public WorldStatisticsProvider(AsyncWorldInfoProvider provider) {
         this.provider = provider;
     }
 
     public WorldStatistics getWorldStatistics() {
-        if (this.provider == WorldInfoProvider.NO_OP) {
-            return null;
-        }
-
-        CompletableFuture<WorldInfoProvider.Result<? extends ChunkInfo<?>>> future;
-
-        if (this.provider.mustCallSync()) {
-            SparkPlugin plugin = this.platform.getPlugin();
-            future = CompletableFuture.supplyAsync(this.provider::poll, plugin::executeSync);
-        } else {
-            future = CompletableFuture.completedFuture(this.provider.poll());
-        }
-
-        WorldInfoProvider.Result<? extends ChunkInfo<?>> result;
-        try {
-            result = future.get(5, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        } catch (TimeoutException e) {
-            this.platform.getPlugin().log(Level.WARNING, "Timed out waiting for world statistics");
-            return null;
-        }
-
+        WorldInfoProvider.ChunksResult<? extends ChunkInfo<?>> result = provider.getChunks();
         if (result == null) {
             return null;
         }

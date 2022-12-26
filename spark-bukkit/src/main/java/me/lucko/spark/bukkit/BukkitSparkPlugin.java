@@ -30,9 +30,10 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 
@@ -40,10 +41,13 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -178,6 +182,16 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new BukkitClassSourceLookup();
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                Arrays.asList(getServer().getPluginManager().getPlugins()),
+                Plugin::getName,
+                plugin -> plugin.getDescription().getVersion(),
+                plugin -> String.join(", ", plugin.getDescription().getAuthors())
+        );
     }
 
     @Override

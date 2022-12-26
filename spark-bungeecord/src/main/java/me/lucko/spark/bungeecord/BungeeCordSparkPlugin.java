@@ -24,7 +24,8 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences;
 import net.md_5.bungee.api.CommandSender;
@@ -33,6 +34,7 @@ import net.md_5.bungee.api.plugin.Plugin;
 import net.md_5.bungee.api.plugin.TabExecutor;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -89,6 +91,16 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new BungeeCordClassSourceLookup();
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                getProxy().getPluginManager().getPlugins(),
+                plugin -> plugin.getDescription().getName(),
+                plugin -> plugin.getDescription().getVersion(),
+                plugin -> plugin.getDescription().getAuthor()
+        );
     }
 
     @Override

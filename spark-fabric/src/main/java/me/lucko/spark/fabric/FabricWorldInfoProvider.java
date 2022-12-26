@@ -40,6 +40,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerEntityManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.entity.EntityIndex;
 import net.minecraft.world.entity.EntityTrackingSection;
 import net.minecraft.world.entity.SectionedEntityCache;
 
@@ -72,8 +73,25 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
         }
 
         @Override
-        public Result<FabricChunkInfo> poll() {
-            Result<FabricChunkInfo> data = new Result<>();
+        public CountsResult pollCounts() {
+            int players = this.server.getCurrentPlayerCount();
+            int entities = 0;
+            int chunks = 0;
+
+            for (ServerWorld world : this.server.getWorlds()) {
+                ServerEntityManager<Entity> entityManager = ((ServerWorldAccessor) world).getEntityManager();
+                EntityIndex<?> entityIndex = ((ServerEntityManagerAccessor) entityManager).getIndex();
+
+                entities += entityIndex.size();
+                chunks += world.getChunkManager().getLoadedChunkCount();
+            }
+
+            return new CountsResult(players, entities, -1, chunks);
+        }
+
+        @Override
+        public ChunksResult<FabricChunkInfo> pollChunks() {
+            ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
 
             for (ServerWorld world : this.server.getWorlds()) {
                 ServerEntityManager<Entity> entityManager = ((ServerWorldAccessor) world).getEntityManager();
@@ -95,8 +113,24 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
         }
 
         @Override
-        public Result<FabricChunkInfo> poll() {
-            Result<FabricChunkInfo> data = new Result<>();
+        public CountsResult pollCounts() {
+            ClientWorld world = this.client.world;
+            if (world == null) {
+                return null;
+            }
+
+            ClientEntityManager<Entity> entityManager = ((ClientWorldAccessor) world).getEntityManager();
+            EntityIndex<?> entityIndex = ((ClientEntityManagerAccessor) entityManager).getIndex();
+
+            int entities = entityIndex.size();
+            int chunks = world.getChunkManager().getLoadedChunkCount();
+
+            return new CountsResult(-1, entities, -1, chunks);
+        }
+
+        @Override
+        public ChunksResult<FabricChunkInfo> pollChunks() {
+            ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
 
             ClientWorld world = this.client.world;
             if (world == null) {

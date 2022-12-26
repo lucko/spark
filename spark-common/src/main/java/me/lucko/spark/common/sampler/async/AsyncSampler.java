@@ -25,64 +25,43 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.async.jfr.JfrReader;
+import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.node.MergeMode;
-import me.lucko.spark.common.sampler.node.ThreadNode;
-import me.lucko.spark.common.util.ClassSourceLookup;
-import me.lucko.spark.common.util.TemporaryFiles;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
+import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
-import one.profiler.AsyncProfiler;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
+import java.util.function.IntPredicate;
 
 /**
  * A sampler implementation using async-profiler.
  */
 public class AsyncSampler extends AbstractSampler {
-    private final AsyncProfiler profiler;
+    private final AsyncProfilerAccess profilerAccess;
 
     /** Responsible for aggregating and then outputting collected sampling data */
     private final AsyncDataAggregator dataAggregator;
 
-    /** Flag to mark if the output has been completed */
-    private boolean outputComplete = false;
+    /** Mutex for the current profiler job */
+    private final Object[] currentJobMutex = new Object[0];
 
-    /** The temporary output file */
-    private Path outputFile;
+    /** Current profiler job */
+    private AsyncProfilerJob currentJob;
 
-    /** The executor used for timeouts */
-    private ScheduledExecutorService timeoutExecutor;
+    /** The executor used for scheduling and management */
+    private ScheduledExecutorService scheduler;
 
-    public AsyncSampler(SparkPlatform platform, int interval, ThreadDumper threadDumper, ThreadGrouper threadGrouper, long endTime) {
-        super(platform, interval, threadDumper, endTime);
-        this.profiler = AsyncProfilerAccess.INSTANCE.getProfiler();
-        this.dataAggregator = new AsyncDataAggregator(threadGrouper);
-    }
-
-    /**
-     * Executes a profiler command.
-     *
-     * @param command the command to execute
-     * @return the response
-     */
-    private String execute(String command) {
-        try {
-            return this.profiler.execute(command);
-        } catch (IOException e) {
-            throw new RuntimeException("Exception whilst executing profiler command", e);
-        }
+    public AsyncSampler(SparkPlatform platform, SamplerSettings settings) {
+        super(platform, settings);
+        this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
+        this.dataAggregator = new AsyncDataAggregator(settings.threadGrouper());
+        this.scheduler = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactoryBuilder().setNameFormat("spark-asyncsampler-worker-thread").build()
+        );
     }
 
     /**
@@ -92,31 +71,66 @@ public class AsyncSampler extends AbstractSampler {
     public void start() {
         super.start();
 
-        try {
-            this.outputFile = TemporaryFiles.create("spark-profile-", ".jfr.tmp");
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to create temporary output file", e);
+        TickHook tickHook = this.platform.getTickHook();
+        if (tickHook != null) {
+            this.windowStatisticsCollector.startCountingTicks(tickHook);
         }
 
-        String command = "start,event=" + AsyncProfilerAccess.INSTANCE.getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            command += ",filter";
-        }
+        int window = ProfilingWindowUtils.windowNow();
 
-        String resp = execute(command).trim();
-        if (!resp.equalsIgnoreCase("profiling started")) {
-            throw new RuntimeException("Unexpected response: " + resp);
-        }
+        AsyncProfilerJob job = this.profilerAccess.startNewProfilerJob();
+        job.init(this.platform, this.interval, this.threadDumper, window, this.background);
+        job.start();
+        this.currentJob = job;
 
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            ThreadDumper.Specific threadDumper = (ThreadDumper.Specific) this.threadDumper;
-            for (Thread thread : threadDumper.getThreads()) {
-                this.profiler.addThread(thread);
-            }
-        }
+        // rotate the sampler job to put data into a new window
+        this.scheduler.scheduleAtFixedRate(
+                this::rotateProfilerJob,
+                ProfilingWindowUtils.WINDOW_SIZE_SECONDS,
+                ProfilingWindowUtils.WINDOW_SIZE_SECONDS,
+                TimeUnit.SECONDS
+        );
 
         recordInitialGcStats();
         scheduleTimeout();
+    }
+
+    private void rotateProfilerJob() {
+        try {
+            synchronized (this.currentJobMutex) {
+                AsyncProfilerJob previousJob = this.currentJob;
+                if (previousJob == null) {
+                    return;
+                }
+
+                try {
+                    // stop the previous job
+                    previousJob.stop();
+
+                    // collect statistics for the window
+                    this.windowStatisticsCollector.measureNow(previousJob.getWindow());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                // start a new job
+                int window = previousJob.getWindow() + 1;
+                AsyncProfilerJob newJob = this.profilerAccess.startNewProfilerJob();
+                newJob.init(this.platform, this.interval, this.threadDumper, window, this.background);
+                newJob.start();
+                this.currentJob = newJob;
+
+                // aggregate the output of the previous job
+                previousJob.aggregate(this.dataAggregator);
+
+                // prune data older than the history size
+                IntPredicate predicate = ProfilingWindowUtils.keepHistoryBefore(window);
+                this.dataAggregator.pruneData(predicate);
+                this.windowStatisticsCollector.pruneStatistics(predicate);
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
     }
 
     private void scheduleTimeout() {
@@ -129,12 +143,8 @@ public class AsyncSampler extends AbstractSampler {
             return;
         }
 
-        this.timeoutExecutor = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("spark-asyncsampler-timeout-thread").build()
-        );
-
-        this.timeoutExecutor.schedule(() -> {
-            stop();
+        this.scheduler.schedule(() -> {
+            stop(false);
             this.future.complete(this);
         }, delay, TimeUnit.MILLISECONDS);
     }
@@ -143,129 +153,32 @@ public class AsyncSampler extends AbstractSampler {
      * Stops the profiler.
      */
     @Override
-    public void stop() {
-        try {
-            this.profiler.stop();
-        } catch (IllegalStateException e) {
-            if (!e.getMessage().equals("Profiler is not active")) { // ignore
-                throw e;
+    public void stop(boolean cancelled) {
+        super.stop(cancelled);
+
+        synchronized (this.currentJobMutex) {
+            this.currentJob.stop();
+            if (!cancelled) {
+                this.windowStatisticsCollector.measureNow(this.currentJob.getWindow());
+                this.currentJob.aggregate(this.dataAggregator);
+            } else {
+                this.currentJob.deleteOutputFile();
             }
+            this.currentJob = null;
         }
 
-
-        if (this.timeoutExecutor != null) {
-            this.timeoutExecutor.shutdown();
-            this.timeoutExecutor = null;
+        if (this.scheduler != null) {
+            this.scheduler.shutdown();
+            this.scheduler = null;
         }
     }
 
     @Override
-    public SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    public SamplerData toProto(SparkPlatform platform, CommandSender creator, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
         SamplerData.Builder proto = SamplerData.newBuilder();
         writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
-        aggregateOutput();
-        writeDataToProto(proto, this.dataAggregator, outputOrder, mergeMode, classSourceLookup);
+        writeDataToProto(proto, this.dataAggregator, mergeMode, classSourceLookup);
         return proto.build();
     }
 
-    private void aggregateOutput() {
-        if (this.outputComplete) {
-            return;
-        }
-        this.outputComplete = true;
-
-        Predicate<String> threadFilter;
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            ThreadDumper.Specific threadDumper = (ThreadDumper.Specific) this.threadDumper;
-            threadFilter = n -> threadDumper.getThreadNames().contains(n.toLowerCase());
-        } else {
-            threadFilter = n -> true;
-        }
-
-        // read the jfr file produced by async-profiler
-        try (JfrReader reader = new JfrReader(this.outputFile)) {
-            readSegments(reader, threadFilter);
-        } catch (IOException e) {
-            throw new RuntimeException("Read error", e);
-        }
-
-        // delete the output file after reading
-        try {
-            Files.deleteIfExists(this.outputFile);
-        } catch (IOException e) {
-            // ignore
-        }
-    }
-
-    private void readSegments(JfrReader reader, Predicate<String> threadFilter) throws IOException {
-        List<JfrReader.ExecutionSample> samples = reader.readAllEvents(JfrReader.ExecutionSample.class);
-        for (int i = 0; i < samples.size(); i++) {
-            JfrReader.ExecutionSample sample = samples.get(i);
-
-            long duration;
-            if (i == 0) {
-                // we don't really know the duration of the first sample, so just use the sampling
-                // interval
-                duration = this.interval;
-            } else {
-                // calculate the duration of the sample by calculating the time elapsed since the
-                // previous sample
-                duration = TimeUnit.NANOSECONDS.toMicros(sample.time - samples.get(i - 1).time);
-            }
-
-            String threadName = reader.threads.get(sample.tid);
-            if (!threadFilter.test(threadName)) {
-                continue;
-            }
-
-            // parse the segment and give it to the data aggregator
-            ProfileSegment segment = parseSegment(reader, sample, threadName, duration);
-            this.dataAggregator.insertData(segment);
-        }
-    }
-
-    private static ProfileSegment parseSegment(JfrReader reader, JfrReader.ExecutionSample sample, String threadName, long duration) {
-        JfrReader.StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
-        int len = stackTrace.methods.length;
-
-        AsyncStackTraceElement[] stack = new AsyncStackTraceElement[len];
-        for (int i = 0; i < len; i++) {
-            stack[i] = parseStackFrame(reader, stackTrace.methods[i]);
-        }
-
-        return new ProfileSegment(sample.tid, threadName, stack, duration);
-    }
-
-    private static AsyncStackTraceElement parseStackFrame(JfrReader reader, long methodId) {
-        AsyncStackTraceElement result = reader.stackFrames.get(methodId);
-        if (result != null) {
-            return result;
-        }
-
-        JfrReader.MethodRef methodRef = reader.methods.get(methodId);
-        JfrReader.ClassRef classRef = reader.classes.get(methodRef.cls);
-
-        byte[] className = reader.symbols.get(classRef.name);
-        byte[] methodName = reader.symbols.get(methodRef.name);
-
-        if (className == null || className.length == 0) {
-            // native call
-            result = new AsyncStackTraceElement(
-                    AsyncStackTraceElement.NATIVE_CALL,
-                    new String(methodName, StandardCharsets.UTF_8),
-                    null
-            );
-        } else {
-            // java method
-            byte[] methodDesc = reader.symbols.get(methodRef.sig);
-            result = new AsyncStackTraceElement(
-                    new String(className, StandardCharsets.UTF_8).replace('/', '.'),
-                    new String(methodName, StandardCharsets.UTF_8),
-                    new String(methodDesc, StandardCharsets.UTF_8)
-            );
-        }
-
-        reader.stackFrames.put(methodId, result);
-        return result;
-    }
 }

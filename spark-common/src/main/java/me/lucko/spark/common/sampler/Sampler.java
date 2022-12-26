@@ -23,11 +23,9 @@ package me.lucko.spark.common.sampler;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
-import me.lucko.spark.common.sampler.node.ThreadNode;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
-import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -43,7 +41,7 @@ public interface Sampler {
     /**
      * Stops the sampler.
      */
-    void stop();
+    void stop(boolean cancelled);
 
     /**
      * Gets the time when the sampler started (unix timestamp in millis)
@@ -60,6 +58,13 @@ public interface Sampler {
     long getAutoEndTime();
 
     /**
+     * If this sampler is running in the background. (wasn't started by a specific user)
+     *
+     * @return true if the sampler is running in the background
+     */
+    boolean isRunningInBackground();
+
+    /**
      * Gets a future to encapsulate the completion of the sampler
      *
      * @return a future
@@ -67,6 +72,6 @@ public interface Sampler {
     CompletableFuture<Sampler> getFuture();
 
     // Methods used to export the sampler data to the web viewer.
-    SamplerData toProto(SparkPlatform platform, CommandSender creator, Comparator<ThreadNode> outputOrder, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
+    SamplerData toProto(SparkPlatform platform, CommandSender creator, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
 
 }

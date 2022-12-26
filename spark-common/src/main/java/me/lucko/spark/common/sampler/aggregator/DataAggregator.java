@@ -24,6 +24,7 @@ import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import java.util.List;
+import java.util.function.IntPredicate;
 
 /**
  * Aggregates sampling data.
@@ -36,6 +37,13 @@ public interface DataAggregator {
      * @return the output data
      */
     List<ThreadNode> exportData();
+
+    /**
+     * Prunes windows of data from this aggregator if the given {@code timeWindowPredicate} returns true.
+     *
+     * @param timeWindowPredicate the predicate
+     */
+    void pruneData(IntPredicate timeWindowPredicate);
 
     /**
      * Gets metadata about the data aggregator instance.

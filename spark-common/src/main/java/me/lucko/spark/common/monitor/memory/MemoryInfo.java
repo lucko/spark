@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.monitor.memory;
 
-import me.lucko.spark.common.util.LinuxProc;
+import me.lucko.spark.common.monitor.LinuxProc;
 
 import java.lang.management.ManagementFactory;
 import java.util.regex.Matcher;

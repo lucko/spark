@@ -42,7 +42,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
-        public static final class Server extends Forge1710WorldInfoProvider {
+    public static final class Server extends Forge1710WorldInfoProvider {
         private final MinecraftServer server;
 
         public Server(MinecraftServer server) {
@@ -50,8 +50,8 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
         }
 
         @Override
-        public Result<ForgeChunkInfo> poll() {
-            Result<ForgeChunkInfo> data = new Result<>();
+        public ChunksResult<ForgeChunkInfo> pollChunks() {
+            ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
             for (WorldServer level : this.server.worldServers) {
                 ArrayList<ForgeChunkInfo> list = new ArrayList<>();
@@ -62,6 +62,20 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
             }
 
             return data;
+        }
+
+        @Override
+        public CountsResult pollCounts() {
+            int players = this.server.getCurrentPlayerCount();
+            int entities = 0;
+            int chunks = 0;
+
+            for (WorldServer level : this.server.worldServers) {
+                entities += level.loadedEntityList.size();
+                chunks += level.getChunkProvider().getLoadedChunkCount();
+            }
+
+            return new CountsResult(players, entities, -1, chunks);
         }
     }
 
@@ -74,8 +88,8 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
         }
 
         @Override
-        public Result<ForgeChunkInfo> poll() {
-            Result<ForgeChunkInfo> data = new Result<>();
+        public ChunksResult<ForgeChunkInfo> pollChunks() {
+            ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
             WorldClient level = this.client.theWorld;
             if (level == null) {
@@ -94,6 +108,16 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
             data.put(level.provider.getDimensionName(), list);
 
             return data;
+        }
+
+        @Override
+        public CountsResult pollCounts() {
+            WorldClient level = this.client.theWorld;
+            if (level == null) {
+                return null;
+            }
+
+            return new CountsResult(-1, level.loadedEntityList.size(), -1, level.getChunkProvider().getLoadedChunkCount());
         }
     }
 

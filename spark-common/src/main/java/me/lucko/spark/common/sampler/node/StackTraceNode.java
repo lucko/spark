@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.sampler.node;
 
+import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
@@ -30,7 +31,7 @@ import java.util.Objects;
 /**
  * Represents a stack trace element within the {@link AbstractNode node} structure.
  */
-public final class StackTraceNode extends AbstractNode implements Comparable<StackTraceNode> {
+public final class StackTraceNode extends AbstractNode {
 
     /**
      * Magic number to denote "no present" line number for a node.
@@ -64,11 +65,15 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
         return this.description.parentLineNumber;
     }
 
-    public SparkSamplerProtos.StackTraceNode toProto(MergeMode mergeMode) {
+    public SparkSamplerProtos.StackTraceNode toProto(MergeMode mergeMode, ProtoTimeEncoder timeEncoder, Iterable<Integer> childrenRefs) {
         SparkSamplerProtos.StackTraceNode.Builder proto = SparkSamplerProtos.StackTraceNode.newBuilder()
-                .setTime(getTotalTime())
                 .setClassName(this.description.className)
                 .setMethodName(this.description.methodName);
+
+        double[] times = encodeTimesForProto(timeEncoder);
+        for (double time : times) {
+            proto.addTimes(time);
+        }
 
         if (this.description.lineNumber >= 0) {
             proto.setLineNumber(this.description.lineNumber);
@@ -86,25 +91,9 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
                     .ifPresent(proto::setMethodDesc);
         }
 
-        for (StackTraceNode child : exportChildren(mergeMode)) {
-            proto.addChildren(child.toProto(mergeMode));
-        }
+        proto.addAllChildrenRefs(childrenRefs);
 
         return proto.build();
-    }
-
-    @Override
-    public int compareTo(StackTraceNode that) {
-        if (this == that) {
-            return 0;
-        }
-
-        int i = -Double.compare(this.getTotalTime(), that.getTotalTime());
-        if (i != 0) {
-            return i;
-        }
-
-        return this.description.compareTo(that.description);
     }
 
     /**
@@ -129,7 +118,7 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
     /**
      * Encapsulates the attributes of a {@link StackTraceNode}.
      */
-    public static final class Description implements Comparable<Description> {
+    public static final class Description {
         private final String className;
         private final String methodName;
 
@@ -160,54 +149,6 @@ public final class StackTraceNode extends AbstractNode implements Comparable<Sta
             this.lineNumber = StackTraceNode.NULL_LINE_NUMBER;
             this.parentLineNumber = StackTraceNode.NULL_LINE_NUMBER;
             this.hash = Objects.hash(this.className, this.methodName, this.methodDescription);
-        }
-
-        private static <T extends Comparable<T>> int nullCompare(T a, T b) {
-            if (a == null && b == null) {
-                return 0;
-            } else if (a == null) {
-                return -1;
-            } else if (b == null) {
-                return 1;
-            } else {
-                return a.compareTo(b);
-            }
-        }
-
-        @Override
-        public int compareTo(Description that) {
-            if (this == that) {
-                return 0;
-            }
-
-            int i = this.className.compareTo(that.className);
-            if (i != 0) {
-                return i;
-            }
-
-            i = this.methodName.compareTo(that.methodName);
-            if (i != 0) {
-                return i;
-            }
-
-            i = nullCompare(this.methodDescription, that.methodDescription);
-            if (i != 0) {
-                return i;
-            }
-
-            if (this.methodDescription != null && that.methodDescription != null) {
-                i = this.methodDescription.compareTo(that.methodDescription);
-                if (i != 0) {
-                    return i;
-                }
-            }
-
-            i = Integer.compare(this.lineNumber, that.lineNumber);
-            if (i != 0) {
-                return i;
-            }
-
-            return Integer.compare(this.parentLineNumber, that.parentLineNumber);
         }
 
         @Override

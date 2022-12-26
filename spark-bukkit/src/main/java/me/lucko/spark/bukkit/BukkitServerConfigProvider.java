@@ -28,10 +28,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializer;
 
-import me.lucko.spark.common.platform.serverconfig.AbstractServerConfigProvider;
 import me.lucko.spark.common.platform.serverconfig.ConfigParser;
 import me.lucko.spark.common.platform.serverconfig.ExcludedConfigFilter;
 import me.lucko.spark.common.platform.serverconfig.PropertiesConfigParser;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -51,7 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BukkitServerConfigProvider extends AbstractServerConfigProvider {
+public class BukkitServerConfigProvider extends ServerConfigProvider {
 
     /** A map of provided files and their type */
     private static final Map<String, ConfigParser> FILES;

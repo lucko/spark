@@ -24,7 +24,8 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 
 import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.command.Command;
@@ -32,6 +33,7 @@ import dev.waterdog.waterdogpe.command.CommandSender;
 import dev.waterdog.waterdogpe.plugin.Plugin;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -98,6 +100,16 @@ public class WaterdogSparkPlugin extends Plugin implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new WaterdogClassSourceLookup(getProxy());
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                getProxy().getPluginManager().getPlugins(),
+                Plugin::getName,
+                plugin -> plugin.getDescription().getVersion(),
+                plugin -> plugin.getDescription().getAuthor()
+        );
     }
 
     @Override

@@ -152,6 +152,21 @@ message WorldStatistics {
   }
 }
 
+message WindowStatistics {
+  int32 ticks = 1;
+  double cpu_process = 2;
+  double cpu_system = 3;
+  double tps = 4;
+  double mspt_median = 5;
+  double mspt_max = 6;
+
+  // world
+  int32 players = 7;
+  int32 entities = 8;
+  int32 tile_entities = 9;
+  int32 chunks = 10;
+}
+
 message RollingAverageValues {
   double mean = 1;
   double max = 2;
