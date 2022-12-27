@@ -55,6 +55,12 @@ processResources {
     }
 }
 
+jar {
+    manifest {
+        attributes 'FMLAT': 'spark_at.cfg'
+    }
+}
+
 shadowJar {
     archiveName = 'spark-forge1710.jar'
     configurations = [project.configurations.shade]

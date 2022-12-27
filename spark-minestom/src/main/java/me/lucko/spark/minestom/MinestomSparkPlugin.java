@@ -24,9 +24,10 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.CommandSender;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -115,6 +117,16 @@ public class MinestomSparkPlugin extends Extension implements SparkPlugin {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new MinestomClassSourceLookup();
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                MinecraftServer.getExtensionManager().getExtensions(),
+                extension -> extension.getOrigin().getName(),
+                extension -> extension.getOrigin().getVersion(),
+                extension -> String.join(", ", extension.getOrigin().getAuthors())
+        );
     }
 
     @Override

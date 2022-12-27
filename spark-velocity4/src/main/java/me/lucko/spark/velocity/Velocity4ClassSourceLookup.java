@@ -23,7 +23,7 @@ package me.lucko.spark.velocity;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginManager;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -48,7 +48,7 @@ public class Velocity4ClassSourceLookup extends ClassSourceLookup.ByClassLoader 
         for (PluginContainer plugin : pluginManager.plugins()) {
             Object instance = plugin.instance();
             if (instance != null) {
-                this.classLoadersToPlugin.put(instance.getClass().getClassLoader(), plugin.description().name());
+                this.classLoadersToPlugin.put(instance.getClass().getClassLoader(), plugin.description().id());
             }
         }
     }

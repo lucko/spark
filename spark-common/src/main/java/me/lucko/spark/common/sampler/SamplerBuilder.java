@@ -38,7 +38,8 @@ public class SamplerBuilder {
     private boolean ignoreSleeping = false;
     private boolean ignoreNative = false;
     private boolean useAsyncProfiler = true;
-    private long timeout = -1;
+    private long autoEndTime = -1;
+    private boolean background = false;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
     private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;
 
@@ -57,7 +58,12 @@ public class SamplerBuilder {
         if (timeout <= 0) {
             throw new IllegalArgumentException("timeout > 0");
         }
-        this.timeout = System.currentTimeMillis() + unit.toMillis(timeout);
+        this.autoEndTime = System.currentTimeMillis() + unit.toMillis(timeout);
+        return this;
+    }
+
+    public SamplerBuilder background(boolean background) {
+        this.background = background;
         return this;
     }
 
@@ -93,15 +99,24 @@ public class SamplerBuilder {
     }
 
     public Sampler start(SparkPlatform platform) {
+        boolean onlyTicksOverMode = this.ticksOver != -1 && this.tickHook != null;
+        boolean canUseAsyncProfiler = this.useAsyncProfiler &&
+                !onlyTicksOverMode &&
+                !(this.ignoreSleeping || this.ignoreNative) &&
+                !(this.threadDumper instanceof ThreadDumper.Regex) &&
+                AsyncProfilerAccess.getInstance(platform).checkSupported(platform);
+
+
         int intervalMicros = (int) (this.samplingInterval * 1000d);
+        SamplerSettings settings = new SamplerSettings(intervalMicros, this.threadDumper, this.threadGrouper, this.autoEndTime, this.background);
 
         Sampler sampler;
-        if (this.ticksOver != -1 && this.tickHook != null) {
-            sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
-        } else if (this.useAsyncProfiler && !(this.threadDumper instanceof ThreadDumper.Regex) && AsyncProfilerAccess.INSTANCE.checkSupported(platform)) {
-            sampler = new AsyncSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout);
+        if (canUseAsyncProfiler) {
+            sampler = new AsyncSampler(platform, settings);
+        } else if (onlyTicksOverMode) {
+            sampler = new JavaSampler(platform, settings, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
         } else {
-            sampler = new JavaSampler(intervalMicros, this.threadDumper, this.threadGrouper, this.timeout, this.ignoreSleeping, this.ignoreNative);
+            sampler = new JavaSampler(platform, settings, this.ignoreSleeping, this.ignoreNative);
         }
 
         sampler.start();

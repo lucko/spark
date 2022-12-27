@@ -4,13 +4,7 @@ plugins {
 
 dependencies {
     implementation project(':spark-common')
-    implementation('me.lucko:adventure-platform-bukkit:4.9.4') {
-        exclude(module: 'adventure-api')
-        exclude(module: 'checker-qual')
-        exclude(module: 'annotations')
-        exclude(module: 'adventure-text-serializer-gson')
-        exclude(module: 'adventure-text-serializer-legacy')
-    }
+    implementation 'net.kyori:adventure-platform-bukkit:4.2.0'
     compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
     
     // placeholders
@@ -37,12 +31,9 @@ processResources {
 shadowJar {
     archiveName = "spark-${project.pluginVersion}-bukkit.jar"
 
-    relocate 'okio', 'me.lucko.spark.lib.okio'
-    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
-    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'

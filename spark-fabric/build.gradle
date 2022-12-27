@@ -28,9 +28,9 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.19'
-    mappings 'net.fabricmc:yarn:1.19+build.1:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.14.7'
+    minecraft 'com.mojang:minecraft:1.19.3'
+    mappings 'net.fabricmc:yarn:1.19.3+build.2:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.14.11'
 
     Set<String> apiModules = [
             "fabric-api-base",
@@ -40,12 +40,12 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.55.3+1.19'))
+        modImplementation(fabricApi.module(it, '0.68.1+1.19.3'))
     }
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.1-SNAPSHOT'))
 
-    modImplementation('eu.pb4:placeholder-api:1.1.1+1.17.1')
+    modImplementation('eu.pb4:placeholder-api:2.0.0-beta.4+1.19')
 
     shade project(':spark-common')
 }
@@ -66,23 +66,28 @@ processResources {
     }
 }
 
+license {
+    exclude '**/smap/SourceMap.java'
+}
+
 shadowJar {
     archiveFileName = "spark-fabric-${project.pluginVersion}-dev.jar"
     configurations = [project.configurations.shade]
 
-    relocate 'okio', 'me.lucko.spark.lib.okio'
-    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
-    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
-    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+//    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
 
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+
+    dependencies {
+        exclude(dependency('org.ow2.asm::'))
+    }
 }
 
 task remappedShadowJar(type: RemapJarTask) {

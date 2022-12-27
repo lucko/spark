@@ -66,10 +66,11 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
      * Inserts sampling data into this aggregator
      *
      * @param threadInfo the thread info
+     * @param window the window
      */
-    public abstract void insertData(ThreadInfo threadInfo);
+    public abstract void insertData(ThreadInfo threadInfo, int window);
 
-    protected void writeData(ThreadInfo threadInfo) {
+    protected void writeData(ThreadInfo threadInfo, int window) {
         if (this.ignoreSleeping && isSleeping(threadInfo)) {
             return;
         }
@@ -79,7 +80,7 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
 
         try {
             ThreadNode node = getNode(this.threadGrouper.getGroup(threadInfo.getThreadId(), threadInfo.getThreadName()));
-            node.log(STACK_TRACE_DESCRIBER, threadInfo.getStackTrace(), this.interval);
+            node.log(STACK_TRACE_DESCRIBER, threadInfo.getStackTrace(), this.interval, window);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -34,11 +34,13 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -131,6 +133,16 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
     @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new VelocityClassSourceLookup(this.proxy.getPluginManager());
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                this.proxy.getPluginManager().getPlugins(),
+                plugin -> plugin.getDescription().getId(),
+                plugin -> plugin.getDescription().getVersion().orElse("unspecified"),
+                plugin -> String.join(", ", plugin.getDescription().getAuthors())
+        );
     }
 
     @Override

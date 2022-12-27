@@ -20,7 +20,7 @@
 
 package me.lucko.spark.sponge;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import org.spongepowered.api.Game;
 

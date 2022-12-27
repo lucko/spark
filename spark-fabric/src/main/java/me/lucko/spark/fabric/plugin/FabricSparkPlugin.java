@@ -34,12 +34,14 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.sampler.ThreadDumper;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.fabric.FabricClassSourceLookup;
 import me.lucko.spark.fabric.FabricSparkMod;
 
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.metadata.Person;
 import net.minecraft.server.command.CommandOutput;
 
 import org.apache.logging.log4j.LogManager;
@@ -47,10 +49,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public abstract class FabricSparkPlugin implements SparkPlugin {
 
@@ -59,7 +63,6 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
     protected final ScheduledExecutorService scheduler;
 
     protected SparkPlatform platform;
-    protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected FabricSparkPlugin(FabricSparkMod mod) {
         this.mod = mod;
@@ -108,13 +111,20 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
     }
 
     @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return this.threadDumper.get();
+    public ClassSourceLookup createClassSourceLookup() {
+        return new FabricClassSourceLookup();
     }
 
     @Override
-    public ClassSourceLookup createClassSourceLookup() {
-        return new FabricClassSourceLookup();
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                FabricLoader.getInstance().getAllMods(),
+                mod -> mod.getMetadata().getId(),
+                mod -> mod.getMetadata().getVersion().getFriendlyString(),
+                mod -> mod.getMetadata().getAuthors().stream()
+                        .map(Person::getName)
+                        .collect(Collectors.joining(", "))
+        );
     }
 
     protected CompletableFuture<Suggestions> generateSuggestions(CommandSender sender, String[] args, SuggestionsBuilder builder) {

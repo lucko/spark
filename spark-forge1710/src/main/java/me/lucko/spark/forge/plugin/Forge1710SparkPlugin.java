@@ -23,7 +23,6 @@ package me.lucko.spark.forge.plugin;
 import cpw.mods.fml.common.FMLCommonHandler;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
-import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.forge.Forge1710CommandSender;
 import me.lucko.spark.forge.Forge1710SparkMod;
 import net.minecraft.command.ICommand;
@@ -45,7 +44,6 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
     protected final SparkPlatform platform;
-    protected final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     protected Forge1710SparkPlugin(Forge1710SparkMod mod) {
         this.mod = mod;
@@ -98,11 +96,6 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
         }
     }
 
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return this.threadDumper.get();
-    }
-
     // implement ICommand
 
     @Override
@@ -122,7 +115,6 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new Forge1710CommandSender(sender, this), args);
     }
 

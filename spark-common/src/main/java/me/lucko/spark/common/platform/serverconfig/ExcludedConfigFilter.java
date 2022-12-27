@@ -20,11 +20,9 @@
 
 package me.lucko.spark.common.platform.serverconfig;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,62 +32,26 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Abstract implementation of {@link ServerConfigProvider}.
- *
- * <p>This implementation is able to delete hidden paths from
- * the configurations before they are sent to the viewer.</p>
- *
- * @param <T> the file type
+ * Filtered excluded paths from {@link JsonElement}s (parsed configuration files).
  */
-public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements ServerConfigProvider {
-    private final Map<String, T> files;
-    private final Collection<String> hiddenPaths;
+public class ExcludedConfigFilter {
+    private final Collection<String> pathsToExclude;
 
-    protected AbstractServerConfigProvider(Map<String, T> files, Collection<String> hiddenPaths) {
-        this.files = files;
-        this.hiddenPaths = hiddenPaths;
-    }
-
-    @Override
-    public final Map<String, JsonElement> loadServerConfigurations() {
-        ImmutableMap.Builder<String, JsonElement> builder = ImmutableMap.builder();
-
-        this.files.forEach((path, type) -> {
-            try {
-                JsonElement json = load(path, type);
-                if (json != null) {
-                    delete(json, this.hiddenPaths);
-                    builder.put(path, json);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-
-        return builder.build();
+    public ExcludedConfigFilter(Collection<String> pathsToExclude) {
+        this.pathsToExclude = pathsToExclude;
     }
 
     /**
-     * Loads a file from the system.
-     *
-     * @param path the name of the file to load
-     * @param type the type of the file
-     * @return the loaded file
-     * @throws IOException if an error occurs performing i/o
-     */
-    protected abstract JsonElement load(String path, T type) throws IOException;
-
-    /**
-     * Deletes the given paths from the json element.
+     * Deletes the excluded paths from the json element.
      *
      * @param json the json element
-     * @param paths the paths to delete
      */
-    private static void delete(JsonElement json, Collection<String> paths) {
-        for (String path : paths) {
+    public JsonElement apply(JsonElement json) {
+        for (String path : this.pathsToExclude) {
             Deque<String> pathDeque = new LinkedList<>(Arrays.asList(path.split("\\.")));
             delete(json, pathDeque);
         }
+        return json;
     }
 
     private static void delete(JsonElement json, Deque<String> path) {
@@ -132,5 +94,4 @@ public abstract class AbstractServerConfigProvider<T extends Enum<T>> implements
             }
         }
     }
-
 }

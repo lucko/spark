@@ -20,9 +20,14 @@
 
 package me.lucko.spark.forge.plugin;
 
+import com.google.common.collect.Queues;
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.*;
@@ -32,13 +37,20 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.FutureTask;
 import java.util.stream.Stream;
 
 public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
+    private final Queue<Runnable> scheduledServerTasks = Queues.newArrayDeque();
+
+    private final ThreadDumper.GameThread gameThreadDumper;
 
     public static Forge1710ServerSparkPlugin register(Forge1710SparkMod mod, FMLServerStartingEvent event) {
         Forge1710ServerSparkPlugin plugin = new Forge1710ServerSparkPlugin(mod, event.getServer());
         plugin.enable();
+
+        FMLCommonHandler.instance().bus().register(plugin);
 
         // register commands & permissions
         event.registerServerCommand(plugin);
@@ -46,18 +58,45 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
         return plugin;
     }
 
+    @SubscribeEvent
+    public void onServerTickEnd(TickEvent.ServerTickEvent event) {
+        if(event.phase == TickEvent.Phase.START) {
+            synchronized(scheduledServerTasks) {
+                while (!scheduledServerTasks.isEmpty())
+                {
+                    scheduledServerTasks.poll().run();
+                }
+            }
+        }
+    }
+
     private final MinecraftServer server;
 
     public Forge1710ServerSparkPlugin(Forge1710SparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
+        this.gameThreadDumper = new ThreadDumper.GameThread();
+        this.scheduledServerTasks.add(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper.get();
     }
 
     @Override
     public boolean hasPermission(ICommandSender sender, String permission) {
         if (sender instanceof EntityPlayerMP) {
             EntityPlayerMP player = (EntityPlayerMP)sender;
-            return isOp(player) || player.mcServer.getServerOwner().equals(player.getGameProfile().getName());
+            if(isOp(player))
+                return true;
+            else {
+                String serverOwner = MinecraftServer.getServer().getServerOwner();
+                if(player.getGameProfile().getName() != null && serverOwner != null)
+                    return serverOwner.equals(player.getGameProfile().getName());
+                else
+                    return false;
+            }
         } else {
             return true;
         }
@@ -79,6 +118,18 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
     @Override
     public TickReporter createTickReporter() {
         return new Forge1710TickReporter(TickEvent.Type.SERVER);
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new Forge1710WorldInfoProvider.Server(FMLCommonHandler.instance().getMinecraftServerInstance());
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        synchronized (scheduledServerTasks) {
+            scheduledServerTasks.add(task);
+        }
     }
 
     @Override

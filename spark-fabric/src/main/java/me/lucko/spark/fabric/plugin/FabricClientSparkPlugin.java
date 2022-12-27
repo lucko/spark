@@ -28,14 +28,20 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
+import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
+import me.lucko.spark.fabric.FabricExtraMetadataProvider;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
+import me.lucko.spark.fabric.FabricWorldInfoProvider;
+import me.lucko.spark.fabric.mixin.MinecraftClientAccessor;
 
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -55,10 +61,12 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     }
 
     private final MinecraftClient minecraft;
+    private final ThreadDumper.GameThread gameThreadDumper;
 
     public FabricClientSparkPlugin(FabricSparkMod mod, MinecraftClient minecraft) {
         super(mod);
         this.minecraft = minecraft;
+        this.gameThreadDumper = new ThreadDumper.GameThread(() -> ((MinecraftClientAccessor) minecraft).getThread());
     }
 
     @Override
@@ -87,7 +95,6 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
             return 0;
         }
 
-        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new FabricCommandSender(context.getSource().getEntity(), this), args);
         return Command.SINGLE_SUCCESS;
     }
@@ -113,6 +120,16 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     }
 
     @Override
+    public void executeSync(Runnable task) {
+        this.minecraft.executeSync(task);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper.get();
+    }
+
+    @Override
     public TickHook createTickHook() {
         return new FabricTickHook.Client();
     }
@@ -120,6 +137,16 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public TickReporter createTickReporter() {
         return new FabricTickReporter.Client();
+    }
+
+    @Override
+    public MetadataProvider createExtraMetadataProvider() {
+        return new FabricExtraMetadataProvider(this.minecraft.getResourcePackManager());
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new FabricWorldInfoProvider.Client(this.minecraft);
     }
 
     @Override

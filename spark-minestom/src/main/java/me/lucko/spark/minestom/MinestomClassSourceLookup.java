@@ -20,7 +20,7 @@
 
 package me.lucko.spark.minestom;
 
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.extensions.Extension;

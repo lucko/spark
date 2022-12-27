@@ -1,0 +1,2 @@
+before_install:
+  - ./gradlew :spark-forge1710:setupCIWorkspace

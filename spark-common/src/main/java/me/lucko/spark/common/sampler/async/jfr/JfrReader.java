@@ -51,7 +51,7 @@ public class JfrReader implements Closeable {
 
     public final Dictionary<JfrClass> types = new Dictionary<>();
     public final Map<String, JfrClass> typesByName = new HashMap<>();
-    public final Dictionary<String> threads = new Dictionary<>();
+    public final Map<Long, String> threads = new HashMap<>(); // spark
     public final Dictionary<ClassRef> classes = new Dictionary<>();
     public final Dictionary<byte[]> symbols = new Dictionary<>();
     public final Dictionary<MethodRef> methods = new Dictionary<>();
@@ -324,7 +324,7 @@ public class JfrReader implements Closeable {
     }
 
     private void readThreads(boolean hasGroup) {
-        int count = threads.preallocate(getVarint());
+        int count = getVarint(); //threads.preallocate(getVarint());
         for (int i = 0; i < count; i++) {
             long id = getVarlong();
             String osName = getString();

@@ -1,29 +1,37 @@
+import org.cadixdev.gradle.licenser.LicenseExtension
+
 plugins {
-    id 'com.google.protobuf' version '0.8.16'
+    id 'com.google.protobuf' version '0.9.1'
 }
 
 license {
     exclude '**/sampler/async/jfr/**'
 }
 
+extensions.configure(LicenseExtension.class) {
+    it.exclude {
+        it.file.toString().startsWith(buildDir.toString())
+    }
+}
+
 dependencies {
     api project(':spark-api')
-    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.7'
+    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.3'
     implementation 'org.ow2.asm:asm:9.1'
-    implementation 'com.google.protobuf:protobuf-javalite:3.15.6'
-    implementation 'com.squareup.okhttp3:okhttp:3.14.1'
-    implementation 'com.squareup.okio:okio:1.17.3'
+    implementation 'com.google.protobuf:protobuf-javalite:3.21.11'
     implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
-    implementation 'org.tukaani:xz:1.8'
-    api('net.kyori:adventure-api:4.9.3') {
+    api('net.kyori:adventure-api:4.12.0') {
+        exclude(module: 'adventure-bom')
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')
     }
-    api('net.kyori:adventure-text-serializer-gson:4.9.3') {
+    api('net.kyori:adventure-text-serializer-gson:4.12.0') {
+        exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
         exclude(module: 'gson')
     }
-    api('net.kyori:adventure-text-serializer-legacy:4.9.3') {
+    api('net.kyori:adventure-text-serializer-legacy:4.12.0') {
+        exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
     }
     implementation('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
@@ -34,20 +42,9 @@ dependencies {
     compileOnly 'org.checkerframework:checker-qual:3.8.0'
 }
 
-processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        include 'spark/linux/libasyncProfiler.so'
-        include 'spark/macosx/libasyncProfiler.so'
-    }
-}
-
 protobuf {
     protoc {
-        if (System.getProperty("os.name") == "Mac OS X" && System.getProperty("os.arch") == "aarch64") {
-            path = '/opt/homebrew/bin/protoc'
-        } else {
-            artifact = 'com.google.protobuf:protoc:3.15.6'
-        }
+        artifact = 'com.google.protobuf:protoc:3.21.11'
     }
     generateProtoTasks {
         all().each { task ->

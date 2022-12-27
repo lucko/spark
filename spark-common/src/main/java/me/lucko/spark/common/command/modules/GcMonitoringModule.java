@@ -123,7 +123,7 @@ public class GcMonitoringModule implements CommandModule {
                         );
                         report.add(text()
                                 .content("      ")
-                                .append(text(formatTime((long) averageFrequency), WHITE))
+                                .append(text(FormatUtil.formatSeconds((long) averageFrequency / 1000), WHITE))
                                 .append(text(" avg frequency", GRAY))
                                 .build()
                         );
@@ -151,26 +151,6 @@ public class GcMonitoringModule implements CommandModule {
                 })
                 .build()
         );
-    }
-
-    private static String formatTime(long millis) {
-        if (millis <= 0) {
-            return "0s";
-        }
-
-        long second = millis / 1000;
-        long minute = second / 60;
-        second = second % 60;
-
-        StringBuilder sb = new StringBuilder();
-        if (minute != 0) {
-            sb.append(minute).append("m ");
-        }
-        if (second != 0) {
-            sb.append(second).append("s ");
-        }
-
-        return sb.toString().trim();
     }
 
     private static class ReportingGcMonitor extends GarbageCollectionMonitor implements GarbageCollectionMonitor.Listener {

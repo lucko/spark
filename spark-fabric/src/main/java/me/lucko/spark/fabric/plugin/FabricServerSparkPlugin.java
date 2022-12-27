@@ -30,15 +30,22 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
+import me.lucko.spark.fabric.FabricExtraMetadataProvider;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricPlayerPingProvider;
+import me.lucko.spark.fabric.FabricServerConfigProvider;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
+import me.lucko.spark.fabric.FabricWorldInfoProvider;
 import me.lucko.spark.fabric.placeholder.SparkFabricPlaceholderApi;
 
 import net.fabricmc.loader.api.FabricLoader;
@@ -59,10 +66,12 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     }
 
     private final MinecraftServer server;
+    private final ThreadDumper gameThreadDumper;
 
     public FabricServerSparkPlugin(FabricSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
+        this.gameThreadDumper = new ThreadDumper.Specific(server.getThread());
     }
 
     @Override
@@ -74,7 +83,11 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
         // placeholders
         if (FabricLoader.getInstance().isModLoaded("placeholder-api")) {
-            new SparkFabricPlaceholderApi(this.platform);
+            try {
+                SparkFabricPlaceholderApi.register(this.platform);
+            } catch (LinkageError e) {
+                // ignore
+            }
         }
     }
 
@@ -89,7 +102,6 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
             return 0;
         }
 
-        this.threadDumper.ensureSetup();
         CommandOutput source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
         this.platform.executeCommand(new FabricCommandSender(source, this), args);
         return Command.SINGLE_SUCCESS;
@@ -107,8 +119,15 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
 
     @Override
     public boolean hasPermission(CommandOutput sender, String permission) {
-        if (sender instanceof PlayerEntity) {
-            return Permissions.check(((PlayerEntity) sender), permission, 4);
+        if (sender instanceof PlayerEntity player) {
+            return Permissions.getPermissionValue(player, permission).orElseGet(() -> {
+                MinecraftServer server = player.getServer();
+                if (server != null && server.isHost(player.getGameProfile())) {
+                    return true;
+                }
+
+                return player.hasPermissionLevel(4);
+            });
         } else {
             return true;
         }
@@ -120,6 +139,16 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
                 this.server.getPlayerManager().getPlayerList().stream(),
                 Stream.of(this.server)
         ).map(sender -> new FabricCommandSender(sender, this));
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        this.server.executeSync(task);
+    }
+
+    @Override
+    public ThreadDumper getDefaultThreadDumper() {
+        return this.gameThreadDumper;
     }
 
     @Override
@@ -135,6 +164,21 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public PlayerPingProvider createPlayerPingProvider() {
         return new FabricPlayerPingProvider(this.server);
+    }
+
+    @Override
+    public ServerConfigProvider createServerConfigProvider() {
+        return new FabricServerConfigProvider();
+    }
+
+    @Override
+    public MetadataProvider createExtraMetadataProvider() {
+        return new FabricExtraMetadataProvider(this.server.getDataPackManager());
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new FabricWorldInfoProvider.Server(this.server);
     }
 
     @Override

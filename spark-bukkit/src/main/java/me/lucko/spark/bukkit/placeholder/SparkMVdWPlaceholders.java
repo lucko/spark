@@ -22,6 +22,7 @@ package me.lucko.spark.bukkit.placeholder;
 
 import me.lucko.spark.bukkit.BukkitSparkPlugin;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.util.SparkPlaceholder;
 
 import be.maximvdw.placeholderapi.PlaceholderAPI;
 import be.maximvdw.placeholderapi.PlaceholderReplaceEvent;
@@ -43,6 +44,6 @@ public class SparkMVdWPlaceholders implements PlaceholderReplacer {
         }
 
         String identifier = placeholder.substring("spark_".length());
-        return SparkPlaceholderProvider.respond(this.platform, identifier);
+        return SparkPlaceholder.resolveFormattingCode(this.platform, identifier);
     }
 }

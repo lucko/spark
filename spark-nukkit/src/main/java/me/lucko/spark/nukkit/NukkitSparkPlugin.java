@@ -25,13 +25,12 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.util.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import cn.nukkit.command.Command;
 import cn.nukkit.command.CommandSender;
 import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.plugin.service.ServicePriority;
-import cn.nukkit.scheduler.AsyncTask;
 
 import java.nio.file.Path;
 import java.util.logging.Level;
@@ -82,12 +81,7 @@ public class NukkitSparkPlugin extends PluginBase implements SparkPlugin {
 
     @Override
     public void executeAsync(Runnable task) {
-        getServer().getScheduler().scheduleAsyncTask(this, new AsyncTask() {
-            @Override
-            public void onRun() {
-                task.run();
-            }
-        });
+        getServer().getScheduler().scheduleTask(this, task, true);
     }
 
     @Override

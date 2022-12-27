@@ -25,11 +25,16 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializer;
 
-import me.lucko.spark.common.platform.serverconfig.AbstractServerConfigProvider;
-import me.lucko.spark.common.platform.serverconfig.PropertiesFileReader;
+import me.lucko.spark.common.platform.serverconfig.ConfigParser;
+import me.lucko.spark.common.platform.serverconfig.ExcludedConfigFilter;
+import me.lucko.spark.common.platform.serverconfig.PropertiesConfigParser;
+import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 
+import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -37,23 +42,19 @@ import co.aikar.timings.TimingsManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BukkitServerConfigProvider extends AbstractServerConfigProvider<BukkitServerConfigProvider.FileType> {
-    private static final Gson GSON = new GsonBuilder()
-            .registerTypeAdapter(MemorySection.class, (JsonSerializer<MemorySection>) (obj, type, ctx) -> ctx.serialize(obj.getValues(false)))
-            .create();
+public class BukkitServerConfigProvider extends ServerConfigProvider {
 
     /** A map of provided files and their type */
-    private static final Map<String, FileType> FILES;
+    private static final Map<String, ConfigParser> FILES;
     /** A collection of paths to be excluded from the files */
     private static final Collection<String> HIDDEN_PATHS;
 
@@ -61,51 +62,89 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
         super(FILES, HIDDEN_PATHS);
     }
 
-    @Override
-    protected JsonElement load(String path, FileType type) throws IOException {
-        Path filePath = Paths.get(path);
-        if (!Files.exists(filePath)) {
-            return null;
-        }
+    private static class YamlConfigParser implements ConfigParser {
+        public static final YamlConfigParser INSTANCE = new YamlConfigParser();
+        protected static final Gson GSON = new GsonBuilder()
+                .registerTypeAdapter(MemorySection.class, (JsonSerializer<MemorySection>) (obj, type, ctx) -> ctx.serialize(obj.getValues(false)))
+                .create();
 
-        try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
-            Map<String, Object> values;
-
-            if (type == FileType.PROPERTIES) {
-                PropertiesFileReader propertiesReader = new PropertiesFileReader(reader);
-                values = propertiesReader.readProperties();
-            } else if (type == FileType.YAML) {
-                YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
-                values = config.getValues(false);
-            } else {
-                throw new IllegalArgumentException("Unknown file type: " + type);
+        @Override
+        public JsonElement load(String file, ExcludedConfigFilter filter) throws IOException {
+            Map<String, Object> values = this.parse(Paths.get(file));
+            if (values == null) {
+                return null;
             }
 
-            return GSON.toJsonTree(values);
+            return filter.apply(GSON.toJsonTree(values));
+        }
+
+        @Override
+        public Map<String, Object> parse(BufferedReader reader) throws IOException {
+            YamlConfiguration config = YamlConfiguration.loadConfiguration(reader);
+            return config.getValues(false);
         }
     }
 
-    enum FileType {
-        PROPERTIES,
-        YAML
+    // Paper 1.19+ split config layout
+    private static class SplitYamlConfigParser extends YamlConfigParser {
+        public static final SplitYamlConfigParser INSTANCE = new SplitYamlConfigParser();
+
+        @Override
+        public JsonElement load(String group, ExcludedConfigFilter filter) throws IOException {
+            String prefix = group.replace("/", "");
+
+            Path configDir = Paths.get("config");
+            if (!Files.exists(configDir)) {
+                return null;
+            }
+
+            JsonObject root = new JsonObject();
+
+            for (Map.Entry<String, Path> entry : getNestedFiles(configDir, prefix).entrySet()) {
+                String fileName = entry.getKey();
+                Path path = entry.getValue();
+
+                Map<String, Object> values = this.parse(path);
+                if (values == null) {
+                    continue;
+                }
+
+                // apply the filter individually to each nested file
+                root.add(fileName, filter.apply(GSON.toJsonTree(values)));
+            }
+
+            return root;
+        }
+
+        private static Map<String, Path> getNestedFiles(Path configDir, String prefix) {
+            Map<String, Path> files = new LinkedHashMap<>();
+            files.put("global.yml", configDir.resolve(prefix + "-global.yml"));
+            files.put("world-defaults.yml", configDir.resolve(prefix + "-world-defaults.yml"));
+            for (World world : Bukkit.getWorlds()) {
+                files.put(world.getName() + ".yml", world.getWorldFolder().toPath().resolve(prefix + "-world.yml"));
+            }
+            return files;
+        }
     }
 
     static {
-        ImmutableMap.Builder<String, FileType> files = ImmutableMap.<String, FileType>builder()
-                .put("server.properties", FileType.PROPERTIES)
-                .put("bukkit.yml", FileType.YAML)
-                .put("spigot.yml", FileType.YAML)
-                .put("paper.yml", FileType.YAML)
-                .put("purpur.yml", FileType.YAML);
+        ImmutableMap.Builder<String, ConfigParser> files = ImmutableMap.<String, ConfigParser>builder()
+                .put("server.properties", PropertiesConfigParser.INSTANCE)
+                .put("bukkit.yml", YamlConfigParser.INSTANCE)
+                .put("spigot.yml", YamlConfigParser.INSTANCE)
+                .put("paper.yml", YamlConfigParser.INSTANCE)
+                .put("paper/", SplitYamlConfigParser.INSTANCE)
+                .put("purpur.yml", YamlConfigParser.INSTANCE);
 
         for (String config : getSystemPropertyList("spark.serverconfigs.extra")) {
-            files.put(config, FileType.YAML);
+            files.put(config, YamlConfigParser.INSTANCE);
         }
 
         ImmutableSet.Builder<String> hiddenPaths = ImmutableSet.<String>builder()
                 .add("database")
                 .add("settings.bungeecord-addresses")
                 .add("settings.velocity-support.secret")
+                .add("proxies.velocity.secret")
                 .add("server-ip")
                 .add("motd")
                 .add("resource-pack")
@@ -113,18 +152,13 @@ public class BukkitServerConfigProvider extends AbstractServerConfigProvider<Buk
                 .add("level-seed")
                 .add("world-settings.*.feature-seeds")
                 .add("world-settings.*.seed-*")
+                .add("feature-seeds")
+                .add("seed-*")
                 .addAll(getTimingsHiddenConfigs())
                 .addAll(getSystemPropertyList("spark.serverconfigs.hiddenpaths"));
 
         FILES = files.build();
         HIDDEN_PATHS = hiddenPaths.build();
-    }
-
-    private static List<String> getSystemPropertyList(String property) {
-        String value = System.getProperty(property);
-        return value == null
-                ? Collections.emptyList()
-                : Arrays.asList(value.split(","));
     }
 
     private static List<String> getTimingsHiddenConfigs() {

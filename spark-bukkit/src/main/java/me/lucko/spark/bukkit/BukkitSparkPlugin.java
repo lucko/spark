@@ -28,10 +28,12 @@ import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 
@@ -39,24 +41,29 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     private BukkitAudiences audienceFactory;
+    private ThreadDumper gameThreadDumper;
+
     private SparkPlatform platform;
 
     private CommandExecutor tpsCommand = null;
-    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Override
     public void onEnable() {
         this.audienceFactory = BukkitAudiences.create(this);
+        this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
 
         this.platform = new SparkPlatform(this);
         this.platform.enable();
@@ -101,7 +108,6 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        this.threadDumper.ensureSetup();
         this.platform.executeCommand(new BukkitCommandSender(sender, this.audienceFactory), args);
         return true;
     }
@@ -136,7 +142,12 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void executeAsync(Runnable task) {
-        getServer().getScheduler().runTaskAsynchronously(BukkitSparkPlugin.this, task);
+        getServer().getScheduler().runTaskAsynchronously(this, task);
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        getServer().getScheduler().runTask(this, task);
     }
 
     @Override
@@ -146,7 +157,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return this.threadDumper.get();
+        return this.gameThreadDumper;
     }
 
     @Override
@@ -174,6 +185,16 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                Arrays.asList(getServer().getPluginManager().getPlugins()),
+                Plugin::getName,
+                plugin -> plugin.getDescription().getVersion(),
+                plugin -> String.join(", ", plugin.getDescription().getAuthors())
+        );
+    }
+
+    @Override
     public PlayerPingProvider createPlayerPingProvider() {
         if (BukkitPlayerPingProvider.isSupported()) {
             return new BukkitPlayerPingProvider(getServer());
@@ -185,6 +206,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     @Override
     public ServerConfigProvider createServerConfigProvider() {
         return new BukkitServerConfigProvider();
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        return new BukkitWorldInfoProvider(getServer());
     }
 
     @Override

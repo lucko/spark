@@ -23,6 +23,7 @@ package me.lucko.spark.bukkit.placeholder;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.lucko.spark.bukkit.BukkitSparkPlugin;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.util.SparkPlaceholder;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -44,7 +45,7 @@ public class SparkPlaceholderApi extends PlaceholderExpansion {
 
     @Override
     public String onRequest(OfflinePlayer p, String params) {
-        return SparkPlaceholderProvider.respond(this.platform, params);
+        return SparkPlaceholder.resolveFormattingCode(this.platform, params);
     }
 
     @Override

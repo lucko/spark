@@ -9,7 +9,7 @@ tasks.withType(JavaCompile) {
 
 dependencies {
     implementation project(':spark-common')
-    compileOnly 'com.github.Minestom:Minestom:367c389bc6'
+    compileOnly 'com.github.Minestom:Minestom:1a013728fd'
     implementation 'com.google.guava:guava:19.0'
 }
 
@@ -30,11 +30,8 @@ shadowJar {
         exclude(dependency('net.kyori:^(?!adventure-text-feature-pagination).+$'))
     }
 
-    relocate 'okio', 'me.lucko.spark.lib.okio'
-    relocate 'okhttp3', 'me.lucko.spark.lib.okhttp3'
     relocate 'net.kyori.adventure.text.feature.pagination', 'me.lucko.spark.lib.adventure.pagination'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
-    relocate 'org.tukaani.xz', 'me.lucko.spark.lib.xz'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'

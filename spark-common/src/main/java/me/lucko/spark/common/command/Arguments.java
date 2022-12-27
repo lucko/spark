@@ -38,8 +38,9 @@ public class Arguments {
 
     private final List<String> rawArgs;
     private final SetMultimap<String, String> parsedArgs;
+    private String parsedSubCommand = null;
 
-    public Arguments(List<String> rawArgs) {
+    public Arguments(List<String> rawArgs, boolean allowSubCommand) {
         this.rawArgs = rawArgs;
         this.parsedArgs = HashMultimap.create();
 
@@ -52,7 +53,9 @@ public class Arguments {
             Matcher matcher = FLAG_REGEX.matcher(arg);
             boolean matches = matcher.matches();
 
-            if (flag == null || matches) {
+            if (i == 0 && allowSubCommand && !matches) {
+                this.parsedSubCommand = arg;
+            } else if (flag == null || matches) {
                 if (!matches) {
                     throw new ParseException("Expected flag at position " + i + " but got '" + arg + "' instead!");
                 }
@@ -78,6 +81,10 @@ public class Arguments {
 
     public List<String> raw() {
         return this.rawArgs;
+    }
+
+    public String subCommand() {
+        return this.parsedSubCommand;
     }
 
     public int intFlag(String key) {

@@ -23,14 +23,19 @@ package me.lucko.spark.common;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.common.util.ClassSourceLookup;
 
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -73,6 +78,15 @@ public interface SparkPlugin {
      * @param task the task
      */
     void executeAsync(Runnable task);
+
+    /**
+     * Executes the given {@link Runnable} on the server/client main thread.
+     *
+     * @param task the task
+     */
+    default void executeSync(Runnable task) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Print to the plugin logger.
@@ -123,6 +137,15 @@ public interface SparkPlugin {
     }
 
     /**
+     * Gets a list of known sources (plugins/mods) on the platform.
+     *
+     * @return a list of sources
+     */
+    default Collection<SourceMetadata> getKnownSources() {
+        return Collections.emptyList();
+    }
+
+    /**
      * Creates a player ping provider function.
      *
      * <p>Returns {@code null} if the platform does not support querying player pings</p>
@@ -139,7 +162,25 @@ public interface SparkPlugin {
      * @return the server config provider function
      */
     default ServerConfigProvider createServerConfigProvider() {
-        return ServerConfigProvider.NO_OP;
+        return null;
+    }
+
+    /**
+     * Creates a metadata provider for the platform.
+     *
+     * @return the platform extra metadata provider
+     */
+    default MetadataProvider createExtraMetadataProvider() {
+        return null;
+    }
+
+    /**
+     * Creates a world info provider.
+     *
+     * @return the world info provider function
+     */
+    default WorldInfoProvider createWorldInfoProvider() {
+        return WorldInfoProvider.NO_OP;
     }
 
     /**

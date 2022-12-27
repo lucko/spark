@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.monitor;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -49,7 +49,12 @@ public enum LinuxProc {
     /**
      * Information about the system network usage.
      */
-    NET_DEV("/proc/net/dev");
+    NET_DEV("/proc/net/dev"),
+
+    /**
+     * Information about the operating system distro.
+     */
+    OSINFO("/etc/os-release");
 
     private final Path path;
 

@@ -20,6 +20,7 @@
 
 package me.lucko.spark.sponge;
 
+import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
 
 import me.lucko.spark.common.SparkPlatform;
@@ -27,9 +28,11 @@ import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.common.util.ClassSourceLookup;
 
 import net.kyori.adventure.text.Component;
 
@@ -50,11 +53,14 @@ import org.spongepowered.api.event.lifecycle.StartedEngineEvent;
 import org.spongepowered.api.event.lifecycle.StoppingEngineEvent;
 import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.builtin.jvm.Plugin;
+import org.spongepowered.plugin.metadata.model.PluginContributor;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,9 +73,10 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     private final Game game;
     private final Path configDirectory;
     private final ExecutorService asyncExecutor;
+    private final Supplier<ExecutorService> syncExecutor;
+    private final ThreadDumper.GameThread gameThreadDumper = new ThreadDumper.GameThread();
 
     private SparkPlatform platform;
-    private final ThreadDumper.GameThread threadDumper = new ThreadDumper.GameThread();
 
     @Inject
     public Sponge8SparkPlugin(PluginContainer pluginContainer, Logger logger, Game game, @ConfigDir(sharedRoot = false) Path configDirectory) {
@@ -78,6 +85,15 @@ public class Sponge8SparkPlugin implements SparkPlugin {
         this.game = game;
         this.configDirectory = configDirectory;
         this.asyncExecutor = game.asyncScheduler().executor(pluginContainer);
+        this.syncExecutor = Suppliers.memoize(() -> {
+            if (this.game.isServerAvailable()) {
+                return this.game.server().scheduler().executor(this.pluginContainer);
+            } else if (this.game.isClientAvailable()) {
+                return this.game.client().scheduler().executor(this.pluginContainer);
+            } else {
+                throw new IllegalStateException("Server and client both unavailable");
+            }
+        });
     }
 
 
@@ -88,6 +104,8 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Listener
     public void onEnable(StartedEngineEvent<Server> event) {
+        executeSync(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
+
         this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
@@ -114,15 +132,24 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Override
     public Stream<CommandSender> getCommandSenders() {
-        return Stream.concat(
-                this.game.server().onlinePlayers().stream(),
-                Stream.of(this.game.systemSubject())
-        ).map(Sponge8CommandSender::new);
+        if (this.game.isServerAvailable()) {
+            return Stream.concat(
+                    this.game.server().onlinePlayers().stream(),
+                    Stream.of(this.game.systemSubject())
+            ).map(Sponge8CommandSender::new);
+        } else {
+            return Stream.of(this.game.systemSubject()).map(Sponge8CommandSender::new);
+        }
     }
 
     @Override
     public void executeAsync(Runnable task) {
         this.asyncExecutor.execute(task);
+    }
+
+    @Override
+    public void executeSync(Runnable task) {
+        this.syncExecutor.get().execute(task);
     }
 
     @Override
@@ -140,7 +167,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Override
     public ThreadDumper getDefaultThreadDumper() {
-        return this.threadDumper.get();
+        return this.gameThreadDumper.get();
     }
 
     @Override
@@ -154,11 +181,32 @@ public class Sponge8SparkPlugin implements SparkPlugin {
     }
 
     @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                this.game.pluginManager().plugins(),
+                plugin -> plugin.metadata().id(),
+                plugin -> plugin.metadata().version().toString(),
+                plugin -> plugin.metadata().contributors().stream()
+                        .map(PluginContributor::name)
+                        .collect(Collectors.joining(", "))
+        );
+    }
+
+    @Override
     public PlayerPingProvider createPlayerPingProvider() {
         if (this.game.isServerAvailable()) {
             return new Sponge8PlayerPingProvider(this.game.server());
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public WorldInfoProvider createWorldInfoProvider() {
+        if (this.game.isServerAvailable()) {
+            return new Sponge8WorldInfoProvider(this.game.server());
+        } else {
+            return WorldInfoProvider.NO_OP;
         }
     }
 
@@ -176,7 +224,6 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
         @Override
         public CommandResult process(CommandCause cause, ArgumentReader.Mutable arguments) {
-            this.plugin.threadDumper.ensureSetup();
             this.plugin.platform.executeCommand(new Sponge8CommandSender(cause), arguments.input().split(" "));
             return CommandResult.success();
         }

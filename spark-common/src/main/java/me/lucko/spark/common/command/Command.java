@@ -25,9 +25,16 @@ import com.google.common.collect.ImmutableList;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 
+import net.kyori.adventure.text.Component;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import static net.kyori.adventure.text.Component.space;
+import static net.kyori.adventure.text.Component.text;
+import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
+import static net.kyori.adventure.text.format.NamedTextColor.GRAY;
 
 public class Command {
 
@@ -39,12 +46,14 @@ public class Command {
     private final List<ArgumentInfo> arguments;
     private final Executor executor;
     private final TabCompleter tabCompleter;
+    private final boolean allowSubCommand;
 
-    private Command(List<String> aliases, List<ArgumentInfo> arguments, Executor executor, TabCompleter tabCompleter) {
+    private Command(List<String> aliases, List<ArgumentInfo> arguments, Executor executor, TabCompleter tabCompleter, boolean allowSubCommand) {
         this.aliases = aliases;
         this.arguments = arguments;
         this.executor = executor;
         this.tabCompleter = tabCompleter;
+        this.allowSubCommand = allowSubCommand;
     }
 
     public List<String> aliases() {
@@ -67,11 +76,16 @@ public class Command {
         return this.aliases.get(0);
     }
 
+    public boolean allowSubCommand() {
+        return this.allowSubCommand;
+    }
+
     public static final class Builder {
         private final ImmutableList.Builder<String> aliases = ImmutableList.builder();
         private final ImmutableList.Builder<ArgumentInfo> arguments = ImmutableList.builder();
         private Executor executor = null;
         private TabCompleter tabCompleter = null;
+        private boolean allowSubCommand = false;
 
         Builder() {
 
@@ -82,8 +96,13 @@ public class Command {
             return this;
         }
 
+        public Builder argumentUsage(String subCommandName, String argumentName, String parameterDescription) {
+            this.arguments.add(new ArgumentInfo(subCommandName, argumentName, parameterDescription));
+            return this;
+        }
+
         public Builder argumentUsage(String argumentName, String parameterDescription) {
-            this.arguments.add(new ArgumentInfo(argumentName, parameterDescription));
+            this.arguments.add(new ArgumentInfo("", argumentName, parameterDescription));
             return this;
         }
 
@@ -94,6 +113,11 @@ public class Command {
 
         public Builder tabCompleter(TabCompleter tabCompleter) {
             this.tabCompleter = Objects.requireNonNull(tabCompleter, "tabCompleter");
+            return this;
+        }
+
+        public Builder allowSubCommand(boolean allowSubCommand) {
+            this.allowSubCommand = allowSubCommand;
             return this;
         }
 
@@ -108,7 +132,7 @@ public class Command {
             if (this.tabCompleter == null) {
                 this.tabCompleter = TabCompleter.empty();
             }
-            return new Command(aliases, this.arguments.build(), this.executor, this.tabCompleter);
+            return new Command(aliases, this.arguments.build(), this.executor, this.tabCompleter, this.allowSubCommand);
         }
     }
 
@@ -127,12 +151,18 @@ public class Command {
     }
 
     public static final class ArgumentInfo {
+        private final String subCommandName;
         private final String argumentName;
         private final String parameterDescription;
 
-        public ArgumentInfo(String argumentName, String parameterDescription) {
+        public ArgumentInfo(String subCommandName, String argumentName, String parameterDescription) {
+            this.subCommandName = subCommandName;
             this.argumentName = argumentName;
             this.parameterDescription = parameterDescription;
+        }
+
+        public String subCommandName() {
+            return this.subCommandName;
         }
 
         public String argumentName() {
@@ -145,6 +175,26 @@ public class Command {
 
         public boolean requiresParameter() {
             return this.parameterDescription != null;
+        }
+
+        public Component toComponent(String padding) {
+            if (requiresParameter()) {
+                 return text()
+                        .content(padding)
+                        .append(text("[", DARK_GRAY))
+                        .append(text("--" + argumentName(), GRAY))
+                        .append(space())
+                        .append(text("<" + parameterDescription() + ">", DARK_GRAY))
+                        .append(text("]", DARK_GRAY))
+                        .build();
+            } else {
+                return text()
+                        .content(padding)
+                        .append(text("[", DARK_GRAY))
+                        .append(text("--" + argumentName(), GRAY))
+                        .append(text("]", DARK_GRAY))
+                        .build();
+            }
         }
     }
 

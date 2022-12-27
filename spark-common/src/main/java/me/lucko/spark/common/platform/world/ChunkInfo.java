@@ -18,35 +18,27 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler;
-
-import me.lucko.spark.common.sampler.node.ThreadNode;
-
-import java.util.Comparator;
+package me.lucko.spark.common.platform.world;
 
 /**
- * Methods of ordering {@link ThreadNode}s in the output data.
+ * Information about a given chunk.
+ *
+ * @param <E> the type used to describe entities
  */
-public enum ThreadNodeOrder implements Comparator<ThreadNode> {
+public interface ChunkInfo<E> {
+
+    int getX();
+
+    int getZ();
+
+    CountMap<E> getEntityCounts();
 
     /**
-     * Order by the name of the thread (alphabetically)
+     * Converts entity type {@link E} to a string.
+     *
+     * @param type the entity type
+     * @return a string
      */
-    BY_NAME {
-        @Override
-        public int compare(ThreadNode o1, ThreadNode o2) {
-            return o1.getThreadLabel().compareTo(o2.getThreadLabel());
-        }
-    },
-
-    /**
-     * Order by the time taken by the thread (most time taken first)
-     */
-    BY_TIME {
-        @Override
-        public int compare(ThreadNode o1, ThreadNode o2) {
-            return -Double.compare(o1.getTotalTime(), o2.getTotalTime());
-        }
-    }
+    String entityTypeName(E type);
 
 }

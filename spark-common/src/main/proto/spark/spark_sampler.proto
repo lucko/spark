@@ -11,6 +11,10 @@ message SamplerData {
   SamplerMetadata metadata = 1;
   repeated ThreadNode threads = 2;
   map<string, string> class_sources = 3; // optional
+  map<string, string> method_sources = 4; // optional
+  map<string, string> line_sources = 5; // optional
+  repeated int32 time_windows = 6;
+  map<int32, WindowStatistics> time_window_statistics = 7;
 }
 
 message SamplerMetadata {
@@ -25,6 +29,9 @@ message SamplerMetadata {
   SystemStatistics system_statistics = 9;
   map<string, string> server_configurations = 10;
   int64 end_time = 11;
+  int32 number_of_ticks = 12;
+  map<string, SourceMetadata> sources = 13;
+  map<string, string> extra_platform_metadata = 14;
 
   message ThreadDumper {
     Type type = 1;
@@ -42,6 +49,7 @@ message SamplerMetadata {
     Type type = 1;
     ThreadGrouper thread_grouper = 2;
     int64 tick_length_threshold = 3; // optional
+    int32 number_of_included_ticks = 4; // optional
 
     enum Type {
       SIMPLE = 0;
@@ -54,20 +62,35 @@ message SamplerMetadata {
       AS_ONE = 2;
     }
   }
+
+  message SourceMetadata {
+    string name = 1;
+    string version = 2;
+  }
 }
 
 message ThreadNode {
   string name = 1;
-  double time = 2;
+
+  // replaced
+  reserved 2;
+  reserved "time";
+
   repeated StackTraceNode children = 3;
+  repeated double times = 4;
+  repeated int32 children_refs = 5;
 }
 
 message StackTraceNode {
-  double time = 1;
-  repeated StackTraceNode children = 2;
+  // replaced
+  reserved 1, 2;
+  reserved "time", "children";
+
   string class_name = 3;
   string method_name = 4;
   int32 parent_line_number = 5; // optional
   int32 line_number = 6; // optional
   string method_desc = 7; // optional
+  repeated double times = 8;
+  repeated int32 children_refs = 9;
 }
