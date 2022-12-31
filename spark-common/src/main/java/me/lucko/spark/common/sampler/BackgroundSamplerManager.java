@@ -31,6 +31,7 @@ public class BackgroundSamplerManager {
     private static final String OPTION_ENABLED = "backgroundProfiler";
     private static final String OPTION_ENGINE = "backgroundProfilerEngine";
     private static final String OPTION_INTERVAL = "backgroundProfilerInterval";
+    private static final String OPTION_THREAD_GROUPER = "backgroundProfilerThreadGrouper";
 
     private static final String MARKER_FAILED = "_marker_background_profiler_failed";
 
@@ -101,10 +102,23 @@ public class BackgroundSamplerManager {
     private void startSampler() {
         boolean forceJavaEngine = this.configuration.getString(OPTION_ENGINE, "async").equals("java");
 
+        ThreadGrouper threadGrouper;
+        switch (this.configuration.getString(OPTION_THREAD_GROUPER, "byPool")) {
+            case "asOne":
+                threadGrouper = ThreadGrouper.AS_ONE;
+                break;
+            case "byName":
+                threadGrouper = ThreadGrouper.BY_NAME;
+                break;
+            default:
+                threadGrouper = ThreadGrouper.BY_POOL;
+                break;
+        }
+
         Sampler sampler = new SamplerBuilder()
                 .background(true)
                 .threadDumper(this.platform.getPlugin().getDefaultThreadDumper())
-                .threadGrouper(ThreadGrouper.BY_POOL)
+                .threadGrouper(threadGrouper)
                 .samplingInterval(this.configuration.getInteger(OPTION_INTERVAL, 10))
                 .forceJavaSampler(forceJavaEngine)
                 .start(this.platform);
