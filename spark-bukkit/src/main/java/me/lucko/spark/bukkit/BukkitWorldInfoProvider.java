@@ -70,12 +70,21 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
                 chunks += world.getChunkCount();
             } else {
                 entities += world.getEntities().size();
+
                 Chunk[] chunksArray = world.getLoadedChunks();
+                int nullChunks = 0;
+
                 for (Chunk chunk : chunksArray) {
+                    if (chunk == null) {
+                        ++nullChunks;
+                        continue;
+                    }
+
                     BlockState[] tileEntitiesArray = chunk.getTileEntities();
                     tileEntities += tileEntitiesArray != null ? tileEntitiesArray.length : 0;
                 }
-                chunks += chunksArray.length;
+
+                chunks += chunksArray.length - nullChunks;
             }
         }
 
