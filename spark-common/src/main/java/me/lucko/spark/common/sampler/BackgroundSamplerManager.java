@@ -24,10 +24,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.util.Configuration;
 
-import java.util.Arrays;
-import java.util.Set;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 public class BackgroundSamplerManager {
 
@@ -105,42 +102,20 @@ public class BackgroundSamplerManager {
 
     private void startSampler() {
         boolean forceJavaEngine = this.configuration.getString(OPTION_ENGINE, "async").equals("java");
-        String grouperName = this.configuration.getString(OPTION_THREAD_GROUPER, "byPool");
-        String dumperName = this.configuration.getString(OPTION_THREAD_DUMPER, "default");
 
-        ThreadGrouper threadGrouper;
-        switch (grouperName) {
-            case "asOne":
-                threadGrouper = ThreadGrouper.AS_ONE;
-                break;
-            case "byName":
-                threadGrouper = ThreadGrouper.BY_NAME;
-                break;
-            default:
-                threadGrouper = ThreadGrouper.BY_POOL;
-                break;
+        ThreadGrouper threadGrouper = ThreadGrouper.parseConfigSetting(this.configuration.getString(OPTION_THREAD_GROUPER, "by-pool"));
+        ThreadDumper threadDumper = ThreadDumper.parseConfigSetting(this.configuration.getString(OPTION_THREAD_DUMPER, "default"));
+        if (threadDumper == null) {
+            threadDumper = this.platform.getPlugin().getDefaultThreadDumper();
         }
 
-        ThreadDumper threadDumper;
-        switch (dumperName) {
-            case "default":
-                threadDumper = this.platform.getPlugin().getDefaultThreadDumper();
-                break;
-            case "*":
-            case "all":
-                threadDumper = ThreadDumper.ALL;
-                break;
-            default:
-                Set<String> threadNames = Arrays.stream(dumperName.split(",")).collect(Collectors.toSet());
-                threadDumper = new ThreadDumper.Specific(threadNames);
-                break;
-        }
+        int interval = this.configuration.getInteger(OPTION_INTERVAL, 10);
 
         Sampler sampler = new SamplerBuilder()
               .background(true)
               .threadDumper(threadDumper)
               .threadGrouper(threadGrouper)
-              .samplingInterval(this.configuration.getInteger(OPTION_INTERVAL, 10))
+              .samplingInterval(interval)
               .forceJavaSampler(forceJavaEngine)
               .start(this.platform);
 

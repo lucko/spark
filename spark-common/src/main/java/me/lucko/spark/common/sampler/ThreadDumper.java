@@ -55,6 +55,24 @@ public interface ThreadDumper {
     SamplerMetadata.ThreadDumper getMetadata();
 
     /**
+     * Creates a new {@link ThreadDumper} by parsing the given config setting.
+     *
+     * @param setting the config setting
+     * @return the thread dumper
+     */
+    static ThreadDumper parseConfigSetting(String setting) {
+        switch (setting) {
+            case "default":
+                return null;
+            case "all":
+                return ALL;
+            default:
+                Set<String> threadNames = Arrays.stream(setting.split(",")).collect(Collectors.toSet());
+                return new ThreadDumper.Specific(threadNames);
+        }
+    }
+
+    /**
      * Implementation of {@link ThreadDumper} that generates data for all threads.
      */
     ThreadDumper ALL = new ThreadDumper() {
