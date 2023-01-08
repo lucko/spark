@@ -165,6 +165,11 @@ message WindowStatistics {
   int32 entities = 8;
   int32 tile_entities = 9;
   int32 chunks = 10;
+
+  // approximate wall-clock start/end times
+  int64 start_time = 11;
+  int64 end_time = 12;
+  int32 duration = 13;
 }
 
 message RollingAverageValues {

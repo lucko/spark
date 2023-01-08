@@ -65,6 +65,13 @@ public interface Sampler {
     boolean isRunningInBackground();
 
     /**
+     * Gets the sampler mode.
+     *
+     * @return the sampler mode
+     */
+    SamplerMode getMode();
+
+    /**
      * Gets a future to encapsulate the completion of the sampler
      *
      * @return a future

@@ -126,6 +126,7 @@ public abstract class AbstractSampler implements Sampler {
 
     protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender creator, String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
+                .setSamplerMode(getMode().asProto())
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
                 .setCreator(creator.toData().toProto())
                 .setStartTime(this.startTime)
@@ -187,7 +188,7 @@ public abstract class AbstractSampler implements Sampler {
 
         ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
 
-        ProtoTimeEncoder timeEncoder = new ProtoTimeEncoder(data);
+        ProtoTimeEncoder timeEncoder = new ProtoTimeEncoder(getMode().valueTransformer(), data);
         int[] timeWindows = timeEncoder.getKeys();
         for (int timeWindow : timeWindows) {
             proto.addTimeWindows(timeWindow);
