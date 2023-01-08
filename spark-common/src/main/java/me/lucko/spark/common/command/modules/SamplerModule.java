@@ -33,6 +33,7 @@ import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.SamplerBuilder;
+import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
@@ -80,6 +81,7 @@ public class SamplerModule implements CommandModule {
                 .argumentUsage("start", "thread", "thread name")
                 .argumentUsage("start", "only-ticks-over", "tick length millis")
                 .argumentUsage("start", "interval", "interval millis")
+                .argumentUsage("start", "alloc", null)
                 .argumentUsage("stop", "", null)
                 .argumentUsage("cancel", "", null)
                 .executor(this::profiler)
@@ -94,7 +96,7 @@ public class SamplerModule implements CommandModule {
                         }
                         if (subCommand.equals("start")) {
                             opts = new ArrayList<>(Arrays.asList("--timeout", "--regex", "--combine-all",
-                                    "--not-combined", "--interval", "--only-ticks-over", "--force-java-sampler"));
+                                    "--not-combined", "--interval", "--only-ticks-over", "--force-java-sampler", "--alloc", "--alloc-live-only"));
                             opts.removeAll(arguments);
                             opts.add("--thread"); // allowed multiple times
                         }
@@ -166,9 +168,12 @@ public class SamplerModule implements CommandModule {
                     "Consider setting a timeout value over 30 seconds."));
         }
 
-        double intervalMillis = arguments.doubleFlag("interval");
-        if (intervalMillis <= 0) {
-            intervalMillis = 4;
+        SamplerMode mode = arguments.boolFlag("alloc") ? SamplerMode.ALLOCATION : SamplerMode.EXECUTION;
+        boolean allocLiveOnly = arguments.boolFlag("alloc-live-only");
+
+        double interval = arguments.doubleFlag("interval");
+        if (interval <= 0) {
+            interval = mode.defaultInterval();
         }
 
         boolean ignoreSleeping = arguments.boolFlag("ignore-sleeping");
@@ -213,23 +218,33 @@ public class SamplerModule implements CommandModule {
         resp.broadcastPrefixed(text("Starting a new profiler, please wait..."));
 
         SamplerBuilder builder = new SamplerBuilder();
+        builder.mode(mode);
         builder.threadDumper(threadDumper);
         builder.threadGrouper(threadGrouper);
         if (timeoutSeconds != -1) {
             builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
         }
-        builder.samplingInterval(intervalMillis);
+        builder.samplingInterval(interval);
         builder.ignoreSleeping(ignoreSleeping);
         builder.ignoreNative(ignoreNative);
         builder.forceJavaSampler(forceJavaSampler);
+        builder.allocLiveOnly(allocLiveOnly);
         if (ticksOver != -1) {
             builder.ticksOver(ticksOver, tickHook);
         }
-        Sampler sampler = builder.start(platform);
+
+        Sampler sampler;
+        try {
+            sampler = builder.start(platform);
+        } catch (UnsupportedOperationException e) {
+            resp.replyPrefixed(text(e.getMessage(), RED));
+            return;
+        }
+
         platform.getSamplerContainer().setActiveSampler(sampler);
 
         resp.broadcastPrefixed(text()
-                .append(text("Profiler is now running!", GOLD))
+                .append(text((mode == SamplerMode.ALLOCATION ? "Allocation Profiler" : "Profiler") + " is now running!", GOLD))
                 .append(space())
                 .append(text("(" + (sampler instanceof AsyncSampler ? "async" : "built-in java") + ")", DARK_GRAY))
                 .build()

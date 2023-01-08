@@ -38,13 +38,13 @@ public class ProfileSegment {
     /** The stack trace for this segment */
     private final AsyncStackTraceElement[] stackTrace;
     /** The time spent executing this segment in microseconds */
-    private final long time;
+    private final long value;
 
-    public ProfileSegment(int nativeThreadId, String threadName, AsyncStackTraceElement[] stackTrace, long time) {
+    public ProfileSegment(int nativeThreadId, String threadName, AsyncStackTraceElement[] stackTrace, long value) {
         this.nativeThreadId = nativeThreadId;
         this.threadName = threadName;
         this.stackTrace = stackTrace;
-        this.time = time;
+        this.value = value;
     }
 
     public int getNativeThreadId() {
@@ -59,11 +59,11 @@ public class ProfileSegment {
         return this.stackTrace;
     }
 
-    public long getTime() {
-        return this.time;
+    public long getValue() {
+        return this.value;
     }
 
-    public static ProfileSegment parseSegment(JfrReader reader, JfrReader.ExecutionSample sample, String threadName, long duration) {
+    public static ProfileSegment parseSegment(JfrReader reader, JfrReader.Event sample, String threadName, long value) {
         JfrReader.StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
         int len = stackTrace.methods.length;
 
@@ -72,7 +72,7 @@ public class ProfileSegment {
             stack[i] = parseStackFrame(reader, stackTrace.methods[i]);
         }
 
-        return new ProfileSegment(sample.tid, threadName, stack, duration);
+        return new ProfileSegment(sample.tid, threadName, stack, value);
     }
 
     private static AsyncStackTraceElement parseStackFrame(JfrReader reader, long methodId) {

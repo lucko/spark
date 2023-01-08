@@ -32,6 +32,7 @@ message SamplerMetadata {
   int32 number_of_ticks = 12;
   map<string, SourceMetadata> sources = 13;
   map<string, string> extra_platform_metadata = 14;
+  SamplerMode sampler_mode = 15;
 
   message ThreadDumper {
     Type type = 1;
@@ -66,6 +67,11 @@ message SamplerMetadata {
   message SourceMetadata {
     string name = 1;
     string version = 2;
+  }
+
+  enum SamplerMode {
+    EXECUTION = 0;
+    ALLOCATION = 1;
   }
 }
 

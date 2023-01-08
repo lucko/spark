@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
+import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
@@ -90,6 +91,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             }
         }
 
+        this.windowStatisticsCollector.recordWindowStartTime(ProfilingWindowUtils.unixMillisToWindow(this.startTime));
         this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
     }
 
@@ -149,6 +151,9 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             int previousWindow = JavaSampler.this.lastWindow.getAndUpdate(previous -> Math.max(this.window, previous));
             if (previousWindow != 0 && previousWindow != this.window) {
 
+                // record the start time for the new window
+                JavaSampler.this.windowStatisticsCollector.recordWindowStartTime(this.window);
+
                 // collect statistics for the previous window
                 JavaSampler.this.windowStatisticsCollector.measureNow(previousWindow);
 
@@ -168,4 +173,8 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         return proto.build();
     }
 
+    @Override
+    public SamplerMode getMode() {
+        return SamplerMode.EXECUTION;
+    }
 }

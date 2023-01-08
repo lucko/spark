@@ -50,7 +50,7 @@ public class AsyncDataAggregator extends AbstractDataAggregator {
     public void insertData(ProfileSegment element, int window) {
         try {
             ThreadNode node = getNode(this.threadGrouper.getGroup(element.getNativeThreadId(), element.getThreadName()));
-            node.log(STACK_TRACE_DESCRIBER, element.getStackTrace(), element.getTime(), window);
+            node.log(STACK_TRACE_DESCRIBER, element.getStackTrace(), element.getValue(), window);
         } catch (Exception e) {
             e.printStackTrace();
         }

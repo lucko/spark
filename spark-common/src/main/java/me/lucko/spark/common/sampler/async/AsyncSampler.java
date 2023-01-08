@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
+import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
@@ -41,6 +42,11 @@ import java.util.function.IntPredicate;
  * A sampler implementation using async-profiler.
  */
 public class AsyncSampler extends AbstractSampler {
+
+    /** Function to collect and measure samples - either execution or allocation */
+    private final SampleCollector<?> sampleCollector;
+
+    /** Object that provides access to the async-profiler API */
     private final AsyncProfilerAccess profilerAccess;
 
     /** Responsible for aggregating and then outputting collected sampling data */
@@ -55,8 +61,9 @@ public class AsyncSampler extends AbstractSampler {
     /** The executor used for scheduling and management */
     private ScheduledExecutorService scheduler;
 
-    public AsyncSampler(SparkPlatform platform, SamplerSettings settings) {
+    public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector) {
         super(platform, settings);
+        this.sampleCollector = collector;
         this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
         this.dataAggregator = new AsyncDataAggregator(settings.threadGrouper());
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
@@ -79,17 +86,21 @@ public class AsyncSampler extends AbstractSampler {
         int window = ProfilingWindowUtils.windowNow();
 
         AsyncProfilerJob job = this.profilerAccess.startNewProfilerJob();
-        job.init(this.platform, this.interval, this.threadDumper, window, this.background);
+        job.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background);
         job.start();
+        this.windowStatisticsCollector.recordWindowStartTime(window);
         this.currentJob = job;
 
         // rotate the sampler job to put data into a new window
-        this.scheduler.scheduleAtFixedRate(
-                this::rotateProfilerJob,
-                ProfilingWindowUtils.WINDOW_SIZE_SECONDS,
-                ProfilingWindowUtils.WINDOW_SIZE_SECONDS,
-                TimeUnit.SECONDS
-        );
+        boolean shouldNotRotate = this.sampleCollector instanceof SampleCollector.Allocation && ((SampleCollector.Allocation) this.sampleCollector).isLiveOnly();
+        if (!shouldNotRotate) {
+            this.scheduler.scheduleAtFixedRate(
+                    this::rotateProfilerJob,
+                    ProfilingWindowUtils.WINDOW_SIZE_SECONDS,
+                    ProfilingWindowUtils.WINDOW_SIZE_SECONDS,
+                    TimeUnit.SECONDS
+            );
+        }
 
         recordInitialGcStats();
         scheduleTimeout();
@@ -106,9 +117,6 @@ public class AsyncSampler extends AbstractSampler {
                 try {
                     // stop the previous job
                     previousJob.stop();
-
-                    // collect statistics for the window
-                    this.windowStatisticsCollector.measureNow(previousJob.getWindow());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -116,9 +124,17 @@ public class AsyncSampler extends AbstractSampler {
                 // start a new job
                 int window = previousJob.getWindow() + 1;
                 AsyncProfilerJob newJob = this.profilerAccess.startNewProfilerJob();
-                newJob.init(this.platform, this.interval, this.threadDumper, window, this.background);
+                newJob.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background);
                 newJob.start();
+                this.windowStatisticsCollector.recordWindowStartTime(window);
                 this.currentJob = newJob;
+
+                // collect statistics for the previous window
+                try {
+                    this.windowStatisticsCollector.measureNow(previousJob.getWindow());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
                 // aggregate the output of the previous job
                 previousJob.aggregate(this.dataAggregator);
@@ -171,6 +187,11 @@ public class AsyncSampler extends AbstractSampler {
             this.scheduler.shutdown();
             this.scheduler = null;
         }
+    }
+
+    @Override
+    public SamplerMode getMode() {
+        return this.sampleCollector.getMode();
     }
 
     @Override
