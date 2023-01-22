@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package spark;
+
+import "spark/spark.proto";
+import "spark/spark_sampler.proto";
+
+option java_package = "me.lucko.spark.proto";
+option java_outer_classname = "SparkWebSocketProtos";
+
+message LiveSamplerData {
+  string channelId = 1;
+  bytes publicKey = 2;
+  SamplerData initialData = 3;
+}
+
+message RawPacket {
+  int32 version = 1;
+  bytes publicKey = 2;
+  bytes signature = 3;
+  bytes message = 4;
+}
+
+message PacketWrapper {
+  oneof packet {
+    // server -> client
+    ServerPong serverPong = 1;
+    ServerConnectResponse serverConnectResponse = 2;
+    ServerUpdateSamplerData serverUpdateSampler = 3;
+    ServerUpdateStatistics serverUpdateStatistics = 4;
+
+    // client -> server
+    ClientPing clientPing = 10;
+    ClientConnect clientConnect = 11;
+  }
+}
+
+// (signed) Sent from the server -> client in response to a ping
+message ServerPong {
+  bool ok = 1;
+}
+
+// (signed) Sent from the server -> client in response to a connection request
+message ServerConnectResponse {
+  string clientId = 1;
+  State state = 2;
+
+  enum State {
+    ACCEPTED = 0;
+    UNTRUSTED = 1;
+    REJECTED = 2;
+  }
+}
+
+// (signed) Sent from the server -> client when there is new sampler data
+message ServerUpdateSamplerData {
+  string payloadId = 1;
+}
+
+// (signed) Sent from the server -> client periodically to update statistics shown in widgets
+message ServerUpdateStatistics {
+  PlatformStatistics platform = 1;
+  SystemStatistics system = 2;
+}
+
+// (unsigned) Sent from the client -> server on initial connection
+message ClientConnect {
+  string clientId = 1;
+  string description = 2;
+}
+
+// (unsigned) Sent from the client -> server to check for responsiveness
+message ClientPing {
+  bool ok = 1;
+}

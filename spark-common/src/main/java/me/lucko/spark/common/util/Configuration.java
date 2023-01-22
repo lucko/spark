@@ -22,6 +22,7 @@ package me.lucko.spark.common.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -32,6 +33,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public final class Configuration {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -103,6 +108,21 @@ public final class Configuration {
         return val.isBoolean() ? val.getAsInt() : def;
     }
 
+    public List<String> getStringList(String path) {
+        JsonElement el = this.root.get(path);
+        if (el == null || !el.isJsonArray()) {
+            return Collections.emptyList();
+        }
+
+        List<String> list = new ArrayList<>();
+        for (JsonElement child : el.getAsJsonArray()) {
+            if (child.isJsonPrimitive()) {
+                list.add(child.getAsJsonPrimitive().getAsString());
+            }
+        }
+        return list;
+    }
+
     public void setString(String path, String value) {
         this.root.add(path, new JsonPrimitive(value));
     }
@@ -113,6 +133,14 @@ public final class Configuration {
 
     public void setInteger(String path, int value) {
         this.root.add(path, new JsonPrimitive(value));
+    }
+
+    public void setStringList(String path, List<String> value) {
+        JsonArray array = new JsonArray();
+        for (String str : value) {
+            array.add(str);
+        }
+        this.root.add(path, array);
     }
 
     public boolean contains(String path) {

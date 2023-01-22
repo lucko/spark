@@ -30,17 +30,28 @@ import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
+import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
+import me.lucko.spark.common.ws.ViewerSocket;
+import me.lucko.spark.common.ws.ViewerSocketConnection;
+import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkWebSocketProtos;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.IntPredicate;
+import java.util.logging.Level;
 
 /**
  * Base implementation class for {@link Sampler}s.
@@ -73,6 +84,9 @@ public abstract class AbstractSampler implements Sampler {
 
     /** The garbage collector statistics when profiling started */
     protected Map<String, GarbageCollectorStatistics> initialGcStats;
+
+    /** A set of viewer sockets linked to the sampler */
+    protected List<ViewerSocket> viewerSockets = new ArrayList<>();
 
     protected AbstractSampler(SparkPlatform platform, SamplerSettings settings) {
         this.platform = platform;
@@ -122,13 +136,55 @@ public abstract class AbstractSampler implements Sampler {
     @Override
     public void stop(boolean cancelled) {
         this.windowStatisticsCollector.stop();
+        for (ViewerSocket viewerSocket : this.viewerSockets) {
+            viewerSocket.processSamplerStopped(this);
+        }
     }
 
-    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender creator, String comment, DataAggregator dataAggregator) {
+    @Override
+    public void attachSocket(ViewerSocket socket) {
+        this.viewerSockets.add(socket);
+    }
+
+    @Override
+    public Collection<ViewerSocket> getAttachedSockets() {
+        return this.viewerSockets;
+    }
+
+    protected void processWindowRotate() {
+        this.viewerSockets.removeIf(socket -> {
+            if (!socket.isOpen()) {
+                this.platform.getPlugin().log(Level.INFO, "Viewer socket closed - " + socket);
+                return true;
+            }
+
+            socket.processWindowRotate(this);
+            return false;
+        });
+    }
+
+    protected void sendStatisticsToSocket() {
+        try {
+            if (this.viewerSockets.isEmpty()) {
+                return;
+            }
+
+            SparkProtos.PlatformStatistics platform = this.platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats(), false);
+            SparkProtos.SystemStatistics system = this.platform.getStatisticsProvider().getSystemStatistics();
+
+            for (ViewerSocket viewerSocket : this.viewerSockets) {
+                viewerSocket.sendUpdatedStatistics(platform, system);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender.Data creator, String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
                 .setSamplerMode(getMode().asProto())
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setCreator(creator.toData().toProto())
+                .setCreator(creator.toProto())
                 .setStartTime(this.startTime)
                 .setEndTime(System.currentTimeMillis())
                 .setInterval(this.interval)
@@ -145,7 +201,7 @@ public abstract class AbstractSampler implements Sampler {
         }
 
         try {
-            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats()));
+            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats(), true));
         } catch (Exception e) {
             e.printStackTrace();
         }

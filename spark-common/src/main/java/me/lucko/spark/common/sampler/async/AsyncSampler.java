@@ -23,18 +23,17 @@ package me.lucko.spark.common.sampler.async;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
-import me.lucko.spark.common.sampler.node.MergeMode;
-import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntPredicate;
 
@@ -60,6 +59,9 @@ public class AsyncSampler extends AbstractSampler {
 
     /** The executor used for scheduling and management */
     private ScheduledExecutorService scheduler;
+
+    /** The task to send statistics to the viewer socket */
+    private ScheduledFuture<?> socketStatisticsTask;
 
     public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector) {
         super(platform, settings);
@@ -143,6 +145,8 @@ public class AsyncSampler extends AbstractSampler {
                 IntPredicate predicate = ProfilingWindowUtils.keepHistoryBefore(window);
                 this.dataAggregator.pruneData(predicate);
                 this.windowStatisticsCollector.pruneStatistics(predicate);
+
+                this.scheduler.execute(this::processWindowRotate);
             }
         } catch (Throwable e) {
             e.printStackTrace();
@@ -183,9 +187,22 @@ public class AsyncSampler extends AbstractSampler {
             this.currentJob = null;
         }
 
+        if (this.socketStatisticsTask != null) {
+            this.socketStatisticsTask.cancel(false);
+        }
+
         if (this.scheduler != null) {
             this.scheduler.shutdown();
             this.scheduler = null;
+        }
+    }
+
+    @Override
+    public void attachSocket(ViewerSocket socket) {
+        super.attachSocket(socket);
+
+        if (this.socketStatisticsTask == null) {
+            this.socketStatisticsTask = this.scheduler.scheduleAtFixedRate(this::sendStatisticsToSocket, 10, 10, TimeUnit.SECONDS);
         }
     }
 
@@ -195,10 +212,10 @@ public class AsyncSampler extends AbstractSampler {
     }
 
     @Override
-    public SamplerData toProto(SparkPlatform platform, CommandSender creator, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    public SamplerData toProto(SparkPlatform platform, ExportProps exportProps) {
         SamplerData.Builder proto = SamplerData.newBuilder();
-        writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
-        writeDataToProto(proto, this.dataAggregator, mergeMode, classSourceLookup);
+        writeMetadataToProto(proto, platform, exportProps.creator(), exportProps.comment(), this.dataAggregator);
+        writeDataToProto(proto, this.dataAggregator, exportProps.mergeMode().get(), exportProps.classSourceLookup().get());
         return proto.build();
     }
 
