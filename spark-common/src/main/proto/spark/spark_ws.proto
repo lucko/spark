@@ -8,15 +8,9 @@ import "spark/spark_sampler.proto";
 option java_package = "me.lucko.spark.proto";
 option java_outer_classname = "SparkWebSocketProtos";
 
-message LiveSamplerData {
-  string channelId = 1;
-  bytes publicKey = 2;
-  SamplerData initialData = 3;
-}
-
 message RawPacket {
   int32 version = 1;
-  bytes publicKey = 2;
+  bytes public_key = 2;
   bytes signature = 3;
   bytes message = 4;
 }
@@ -24,37 +18,45 @@ message RawPacket {
 message PacketWrapper {
   oneof packet {
     // server -> client
-    ServerPong serverPong = 1;
-    ServerConnectResponse serverConnectResponse = 2;
-    ServerUpdateSamplerData serverUpdateSampler = 3;
-    ServerUpdateStatistics serverUpdateStatistics = 4;
+    ServerPong server_pong = 1;
+    ServerConnectResponse server_connect_response = 2;
+    ServerUpdateSamplerData server_update_sampler = 3;
+    ServerUpdateStatistics server_update_statistics = 4;
 
     // client -> server
-    ClientPing clientPing = 10;
-    ClientConnect clientConnect = 11;
+    ClientPing client_ping = 10;
+    ClientConnect client_connect = 11;
   }
 }
 
 // (signed) Sent from the server -> client in response to a ping
 message ServerPong {
   bool ok = 1;
+  int32 data = 2;
 }
 
 // (signed) Sent from the server -> client in response to a connection request
 message ServerConnectResponse {
-  string clientId = 1;
+  string client_id = 1;
   State state = 2;
+  Settings settings = 3;
+  string last_payload_id = 4;
 
   enum State {
     ACCEPTED = 0;
     UNTRUSTED = 1;
     REJECTED = 2;
   }
+
+  message Settings {
+    int32 statistics_interval = 1;
+    int32 sampler_interval = 2;
+  }
 }
 
 // (signed) Sent from the server -> client when there is new sampler data
 message ServerUpdateSamplerData {
-  string payloadId = 1;
+  string payload_id = 1;
 }
 
 // (signed) Sent from the server -> client periodically to update statistics shown in widgets
@@ -65,11 +67,12 @@ message ServerUpdateStatistics {
 
 // (unsigned) Sent from the client -> server on initial connection
 message ClientConnect {
-  string clientId = 1;
+  string client_id = 1;
   string description = 2;
 }
 
 // (unsigned) Sent from the client -> server to check for responsiveness
 message ClientPing {
   bool ok = 1;
+  int32 data = 2;
 }

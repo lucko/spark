@@ -184,6 +184,9 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     @Override
     public SamplerData toProto(SparkPlatform platform, ExportProps exportProps) {
         SamplerData.Builder proto = SamplerData.newBuilder();
+        if (exportProps.channelInfo() != null) {
+            proto.setChannelInfo(exportProps.channelInfo());
+        }
         writeMetadataToProto(proto, platform, exportProps.creator(), exportProps.comment(), this.dataAggregator);
         writeDataToProto(proto, this.dataAggregator, exportProps.mergeMode().get(), exportProps.classSourceLookup().get());
         return proto.build();

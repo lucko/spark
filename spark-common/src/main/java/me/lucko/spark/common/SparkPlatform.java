@@ -122,8 +122,8 @@ public class SparkPlatform {
         this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
-        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://bytebin.lucko.me/");
-        String bytesocksHost = this.configuration.getString("bytesocksHost", "usersockets.luckperms.net"); // TODO
+        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://spark-usercontent.lucko.me/");
+        String bytesocksHost = this.configuration.getString("bytesocksHost", "spark-usersockets.lucko.me");
 
         this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
         this.bytesocksClient = BytesocksClient.create(bytesocksHost, "spark-plugin");

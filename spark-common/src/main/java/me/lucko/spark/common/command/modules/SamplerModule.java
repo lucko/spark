@@ -46,7 +46,6 @@ import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.util.ws.BytesocksClient;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
-import me.lucko.spark.proto.SparkWebSocketProtos;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -268,6 +267,8 @@ public class SamplerModule implements CommandModule {
             resp.broadcastPrefixed(text("It will run in the background until it is stopped by an admin."));
             resp.broadcastPrefixed(text("To stop the profiler and upload the results, run:"));
             resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler stop"));
+            resp.broadcastPrefixed(text("To view the profiler while it's running, run:"));
+            resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler open"));
         } else {
             resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + FormatUtil.formatSeconds(timeoutSeconds) + "."));
         }
@@ -318,6 +319,9 @@ public class SamplerModule implements CommandModule {
                 resp.replyPrefixed(text("So far, it has profiled for " + FormatUtil.formatSeconds(runningTime) + "."));
             }
 
+            resp.replyPrefixed(text("To view the profiler while it's running, run:"));
+            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler open"));
+
             long timeout = sampler.getAutoEndTime();
             if (timeout == -1) {
                 resp.replyPrefixed(text("To stop the profiler and upload the results, run:"));
@@ -335,7 +339,7 @@ public class SamplerModule implements CommandModule {
     private void profilerOpen(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         BytesocksClient bytesocksClient = platform.getBytesocksClient();
         if (bytesocksClient == null) {
-            resp.replyPrefixed(text("Live profiling is only supported on Java 17 or newer.", RED));
+            resp.replyPrefixed(text("The live viewer is only supported on Java 11 or newer.", RED));
             return;
         }
 
@@ -459,15 +463,14 @@ public class SamplerModule implements CommandModule {
     }
 
     private void handleOpen(SparkPlatform platform, BytesocksClient bytesocksClient, CommandResponseHandler resp, Sampler sampler, Sampler.ExportProps exportProps) {
-        SparkSamplerProtos.SamplerData data = sampler.toProto(platform, exportProps);
-
         try {
             ViewerSocket socket = new ViewerSocket(platform, bytesocksClient, exportProps);
             sampler.attachSocket(socket);
+            exportProps.channelInfo(socket.getPayload());
 
-            SparkWebSocketProtos.LiveSamplerData payload = socket.getPayload(data);
+            SparkSamplerProtos.SamplerData data = sampler.toProto(platform, exportProps);
 
-            String key = platform.getBytebinClient().postContent(payload, MediaTypes.SPARK_SAMPLER_MEDIA_TYPE_LIVE, "live").key();
+            String key = platform.getBytebinClient().postContent(data, MediaTypes.SPARK_SAMPLER_MEDIA_TYPE, "live").key();
             String url = platform.getViewerUrl() + key;
 
             resp.broadcastPrefixed(text("Profiler live viewer:", GOLD));

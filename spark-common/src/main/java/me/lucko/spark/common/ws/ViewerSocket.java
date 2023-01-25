@@ -25,11 +25,11 @@ import com.google.protobuf.ByteString;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.Sampler;
+import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.ws.BytesocksClient;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos;
-import me.lucko.spark.proto.SparkWebSocketProtos;
 import me.lucko.spark.proto.SparkWebSocketProtos.ClientConnect;
 import me.lucko.spark.proto.SparkWebSocketProtos.ClientPing;
 import me.lucko.spark.proto.SparkWebSocketProtos.PacketWrapper;
@@ -47,6 +47,12 @@ import java.util.logging.Level;
  */
 public class ViewerSocket implements ViewerSocketConnection.Listener, AutoCloseable {
 
+    /** Allow 60 seconds for the first client to connect */
+    private static final long SOCKET_INITIAL_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
+
+    /** Once established, expect a ping at least once every 30 seconds */
+    private static final long SOCKET_ESTABLISHED_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+
     /** The spark platform */
     private final SparkPlatform platform;
     /** The export props to use when exporting the sampler data */
@@ -55,7 +61,9 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
     private final ViewerSocketConnection socket;
 
     private boolean closed = false;
+    private final long socketOpenTime = System.currentTimeMillis();
     private long lastPing = 0;
+    private String lastPayloadId = null;
 
     public ViewerSocket(SparkPlatform platform, BytesocksClient client, Sampler.ExportProps exportProps) throws Exception {
         this.platform = platform;
@@ -63,17 +71,19 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         this.socket = new ViewerSocketConnection(platform, client, this);
     }
 
+    private void log(String message) {
+        this.platform.getPlugin().log(Level.INFO, "[Viewer - " + this.socket.getChannelId() + "] " + message);
+    }
+
     /**
      * Gets the initial payload to send to the viewer.
      *
-     * @param samplerData the sampler data to include in the initial payload
      * @return the payload
      */
-    public SparkWebSocketProtos.LiveSamplerData getPayload(SparkSamplerProtos.SamplerData samplerData) {
-        return SparkWebSocketProtos.LiveSamplerData.newBuilder()
+    public SparkSamplerProtos.SocketChannelInfo getPayload() {
+        return SparkSamplerProtos.SocketChannelInfo.newBuilder()
                 .setChannelId(this.socket.getChannelId())
                 .setPublicKey(ByteString.copyFrom(this.platform.getTrustedKeyStore().getLocalPublicKey().getEncoded()))
-                .setInitialData(samplerData)
                 .build();
     }
 
@@ -91,14 +101,21 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
             return;
         }
 
-        if ((System.currentTimeMillis() - this.lastPing) > TimeUnit.SECONDS.toMillis(60)) {
+        long time = System.currentTimeMillis();
+        if ((time - this.socketOpenTime) > SOCKET_INITIAL_TIMEOUT && (time - this.lastPing) > SOCKET_ESTABLISHED_TIMEOUT) {
+            log("No clients have pinged for 30s, closing socket");
             close();
+            return;
+        }
+
+        // no clients connected yet!
+        if (this.lastPing == 0) {
             return;
         }
 
         try {
             SparkSamplerProtos.SamplerData samplerData = sampler.toProto(this.platform, this.exportProps);
-            String key = this.platform.getBytebinClient().postContent(samplerData, MediaTypes.SPARK_SAMPLER_MEDIA_TYPE_LIVE, "live").key();
+            String key = this.platform.getBytebinClient().postContent(samplerData, MediaTypes.SPARK_SAMPLER_MEDIA_TYPE, "live").key();
             sendUpdatedSamplerData(key);
         } catch (Exception e) {
             this.platform.getPlugin().log(Level.WARNING, "Error whilst sending updated sampler data to the socket");
@@ -157,6 +174,7 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
                 .setPayloadId(payloadId)
                 .build()
         ));
+        this.lastPayloadId = payloadId;
     }
 
     /**
@@ -176,33 +194,48 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
     @Override
     public void onPacket(PacketWrapper packet, boolean verified, PublicKey publicKey) throws Exception {
         switch (packet.getPacketCase()) {
-            case CLIENTPING:
-                onPing(packet.getClientPing());
+            case CLIENT_PING:
+                onClientPing(packet.getClientPing(), publicKey);
                 break;
-            case CLIENTCONNECT:
-                onConnect(packet.getClientConnect(), verified, publicKey);
+            case CLIENT_CONNECT:
+                onClientConnect(packet.getClientConnect(), verified, publicKey);
                 break;
             default:
                 throw new IllegalArgumentException("Unexpected packet: " + packet.getPacketCase());
         }
     }
 
-    private void onPing(ClientPing packet) {
+    private void onClientPing(ClientPing packet, PublicKey publicKey) {
         this.lastPing = System.currentTimeMillis();
         this.socket.sendPacket(builder -> builder.setServerPong(ServerPong.newBuilder()
                 .setOk(!this.closed)
+                .setData(packet.getData())
                 .build()
         ));
     }
 
-    private void onConnect(ClientConnect packet, boolean verified, PublicKey publicKey) {
+    private void onClientConnect(ClientConnect packet, boolean verified, PublicKey publicKey) {
         if (publicKey == null) {
             throw new IllegalStateException("Missing public key");
         }
 
-        String clientId = packet.getClientId();
+        this.lastPing = System.currentTimeMillis();
 
-        ServerConnectResponse.Builder resp = ServerConnectResponse.newBuilder().setClientId(clientId);
+        String clientId = packet.getClientId();
+        log("Client connected: clientId=" + clientId + ", keyhash=" + hashPublicKey(publicKey) + ", desc=" + packet.getDescription());
+
+        ServerConnectResponse.Builder resp = ServerConnectResponse.newBuilder()
+                .setClientId(clientId)
+                .setSettings(ServerConnectResponse.Settings.newBuilder()
+                        .setSamplerInterval(ProfilingWindowUtils.WINDOW_SIZE_SECONDS)
+                        .setStatisticsInterval(10)
+                        .build()
+                );
+
+        if (this.lastPayloadId != null) {
+            resp.setLastPayloadId(this.lastPayloadId);
+        }
+
         if (this.closed) {
             resp.setState(ServerConnectResponse.State.REJECTED);
         } else if (verified) {
@@ -213,6 +246,10 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         }
 
         this.socket.sendPacket(builder -> builder.setServerConnectResponse(resp.build()));
+    }
+
+    private static String hashPublicKey(PublicKey publicKey) {
+        return publicKey == null ? "null" : Integer.toHexString(publicKey.hashCode());
     }
 
 }

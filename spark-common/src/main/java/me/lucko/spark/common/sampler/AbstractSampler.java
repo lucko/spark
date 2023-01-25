@@ -30,28 +30,20 @@ import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
-import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.ws.ViewerSocket;
-import me.lucko.spark.common.ws.ViewerSocketConnection;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
-import me.lucko.spark.proto.SparkWebSocketProtos;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.IntPredicate;
-import java.util.logging.Level;
 
 /**
  * Base implementation class for {@link Sampler}s.
@@ -154,7 +146,6 @@ public abstract class AbstractSampler implements Sampler {
     protected void processWindowRotate() {
         this.viewerSockets.removeIf(socket -> {
             if (!socket.isOpen()) {
-                this.platform.getPlugin().log(Level.INFO, "Viewer socket closed - " + socket);
                 return true;
             }
 

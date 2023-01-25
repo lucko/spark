@@ -25,27 +25,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.WebSocket;
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Java 11 implementation of {@link BytesocksClient}.
  */
 class BytesocksClientImpl implements BytesocksClient {
-
-    private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor(r -> {
-        Thread thread = Executors.defaultThreadFactory().newThread(r);
-        thread.setName("spark-ws-keepalive");
-        thread.setDaemon(true);
-        return thread;
-    });
 
     private final HttpClient client;
 
@@ -99,24 +86,9 @@ class BytesocksClientImpl implements BytesocksClient {
         private final String id;
         private final WebSocket ws;
 
-        private final ScheduledFuture<?> pingTask;
-
         private SocketImpl(String id, WebSocket ws) {
             this.id = id;
             this.ws = ws;
-
-            this.pingTask = EXECUTOR.scheduleAtFixedRate(this::doPing, 10, 30, TimeUnit.SECONDS);
-        }
-
-        private void doPing() {
-            if (this.ws.isOutputClosed()) {
-                this.pingTask.cancel(true);
-                return;
-            }
-
-            byte[] bytes = new byte[32];
-            ThreadLocalRandom.current().nextBytes(bytes);
-            this.ws.sendPing(ByteBuffer.wrap(bytes));
         }
 
         @Override
@@ -137,7 +109,6 @@ class BytesocksClientImpl implements BytesocksClient {
         @Override
         public void close(int statusCode, String reason) {
             this.ws.sendClose(statusCode, reason);
-            this.pingTask.cancel(false);
         }
     }
 

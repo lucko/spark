@@ -24,7 +24,6 @@ public enum MediaTypes {
     ;
 
     public static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
-    public static final String SPARK_SAMPLER_MEDIA_TYPE_LIVE = "application/x-spark-sampler-live";
     public static final String SPARK_HEAP_MEDIA_TYPE = "application/x-spark-heap";
 
 }

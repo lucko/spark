@@ -25,8 +25,8 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.ws.ViewerSocket;
-import me.lucko.spark.common.ws.ViewerSocketConnection;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
+import me.lucko.spark.proto.SparkSamplerProtos.SocketChannelInfo;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
@@ -104,6 +104,10 @@ public interface Sampler {
         private String comment;
         private Supplier<MergeMode> mergeMode;
         private Supplier<ClassSourceLookup> classSourceLookup;
+        private SocketChannelInfo channelInfo;
+
+        public ExportProps() {
+        }
 
         public CommandSender.Data creator() {
             return this.creator;
@@ -119,6 +123,10 @@ public interface Sampler {
 
         public Supplier<ClassSourceLookup> classSourceLookup() {
             return this.classSourceLookup;
+        }
+
+        public SocketChannelInfo channelInfo() {
+            return this.channelInfo;
         }
 
         public ExportProps creator(CommandSender.Data creator) {
@@ -138,6 +146,11 @@ public interface Sampler {
 
         public ExportProps classSourceLookup(Supplier<ClassSourceLookup> classSourceLookup) {
             this.classSourceLookup = classSourceLookup;
+            return this;
+        }
+
+        public ExportProps channelInfo(SocketChannelInfo channelInfo) {
+            this.channelInfo = channelInfo;
             return this;
         }
     }

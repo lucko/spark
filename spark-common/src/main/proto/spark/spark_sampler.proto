@@ -15,6 +15,7 @@ message SamplerData {
   map<string, string> line_sources = 5; // optional
   repeated int32 time_windows = 6;
   map<int32, WindowStatistics> time_window_statistics = 7;
+  SocketChannelInfo channel_info = 8;
 }
 
 message SamplerMetadata {
@@ -99,4 +100,9 @@ message StackTraceNode {
   string method_desc = 7; // optional
   repeated double times = 8;
   repeated int32 children_refs = 9;
+}
+
+message SocketChannelInfo {
+  string channel_id = 1;
+  bytes public_key = 2;
 }

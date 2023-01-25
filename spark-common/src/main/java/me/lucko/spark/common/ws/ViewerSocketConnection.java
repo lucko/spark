@@ -96,7 +96,7 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
      * @return true if the socket is open
      */
     public boolean isOpen() {
-        return socket.isOpen();
+        return this.socket.isOpen();
     }
 
     @Override
@@ -108,6 +108,17 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
             this.platform.getPlugin().log(Level.WARNING, "Exception occurred while reading data from the socket");
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void onError(Throwable error) {
+        this.platform.getPlugin().log(Level.INFO, "Socket error: " + error.getClass().getName() + " " + error.getMessage());
+        error.printStackTrace();
+    }
+
+    @Override
+    public void onClose(int statusCode, String reason) {
+        //this.platform.getPlugin().log(Level.INFO, "Socket closed with status " + statusCode + " and reason " + reason);
     }
 
     /**

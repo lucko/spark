@@ -59,7 +59,7 @@ dependencies {
         exclude(module: 'adventure-api')
     }
     compileOnly 'com.google.code.gson:gson:2.7'
-    implementation 'com.google.guava:guava:19.0'
+    compileOnly 'com.google.guava:guava:19.0'
     compileOnly 'org.checkerframework:checker-qual:3.8.0'
 
     java11Implementation files(sourceSets.main.output.classesDirs) { builtBy compileJava }
