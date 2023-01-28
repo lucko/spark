@@ -21,6 +21,7 @@
 package me.lucko.spark.fabric.plugin;
 
 import me.lucko.spark.fabric.smap.SourceDebugCache;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.tree.ClassNode;

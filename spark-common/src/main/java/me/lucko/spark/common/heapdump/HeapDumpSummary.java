@@ -130,7 +130,7 @@ public final class HeapDumpSummary {
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
                 .setCreator(creator.toData().toProto());
         try {
-            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null));
+            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null, true));
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -128,7 +128,7 @@ public class PlatformStatisticsProvider {
         return builder.build();
     }
 
-    public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics) {
+    public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, boolean includeWorld) {
         PlatformStatistics.Builder builder = PlatformStatistics.newBuilder();
 
         MemoryUsage memoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
@@ -187,18 +187,19 @@ public class PlatformStatisticsProvider {
             builder.setPlayerCount(playerCount);
         }
 
-        try {
-            WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
-                    new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
-            );
-            WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
-            if (worldStatistics != null) {
-                builder.setWorld(worldStatistics);
+        if (includeWorld) {
+            try {
+                WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
+                        new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
+                );
+                WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
+                if (worldStatistics != null) {
+                    builder.setWorld(worldStatistics);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
 
         return builder.build();
     }

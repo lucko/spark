@@ -251,11 +251,13 @@ public class WindowStatisticsCollector {
             if (this.startTick == -1) {
                 throw new IllegalStateException("start tick not recorded");
             }
-            if (this.stopTick == -1) {
-                throw new IllegalStateException("stop tick not recorded");
+
+            int stopTick = this.stopTick;
+            if (stopTick == -1) {
+                stopTick = this.tickHook.getCurrentTick();
             }
 
-            return this.stopTick - this.startTick;
+            return stopTick - this.startTick;
         }
     }
 

@@ -53,6 +53,8 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.TemporaryFiles;
+import me.lucko.spark.common.util.ws.BytesocksClient;
+import me.lucko.spark.common.ws.TrustedKeyStore;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -95,6 +97,8 @@ public class SparkPlatform {
     private final Configuration configuration;
     private final String viewerUrl;
     private final BytebinClient bytebinClient;
+    private final BytesocksClient bytesocksClient;
+    private final TrustedKeyStore trustedKeyStore;
     private final boolean disableResponseBroadcast;
     private final List<CommandModule> commandModules;
     private final List<Command> commands;
@@ -118,8 +122,12 @@ public class SparkPlatform {
         this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
-        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://bytebin.lucko.me/");
+        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://spark-usercontent.lucko.me/");
+        String bytesocksHost = this.configuration.getString("bytesocksHost", "spark-usersockets.lucko.me");
+
         this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
+        this.bytesocksClient = BytesocksClient.create(bytesocksHost, "spark-plugin");
+        this.trustedKeyStore = new TrustedKeyStore(this.configuration);
 
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
 
@@ -226,6 +234,14 @@ public class SparkPlatform {
 
     public BytebinClient getBytebinClient() {
         return this.bytebinClient;
+    }
+
+    public BytesocksClient getBytesocksClient() {
+        return this.bytesocksClient;
+    }
+
+    public TrustedKeyStore getTrustedKeyStore() {
+        return this.trustedKeyStore;
     }
 
     public boolean shouldBroadcastResponse() {
