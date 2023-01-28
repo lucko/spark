@@ -47,7 +47,11 @@ public class BytebinClient {
         this.userAgent = userAgent;
     }
 
-    private Content postContent(String contentType, Consumer<OutputStream> consumer, String userAgent) throws IOException {
+    private Content postContent(String contentType, Consumer<OutputStream> consumer, String userAgentExtra) throws IOException {
+        String userAgent = userAgentExtra != null
+                ? this.userAgent + "/" + userAgentExtra
+                : this.userAgent;
+
         URL url = new URL(this.url + "post");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         try {
@@ -83,11 +87,11 @@ public class BytebinClient {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, this.userAgent + "/" + userAgentExtra);
+        }, userAgentExtra);
     }
 
     public Content postContent(AbstractMessageLite<?, ?> proto, String contentType) throws IOException {
-        return postContent(proto, contentType, this.userAgent);
+        return postContent(proto, contentType, null);
     }
 
     public static final class Content {
