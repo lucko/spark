@@ -31,7 +31,6 @@ import me.lucko.spark.fabric.smap.SourceMapProvider;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.FabricUtil;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;
@@ -73,7 +72,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     }
 
     @Override
-    public @Nullable String identify(MethodCall methodCall) throws Exception {
+    public String identify(MethodCall methodCall) throws Exception {
         String className = methodCall.getClassName();
         String methodName = methodCall.getMethodName();
         String methodDesc = methodCall.getMethodDescriptor();
@@ -99,7 +98,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     }
 
     @Override
-    public @Nullable String identify(MethodCallByLine methodCall) throws Exception {
+    public String identify(MethodCallByLine methodCall) throws Exception {
         String className = methodCall.getClassName();
         String methodName = methodCall.getMethodName();
         int lineNumber = methodCall.getLineNumber();
