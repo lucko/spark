@@ -9,7 +9,7 @@ dependencies {
 }
 
 repositories {
-    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
+    maven { url 'https://repo.opencollab.dev/main/' }
 }
 
 processResources {
