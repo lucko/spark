@@ -22,6 +22,7 @@ package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
 
+import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
@@ -43,7 +44,6 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.MethodDisambiguator;
-import me.lucko.spark.common.util.ws.BytesocksClient;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
 

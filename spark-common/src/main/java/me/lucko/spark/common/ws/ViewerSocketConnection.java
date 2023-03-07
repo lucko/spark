@@ -22,8 +22,8 @@ package me.lucko.spark.common.ws;
 
 import com.google.protobuf.ByteString;
 
+import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.util.ws.BytesocksClient;
 import me.lucko.spark.proto.SparkWebSocketProtos.PacketWrapper;
 import me.lucko.spark.proto.SparkWebSocketProtos.RawPacket;
 

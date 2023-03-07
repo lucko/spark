@@ -23,6 +23,8 @@ package me.lucko.spark.common;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import me.lucko.bytesocks.client.BytesocksClient;
+import me.lucko.bytesocks.client.BytesocksClientFactory;
 import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.api.SparkApi;
 import me.lucko.spark.common.command.Arguments;
@@ -53,7 +55,6 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.TemporaryFiles;
-import me.lucko.spark.common.util.ws.BytesocksClient;
 import me.lucko.spark.common.ws.TrustedKeyStore;
 
 import net.kyori.adventure.text.Component;
@@ -126,7 +127,7 @@ public class SparkPlatform {
         String bytesocksHost = this.configuration.getString("bytesocksHost", "spark-usersockets.lucko.me");
 
         this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
-        this.bytesocksClient = BytesocksClient.create(bytesocksHost, "spark-plugin");
+        this.bytesocksClient = BytesocksClientFactory.newClient(bytesocksHost, "spark-plugin");
         this.trustedKeyStore = new TrustedKeyStore(this.configuration);
 
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);

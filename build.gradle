@@ -29,12 +29,6 @@ subprojects {
         options.release = 8
     }
 
-    jar {
-        manifest {
-            attributes('Multi-Release': 'true')
-        }
-    }
-
     processResources {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
