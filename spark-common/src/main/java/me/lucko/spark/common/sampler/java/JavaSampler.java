@@ -110,6 +110,8 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             // collect statistics for the final window
             this.windowStatisticsCollector.measureNow(this.lastWindow.get());
         }
+
+        this.workerPool.shutdown();
     }
 
     @Override
