@@ -15,7 +15,7 @@ dependencies {
 }
 
 repositories {
-    maven { url "https://repo.velocitypowered.com/snapshots/" }
+    maven { url "https://repo.papermc.io/repository/maven-public/" }
 }
 
 blossom {
