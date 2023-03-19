@@ -28,6 +28,7 @@ import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
@@ -69,7 +70,10 @@ public class AsyncSampler extends AbstractSampler {
         this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
         this.dataAggregator = new AsyncDataAggregator(settings.threadGrouper());
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder().setNameFormat("spark-asyncsampler-worker-thread").build()
+                new ThreadFactoryBuilder()
+                        .setNameFormat("spark-async-sampler-worker-thread")
+                        .setUncaughtExceptionHandler(SparkThreadFactory.EXCEPTION_HANDLER)
+                        .build()
         );
     }
 

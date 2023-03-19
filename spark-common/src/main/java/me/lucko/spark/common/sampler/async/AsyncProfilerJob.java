@@ -34,7 +34,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 
 /**
  * Represents a profiling job within async-profiler.
@@ -203,18 +202,9 @@ public class AsyncProfilerJob {
      * Aggregates the collected data.
      */
     public void aggregate(AsyncDataAggregator dataAggregator) {
-
-        Predicate<String> threadFilter;
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            ThreadDumper.Specific specificDumper = (ThreadDumper.Specific) this.threadDumper;
-            threadFilter = n -> specificDumper.getThreadNames().contains(n.toLowerCase());
-        } else {
-            threadFilter = n -> true;
-        }
-
         // read the jfr file produced by async-profiler
         try (JfrReader reader = new JfrReader(this.outputFile)) {
-            readSegments(reader, this.sampleCollector, threadFilter, dataAggregator);
+            readSegments(reader, this.sampleCollector, dataAggregator);
         } catch (Exception e) {
             boolean fileExists;
             try {
@@ -241,7 +231,7 @@ public class AsyncProfilerJob {
         }
     }
 
-    private <E extends JfrReader.Event> void readSegments(JfrReader reader, SampleCollector<E> collector, Predicate<String> threadFilter, AsyncDataAggregator dataAggregator) throws IOException {
+    private <E extends JfrReader.Event> void readSegments(JfrReader reader, SampleCollector<E> collector, AsyncDataAggregator dataAggregator) throws IOException {
         List<E> samples = reader.readAllEvents(collector.eventClass());
         for (E sample : samples) {
             String threadName = reader.threads.get((long) sample.tid);
@@ -249,7 +239,7 @@ public class AsyncProfilerJob {
                 continue;
             }
 
-            if (!threadFilter.test(threadName)) {
+            if (!this.threadDumper.isThreadIncluded(sample.tid, threadName)) {
                 continue;
             }
 

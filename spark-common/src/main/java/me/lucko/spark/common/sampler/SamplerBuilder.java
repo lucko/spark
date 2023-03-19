@@ -120,7 +120,6 @@ public class SamplerBuilder {
         boolean canUseAsyncProfiler = this.useAsyncProfiler &&
                 !onlyTicksOverMode &&
                 !(this.ignoreSleeping || this.ignoreNative) &&
-                !(this.threadDumper instanceof ThreadDumper.Regex) &&
                 AsyncProfilerAccess.getInstance(platform).checkSupported(platform);
 
         if (this.mode == SamplerMode.ALLOCATION && (!canUseAsyncProfiler || !AsyncProfilerAccess.getInstance(platform).checkAllocationProfilingSupported(platform))) {

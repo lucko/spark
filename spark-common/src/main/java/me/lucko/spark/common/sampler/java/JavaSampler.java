@@ -29,6 +29,7 @@ import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
@@ -50,7 +51,10 @@ public class JavaSampler extends AbstractSampler implements Runnable {
 
     /** The worker pool for inserting stack nodes */
     private final ScheduledExecutorService workerPool = Executors.newScheduledThreadPool(
-            6, new ThreadFactoryBuilder().setNameFormat("spark-worker-" + THREAD_ID.getAndIncrement() + "-%d").build()
+            6, new ThreadFactoryBuilder()
+                    .setNameFormat("spark-java-sampler-" + THREAD_ID.getAndIncrement() + "-%d")
+                    .setUncaughtExceptionHandler(SparkThreadFactory.EXCEPTION_HANDLER)
+                    .build()
     );
 
     /** The main sampling task */
