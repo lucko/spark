@@ -45,6 +45,7 @@ import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+import me.lucko.spark.common.monitor.tick.SparkTickStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
 import me.lucko.spark.common.sampler.BackgroundSamplerManager;
@@ -153,9 +154,13 @@ public class SparkPlatform {
         this.samplerContainer = new SamplerContainer();
         this.backgroundSamplerManager = new BackgroundSamplerManager(this, this.configuration);
 
+        TickStatistics tickStatistics = plugin.createTickStatistics();
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
-        this.tickStatistics = this.tickHook != null || this.tickReporter != null ? new TickStatistics() : null;
+        if (tickStatistics == null && (this.tickHook != null || this.tickReporter != null)) {
+            tickStatistics = new SparkTickStatistics();
+        }
+        this.tickStatistics = tickStatistics;
 
         PlayerPingProvider pingProvider = plugin.createPlayerPingProvider();
         this.pingStatistics = pingProvider != null ? new PingStatistics(pingProvider) : null;
@@ -168,12 +173,12 @@ public class SparkPlatform {
             throw new RuntimeException("Platform has already been enabled!");
         }
 
-        if (this.tickHook != null) {
-            this.tickHook.addCallback(this.tickStatistics);
+        if (this.tickHook != null && this.tickStatistics instanceof SparkTickStatistics) {
+            this.tickHook.addCallback((TickHook.Callback) this.tickStatistics);
             this.tickHook.start();
         }
-        if (this.tickReporter != null) {
-            this.tickReporter.addCallback(this.tickStatistics);
+        if (this.tickReporter != null&& this.tickStatistics instanceof SparkTickStatistics) {
+            this.tickReporter.addCallback((TickReporter.Callback) this.tickStatistics);
             this.tickReporter.start();
         }
         if (this.pingStatistics != null) {

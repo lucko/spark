@@ -92,7 +92,8 @@ public interface StatisticWindow {
     enum MillisPerTick implements StatisticWindow {
 
         SECONDS_10(Duration.ofSeconds(10)),
-        MINUTES_1(Duration.ofMinutes(1));
+        MINUTES_1(Duration.ofMinutes(1)),
+        MINUTES_5(Duration.ofMinutes(5));
 
         private final Duration value;
 

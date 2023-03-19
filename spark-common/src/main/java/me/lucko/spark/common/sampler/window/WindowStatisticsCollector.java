@@ -20,13 +20,13 @@
 
 package me.lucko.spark.common.sampler.window;
 
+import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.proto.SparkProtos;
 
 import java.util.HashMap;
@@ -165,7 +165,7 @@ public class WindowStatisticsCollector {
         if (tickStatistics != null) {
             builder.setTps(tickStatistics.tps1Min());
 
-            RollingAverage mspt = tickStatistics.duration1Min();
+            DoubleAverageInfo mspt = tickStatistics.duration1Min();
             if (mspt != null) {
                 builder.setMsptMedian(mspt.median());
                 builder.setMsptMax(mspt.max());

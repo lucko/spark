@@ -22,6 +22,8 @@ package me.lucko.spark.common.util;
 
 import com.google.common.base.Strings;
 
+import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
+
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
@@ -55,7 +57,7 @@ public enum StatisticFormatter {
         return text((tps > 20.0 ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, 20.0), color);
     }
 
-    public static TextComponent formatTickDurations(RollingAverage average) {
+    public static TextComponent formatTickDurations(DoubleAverageInfo average) {
         return text()
                 .append(formatTickDuration(average.min()))
                 .append(text('/', GRAY))
