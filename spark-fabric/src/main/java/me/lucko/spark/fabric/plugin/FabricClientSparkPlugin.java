@@ -43,12 +43,12 @@ import me.lucko.spark.fabric.FabricTickReporter;
 import me.lucko.spark.fabric.FabricWorldInfoProvider;
 import me.lucko.spark.fabric.mixin.MinecraftClientAccessor;
 
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandOutput;
+import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -73,9 +73,11 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     public void enable() {
         super.enable();
 
+        // register commands
+        registerCommands(ClientCommandManager.DISPATCHER);
+
         // events
         ClientLifecycleEvents.CLIENT_STOPPING.register(this::onDisable);
-        ClientCommandRegistrationCallback.EVENT.register(this::onCommandRegister);
     }
 
     private void onDisable(MinecraftClient stoppingClient) {
@@ -84,7 +86,7 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
         }
     }
 
-    public void onCommandRegister(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
+    public void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher) {
         registerCommands(dispatcher, this, this, "sparkc", "sparkclient");
     }
 

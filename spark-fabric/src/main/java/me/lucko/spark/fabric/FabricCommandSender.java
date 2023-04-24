@@ -30,6 +30,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.rcon.RconCommandOutput;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
 
 import java.util.UUID;
 
@@ -65,7 +66,7 @@ public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
     @Override
     public void sendMessage(Component message) {
         Text component = Text.Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
-        super.delegate.sendMessage(component);
+        super.delegate.sendSystemMessage(component, Util.NIL_UUID);
     }
 
     @Override
