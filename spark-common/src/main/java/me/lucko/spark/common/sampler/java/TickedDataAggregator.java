@@ -30,6 +30,7 @@ import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 import java.lang.management.ThreadInfo;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +76,7 @@ public class TickedDataAggregator extends JavaDataAggregator {
     public SamplerMetadata.DataAggregator getMetadata() {
         // push the current tick (so numberOfTicks is accurate)
         synchronized (this.mutex) {
-            pushCurrentTick();
+            pushCurrentTick(Runnable::run);
             this.currentData = null;
         }
 
@@ -92,7 +93,7 @@ public class TickedDataAggregator extends JavaDataAggregator {
         synchronized (this.mutex) {
             int tick = this.tickHook.getCurrentTick();
             if (this.currentTick != tick || this.currentData == null) {
-                pushCurrentTick();
+                pushCurrentTick(this.workerPool);
                 this.currentTick = tick;
                 this.currentData = new TickList(this.expectedSize, window);
             }
@@ -102,7 +103,7 @@ public class TickedDataAggregator extends JavaDataAggregator {
     }
 
     // guarded by 'mutex'
-    private void pushCurrentTick() {
+    private void pushCurrentTick(Executor executor) {
         TickList currentData = this.currentData;
         if (currentData == null) {
             return;
@@ -116,7 +117,7 @@ public class TickedDataAggregator extends JavaDataAggregator {
             return;
         }
 
-        this.workerPool.submit(currentData);
+        executor.execute(currentData);
         this.tickCounter.increment();
     }
 
@@ -124,7 +125,7 @@ public class TickedDataAggregator extends JavaDataAggregator {
     public List<ThreadNode> exportData() {
         // push the current tick
         synchronized (this.mutex) {
-            pushCurrentTick();
+            pushCurrentTick(Runnable::run);
         }
 
         return super.exportData();
