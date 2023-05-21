@@ -142,7 +142,8 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     private static String modIdFromMixinClass(String mixinClassName) {
         for (Config config : MixinUtils.getMixinConfigs().values()) {
             IMixinConfig mixinConfig = config.getConfig();
-            if (mixinClassName.startsWith(mixinConfig.getMixinPackage())) {
+            String mixinPackage = mixinConfig.getMixinPackage();
+            if (!mixinPackage.isEmpty() && mixinClassName.startsWith(mixinPackage)) {
                 return mixinConfig.getDecoration(FabricUtil.KEY_MOD_ID);
             }
         }
