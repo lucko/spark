@@ -1,7 +1,7 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '0.12.+'
+    id 'fabric-loom' version '1.1-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '7.0.0'
 }
 
@@ -28,9 +28,9 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.19.3'
-    mappings 'net.fabricmc:yarn:1.19.3+build.2:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.14.11'
+    minecraft 'com.mojang:minecraft:1.19.4'
+    mappings 'net.fabricmc:yarn:1.19.4+build.1:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.14.17'
 
     Set<String> apiModules = [
             "fabric-api-base",
@@ -40,7 +40,7 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.68.1+1.19.3'))
+        modImplementation(fabricApi.module(it, '0.76.0+1.19.4'))
     }
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.1-SNAPSHOT'))
@@ -80,6 +80,7 @@ shadowJar {
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
 //    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
+    relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
 
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'

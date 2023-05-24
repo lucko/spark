@@ -18,25 +18,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.monitor.tick;
+package me.lucko.spark.common.util;
 
-import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
+public enum MediaTypes {
+    ;
 
-/**
- * Provides the server TPS (ticks per second) and MSPT (milliseconds per tick) rates.
- */
-public interface TickStatistics {
-
-    double tps5Sec();
-    double tps10Sec();
-    double tps1Min();
-    double tps5Min();
-    double tps15Min();
-
-    boolean isDurationSupported();
-
-    DoubleAverageInfo duration10Sec();
-    DoubleAverageInfo duration1Min();
-    DoubleAverageInfo duration5Min();
+    public static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
+    public static final String SPARK_HEAP_MEDIA_TYPE = "application/x-spark-heap";
 
 }

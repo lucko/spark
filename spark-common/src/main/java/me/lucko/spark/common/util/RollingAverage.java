@@ -21,7 +21,6 @@
 package me.lucko.spark.common.util;
 
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
-import me.lucko.spark.proto.SparkProtos;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -110,16 +109,6 @@ public class RollingAverage implements DoubleAverageInfo {
 
         int rank = (int) Math.ceil(percentile * (sortedSamples.length - 1));
         return sortedSamples[rank].doubleValue();
-    }
-
-    public SparkProtos.RollingAverageValues toProto() {
-        return SparkProtos.RollingAverageValues.newBuilder()
-                .setMean(mean())
-                .setMax(max())
-                .setMin(min())
-                .setMedian(median())
-                .setPercentile95(percentile95th())
-                .build();
     }
 
 }

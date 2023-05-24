@@ -23,6 +23,8 @@ package me.lucko.spark.common;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import me.lucko.bytesocks.client.BytesocksClient;
+import me.lucko.bytesocks.client.BytesocksClientFactory;
 import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.api.SparkApi;
 import me.lucko.spark.common.command.Arguments;
@@ -43,6 +45,7 @@ import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+import me.lucko.spark.common.monitor.tick.SparkTickStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
 import me.lucko.spark.common.sampler.BackgroundSamplerManager;
@@ -53,6 +56,7 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.TemporaryFiles;
+import me.lucko.spark.common.ws.TrustedKeyStore;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -95,6 +99,8 @@ public class SparkPlatform {
     private final Configuration configuration;
     private final String viewerUrl;
     private final BytebinClient bytebinClient;
+    private final BytesocksClient bytesocksClient;
+    private final TrustedKeyStore trustedKeyStore;
     private final boolean disableResponseBroadcast;
     private final List<CommandModule> commandModules;
     private final List<Command> commands;
@@ -118,8 +124,12 @@ public class SparkPlatform {
         this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
-        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://bytebin.lucko.me/");
+        String bytebinUrl = this.configuration.getString("bytebinUrl", "https://spark-usercontent.lucko.me/");
+        String bytesocksHost = this.configuration.getString("bytesocksHost", "spark-usersockets.lucko.me");
+
         this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
+        this.bytesocksClient = BytesocksClientFactory.newClient(bytesocksHost, "spark-plugin");
+        this.trustedKeyStore = new TrustedKeyStore(this.configuration);
 
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
 
@@ -144,9 +154,13 @@ public class SparkPlatform {
         this.samplerContainer = new SamplerContainer();
         this.backgroundSamplerManager = new BackgroundSamplerManager(this, this.configuration);
 
+        TickStatistics tickStatistics = plugin.createTickStatistics();
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
-        this.tickStatistics = this.tickHook != null || this.tickReporter != null ? new TickStatistics() : null;
+        if (tickStatistics == null && (this.tickHook != null || this.tickReporter != null)) {
+            tickStatistics = new SparkTickStatistics();
+        }
+        this.tickStatistics = tickStatistics;
 
         PlayerPingProvider pingProvider = plugin.createPlayerPingProvider();
         this.pingStatistics = pingProvider != null ? new PingStatistics(pingProvider) : null;
@@ -159,12 +173,12 @@ public class SparkPlatform {
             throw new RuntimeException("Platform has already been enabled!");
         }
 
-        if (this.tickHook != null) {
-            this.tickHook.addCallback(this.tickStatistics);
+        if (this.tickHook != null && this.tickStatistics instanceof SparkTickStatistics) {
+            this.tickHook.addCallback((TickHook.Callback) this.tickStatistics);
             this.tickHook.start();
         }
-        if (this.tickReporter != null) {
-            this.tickReporter.addCallback(this.tickStatistics);
+        if (this.tickReporter != null&& this.tickStatistics instanceof SparkTickStatistics) {
+            this.tickReporter.addCallback((TickReporter.Callback) this.tickStatistics);
             this.tickReporter.start();
         }
         if (this.pingStatistics != null) {
@@ -226,6 +240,14 @@ public class SparkPlatform {
 
     public BytebinClient getBytebinClient() {
         return this.bytebinClient;
+    }
+
+    public BytesocksClient getBytesocksClient() {
+        return this.bytesocksClient;
+    }
+
+    public TrustedKeyStore getTrustedKeyStore() {
+        return this.trustedKeyStore;
     }
 
     public boolean shouldBroadcastResponse() {

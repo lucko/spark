@@ -27,6 +27,7 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import org.bukkit.Chunk;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
@@ -69,11 +70,21 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
                 chunks += world.getChunkCount();
             } else {
                 entities += world.getEntities().size();
+
                 Chunk[] chunksArray = world.getLoadedChunks();
+                int nullChunks = 0;
+
                 for (Chunk chunk : chunksArray) {
-                    tileEntities += chunk.getTileEntities().length;
+                    if (chunk == null) {
+                        ++nullChunks;
+                        continue;
+                    }
+
+                    BlockState[] tileEntitiesArray = chunk.getTileEntities();
+                    tileEntities += tileEntitiesArray != null ? tileEntitiesArray.length : 0;
                 }
-                chunks += chunksArray.length;
+
+                chunks += chunksArray.length - nullChunks;
             }
         }
 

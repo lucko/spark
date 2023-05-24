@@ -35,6 +35,47 @@ import java.util.regex.Pattern;
 public interface ThreadGrouper {
 
     /**
+     * Gets the group for the given thread.
+     *
+     * @param threadId the id of the thread
+     * @param threadName the name of the thread
+     * @return the group
+     */
+    String getGroup(long threadId, String threadName);
+
+    /**
+     * Gets the label to use for a given group.
+     *
+     * @param group the group
+     * @return the label
+     */
+    String getLabel(String group);
+
+    /**
+     * Gets the metadata enum instance for this thread grouper.
+     *
+     * @return proto metadata
+     */
+    SamplerMetadata.DataAggregator.ThreadGrouper asProto();
+
+    /**
+     * Creates a new {@link ThreadGrouper} by parsing the given config setting.
+     *
+     * @param setting the config setting
+     * @return the thread grouper
+     */
+    static ThreadGrouper parseConfigSetting(String setting) {
+        switch (setting) {
+            case "as-one":
+                return AS_ONE;
+            case "by-name":
+                return BY_NAME;
+            default:
+                return BY_POOL;
+        }
+    }
+
+    /**
      * Implementation of {@link ThreadGrouper} that just groups by thread name.
      */
     ThreadGrouper BY_NAME = new ThreadGrouper() {
@@ -125,24 +166,5 @@ public interface ThreadGrouper {
             return SamplerMetadata.DataAggregator.ThreadGrouper.AS_ONE;
         }
     };
-
-    /**
-     * Gets the group for the given thread.
-     *
-     * @param threadId the id of the thread
-     * @param threadName the name of the thread
-     * @return the group
-     */
-    String getGroup(long threadId, String threadName);
-
-    /**
-     * Gets the label to use for a given group.
-     *
-     * @param group the group
-     * @return the label
-     */
-    String getLabel(String group);
-
-    SamplerMetadata.DataAggregator.ThreadGrouper asProto();
 
 }

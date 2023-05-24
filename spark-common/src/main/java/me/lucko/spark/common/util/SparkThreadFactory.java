@@ -23,7 +23,13 @@ package me.lucko.spark.common.util;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class SparkThreadFactory implements ThreadFactory, Thread.UncaughtExceptionHandler {
+public class SparkThreadFactory implements ThreadFactory {
+
+    public static final Thread.UncaughtExceptionHandler EXCEPTION_HANDLER = (t, e) -> {
+        System.err.println("Uncaught exception thrown by thread " + t.getName());
+        e.printStackTrace();
+    };
+
     private static final AtomicInteger poolNumber = new AtomicInteger(1);
     private final AtomicInteger threadNumber = new AtomicInteger(1);
     private final String namePrefix;
@@ -36,14 +42,9 @@ public class SparkThreadFactory implements ThreadFactory, Thread.UncaughtExcepti
 
     public Thread newThread(Runnable r) {
         Thread t = new Thread(r, this.namePrefix + this.threadNumber.getAndIncrement());
-        t.setUncaughtExceptionHandler(this);
+        t.setUncaughtExceptionHandler(EXCEPTION_HANDLER);
         t.setDaemon(true);
         return t;
     }
 
-    @Override
-    public void uncaughtException(Thread t, Throwable e) {
-        System.err.println("Uncaught exception thrown by thread " + t.getName());
-        e.printStackTrace();
-    }
 }

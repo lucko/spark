@@ -20,29 +20,35 @@
 
 package me.lucko.spark.common.sampler.window;
 
+import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.tick.TickHook;
-import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.proto.SparkProtos;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntPredicate;
+import java.util.logging.Level;
 
 /**
  * Collects statistics for each profiling window.
  */
 public class WindowStatisticsCollector {
-    private static final SparkProtos.WindowStatistics ZERO = SparkProtos.WindowStatistics.newBuilder().build();
+    private static final SparkProtos.WindowStatistics ZERO = SparkProtos.WindowStatistics.newBuilder()
+            .setDuration(ProfilingWindowUtils.WINDOW_SIZE_SECONDS * 1000)
+            .build();
 
     /** The platform */
     private final SparkPlatform platform;
 
+    /** Map of profiling window -> start time */
+    private final Map<Integer, Long> windowStartTimes = new HashMap<>();
     /** Map of profiling window -> statistics */
     private final Map<Integer, SparkProtos.WindowStatistics> stats;
 
@@ -100,12 +106,21 @@ public class WindowStatisticsCollector {
     }
 
     /**
+     * Records the wall-clock time when a window was started.
+     *
+     * @param window the window
+     */
+    public void recordWindowStartTime(int window) {
+        this.windowStartTimes.put(window, System.currentTimeMillis());
+    }
+
+    /**
      * Measures statistics for the given window if none have been recorded yet.
      *
      * @param window the window
      */
     public void measureNow(int window) {
-        this.stats.computeIfAbsent(window, w -> measure());
+        this.stats.computeIfAbsent(window, this::measure);
     }
 
     /**
@@ -132,14 +147,25 @@ public class WindowStatisticsCollector {
      *
      * @return the current statistics
      */
-    private SparkProtos.WindowStatistics measure() {
+    private SparkProtos.WindowStatistics measure(int window) {
         SparkProtos.WindowStatistics.Builder builder = SparkProtos.WindowStatistics.newBuilder();
+
+        long endTime = System.currentTimeMillis();
+        Long startTime = this.windowStartTimes.get(window);
+        if (startTime == null) {
+            this.platform.getPlugin().log(Level.WARNING, "Unknown start time for window " + window);
+            startTime = endTime - (ProfilingWindowUtils.WINDOW_SIZE_SECONDS * 1000); // guess
+        }
+
+        builder.setStartTime(startTime);
+        builder.setEndTime(endTime);
+        builder.setDuration((int) (endTime - startTime));
 
         TickStatistics tickStatistics = this.platform.getTickStatistics();
         if (tickStatistics != null) {
             builder.setTps(tickStatistics.tps1Min());
 
-            RollingAverage mspt = tickStatistics.duration1Min();
+            DoubleAverageInfo mspt = tickStatistics.duration1Min();
             if (mspt != null) {
                 builder.setMsptMedian(mspt.median());
                 builder.setMsptMax(mspt.max());
@@ -225,11 +251,13 @@ public class WindowStatisticsCollector {
             if (this.startTick == -1) {
                 throw new IllegalStateException("start tick not recorded");
             }
-            if (this.stopTick == -1) {
-                throw new IllegalStateException("stop tick not recorded");
+
+            int stopTick = this.stopTick;
+            if (stopTick == -1) {
+                stopTick = this.tickHook.getCurrentTick();
             }
 
-            return this.stopTick - this.startTick;
+            return stopTick - this.startTick;
         }
     }
 

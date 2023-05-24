@@ -61,6 +61,8 @@ public class AsyncProfilerAccess {
 
     /** The event to use for profiling */
     private final ProfilingEvent profilingEvent;
+    /** The event to use for allocation profiling */
+    private final ProfilingEvent allocationProfilingEvent;
 
     /** If profiler is null, contains the reason why setup failed */
     private final Exception setupException;
@@ -68,10 +70,16 @@ public class AsyncProfilerAccess {
     AsyncProfilerAccess(SparkPlatform platform) {
         AsyncProfiler profiler;
         ProfilingEvent profilingEvent = null;
+        ProfilingEvent allocationProfilingEvent = null;
         Exception setupException = null;
 
         try {
             profiler = load(platform);
+
+            if (isEventSupported(profiler, ProfilingEvent.ALLOC, false)) {
+                allocationProfilingEvent = ProfilingEvent.ALLOC;
+            }
+
             if (isEventSupported(profiler, ProfilingEvent.CPU, false)) {
                 profilingEvent = ProfilingEvent.CPU;
             } else if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
@@ -84,6 +92,7 @@ public class AsyncProfilerAccess {
 
         this.profiler = profiler;
         this.profilingEvent = profilingEvent;
+        this.allocationProfilingEvent = allocationProfilingEvent;
         this.setupException = setupException;
     }
 
@@ -96,6 +105,10 @@ public class AsyncProfilerAccess {
 
     public ProfilingEvent getProfilingEvent() {
         return this.profilingEvent;
+    }
+
+    public ProfilingEvent getAllocationProfilingEvent() {
+        return this.allocationProfilingEvent;
     }
 
     public boolean checkSupported(SparkPlatform platform) {
@@ -114,6 +127,15 @@ public class AsyncProfilerAccess {
 
         }
         return this.profiler != null;
+    }
+
+    public boolean checkAllocationProfilingSupported(SparkPlatform platform) {
+        boolean supported = this.allocationProfilingEvent != null;
+        if (!supported && this.profiler != null) {
+            platform.getPlugin().log(Level.WARNING, "The allocation profiling mode is not supported on your system. This is most likely because Hotspot debug symbols are not available.");
+            platform.getPlugin().log(Level.WARNING, "To resolve, try installing the 'openjdk-11-dbg' or 'openjdk-8-dbg' package using your OS package manager.");
+        }
+        return supported;
     }
 
     private static AsyncProfiler load(SparkPlatform platform) throws Exception {
@@ -183,7 +205,8 @@ public class AsyncProfilerAccess {
 
     enum ProfilingEvent {
         CPU(Events.CPU),
-        WALL(Events.WALL);
+        WALL(Events.WALL),
+        ALLOC(Events.ALLOC);
 
         private final String id;
 

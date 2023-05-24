@@ -27,18 +27,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.LongToDoubleFunction;
 import java.util.stream.IntStream;
 
 /**
  * Encodes a map of int->double into a double array.
  */
 public class ProtoTimeEncoder {
+
+    /** A transformer function to transform the 'time' value from a long to a double */
+    private final LongToDoubleFunction valueTransformer;
+
     /** A sorted array of all possible keys to encode */
     private final int[] keys;
     /** A map of key value -> index in the keys array */
     private final Map<Integer, Integer> keysToIndex;
 
-    public ProtoTimeEncoder(List<ThreadNode> sourceData) {
+    public ProtoTimeEncoder(LongToDoubleFunction valueTransformer, List<ThreadNode> sourceData) {
+        this.valueTransformer = valueTransformer;
+
         // get an array of all keys that show up in the source data
         this.keys = sourceData.stream()
                 .map(n -> n.getTimeWindows().stream().mapToInt(i -> i))
@@ -81,11 +88,8 @@ public class ProtoTimeEncoder {
                 throw new RuntimeException("No index for key " + key + " in " + this.keysToIndex.keySet());
             }
 
-            // convert the duration from microseconds -> milliseconds
-            double durationInMilliseconds = value.longValue() / 1000d;
-
             // store in the array
-            array[idx] = durationInMilliseconds;
+            array[idx] = this.valueTransformer.applyAsDouble(value.longValue());
         });
 
         return array;
