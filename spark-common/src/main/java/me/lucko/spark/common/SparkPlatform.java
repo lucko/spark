@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import me.lucko.bytesocks.client.BytesocksClient;
-import me.lucko.bytesocks.client.BytesocksClientFactory;
 import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.api.SparkApi;
 import me.lucko.spark.common.command.Arguments;
@@ -40,6 +39,7 @@ import me.lucko.spark.common.command.modules.TickMonitoringModule;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
+import me.lucko.spark.common.legacy.LegacyBytesocksClientFactory;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
@@ -128,7 +128,7 @@ public class SparkPlatform {
         String bytesocksHost = this.configuration.getString("bytesocksHost", "spark-usersockets.lucko.me");
 
         this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
-        this.bytesocksClient = BytesocksClientFactory.newClient(bytesocksHost, "spark-plugin");
+        this.bytesocksClient = LegacyBytesocksClientFactory.newClient(bytesocksHost, "spark-plugin");
         this.trustedKeyStore = new TrustedKeyStore(this.configuration);
 
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
