@@ -57,6 +57,12 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
         return plugin;
     }
 
+    @Override
+    public void disable() {
+        super.disable();
+        FMLCommonHandler.instance().bus().unregister(this);
+    }
+
     @SubscribeEvent
     public void onServerTickEnd(TickEvent.ServerTickEvent event) {
         if(event.phase == TickEvent.Phase.START) {
