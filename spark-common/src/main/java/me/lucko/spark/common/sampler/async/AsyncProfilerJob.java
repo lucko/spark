@@ -20,6 +20,8 @@
 
 package me.lucko.spark.common.sampler.async;
 
+import com.google.common.collect.ImmutableList;
+
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
@@ -29,10 +31,9 @@ import one.profiler.AsyncProfiler;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
 
 /**
  * Represents a profiling job within async-profiler.
@@ -77,8 +78,8 @@ public class AsyncProfilerJob {
     // Set on init
     /** The platform */
     private SparkPlatform platform;
-    /** The sampling interval in microseconds */
-    private int interval;
+    /** The sample collector */
+    private SampleCollector<?> sampleCollector;
     /** The thread dumper */
     private ThreadDumper threadDumper;
     /** The profiling window */
@@ -100,9 +101,9 @@ public class AsyncProfilerJob {
      * @param command the command
      * @return the output
      */
-    private String execute(String command) {
+    private String execute(Collection<String> command) {
         try {
-            return this.profiler.execute(command);
+            return this.profiler.execute(String.join(",", command));
         } catch (IOException e) {
             throw new RuntimeException("Exception whilst executing profiler command", e);
         }
@@ -118,9 +119,9 @@ public class AsyncProfilerJob {
     }
 
     // Initialise the job
-    public void init(SparkPlatform platform, int interval, ThreadDumper threadDumper, int window, boolean quiet) {
+    public void init(SparkPlatform platform, SampleCollector<?> collector, ThreadDumper threadDumper, int window, boolean quiet) {
         this.platform = platform;
-        this.interval = interval;
+        this.sampleCollector = collector;
         this.threadDumper = threadDumper;
         this.window = window;
         this.quiet = quiet;
@@ -141,16 +142,20 @@ public class AsyncProfilerJob {
             }
 
             // construct a command to send to async-profiler
-            String command = "start,event=" + this.access.getProfilingEvent() + ",interval=" + this.interval + "us,threads,jfr,file=" + this.outputFile.toString();
+            ImmutableList.Builder<String> command = ImmutableList.<String>builder()
+                    .add("start")
+                    .addAll(this.sampleCollector.initArguments(this.access))
+                    .add("threads").add("jfr").add("file=" + this.outputFile.toString());
+
             if (this.quiet) {
-                command += ",loglevel=NONE";
+                command.add("loglevel=NONE");
             }
             if (this.threadDumper instanceof ThreadDumper.Specific) {
-                command += ",filter";
+                command.add("filter");
             }
 
             // start the profiler
-            String resp = execute(command).trim();
+            String resp = execute(command.build()).trim();
 
             if (!resp.equalsIgnoreCase("profiling started")) {
                 throw new RuntimeException("Unexpected response: " + resp);
@@ -197,18 +202,9 @@ public class AsyncProfilerJob {
      * Aggregates the collected data.
      */
     public void aggregate(AsyncDataAggregator dataAggregator) {
-
-        Predicate<String> threadFilter;
-        if (this.threadDumper instanceof ThreadDumper.Specific) {
-            ThreadDumper.Specific specificDumper = (ThreadDumper.Specific) this.threadDumper;
-            threadFilter = n -> specificDumper.getThreadNames().contains(n.toLowerCase());
-        } else {
-            threadFilter = n -> true;
-        }
-
         // read the jfr file produced by async-profiler
         try (JfrReader reader = new JfrReader(this.outputFile)) {
-            readSegments(reader, threadFilter, dataAggregator, this.window);
+            readSegments(reader, this.sampleCollector, dataAggregator);
         } catch (Exception e) {
             boolean fileExists;
             try {
@@ -235,34 +231,23 @@ public class AsyncProfilerJob {
         }
     }
 
-    private void readSegments(JfrReader reader, Predicate<String> threadFilter, AsyncDataAggregator dataAggregator, int window) throws IOException {
-        List<JfrReader.ExecutionSample> samples = reader.readAllEvents(JfrReader.ExecutionSample.class);
-        for (int i = 0; i < samples.size(); i++) {
-            JfrReader.ExecutionSample sample = samples.get(i);
-
-            long duration;
-            if (i == 0) {
-                // we don't really know the duration of the first sample, so just use the sampling
-                // interval
-                duration = this.interval;
-            } else {
-                // calculate the duration of the sample by calculating the time elapsed since the
-                // previous sample
-                duration = TimeUnit.NANOSECONDS.toMicros(sample.time - samples.get(i - 1).time);
-            }
-
+    private <E extends JfrReader.Event> void readSegments(JfrReader reader, SampleCollector<E> collector, AsyncDataAggregator dataAggregator) throws IOException {
+        List<E> samples = reader.readAllEvents(collector.eventClass());
+        for (E sample : samples) {
             String threadName = reader.threads.get((long) sample.tid);
             if (threadName == null) {
                 continue;
             }
 
-            if (!threadFilter.test(threadName)) {
+            if (!this.threadDumper.isThreadIncluded(sample.tid, threadName)) {
                 continue;
             }
 
+            long value = collector.measure(sample);
+
             // parse the segment and give it to the data aggregator
-            ProfileSegment segment = ProfileSegment.parseSegment(reader, sample, threadName, duration);
-            dataAggregator.insertData(segment, window);
+            ProfileSegment segment = ProfileSegment.parseSegment(reader, sample, threadName, value);
+            dataAggregator.insertData(segment, this.window);
         }
     }
 

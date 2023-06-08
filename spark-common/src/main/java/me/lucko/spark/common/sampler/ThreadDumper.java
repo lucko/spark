@@ -32,7 +32,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 /**
@@ -50,9 +49,36 @@ public interface ThreadDumper {
     ThreadInfo[] dumpThreads(ThreadMXBean threadBean);
 
     /**
+     * Gets if the given thread should be included in the output.
+     *
+     * @param threadId the thread id
+     * @param threadName the thread name
+     * @return if the thread should be included
+     */
+    boolean isThreadIncluded(long threadId, String threadName);
+
+    /**
      * Gets metadata about the thread dumper instance.
      */
     SamplerMetadata.ThreadDumper getMetadata();
+
+    /**
+     * Creates a new {@link ThreadDumper} by parsing the given config setting.
+     *
+     * @param setting the config setting
+     * @return the thread dumper
+     */
+    static ThreadDumper parseConfigSetting(String setting) {
+        switch (setting) {
+            case "default":
+                return null;
+            case "all":
+                return ALL;
+            default:
+                Set<String> threadNames = Arrays.stream(setting.split(",")).collect(Collectors.toSet());
+                return new ThreadDumper.Specific(threadNames);
+        }
+    }
 
     /**
      * Implementation of {@link ThreadDumper} that generates data for all threads.
@@ -61,6 +87,11 @@ public interface ThreadDumper {
         @Override
         public ThreadInfo[] dumpThreads(final ThreadMXBean threadBean) {
             return threadBean.dumpAllThreads(false, false);
+        }
+
+        @Override
+        public boolean isThreadIncluded(long threadId, String threadName) {
+            return true;
         }
 
         @Override
@@ -98,7 +129,7 @@ public interface ThreadDumper {
         }
 
         public void setThread(Thread thread) {
-            this.dumper = new Specific(new long[]{thread.getId()});
+            this.dumper = new Specific(thread);
         }
     }
 
@@ -112,10 +143,6 @@ public interface ThreadDumper {
 
         public Specific(Thread thread) {
             this.ids = new long[]{thread.getId()};
-        }
-
-        public Specific(long[] ids) {
-            this.ids = ids;
         }
 
         public Specific(Set<String> names) {
@@ -146,6 +173,14 @@ public interface ThreadDumper {
         }
 
         @Override
+        public boolean isThreadIncluded(long threadId, String threadName) {
+            if (Arrays.binarySearch(this.ids, threadId) >= 0) {
+                return true;
+            }
+            return getThreadNames().contains(threadName.toLowerCase());
+        }
+
+        @Override
         public ThreadInfo[] dumpThreads(ThreadMXBean threadBean) {
             return threadBean.getThreadInfo(this.ids, Integer.MAX_VALUE);
         }
@@ -169,35 +204,31 @@ public interface ThreadDumper {
 
         public Regex(Set<String> namePatterns) {
             this.namePatterns = namePatterns.stream()
-                    .map(regex -> {
-                        try {
-                            return Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-                        } catch (PatternSyntaxException e) {
-                            return null;
-                        }
-                    })
-                    .filter(Objects::nonNull)
+                    .map(regex -> Pattern.compile(regex, Pattern.CASE_INSENSITIVE))
                     .collect(Collectors.toSet());
+        }
+
+        @Override
+        public boolean isThreadIncluded(long threadId, String threadName) {
+            Boolean result = this.cache.get(threadId);
+            if (result != null) {
+                return result;
+            }
+
+            for (Pattern pattern : this.namePatterns) {
+                if (pattern.matcher(threadName).matches()) {
+                    this.cache.put(threadId, true);
+                    return true;
+                }
+            }
+            this.cache.put(threadId, false);
+            return false;
         }
 
         @Override
         public ThreadInfo[] dumpThreads(ThreadMXBean threadBean) {
             return this.threadFinder.getThreads()
-                    .filter(thread -> {
-                        Boolean result = this.cache.get(thread.getId());
-                        if (result != null) {
-                            return result;
-                        }
-
-                        for (Pattern pattern : this.namePatterns) {
-                            if (pattern.matcher(thread.getName()).matches()) {
-                                this.cache.put(thread.getId(), true);
-                                return true;
-                            }
-                        }
-                        this.cache.put(thread.getId(), false);
-                        return false;
-                    })
+                    .filter(thread -> isThreadIncluded(thread.getId(), thread.getName()))
                     .map(thread -> threadBean.getThreadInfo(thread.getId(), Integer.MAX_VALUE))
                     .filter(Objects::nonNull)
                     .toArray(ThreadInfo[]::new);

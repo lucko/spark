@@ -38,7 +38,6 @@ import net.minecraft.server.MinecraftServer;
 
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.FutureTask;
 import java.util.stream.Stream;
 
 public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
@@ -56,6 +55,12 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
         event.registerServerCommand(plugin);
 
         return plugin;
+    }
+
+    @Override
+    public void disable() {
+        super.disable();
+        FMLCommonHandler.instance().bus().unregister(this);
     }
 
     @SubscribeEvent
@@ -76,7 +81,7 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
         super(mod);
         this.server = server;
         this.gameThreadDumper = new ThreadDumper.GameThread();
-        this.scheduledServerTasks.add(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
+        this.gameThreadDumper.setThread(Thread.currentThread());
     }
 
     @Override

@@ -15,7 +15,7 @@ dependencies {
 }
 
 repositories {
-    maven { url 'https://papermc.io/repo/repository/maven-public/' }
+    maven { url "https://repo.papermc.io/repository/maven-public/" }
 }
 
 processResources {
@@ -37,6 +37,7 @@ shadowJar {
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
+    relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
 
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'

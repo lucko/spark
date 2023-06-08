@@ -32,6 +32,7 @@ import me.lucko.spark.common.heapdump.HeapDump;
 import me.lucko.spark.common.heapdump.HeapDumpSummary;
 import me.lucko.spark.common.util.Compression;
 import me.lucko.spark.common.util.FormatUtil;
+import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.proto.SparkHeapProtos;
 
 import net.kyori.adventure.text.event.ClickEvent;
@@ -52,7 +53,6 @@ import static net.kyori.adventure.text.format.NamedTextColor.GREEN;
 import static net.kyori.adventure.text.format.NamedTextColor.RED;
 
 public class HeapAnalysisModule implements CommandModule {
-    private static final String SPARK_HEAP_MEDIA_TYPE = "application/x-spark-heap";
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
@@ -97,7 +97,7 @@ public class HeapAnalysisModule implements CommandModule {
             saveToFile = true;
         } else {
             try {
-                String key = platform.getBytebinClient().postContent(output, SPARK_HEAP_MEDIA_TYPE).key();
+                String key = platform.getBytebinClient().postContent(output, MediaTypes.SPARK_HEAP_MEDIA_TYPE).key();
                 String url = platform.getViewerUrl() + key;
 
                 resp.broadcastPrefixed(text("Heap dump summmary output:", GOLD));

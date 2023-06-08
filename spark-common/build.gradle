@@ -18,8 +18,11 @@ dependencies {
     api project(':spark-api')
     implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.3'
     implementation 'org.ow2.asm:asm:9.1'
-    implementation 'com.google.protobuf:protobuf-javalite:3.21.11'
     implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
+    implementation 'com.google.protobuf:protobuf-javalite:3.21.11'
+    implementation 'me.lucko:bytesocks-java-client-api:1.0-SNAPSHOT'
+    implementation 'com.neovisionaries:nv-websocket-client:2.14'
+
     api('net.kyori:adventure-api:4.12.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'checker-qual')

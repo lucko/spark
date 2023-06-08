@@ -23,14 +23,14 @@ package me.lucko.spark.common.sampler.java;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.AbstractSampler;
+import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
-import me.lucko.spark.common.sampler.node.MergeMode;
-import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.SparkThreadFactory;
+import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.lang.management.ManagementFactory;
@@ -51,11 +51,17 @@ public class JavaSampler extends AbstractSampler implements Runnable {
 
     /** The worker pool for inserting stack nodes */
     private final ScheduledExecutorService workerPool = Executors.newScheduledThreadPool(
-            6, new ThreadFactoryBuilder().setNameFormat("spark-worker-" + THREAD_ID.getAndIncrement() + "-%d").build()
+            6, new ThreadFactoryBuilder()
+                    .setNameFormat("spark-java-sampler-" + THREAD_ID.getAndIncrement() + "-%d")
+                    .setUncaughtExceptionHandler(SparkThreadFactory.EXCEPTION_HANDLER)
+                    .build()
     );
 
     /** The main sampling task */
     private ScheduledFuture<?> task;
+
+    /** The task to send statistics to the viewer socket */
+    private ScheduledFuture<?> socketStatisticsTask;
 
     /** The thread management interface for the current JVM */
     private final ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
@@ -90,6 +96,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             }
         }
 
+        this.windowStatisticsCollector.recordWindowStartTime(ProfilingWindowUtils.unixMillisToWindow(this.startTime));
         this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
     }
 
@@ -99,10 +106,16 @@ public class JavaSampler extends AbstractSampler implements Runnable {
 
         this.task.cancel(false);
 
+        if (this.socketStatisticsTask != null) {
+            this.socketStatisticsTask.cancel(false);
+        }
+
         if (!cancelled) {
             // collect statistics for the final window
             this.windowStatisticsCollector.measureNow(this.lastWindow.get());
         }
+
+        this.workerPool.shutdown();
     }
 
     @Override
@@ -124,6 +137,15 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         } catch (Throwable t) {
             stop(false);
             this.future.completeExceptionally(t);
+        }
+    }
+
+    @Override
+    public void attachSocket(ViewerSocket socket) {
+        super.attachSocket(socket);
+
+        if (this.socketStatisticsTask == null) {
+            this.socketStatisticsTask = this.workerPool.scheduleAtFixedRate(this::sendStatisticsToSocket, 10, 10, TimeUnit.SECONDS);
         }
     }
 
@@ -149,6 +171,9 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             int previousWindow = JavaSampler.this.lastWindow.getAndUpdate(previous -> Math.max(this.window, previous));
             if (previousWindow != 0 && previousWindow != this.window) {
 
+                // record the start time for the new window
+                JavaSampler.this.windowStatisticsCollector.recordWindowStartTime(this.window);
+
                 // collect statistics for the previous window
                 JavaSampler.this.windowStatisticsCollector.measureNow(previousWindow);
 
@@ -156,16 +181,25 @@ public class JavaSampler extends AbstractSampler implements Runnable {
                 IntPredicate predicate = ProfilingWindowUtils.keepHistoryBefore(this.window);
                 JavaSampler.this.dataAggregator.pruneData(predicate);
                 JavaSampler.this.windowStatisticsCollector.pruneStatistics(predicate);
+
+                JavaSampler.this.workerPool.execute(JavaSampler.this::processWindowRotate);
             }
         }
     }
 
     @Override
-    public SamplerData toProto(SparkPlatform platform, CommandSender creator, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    public SamplerData toProto(SparkPlatform platform, ExportProps exportProps) {
         SamplerData.Builder proto = SamplerData.newBuilder();
-        writeMetadataToProto(proto, platform, creator, comment, this.dataAggregator);
-        writeDataToProto(proto, this.dataAggregator, mergeMode, classSourceLookup);
+        if (exportProps.channelInfo() != null) {
+            proto.setChannelInfo(exportProps.channelInfo());
+        }
+        writeMetadataToProto(proto, platform, exportProps.creator(), exportProps.comment(), this.dataAggregator);
+        writeDataToProto(proto, this.dataAggregator, exportProps.mergeMode().get(), exportProps.classSourceLookup().get());
         return proto.build();
     }
 
+    @Override
+    public SamplerMode getMode() {
+        return SamplerMode.EXECUTION;
+    }
 }

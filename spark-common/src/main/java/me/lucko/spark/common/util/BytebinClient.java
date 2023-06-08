@@ -32,6 +32,8 @@ import java.util.zip.GZIPOutputStream;
 
 /**
  * Utility for posting content to bytebin.
+ *
+ * @see <a href="https://github.com/lucko/bytebin">https://github.com/lucko/bytebin</a>
  */
 public class BytebinClient {
 
@@ -45,7 +47,11 @@ public class BytebinClient {
         this.userAgent = userAgent;
     }
 
-    private Content postContent(String contentType, Consumer<OutputStream> consumer) throws IOException {
+    private Content postContent(String contentType, Consumer<OutputStream> consumer, String userAgentExtra) throws IOException {
+        String userAgent = userAgentExtra != null
+                ? this.userAgent + "/" + userAgentExtra
+                : this.userAgent;
+
         URL url = new URL(this.url + "post");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         try {
@@ -55,7 +61,7 @@ public class BytebinClient {
             connection.setDoOutput(true);
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", contentType);
-            connection.setRequestProperty("User-Agent", this.userAgent);
+            connection.setRequestProperty("User-Agent", userAgent);
             connection.setRequestProperty("Content-Encoding", "gzip");
 
             connection.connect();
@@ -74,14 +80,18 @@ public class BytebinClient {
         }
     }
 
-    public Content postContent(AbstractMessageLite<?, ?> proto, String contentType) throws IOException {
+    public Content postContent(AbstractMessageLite<?, ?> proto, String contentType, String userAgentExtra) throws IOException {
         return postContent(contentType, outputStream -> {
             try (OutputStream out = new GZIPOutputStream(outputStream)) {
                 proto.writeTo(out);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, userAgentExtra);
+    }
+
+    public Content postContent(AbstractMessageLite<?, ?> proto, String contentType) throws IOException {
+        return postContent(proto, contentType, null);
     }
 
     public static final class Content {

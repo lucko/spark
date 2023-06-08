@@ -24,9 +24,13 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
+import me.lucko.spark.proto.SparkSamplerProtos.SocketChannelInfo;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 /**
  * Abstract superinterface for all sampler implementations.
@@ -42,6 +46,20 @@ public interface Sampler {
      * Stops the sampler.
      */
     void stop(boolean cancelled);
+
+    /**
+     * Attaches a viewer socket to this sampler.
+     *
+     * @param socket the socket
+     */
+    void attachSocket(ViewerSocket socket);
+
+    /**
+     * Gets the sockets attached to this sampler.
+     *
+     * @return the attached sockets
+     */
+    Collection<ViewerSocket> getAttachedSockets();
 
     /**
      * Gets the time when the sampler started (unix timestamp in millis)
@@ -65,6 +83,13 @@ public interface Sampler {
     boolean isRunningInBackground();
 
     /**
+     * Gets the sampler mode.
+     *
+     * @return the sampler mode
+     */
+    SamplerMode getMode();
+
+    /**
      * Gets a future to encapsulate the completion of the sampler
      *
      * @return a future
@@ -72,6 +97,62 @@ public interface Sampler {
     CompletableFuture<Sampler> getFuture();
 
     // Methods used to export the sampler data to the web viewer.
-    SamplerData toProto(SparkPlatform platform, CommandSender creator, String comment, MergeMode mergeMode, ClassSourceLookup classSourceLookup);
+    SamplerData toProto(SparkPlatform platform, ExportProps exportProps);
+
+    final class ExportProps {
+        private CommandSender.Data creator;
+        private String comment;
+        private Supplier<MergeMode> mergeMode;
+        private Supplier<ClassSourceLookup> classSourceLookup;
+        private SocketChannelInfo channelInfo;
+
+        public ExportProps() {
+        }
+
+        public CommandSender.Data creator() {
+            return this.creator;
+        }
+
+        public String comment() {
+            return this.comment;
+        }
+
+        public Supplier<MergeMode> mergeMode() {
+            return this.mergeMode;
+        }
+
+        public Supplier<ClassSourceLookup> classSourceLookup() {
+            return this.classSourceLookup;
+        }
+
+        public SocketChannelInfo channelInfo() {
+            return this.channelInfo;
+        }
+
+        public ExportProps creator(CommandSender.Data creator) {
+            this.creator = creator;
+            return this;
+        }
+
+        public ExportProps comment(String comment) {
+            this.comment = comment;
+            return this;
+        }
+
+        public ExportProps mergeMode(Supplier<MergeMode> mergeMode) {
+            this.mergeMode = mergeMode;
+            return this;
+        }
+
+        public ExportProps classSourceLookup(Supplier<ClassSourceLookup> classSourceLookup) {
+            this.classSourceLookup = classSourceLookup;
+            return this;
+        }
+
+        public ExportProps channelInfo(SocketChannelInfo channelInfo) {
+            this.channelInfo = channelInfo;
+            return this;
+        }
+    }
 
 }

@@ -89,7 +89,7 @@ public class WaterdogSparkPlugin extends Plugin implements SparkPlugin {
         if (level == Level.INFO) {
             getLogger().info(msg);
         } else if (level == Level.WARNING) {
-            getLogger().warning(msg);
+            getLogger().warn(msg);
         } else if (level == Level.SEVERE) {
             getLogger().error(msg);
         } else {

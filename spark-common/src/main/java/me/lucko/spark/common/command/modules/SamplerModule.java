@@ -22,6 +22,7 @@ package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
 
+import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
@@ -33,6 +34,7 @@ import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.SamplerBuilder;
+import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
@@ -40,7 +42,9 @@ import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.FormatUtil;
+import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.MethodDisambiguator;
+import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
 import net.kyori.adventure.text.Component;
@@ -67,7 +71,6 @@ import static net.kyori.adventure.text.format.NamedTextColor.RED;
 import static net.kyori.adventure.text.format.NamedTextColor.WHITE;
 
 public class SamplerModule implements CommandModule {
-    private static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
 
     @Override
     public void registerCommands(Consumer<Command> consumer) {
@@ -75,11 +78,13 @@ public class SamplerModule implements CommandModule {
                 .aliases("profiler", "sampler")
                 .allowSubCommand(true)
                 .argumentUsage("info", "", null)
+                .argumentUsage("open", "", null)
                 .argumentUsage("start", "timeout", "timeout seconds")
                 .argumentUsage("start", "thread *", null)
                 .argumentUsage("start", "thread", "thread name")
                 .argumentUsage("start", "only-ticks-over", "tick length millis")
                 .argumentUsage("start", "interval", "interval millis")
+                .argumentUsage("start", "alloc", null)
                 .argumentUsage("stop", "", null)
                 .argumentUsage("cancel", "", null)
                 .executor(this::profiler)
@@ -94,14 +99,14 @@ public class SamplerModule implements CommandModule {
                         }
                         if (subCommand.equals("start")) {
                             opts = new ArrayList<>(Arrays.asList("--timeout", "--regex", "--combine-all",
-                                    "--not-combined", "--interval", "--only-ticks-over", "--force-java-sampler"));
+                                    "--not-combined", "--interval", "--only-ticks-over", "--force-java-sampler", "--alloc", "--alloc-live-only"));
                             opts.removeAll(arguments);
                             opts.add("--thread"); // allowed multiple times
                         }
                     }
 
                     return TabCompleter.create()
-                            .at(0, CompletionSupplier.startsWith(Arrays.asList("info", "start", "stop", "cancel")))
+                            .at(0, CompletionSupplier.startsWith(Arrays.asList("info", "start", "open", "stop", "cancel")))
                             .from(1, CompletionSupplier.startsWith(opts))
                             .complete(arguments);
                 })
@@ -114,6 +119,16 @@ public class SamplerModule implements CommandModule {
 
         if (subCommand.equals("info") || arguments.boolFlag("info")) {
             profilerInfo(platform, resp);
+            return;
+        }
+
+        if (subCommand.equals("open") || arguments.boolFlag("open")) {
+            profilerOpen(platform, sender, resp, arguments);
+            return;
+        }
+
+        if (subCommand.equals("trust-viewer") || arguments.boolFlag("trust-viewer")) {
+            profilerTrustViewer(platform, sender, resp, arguments);
             return;
         }
 
@@ -166,9 +181,12 @@ public class SamplerModule implements CommandModule {
                     "Consider setting a timeout value over 30 seconds."));
         }
 
-        double intervalMillis = arguments.doubleFlag("interval");
-        if (intervalMillis <= 0) {
-            intervalMillis = 4;
+        SamplerMode mode = arguments.boolFlag("alloc") ? SamplerMode.ALLOCATION : SamplerMode.EXECUTION;
+        boolean allocLiveOnly = arguments.boolFlag("alloc-live-only");
+
+        double interval = arguments.doubleFlag("interval");
+        if (interval <= 0) {
+            interval = mode.defaultInterval();
         }
 
         boolean ignoreSleeping = arguments.boolFlag("ignore-sleeping");
@@ -213,23 +231,33 @@ public class SamplerModule implements CommandModule {
         resp.broadcastPrefixed(text("Starting a new profiler, please wait..."));
 
         SamplerBuilder builder = new SamplerBuilder();
+        builder.mode(mode);
         builder.threadDumper(threadDumper);
         builder.threadGrouper(threadGrouper);
         if (timeoutSeconds != -1) {
             builder.completeAfter(timeoutSeconds, TimeUnit.SECONDS);
         }
-        builder.samplingInterval(intervalMillis);
+        builder.samplingInterval(interval);
         builder.ignoreSleeping(ignoreSleeping);
         builder.ignoreNative(ignoreNative);
         builder.forceJavaSampler(forceJavaSampler);
+        builder.allocLiveOnly(allocLiveOnly);
         if (ticksOver != -1) {
             builder.ticksOver(ticksOver, tickHook);
         }
-        Sampler sampler = builder.start(platform);
+
+        Sampler sampler;
+        try {
+            sampler = builder.start(platform);
+        } catch (UnsupportedOperationException e) {
+            resp.replyPrefixed(text(e.getMessage(), RED));
+            return;
+        }
+
         platform.getSamplerContainer().setActiveSampler(sampler);
 
         resp.broadcastPrefixed(text()
-                .append(text("Profiler is now running!", GOLD))
+                .append(text((mode == SamplerMode.ALLOCATION ? "Allocation Profiler" : "Profiler") + " is now running!", GOLD))
                 .append(space())
                 .append(text("(" + (sampler instanceof AsyncSampler ? "async" : "built-in java") + ")", DARK_GRAY))
                 .build()
@@ -239,6 +267,8 @@ public class SamplerModule implements CommandModule {
             resp.broadcastPrefixed(text("It will run in the background until it is stopped by an admin."));
             resp.broadcastPrefixed(text("To stop the profiler and upload the results, run:"));
             resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler stop"));
+            resp.broadcastPrefixed(text("To view the profiler while it's running, run:"));
+            resp.broadcastPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler open"));
         } else {
             resp.broadcastPrefixed(text("The results will be automatically returned after the profiler has been running for " + FormatUtil.formatSeconds(timeoutSeconds) + "."));
         }
@@ -258,13 +288,11 @@ public class SamplerModule implements CommandModule {
 
         // await the result
         if (timeoutSeconds != -1) {
-            String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
-            MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
-            MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
+            Sampler.ExportProps exportProps = getExportProps(platform, resp, arguments);
             boolean saveToFile = arguments.boolFlag("save-to-file");
             future.thenAcceptAsync(s -> {
                 resp.broadcastPrefixed(text("The active profiler has completed! Uploading results..."));
-                handleUpload(platform, resp, s, comment, mergeMode, saveToFile);
+                handleUpload(platform, resp, s, exportProps, saveToFile);
             });
         }
     }
@@ -291,6 +319,9 @@ public class SamplerModule implements CommandModule {
                 resp.replyPrefixed(text("So far, it has profiled for " + FormatUtil.formatSeconds(runningTime) + "."));
             }
 
+            resp.replyPrefixed(text("To view the profiler while it's running, run:"));
+            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler open"));
+
             long timeout = sampler.getAutoEndTime();
             if (timeout == -1) {
                 resp.replyPrefixed(text("To stop the profiler and upload the results, run:"));
@@ -302,6 +333,48 @@ public class SamplerModule implements CommandModule {
 
             resp.replyPrefixed(text("To cancel the profiler without uploading the results, run:"));
             resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler cancel"));
+        }
+    }
+
+    private void profilerOpen(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+        BytesocksClient bytesocksClient = platform.getBytesocksClient();
+        if (bytesocksClient == null) {
+            resp.replyPrefixed(text("The live viewer is only supported on Java 11 or newer.", RED));
+            return;
+        }
+
+        Sampler sampler = platform.getSamplerContainer().getActiveSampler();
+        if (sampler == null) {
+            resp.replyPrefixed(text("The profiler isn't running!"));
+            resp.replyPrefixed(text("To start a new one, run:"));
+            resp.replyPrefixed(cmdPrompt("/" + platform.getPlugin().getCommandName() + " profiler start"));
+            return;
+        }
+
+        Sampler.ExportProps exportProps = getExportProps(platform, resp, arguments);
+        handleOpen(platform, bytesocksClient, resp, sampler, exportProps);
+    }
+
+    private void profilerTrustViewer(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+        Set<String> ids = arguments.stringFlag("id");
+        if (ids.isEmpty()) {
+            resp.replyPrefixed(text("Please provide a client id with '--id <client id>'."));
+            return;
+        }
+
+        for (String id : ids) {
+            boolean success = platform.getTrustedKeyStore().trustPendingKey(id);
+            if (success) {
+                Sampler sampler = platform.getSamplerContainer().getActiveSampler();
+                if (sampler != null) {
+                    for (ViewerSocket socket : sampler.getAttachedSockets()) {
+                        socket.sendClientTrustedMessage(id);
+                    }
+                }
+                resp.replyPrefixed(text("Client connected to the viewer using id '" + id + "' is now trusted."));
+            } else {
+                resp.replyPrefixed(text("Unable to find pending client with id '" + id + "'."));
+            }
         }
     }
 
@@ -331,10 +404,8 @@ public class SamplerModule implements CommandModule {
                 resp.broadcastPrefixed(text("Stopping the profiler & uploading results, please wait..."));
             }
 
-            String comment = Iterables.getFirst(arguments.stringFlag("comment"), null);
-            MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
-            MergeMode mergeMode = arguments.boolFlag("separate-parent-calls") ? MergeMode.separateParentCalls(methodDisambiguator) : MergeMode.sameMethod(methodDisambiguator);
-            handleUpload(platform, resp, sampler, comment, mergeMode, saveToFile);
+            Sampler.ExportProps exportProps = getExportProps(platform, resp, arguments);
+            handleUpload(platform, resp, sampler, exportProps, saveToFile);
 
             // if the previous sampler was running in the background, create a new one
             if (platform.getBackgroundSamplerManager().restartBackgroundSampler()) {
@@ -347,15 +418,15 @@ public class SamplerModule implements CommandModule {
         }
     }
 
-    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, String comment, MergeMode mergeMode, boolean saveToFileFlag) {
-        SparkSamplerProtos.SamplerData output = sampler.toProto(platform, resp.sender(), comment, mergeMode, ClassSourceLookup.create(platform));
+    private void handleUpload(SparkPlatform platform, CommandResponseHandler resp, Sampler sampler, Sampler.ExportProps exportProps, boolean saveToFileFlag) {
+        SparkSamplerProtos.SamplerData output = sampler.toProto(platform, exportProps);
 
         boolean saveToFile = false;
         if (saveToFileFlag) {
             saveToFile = true;
         } else {
             try {
-                String key = platform.getBytebinClient().postContent(output, SPARK_SAMPLER_MEDIA_TYPE).key();
+                String key = platform.getBytebinClient().postContent(output, MediaTypes.SPARK_SAMPLER_MEDIA_TYPE).key();
                 String url = platform.getViewerUrl() + key;
 
                 resp.broadcastPrefixed(text("Profiler stopped & upload complete!", GOLD));
@@ -389,6 +460,45 @@ public class SamplerModule implements CommandModule {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void handleOpen(SparkPlatform platform, BytesocksClient bytesocksClient, CommandResponseHandler resp, Sampler sampler, Sampler.ExportProps exportProps) {
+        try {
+            ViewerSocket socket = new ViewerSocket(platform, bytesocksClient, exportProps);
+            sampler.attachSocket(socket);
+            exportProps.channelInfo(socket.getPayload());
+
+            SparkSamplerProtos.SamplerData data = sampler.toProto(platform, exportProps);
+
+            String key = platform.getBytebinClient().postContent(data, MediaTypes.SPARK_SAMPLER_MEDIA_TYPE, "live").key();
+            String url = platform.getViewerUrl() + key;
+
+            resp.broadcastPrefixed(text("Profiler live viewer:", GOLD));
+            resp.broadcast(text()
+                    .content(url)
+                    .color(GRAY)
+                    .clickEvent(ClickEvent.openUrl(url))
+                    .build()
+            );
+
+            platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler (live)", url));
+        } catch (Exception e) {
+            resp.replyPrefixed(text("An error occurred whilst opening the live profiler.", RED));
+            e.printStackTrace();
+        }
+    }
+
+    private Sampler.ExportProps getExportProps(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
+        return new Sampler.ExportProps()
+                .creator(resp.sender().toData())
+                .comment(Iterables.getFirst(arguments.stringFlag("comment"), null))
+                .mergeMode(() -> {
+                    MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
+                    return arguments.boolFlag("separate-parent-calls")
+                            ? MergeMode.separateParentCalls(methodDisambiguator)
+                            : MergeMode.sameMethod(methodDisambiguator);
+                })
+                .classSourceLookup(() -> ClassSourceLookup.create(platform));
     }
 
     private static Component cmdPrompt(String cmd) {

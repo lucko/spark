@@ -99,7 +99,7 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
             ArrayList<ForgeChunkInfo> list = new ArrayList<>();
             IChunkProvider provider = level.getChunkProvider();
             if(provider instanceof ChunkProviderClient) {
-                List<Chunk> chunks = ReflectionHelper.getPrivateValue(ChunkProviderClient.class, (ChunkProviderClient)provider, "chunkMapping", "field_73236_b");
+                List<Chunk> chunks = ReflectionHelper.getPrivateValue(ChunkProviderClient.class, (ChunkProviderClient)provider, "chunkListing", "field_73237_c");
                 for(Chunk chunk : chunks) {
                     list.add(new ForgeChunkInfo(chunk));
                 }

@@ -151,6 +151,8 @@ public class SparkApi implements Spark {
                         return stats.duration10Sec();
                     case MINUTES_1:
                         return stats.duration1Min();
+                    case MINUTES_5:
+                        return stats.duration5Min();
                     default:
                         throw new AssertionError(window);
                 }

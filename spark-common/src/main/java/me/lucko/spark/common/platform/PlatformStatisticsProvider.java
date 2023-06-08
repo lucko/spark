@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.platform;
 
+import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuInfo;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
@@ -33,6 +34,7 @@ import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldStatisticsProvider;
+import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.PlatformStatistics;
 import me.lucko.spark.proto.SparkProtos.SystemStatistics;
 import me.lucko.spark.proto.SparkProtos.WorldStatistics;
@@ -118,17 +120,17 @@ public class PlatformStatisticsProvider {
         networkInterfaceStats.forEach((name, statistics) -> builder.putNet(
                 name,
                 SystemStatistics.NetInterface.newBuilder()
-                        .setRxBytesPerSecond(statistics.rxBytesPerSecond().toProto())
-                        .setRxPacketsPerSecond(statistics.rxPacketsPerSecond().toProto())
-                        .setTxBytesPerSecond(statistics.txBytesPerSecond().toProto())
-                        .setTxPacketsPerSecond(statistics.txPacketsPerSecond().toProto())
+                        .setRxBytesPerSecond(rollingAvgProto(statistics.rxBytesPerSecond()))
+                        .setRxPacketsPerSecond(rollingAvgProto(statistics.rxPacketsPerSecond()))
+                        .setTxBytesPerSecond(rollingAvgProto(statistics.txBytesPerSecond()))
+                        .setTxPacketsPerSecond(rollingAvgProto(statistics.txPacketsPerSecond()))
                         .build()
         ));
 
         return builder.build();
     }
 
-    public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics) {
+    public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, boolean includeWorld) {
         PlatformStatistics.Builder builder = PlatformStatistics.newBuilder();
 
         MemoryUsage memoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
@@ -166,8 +168,8 @@ public class PlatformStatisticsProvider {
             );
             if (tickStatistics.isDurationSupported()) {
                 builder.setMspt(PlatformStatistics.Mspt.newBuilder()
-                        .setLast1M(tickStatistics.duration1Min().toProto())
-                        .setLast5M(tickStatistics.duration5Min().toProto())
+                        .setLast1M(rollingAvgProto(tickStatistics.duration1Min()))
+                        .setLast5M(rollingAvgProto(tickStatistics.duration5Min()))
                         .build()
                 );
             }
@@ -176,7 +178,7 @@ public class PlatformStatisticsProvider {
         PingStatistics pingStatistics = this.platform.getPingStatistics();
         if (pingStatistics != null && pingStatistics.getPingAverage().getSamples() != 0) {
             builder.setPing(PlatformStatistics.Ping.newBuilder()
-                    .setLast15M(pingStatistics.getPingAverage().toProto())
+                    .setLast15M(rollingAvgProto(pingStatistics.getPingAverage()))
                     .build()
             );
         }
@@ -187,20 +189,31 @@ public class PlatformStatisticsProvider {
             builder.setPlayerCount(playerCount);
         }
 
-        try {
-            WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
-                    new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
-            );
-            WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
-            if (worldStatistics != null) {
-                builder.setWorld(worldStatistics);
+        if (includeWorld) {
+            try {
+                WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
+                        new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
+                );
+                WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
+                if (worldStatistics != null) {
+                    builder.setWorld(worldStatistics);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
-
         return builder.build();
+    }
+
+    public static SparkProtos.RollingAverageValues rollingAvgProto(DoubleAverageInfo info) {
+        return SparkProtos.RollingAverageValues.newBuilder()
+                .setMean(info.mean())
+                .setMax(info.max())
+                .setMin(info.min())
+                .setMedian(info.median())
+                .setPercentile95(info.percentile95th())
+                .build();
     }
 
 }

@@ -44,6 +44,9 @@ public class ClassFinder {
         } catch (Exception e) {
             return;
         }
+        if (instrumentation == null) {
+            return;
+        }
 
         // obtain and cache loaded classes
         for (Class<?> loadedClass : instrumentation.getAllLoadedClasses()) {
