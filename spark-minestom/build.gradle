@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 tasks.withType(JavaCompile) {
@@ -24,7 +24,7 @@ processResources {
 }
 
 shadowJar {
-    archiveName = "spark-${project.pluginVersion}-minestom.jar"
+    archiveFileName = "spark-${project.pluginVersion}-minestom.jar"
 
     dependencies {
         exclude(dependency('net.kyori:^(?!adventure-text-feature-pagination).+$'))

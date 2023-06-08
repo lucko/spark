@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 tasks.withType(JavaCompile) {
@@ -15,7 +15,8 @@ dependencies {
 
 repositories {
     maven { url 'https://repo.opencollab.dev/main/' }
-    maven { url 'https://repo.waterdog.dev/artifactory/main/' }
+    maven { url 'https://repo.waterdog.dev/releases/' }
+    maven { url 'https://repo.waterdog.dev/snapshots/' }
 }
 
 processResources {
@@ -29,7 +30,7 @@ processResources {
 }
 
 shadowJar {
-    archiveName = "spark-${project.pluginVersion}-waterdog.jar"
+    archiveFileName = "spark-${project.pluginVersion}-waterdog.jar"
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'

@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 dependencies {
@@ -23,7 +23,7 @@ processResources {
 }
 
 shadowJar {
-    archiveName = "spark-${project.pluginVersion}-nukkit.jar"
+    archiveFileName = "spark-${project.pluginVersion}-nukkit.jar"
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
