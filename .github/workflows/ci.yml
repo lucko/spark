@@ -1,0 +1,45 @@
+name: Build Gradle
+
+on:
+  push:
+    branches:
+      - 'master'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - 'master'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-gradle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: validate gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Run build with Gradle wrapper
+        run: ./gradlew build
+
+      - name: Upload all artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jars
+          path: |
+            **/build/libs/spark-1.*-*.jar
