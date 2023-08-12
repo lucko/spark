@@ -46,7 +46,7 @@ subprojects {
 def determinePatchVersion() {
     def tagInfo = new ByteArrayOutputStream()
     exec {
-        commandLine 'git', 'describe', '--tags'
+        commandLine 'git', 'describe', '--tags', "--always"
         standardOutput = tagInfo
     }
     tagInfo = tagInfo.toString()
