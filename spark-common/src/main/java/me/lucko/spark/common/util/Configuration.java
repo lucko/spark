@@ -104,7 +104,7 @@ public final class Configuration {
         }
 
         JsonPrimitive val = el.getAsJsonPrimitive();
-        return val.isBoolean() ? val.getAsInt() : def;
+        return val.isNumber() ? val.getAsInt() : def;
     }
 
     public List<String> getStringList(String path) {
