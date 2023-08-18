@@ -134,7 +134,8 @@ public class BukkitServerConfigProvider extends ServerConfigProvider {
                 .put("spigot.yml", YamlConfigParser.INSTANCE)
                 .put("paper.yml", YamlConfigParser.INSTANCE)
                 .put("paper/", SplitYamlConfigParser.INSTANCE)
-                .put("purpur.yml", YamlConfigParser.INSTANCE);
+                .put("purpur.yml", YamlConfigParser.INSTANCE)
+                .put("pufferfish.yml", YamlConfigParser.INSTANCE);
 
         for (String config : getSystemPropertyList("spark.serverconfigs.extra")) {
             files.put(config, YamlConfigParser.INSTANCE);
