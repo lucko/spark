@@ -65,7 +65,7 @@ public class ProfileSegment {
 
     public static ProfileSegment parseSegment(JfrReader reader, JfrReader.Event sample, String threadName, long value) {
         JfrReader.StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
-        int len = stackTrace.methods.length;
+        int len = stackTrace != null ? stackTrace.methods.length : 0;
 
         AsyncStackTraceElement[] stack = new AsyncStackTraceElement[len];
         for (int i = 0; i < len; i++) {
