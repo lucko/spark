@@ -37,13 +37,13 @@ import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Base implementation class for {@link Sampler}s.
@@ -78,7 +78,7 @@ public abstract class AbstractSampler implements Sampler {
     protected Map<String, GarbageCollectorStatistics> initialGcStats;
 
     /** A set of viewer sockets linked to the sampler */
-    protected List<ViewerSocket> viewerSockets = new ArrayList<>();
+    protected List<ViewerSocket> viewerSockets = new CopyOnWriteArrayList<>();
 
     protected AbstractSampler(SparkPlatform platform, SamplerSettings settings) {
         this.platform = platform;
@@ -156,6 +156,7 @@ public abstract class AbstractSampler implements Sampler {
 
     protected void sendStatisticsToSocket() {
         try {
+            this.viewerSockets.removeIf(socket -> !socket.isOpen());
             if (this.viewerSockets.isEmpty()) {
                 return;
             }
