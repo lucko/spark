@@ -20,7 +20,10 @@ dependencies {
     implementation 'org.ow2.asm:asm:9.1'
     implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
     implementation 'com.google.protobuf:protobuf-javalite:3.21.11'
-    implementation 'me.lucko:bytesocks-java-client:1.0-SNAPSHOT'
+
+    implementation('me.lucko:bytesocks-java-client:1.0-20230828.145440-5') {
+        exclude(module: 'slf4j-api')
+    }
 
     api('net.kyori:adventure-api:4.12.0') {
         exclude(module: 'adventure-bom')

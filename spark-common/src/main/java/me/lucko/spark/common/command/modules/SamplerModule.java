@@ -21,7 +21,6 @@
 package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
-
 import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
@@ -46,7 +45,6 @@ import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -339,7 +337,7 @@ public class SamplerModule implements CommandModule {
     private void profilerOpen(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         BytesocksClient bytesocksClient = platform.getBytesocksClient();
         if (bytesocksClient == null) {
-            resp.replyPrefixed(text("The live viewer is only supported on Java 11 or newer.", RED));
+            resp.replyPrefixed(text("The live viewer is not supported.", RED));
             return;
         }
 
