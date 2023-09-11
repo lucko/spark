@@ -150,6 +150,7 @@ public class BukkitServerConfigProvider extends ServerConfigProvider {
                 .add("motd")
                 .add("resource-pack")
                 .add("rcon<dot>password")
+                .add("rcon<dot>ip")
                 .add("level-seed")
                 .add("world-settings.*.feature-seeds")
                 .add("world-settings.*.seed-*")
