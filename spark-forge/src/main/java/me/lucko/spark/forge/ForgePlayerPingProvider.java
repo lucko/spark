@@ -40,7 +40,7 @@ public class ForgePlayerPingProvider implements PlayerPingProvider {
     public Map<String, Integer> poll() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
         for (ServerPlayer player : this.server.getPlayerList().getPlayers()) {
-            builder.put(player.getGameProfile().getName(), player.latency);
+            builder.put(player.getGameProfile().getName(), player.connection.latency());
         }
         return builder.build();
     }
