@@ -1,0 +1,49 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+dependencies {
+    implementation project(':spark-common')
+    implementation 'net.kyori:adventure-text-serializer-legacy:4.14.0'
+    compileOnly 'org.geysermc.geyser:api:2.2.0-SNAPSHOT'
+    // TODO Remove
+    compileOnly('org.geysermc.geyser:core:2.2.0-SNAPSHOT') {
+        exclude group: 'io.netty'
+    }
+}
+
+repositories {
+    maven { url 'https://repo.opencollab.dev/main/' }
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        expand (
+                'pluginVersion': project.pluginVersion,
+                'pluginDescription': project.pluginDescription
+        )
+        include 'extension.yml'
+    }
+}
+
+shadowJar {
+    archiveFileName = "spark-${project.pluginVersion}-geyser.jar"
+
+    relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
+    relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+    relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
+    relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
+    relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
+
+    exclude 'module-info.class'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/proguard/**'
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
+}
