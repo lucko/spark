@@ -25,17 +25,17 @@ dependencies {
         exclude(module: 'slf4j-api')
     }
 
-    api('net.kyori:adventure-api:4.12.0') {
+    api('net.kyori:adventure-api:4.13.1') {
         exclude(module: 'adventure-bom')
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')
     }
-    api('net.kyori:adventure-text-serializer-gson:4.12.0') {
+    api('net.kyori:adventure-text-serializer-gson:4.13.1') {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
         exclude(module: 'gson')
     }
-    api('net.kyori:adventure-text-serializer-legacy:4.12.0') {
+    api('net.kyori:adventure-text-serializer-legacy:4.13.1') {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
     }

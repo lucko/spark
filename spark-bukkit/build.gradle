@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation project(':spark-common')
-    implementation 'net.kyori:adventure-platform-bukkit:4.2.0'
+    implementation 'net.kyori:adventure-platform-bukkit:4.3.1'
     compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
     
     // placeholders
