@@ -21,7 +21,6 @@
 package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.platform.PlatformInfo;
-
 import net.minestom.server.MinecraftServer;
 
 public class MinestomPlatformInfo implements PlatformInfo {
