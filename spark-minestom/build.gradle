@@ -9,7 +9,9 @@ tasks.withType(JavaCompile) {
 
 dependencies {
     implementation project(':spark-common')
-    compileOnly 'com.github.Minestom.Minestom:Minestom:master-SNAPSHOT'
+
+    compileOnly 'dev.hollowcube:minestom-ce:438338381e' // stable minestom version
+    compileOnly 'dev.hollowcube:minestom-ce-extensions:1.2.0' // need this since ce removes extensions
     implementation 'com.google.guava:guava:19.0'
 }
 
