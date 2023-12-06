@@ -60,7 +60,7 @@ public enum SparkFabricPlaceholderApi {
         }
 
         private static Text toText(Component component) {
-            return Text.Serializer.fromJson(GsonComponentSerializer.gson().serialize(component));
+            return Text.Serialization.fromJson(GsonComponentSerializer.gson().serialize(component));
         }
     }
 
