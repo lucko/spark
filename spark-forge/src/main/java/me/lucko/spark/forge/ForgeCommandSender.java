@@ -66,7 +66,7 @@ public class ForgeCommandSender extends AbstractCommandSender<CommandSource> {
 
     @Override
     public void sendMessage(Component message) {
-        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serialize(message));
+        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(message));
         Objects.requireNonNull(component, "component");
         super.delegate.sendSystemMessage(component);
     }
