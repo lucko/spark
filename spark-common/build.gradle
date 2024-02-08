@@ -16,7 +16,7 @@ extensions.configure(LicenseExtension.class) {
 
 dependencies {
     api project(':spark-api')
-    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.3'
+    implementation 'tools.profiler:async-profiler:3.0'
     implementation 'org.ow2.asm:asm:9.1'
     implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
     implementation 'com.google.protobuf:protobuf-javalite:3.21.11'
