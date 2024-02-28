@@ -104,7 +104,7 @@ public class Sponge8SparkPlugin implements SparkPlugin {
 
     @Listener
     public void onEnable(StartedEngineEvent<Server> event) {
-        executeSync(() -> this.gameThreadDumper.setThread(Thread.currentThread()));
+        this.gameThreadDumper.setThread(Thread.currentThread());
 
         this.platform = new SparkPlatform(this);
         this.platform.enable();
