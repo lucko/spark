@@ -20,12 +20,19 @@
 
 package me.lucko.spark.bukkit;
 
+import com.google.common.collect.ImmutableSet;
+
 import me.lucko.spark.api.Spark;
+import me.lucko.spark.bukkit.folia.FoliaScheduler;
+import me.lucko.spark.bukkit.folia.FoliaTickStatistics;
+import me.lucko.spark.bukkit.folia.FoliaSupport;
+import me.lucko.spark.bukkit.folia.FoliaWorldInfoProvider;
 import me.lucko.spark.bukkit.placeholder.SparkMVdWPlaceholders;
 import me.lucko.spark.bukkit.placeholder.SparkPlaceholderApi;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
+import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -53,6 +60,7 @@ import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
+    private BukkitSparkScheduler scheduler;
     private BukkitAudiences audienceFactory;
     private ThreadDumper gameThreadDumper;
 
@@ -62,14 +70,19 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void onEnable() {
+        this.scheduler = FoliaSupport.IS_ACTIVE
+                ? new FoliaScheduler(this)
+                : new BukkitSparkScheduler.Basic(this);
         this.audienceFactory = BukkitAudiences.create(this);
-        this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
+        this.gameThreadDumper = FoliaSupport.IS_ACTIVE
+                ? new ThreadDumper.Regex(ImmutableSet.of("Region Scheduler Thread #\\d+"))
+                : new ThreadDumper.Specific(Thread.currentThread());
 
         this.platform = new SparkPlatform(this);
         this.platform.enable();
 
         // override Spigot's TPS command with our own.
-        if (this.platform.getConfiguration().getBoolean("overrideTpsCommand", true)) {
+        if (this.platform.getConfiguration().getBoolean("overrideTpsCommand", !FoliaSupport.IS_ACTIVE)) {
             this.tpsCommand = (sender, command, label, args) -> {
                 if (!sender.hasPermission("spark") && !sender.hasPermission("spark.tps") && !sender.hasPermission("bukkit.command.tps")) {
                     sender.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
@@ -142,12 +155,12 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void executeAsync(Runnable task) {
-        getServer().getScheduler().runTaskAsynchronously(this, task);
+        this.scheduler.executeAsync(task);
     }
 
     @Override
     public void executeSync(Runnable task) {
-        getServer().getScheduler().runTask(this, task);
+        this.scheduler.executeSync(task);
     }
 
     @Override
@@ -162,7 +175,9 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public TickHook createTickHook() {
-        if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
+        if (FoliaSupport.IS_ACTIVE) {
+            return null;
+        } else if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
             getLogger().info("Using Paper ServerTickStartEvent for tick monitoring");
             return new PaperTickHook(this);
         } else {
@@ -173,10 +188,23 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public TickReporter createTickReporter() {
-        if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
+        if (FoliaSupport.IS_ACTIVE) {
+            return null;
+        } else if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
             return new PaperTickReporter(this);
+        } else {
+            return null;
         }
-        return null;
+    }
+
+    @Override
+    public TickStatistics createTickStatistics() {
+        if (FoliaSupport.IS_ACTIVE) {
+            getLogger().info("Using Paper 'threaded regions' for tick statistics");
+            return new FoliaTickStatistics(getServer());
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -210,7 +238,9 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public WorldInfoProvider createWorldInfoProvider() {
-        return new BukkitWorldInfoProvider(getServer());
+        return FoliaSupport.IS_ACTIVE
+                ? new FoliaWorldInfoProvider(this)
+                : new BukkitWorldInfoProvider(getServer());
     }
 
     @Override

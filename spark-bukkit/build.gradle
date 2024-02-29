@@ -1,11 +1,16 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'io.papermc.paperweight.userdev' version '1.5.3'
+}
+
+tasks.withType(JavaCompile) {
+    options.release = 17
 }
 
 dependencies {
     implementation project(':spark-common')
     implementation 'net.kyori:adventure-platform-bukkit:4.3.1'
-    compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
+    paperweight.devBundle("dev.folia", "1.20.1-R0.1-SNAPSHOT")
     
     // placeholders
     compileOnly 'me.clip:placeholderapi:2.10.3'
@@ -25,6 +30,12 @@ processResources {
                 'pluginDescription': project.pluginDescription
         )
         include 'plugin.yml'
+    }
+}
+
+tasks {
+    assemble {
+        dependsOn reobfJar
     }
 }
 
