@@ -1,7 +1,7 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '1.4-SNAPSHOT'
+    id 'fabric-loom' version '1.5-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
@@ -28,9 +28,9 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.20.4'
-    mappings 'net.fabricmc:yarn:1.20.4+build.1:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.15.1'
+    minecraft 'com.mojang:minecraft:24w10a'
+    mappings 'net.fabricmc:yarn:24w10a+build.4:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.15.7'
 
     Set<String> apiModules = [
             "fabric-api-base",
