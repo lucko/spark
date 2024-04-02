@@ -50,6 +50,6 @@ public class GeyserPlatformInfo implements PlatformInfo {
 
     @Override
     public String getMinecraftVersion() {
-        return GameProtocol.getJavaMinecraftVersion(); // TODO Move to API
+        return GameProtocol.getJavaMinecraftVersion();
     }
 }

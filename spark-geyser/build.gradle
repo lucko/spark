@@ -5,11 +5,9 @@ plugins {
 dependencies {
     implementation project(':spark-common')
     implementation 'net.kyori:adventure-text-serializer-legacy:4.14.0'
-    compileOnly 'org.geysermc.geyser:api:2.2.0-SNAPSHOT'
+    compileOnly 'org.geysermc.geyser:api:2.2.3-SNAPSHOT'
     // TODO Remove
-    compileOnly('org.geysermc.geyser:core:2.2.0-SNAPSHOT') {
-        exclude group: 'io.netty'
-    }
+    compileOnly 'org.geysermc.geyser:core:2.2.3-SNAPSHOT'
 }
 
 repositories {
@@ -46,4 +44,9 @@ shadowJar {
 artifacts {
     archives shadowJar
     shadow shadowJar
+}
+
+tasks.withType(JavaCompile) {
+    // override, compile targeting J17
+    options.release = 17
 }
