@@ -9,7 +9,7 @@ tasks.withType(JavaCompile) {
 
 dependencies {
     implementation project(':spark-common')
-    implementation 'net.kyori:adventure-text-serializer-legacy:4.12.0'
+    implementation 'net.kyori:adventure-text-serializer-legacy:4.13.1'
     compileOnly 'dev.waterdog.waterdogpe:waterdog:1.2.3'
 }
 
