@@ -8,8 +8,16 @@ pluginManagement {
             name = 'Forge'
             url = 'https://maven.minecraftforge.net/'
         }
+        maven {
+            name = 'NeoForge'
+            url = 'https://maven.neoforged.net/releases'
+        }
         gradlePluginPortal()
     }
+}
+
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.5.0'
 }
 
 rootProject.name = 'spark'
@@ -23,6 +31,7 @@ include (
         'spark-sponge7',
         'spark-sponge8',
         'spark-forge',
+        'spark-neoforge',
         'spark-fabric',
         'spark-nukkit',
         'spark-waterdog',
