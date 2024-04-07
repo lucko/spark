@@ -36,8 +36,15 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.neoforge.*;
-import me.lucko.spark.neoforge.ForgeSparkMod;
+import me.lucko.spark.neoforge.NeoForgeCommandSender;
+import me.lucko.spark.neoforge.NeoForgeExtraMetadataProvider;
+import me.lucko.spark.neoforge.NeoForgePlatformInfo;
+import me.lucko.spark.neoforge.NeoForgePlayerPingProvider;
+import me.lucko.spark.neoforge.NeoForgeServerConfigProvider;
+import me.lucko.spark.neoforge.NeoForgeSparkMod;
+import me.lucko.spark.neoforge.NeoForgeTickHook;
+import me.lucko.spark.neoforge.NeoForgeTickReporter;
+import me.lucko.spark.neoforge.NeoForgeWorldInfoProvider;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
@@ -61,10 +68,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
+public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
 
-    public static void register(ForgeSparkMod mod, ServerAboutToStartEvent event) {
-        ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
+    public static void register(NeoForgeSparkMod mod, ServerAboutToStartEvent event) {
+        NeoForgeServerSparkPlugin plugin = new NeoForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
     }
 
@@ -85,7 +92,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     private final ThreadDumper gameThreadDumper;
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
 
-    public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
+    public NeoForgeServerSparkPlugin(NeoForgeSparkMod mod, MinecraftServer server) {
         super(mod);
         this.server = server;
         this.gameThreadDumper = new ThreadDumper.Specific(server.getRunningThread());
@@ -168,7 +175,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         }
 
         CommandSource source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
-        this.platform.executeCommand(new ForgeCommandSender(source, this), args);
+        this.platform.executeCommand(new NeoForgeCommandSender(source, this), args);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -179,7 +186,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new ForgeCommandSender(context.getSource().getPlayerOrException(), this), args, builder);
+        return generateSuggestions(new NeoForgeCommandSender(context.getSource().getPlayerOrException(), this), args, builder);
     }
 
     @Override
@@ -200,11 +207,11 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
-    public Stream<ForgeCommandSender> getCommandSenders() {
+    public Stream<NeoForgeCommandSender> getCommandSenders() {
         return Stream.concat(
             this.server.getPlayerList().getPlayers().stream(),
             Stream.of(this.server)
-        ).map(sender -> new ForgeCommandSender(sender, this));
+        ).map(sender -> new NeoForgeCommandSender(sender, this));
     }
 
     @Override
@@ -219,37 +226,37 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public TickHook createTickHook() {
-        return new ForgeTickHook(TickEvent.Type.SERVER);
+        return new NeoForgeTickHook(TickEvent.Type.SERVER);
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new ForgeTickReporter(TickEvent.Type.SERVER);
+        return new NeoForgeTickReporter(TickEvent.Type.SERVER);
     }
 
     @Override
     public PlayerPingProvider createPlayerPingProvider() {
-        return new ForgePlayerPingProvider(this.server);
+        return new NeoForgePlayerPingProvider(this.server);
     }
 
     @Override
     public ServerConfigProvider createServerConfigProvider() {
-        return new ForgeServerConfigProvider();
+        return new NeoForgeServerConfigProvider();
     }
 
     @Override
     public MetadataProvider createExtraMetadataProvider() {
-        return new ForgeExtraMetadataProvider(this.server.getPackRepository());
+        return new NeoForgeExtraMetadataProvider(this.server.getPackRepository());
     }
 
     @Override
     public WorldInfoProvider createWorldInfoProvider() {
-        return new ForgeWorldInfoProvider.Server(this.server);
+        return new NeoForgeWorldInfoProvider.Server(this.server);
     }
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new ForgePlatformInfo(PlatformInfo.Type.SERVER);
+        return new NeoForgePlatformInfo(PlatformInfo.Type.SERVER);
     }
 
     @Override

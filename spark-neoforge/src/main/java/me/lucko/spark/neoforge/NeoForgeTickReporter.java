@@ -20,45 +20,43 @@
 
 package me.lucko.spark.neoforge;
 
-import me.lucko.spark.common.tick.AbstractTickHook;
-import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.tick.SimpleTickReporter;
+import me.lucko.spark.common.tick.TickReporter;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.TickEvent;
 
-public class ForgeTickHook extends AbstractTickHook implements TickHook {
+public class NeoForgeTickReporter extends SimpleTickReporter implements TickReporter {
     private final TickEvent.Type type;
 
-    public ForgeTickHook(TickEvent.Type type) {
+    public NeoForgeTickReporter(TickEvent.Type type) {
         this.type = type;
     }
 
     @SubscribeEvent
     public void onTick(TickEvent.ServerTickEvent e) {
-        if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
         if (e.type != this.type) {
             return;
         }
 
-        onTick();
+        switch (e.phase) {
+            case START -> onStart();
+            case END -> onEnd();
+            default -> throw new AssertionError(e.phase);
+        }
     }
-
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent e) {
-        if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
         if (e.type != this.type) {
             return;
         }
 
-        onTick();
+        switch (e.phase) {
+            case START -> onStart();
+            case END -> onEnd();
+            default -> throw new AssertionError(e.phase);
+        }
     }
-
 
     @Override
     public void start() {
@@ -68,6 +66,7 @@ public class ForgeTickHook extends AbstractTickHook implements TickHook {
     @Override
     public void close() {
         NeoForge.EVENT_BUS.unregister(this);
+        super.close();
     }
 
 }

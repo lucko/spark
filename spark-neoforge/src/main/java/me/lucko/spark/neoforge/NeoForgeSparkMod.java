@@ -20,8 +20,8 @@
 
 package me.lucko.spark.neoforge;
 
-import me.lucko.spark.neoforge.plugin.ForgeClientSparkPlugin;
-import me.lucko.spark.neoforge.plugin.ForgeServerSparkPlugin;
+import me.lucko.spark.neoforge.plugin.NeoForgeClientSparkPlugin;
+import me.lucko.spark.neoforge.plugin.NeoForgeServerSparkPlugin;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.IExtensionPoint;
@@ -37,14 +37,14 @@ import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import java.nio.file.Path;
 
 @Mod("spark")
-public class ForgeSparkMod {
+public class NeoForgeSparkMod {
 
     private ModContainer container;
     private Path configDirectory;
 
     private IEventBus eventBus;
 
-    public ForgeSparkMod(IEventBus eventBus) {
+    public NeoForgeSparkMod(IEventBus eventBus) {
         this.eventBus = eventBus;
         eventBus.addListener(this::setup);
         eventBus.addListener(this::clientInit);
@@ -63,12 +63,12 @@ public class ForgeSparkMod {
     }
 
     public void clientInit(FMLClientSetupEvent e) {
-        ForgeClientSparkPlugin.register(this, e);
+        NeoForgeClientSparkPlugin.register(this, e);
     }
 
     @SubscribeEvent
     public void serverInit(ServerAboutToStartEvent e) {
-        ForgeServerSparkPlugin.register(this, e);
+        NeoForgeServerSparkPlugin.register(this, e);
     }
 
     public Path getConfigDirectory() {

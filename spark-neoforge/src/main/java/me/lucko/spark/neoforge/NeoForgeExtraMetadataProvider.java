@@ -30,11 +30,11 @@ import net.minecraft.server.packs.repository.PackSource;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ForgeExtraMetadataProvider implements MetadataProvider {
+public class NeoForgeExtraMetadataProvider implements MetadataProvider {
 
     private final PackRepository resourcePackManager;
 
-    public ForgeExtraMetadataProvider(PackRepository resourcePackManager) {
+    public NeoForgeExtraMetadataProvider(PackRepository resourcePackManager) {
         this.resourcePackManager = resourcePackManager;
     }
 

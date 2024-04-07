@@ -32,7 +32,13 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.neoforge.*;
+import me.lucko.spark.neoforge.NeoForgeCommandSender;
+import me.lucko.spark.neoforge.NeoForgeExtraMetadataProvider;
+import me.lucko.spark.neoforge.NeoForgePlatformInfo;
+import me.lucko.spark.neoforge.NeoForgeSparkMod;
+import me.lucko.spark.neoforge.NeoForgeTickHook;
+import me.lucko.spark.neoforge.NeoForgeTickReporter;
+import me.lucko.spark.neoforge.NeoForgeWorldInfoProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
@@ -45,17 +51,17 @@ import net.neoforged.neoforge.event.TickEvent;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
+public class NeoForgeClientSparkPlugin extends NeoForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
 
-    public static void register(ForgeSparkMod mod, FMLClientSetupEvent event) {
-        ForgeClientSparkPlugin plugin = new ForgeClientSparkPlugin(mod, Minecraft.getInstance());
+    public static void register(NeoForgeSparkMod mod, FMLClientSetupEvent event) {
+        NeoForgeClientSparkPlugin plugin = new NeoForgeClientSparkPlugin(mod, Minecraft.getInstance());
         plugin.enable();
     }
 
     private final Minecraft minecraft;
     private final ThreadDumper gameThreadDumper;
 
-    public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
+    public NeoForgeClientSparkPlugin(NeoForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
         this.gameThreadDumper = new ThreadDumper.Specific(minecraft.gameThread);
@@ -81,7 +87,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
             return 0;
         }
 
-        this.platform.executeCommand(new ForgeCommandSender(context.getSource().getEntity(), this), args);
+        this.platform.executeCommand(new NeoForgeCommandSender(context.getSource().getEntity(), this), args);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -92,7 +98,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new ForgeCommandSender(context.getSource().getEntity(), this), args, builder);
+        return generateSuggestions(new NeoForgeCommandSender(context.getSource().getEntity(), this), args, builder);
     }
 
     @Override
@@ -101,8 +107,8 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @Override
-    public Stream<ForgeCommandSender> getCommandSenders() {
-        return Stream.of(new ForgeCommandSender(this.minecraft.player, this));
+    public Stream<NeoForgeCommandSender> getCommandSenders() {
+        return Stream.of(new NeoForgeCommandSender(this.minecraft.player, this));
     }
 
     @Override
@@ -117,27 +123,27 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public TickHook createTickHook() {
-        return new ForgeTickHook(TickEvent.Type.CLIENT);
+        return new NeoForgeTickHook(TickEvent.Type.CLIENT);
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new ForgeTickReporter(TickEvent.Type.CLIENT);
+        return new NeoForgeTickReporter(TickEvent.Type.CLIENT);
     }
 
     @Override
     public WorldInfoProvider createWorldInfoProvider() {
-        return new ForgeWorldInfoProvider.Client(this.minecraft);
+        return new NeoForgeWorldInfoProvider.Client(this.minecraft);
     }
 
     @Override
     public MetadataProvider createExtraMetadataProvider() {
-        return new ForgeExtraMetadataProvider(this.minecraft.getResourcePackRepository());
+        return new NeoForgeExtraMetadataProvider(this.minecraft.getResourcePackRepository());
     }
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new ForgePlatformInfo(PlatformInfo.Type.CLIENT);
+        return new NeoForgePlatformInfo(PlatformInfo.Type.CLIENT);
     }
 
     @Override

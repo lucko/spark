@@ -24,10 +24,10 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import net.neoforged.neoforge.internal.versions.neoforge.NeoForgeVersion;
 import net.neoforged.neoforge.internal.versions.neoform.NeoFormVersion;
 
-public class ForgePlatformInfo implements PlatformInfo {
+public class NeoForgePlatformInfo implements PlatformInfo {
     private final Type type;
 
-    public ForgePlatformInfo(Type type) {
+    public NeoForgePlatformInfo(Type type) {
         this.type = type;
     }
 
@@ -38,7 +38,7 @@ public class ForgePlatformInfo implements PlatformInfo {
 
     @Override
     public String getName() {
-        return "Forge";
+        return "NeoForge";
     }
 
     @Override

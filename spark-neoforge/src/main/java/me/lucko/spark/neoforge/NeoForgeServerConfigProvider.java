@@ -29,14 +29,14 @@ import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import java.util.Collection;
 import java.util.Map;
 
-public class ForgeServerConfigProvider extends ServerConfigProvider {
+public class NeoForgeServerConfigProvider extends ServerConfigProvider {
 
     /** A map of provided files and their type */
     private static final Map<String, ConfigParser> FILES;
     /** A collection of paths to be excluded from the files */
     private static final Collection<String> HIDDEN_PATHS;
 
-    public ForgeServerConfigProvider() {
+    public NeoForgeServerConfigProvider() {
         super(FILES, HIDDEN_PATHS);
     }
 

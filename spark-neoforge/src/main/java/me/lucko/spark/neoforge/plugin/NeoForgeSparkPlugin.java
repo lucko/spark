@@ -36,8 +36,8 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
-import me.lucko.spark.neoforge.ForgeClassSourceLookup;
-import me.lucko.spark.neoforge.ForgeSparkMod;
+import me.lucko.spark.neoforge.NeoForgeClassSourceLookup;
+import me.lucko.spark.neoforge.NeoForgeSparkMod;
 import net.minecraft.commands.CommandSource;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModInfo;
@@ -52,15 +52,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 
-public abstract class ForgeSparkPlugin implements SparkPlugin {
+public abstract class NeoForgeSparkPlugin implements SparkPlugin {
 
-    private final ForgeSparkMod mod;
+    private final NeoForgeSparkMod mod;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
 
     protected SparkPlatform platform;
 
-    protected ForgeSparkPlugin(ForgeSparkMod mod) {
+    protected NeoForgeSparkPlugin(NeoForgeSparkMod mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
@@ -108,7 +108,7 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
 
     @Override
     public ClassSourceLookup createClassSourceLookup() {
-        return new ForgeClassSourceLookup();
+        return new NeoForgeClassSourceLookup();
     }
 
     @Override

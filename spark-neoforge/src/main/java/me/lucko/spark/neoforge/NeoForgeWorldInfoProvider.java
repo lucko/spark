@@ -32,14 +32,18 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.entity.*;
+import net.minecraft.world.level.entity.EntityLookup;
+import net.minecraft.world.level.entity.EntitySection;
+import net.minecraft.world.level.entity.EntitySectionStorage;
+import net.minecraft.world.level.entity.PersistentEntitySectionManager;
+import net.minecraft.world.level.entity.TransientEntitySectionManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
 
-public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
+public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 
     protected List<ForgeChunkInfo> getChunksFromCache(EntitySectionStorage<Entity> cache) {
         LongSet loadedChunks = cache.getAllChunksWithExistingSections();
@@ -55,7 +59,7 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
         return list;
     }
 
-    public static final class Server extends ForgeWorldInfoProvider {
+    public static final class Server extends NeoForgeWorldInfoProvider {
         private final MinecraftServer server;
 
         public Server(MinecraftServer server) {
@@ -95,7 +99,7 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
         }
     }
 
-    public static final class Client extends ForgeWorldInfoProvider {
+    public static final class Client extends NeoForgeWorldInfoProvider {
         private final Minecraft client;
 
         public Client(Minecraft client) {

@@ -20,26 +20,17 @@
 
 package me.lucko.spark.neoforge;
 
-import com.google.common.collect.ImmutableMap;
-import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
+import cpw.mods.modlauncher.TransformingClassLoader;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
-import java.util.Map;
-
-public class ForgePlayerPingProvider implements PlayerPingProvider {
-    private final MinecraftServer server;
-
-    public ForgePlayerPingProvider(MinecraftServer server) {
-        this.server = server;
-    }
+public class NeoForgeClassSourceLookup implements ClassSourceLookup {
 
     @Override
-    public Map<String, Integer> poll() {
-        ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
-        for (ServerPlayer player : this.server.getPlayerList().getPlayers()) {
-            builder.put(player.getGameProfile().getName(), player.connection.latency());
+    public String identify(Class<?> clazz) {
+        if (clazz.getClassLoader() instanceof TransformingClassLoader) {
+            String name = clazz.getModule().getName();
+            return name.equals("forge") || name.equals("minecraft") ? null : name;
         }
-        return builder.build();
+        return null;
     }
 }
