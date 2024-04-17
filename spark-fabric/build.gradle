@@ -1,7 +1,7 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '1.4-SNAPSHOT'
+    id 'fabric-loom' version '1.6-SNAPSHOT'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
@@ -43,7 +43,7 @@ dependencies {
         modImplementation(fabricApi.module(it, '0.91.2+1.20.4'))
     }
 
-    include(modImplementation('me.lucko:fabric-permissions-api:0.2-SNAPSHOT'))
+    include(modImplementation('me.lucko:fabric-permissions-api:0.3.1'))
 
     modImplementation('eu.pb4:placeholder-api:2.0.0-beta.4+1.19')
 
