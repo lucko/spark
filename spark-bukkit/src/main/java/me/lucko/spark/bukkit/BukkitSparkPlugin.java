@@ -52,6 +52,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+
 public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     private BukkitAudiences audienceFactory;
     private ThreadDumper gameThreadDumper;

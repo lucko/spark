@@ -15,3 +15,7 @@ softdepend: [PlaceholderAPI, MVdWPlaceholderAPI]
 commands:
   spark:
     description: Main plugin command
+permissions:
+  spark.viewurl:
+    description: Allows players to view URLs.
+    default: false

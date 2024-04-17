@@ -428,12 +428,17 @@ public class SamplerModule implements CommandModule {
                 String url = platform.getViewerUrl() + key;
 
                 resp.broadcastPrefixed(text("Profiler stopped & upload complete!", GOLD));
-                resp.broadcast(text()
-                        .content(url)
-                        .color(GRAY)
-                        .clickEvent(ClickEvent.openUrl(url))
-                        .build()
-                );
+                if (resp.sender().hasPermission("spark.viewurl")) {
+                    resp.broadcast(text()
+                            .content(url)
+                            .color(GRAY)
+                            .clickEvent(ClickEvent.openUrl(url))
+                            .build()
+                    );
+                } else {
+                    resp.broadcast(text("You don't have permission to view the profiler results. Ask a moderator to look at it for you in /plugins/spark/activity.json")
+                            .color(RED));
+                }
 
                 platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
             } catch (Exception e) {
