@@ -26,6 +26,7 @@ import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.rcon.RconCommandOutput;
@@ -64,7 +65,7 @@ public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
 
     @Override
     public void sendMessage(Component message) {
-        Text component = Text.Serialization.fromJsonTree(GsonComponentSerializer.gson().serializeToTree(message));
+        Text component = Text.Serialization.fromJsonTree(GsonComponentSerializer.gson().serializeToTree(message), DynamicRegistryManager.EMPTY);
         super.delegate.sendMessage(component);
     }
 

@@ -6,8 +6,8 @@ plugins {
 }
 
 tasks.withType(JavaCompile) {
-    // override, compile targeting J17
-    options.release = 17
+    // override, compile targeting J21
+    options.release = 21
 }
 
 repositories {
@@ -28,9 +28,9 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.20.4'
-    mappings 'net.fabricmc:yarn:1.20.4+build.1:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.15.1'
+    minecraft 'com.mojang:minecraft:1.20.5'
+    mappings 'net.fabricmc:yarn:1.20.5+build.1:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.15.10'
 
     Set<String> apiModules = [
             "fabric-api-base",
@@ -40,12 +40,12 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.91.2+1.20.4'))
+        modImplementation(fabricApi.module(it, '0.97.5+1.20.5'))
     }
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.3.1'))
 
-    modImplementation('eu.pb4:placeholder-api:2.0.0-beta.4+1.19')
+    modImplementation('eu.pb4:placeholder-api:2.4.0-pre.1+1.20.5')
 
     shade project(':spark-common')
 }

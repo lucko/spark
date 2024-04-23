@@ -54,7 +54,7 @@ public class FabricExtraMetadataProvider implements MetadataProvider {
             obj.addProperty("name", profile.getDisplayName().getString());
             obj.addProperty("description", profile.getDescription().getString());
             obj.addProperty("source", resourcePackSource(profile.getSource()));
-            datapacks.add(profile.getName(), obj);
+            datapacks.add(profile.getId(), obj);
         }
         return datapacks;
     }
