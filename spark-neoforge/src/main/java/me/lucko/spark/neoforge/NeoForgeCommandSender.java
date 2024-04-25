@@ -18,37 +18,37 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.fabric;
+package me.lucko.spark.neoforge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
-
+import me.lucko.spark.neoforge.plugin.NeoForgeSparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.network.chat.Component.Serializer;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandOutput;
-import net.minecraft.server.rcon.RconCommandOutput;
-import net.minecraft.text.Text;
+import net.minecraft.server.rcon.RconConsoleSource;
+import net.minecraft.world.entity.player.Player;
 
+import java.util.Objects;
 import java.util.UUID;
 
-public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
-    private final FabricSparkPlugin plugin;
+public class NeoForgeCommandSender extends AbstractCommandSender<CommandSource> {
+    private final NeoForgeSparkPlugin plugin;
 
-    public FabricCommandSender(CommandOutput commandOutput, FabricSparkPlugin plugin) {
-        super(commandOutput);
+    public NeoForgeCommandSender(CommandSource source, NeoForgeSparkPlugin plugin) {
+        super(source);
         this.plugin = plugin;
     }
 
     @Override
     public String getName() {
-        if (super.delegate instanceof PlayerEntity) {
-            return ((PlayerEntity) super.delegate).getGameProfile().getName();
+        if (super.delegate instanceof Player) {
+            return ((Player) super.delegate).getGameProfile().getName();
         } else if (super.delegate instanceof MinecraftServer) {
             return "Console";
-        } else if (super.delegate instanceof RconCommandOutput) {
+        } else if (super.delegate instanceof RconConsoleSource) {
             return "RCON Console";
         } else {
             return "unknown:" + super.delegate.getClass().getSimpleName();
@@ -57,16 +57,17 @@ public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
 
     @Override
     public UUID getUniqueId() {
-        if (super.delegate instanceof PlayerEntity) {
-            return ((PlayerEntity) super.delegate).getUuid();
+        if (super.delegate instanceof Player) {
+            return ((Player) super.delegate).getUUID();
         }
         return null;
     }
 
     @Override
     public void sendMessage(Component message) {
-        Text component = Text.Serialization.fromJsonTree(GsonComponentSerializer.gson().serializeToTree(message), DynamicRegistryManager.EMPTY);
-        super.delegate.sendMessage(component);
+        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(message));
+        Objects.requireNonNull(component, "component");
+        super.delegate.sendSystemMessage(component);
     }
 
     @Override

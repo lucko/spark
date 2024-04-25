@@ -30,6 +30,7 @@ import me.lucko.spark.common.util.SparkPlaceholder;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -60,7 +61,7 @@ public enum SparkFabricPlaceholderApi {
         }
 
         private static Text toText(Component component) {
-            return Text.Serialization.fromJsonTree(GsonComponentSerializer.gson().serializeToTree(component));
+            return Text.Serialization.fromJsonTree(GsonComponentSerializer.gson().serializeToTree(component), DynamicRegistryManager.EMPTY);
         }
     }
 
