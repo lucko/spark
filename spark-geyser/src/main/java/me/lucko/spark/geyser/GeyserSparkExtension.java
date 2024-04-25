@@ -53,11 +53,11 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
             this.logger().severe("spark is only supported on standalone Geyser instances! If you wish to use it on other platforms please download the spark version for that platform.");
             this.disable();
         }
+        this.platform = new SparkPlatform(this);
     }
 
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
-        this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
 
