@@ -18,25 +18,23 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.fabric;
+package me.lucko.spark.neoforge;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
 import me.lucko.spark.common.platform.MetadataProvider;
-
-import net.minecraft.resource.ResourcePackManager;
-import net.minecraft.resource.ResourcePackProfile;
-import net.minecraft.resource.ResourcePackSource;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.server.packs.repository.PackSource;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class FabricExtraMetadataProvider implements MetadataProvider {
+public class NeoForgeExtraMetadataProvider implements MetadataProvider {
 
-    private final ResourcePackManager resourcePackManager;
+    private final PackRepository resourcePackManager;
 
-    public FabricExtraMetadataProvider(ResourcePackManager resourcePackManager) {
+    public NeoForgeExtraMetadataProvider(PackRepository resourcePackManager) {
         this.resourcePackManager = resourcePackManager;
     }
 
@@ -49,24 +47,24 @@ public class FabricExtraMetadataProvider implements MetadataProvider {
 
     private JsonElement datapackMetadata() {
         JsonObject datapacks = new JsonObject();
-        for (ResourcePackProfile profile : this.resourcePackManager.getEnabledProfiles()) {
+        for (Pack profile : this.resourcePackManager.getSelectedPacks()) {
             JsonObject obj = new JsonObject();
-            obj.addProperty("name", profile.getDisplayName().getString());
+            obj.addProperty("name", profile.getTitle().getString());
             obj.addProperty("description", profile.getDescription().getString());
-            obj.addProperty("source", resourcePackSource(profile.getSource()));
+            obj.addProperty("source", resourcePackSource(profile.getPackSource()));
             datapacks.add(profile.getId(), obj);
         }
         return datapacks;
     }
 
-    private static String resourcePackSource(ResourcePackSource source) {
-        if (source == ResourcePackSource.NONE) {
+    private static String resourcePackSource(PackSource source) {
+        if (source == PackSource.DEFAULT) {
             return "none";
-        } else if (source == ResourcePackSource.BUILTIN) {
+        } else if (source == PackSource.BUILT_IN) {
             return "builtin";
-        } else if (source == ResourcePackSource.WORLD) {
+        } else if (source == PackSource.WORLD) {
             return "world";
-        } else if (source == ResourcePackSource.SERVER) {
+        } else if (source == PackSource.SERVER) {
             return "server";
         } else {
             return "unknown";
