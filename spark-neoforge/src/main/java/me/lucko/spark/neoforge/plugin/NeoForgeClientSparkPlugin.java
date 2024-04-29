@@ -46,7 +46,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.TickEvent;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -123,12 +122,12 @@ public class NeoForgeClientSparkPlugin extends NeoForgeSparkPlugin implements Co
 
     @Override
     public TickHook createTickHook() {
-        return new NeoForgeTickHook(TickEvent.Type.CLIENT);
+        return new NeoForgeTickHook.Client();
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new NeoForgeTickReporter(TickEvent.Type.CLIENT);
+        return new NeoForgeTickReporter.Client();
     }
 
     @Override

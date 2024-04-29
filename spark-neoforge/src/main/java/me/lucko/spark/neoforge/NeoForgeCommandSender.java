@@ -25,6 +25,7 @@ import me.lucko.spark.neoforge.plugin.NeoForgeSparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.commands.CommandSource;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component.Serializer;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
@@ -65,7 +66,7 @@ public class NeoForgeCommandSender extends AbstractCommandSender<CommandSource> 
 
     @Override
     public void sendMessage(Component message) {
-        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(message));
+        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(message), RegistryAccess.EMPTY);
         Objects.requireNonNull(component, "component");
         super.delegate.sendSystemMessage(component);
     }

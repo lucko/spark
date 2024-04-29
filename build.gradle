@@ -20,7 +20,7 @@ subprojects {
         pluginDescription = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
     }
 
-    tasks.withType(JavaCompile) {
+    tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
         options.release = 8
     }

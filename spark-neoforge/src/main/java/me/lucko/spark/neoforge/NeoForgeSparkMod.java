@@ -49,8 +49,6 @@ public class NeoForgeSparkMod {
         eventBus.addListener(this::setup);
         eventBus.addListener(this::clientInit);
         NeoForge.EVENT_BUS.register(this);
-
-        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> IExtensionPoint.DisplayTest.IGNORESERVERONLY, (a, b) -> true));
     }
 
     public String getVersion() {

@@ -52,7 +52,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.server.permission.PermissionAPI;
@@ -226,12 +225,12 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
 
     @Override
     public TickHook createTickHook() {
-        return new NeoForgeTickHook(TickEvent.Type.SERVER);
+        return new NeoForgeTickHook.Server();
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new NeoForgeTickReporter(TickEvent.Type.SERVER);
+        return new NeoForgeTickReporter.Server();
     }
 
     @Override

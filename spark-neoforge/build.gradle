@@ -1,13 +1,17 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'net.neoforged.gradle.userdev' version '7.0.97'
+    id 'io.github.goooler.shadow' version '8.1.7'
+    id 'net.neoforged.gradle.userdev' version '7.0.105'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+tasks.withType(JavaCompile).configureEach {
+    // override, compile targeting J21
+    options.release = 21
+}
 
-tasks.withType(JavaCompile) {
-    // override, compile targeting J17
-    options.release = 17
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 minecraft {
@@ -22,13 +26,13 @@ configurations {
 }
 
 dependencies {
-    implementation "net.neoforged:neoforge:20.4.223"
+    implementation "net.neoforged:neoforge:20.6.1-beta"
     shade project(':spark-common')
 }
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
-        include 'META-INF/mods.toml'
+        include 'META-INF/neoforge.mods.toml'
         expand (
                 'pluginVersion': project.pluginVersion,
                 'pluginDescription': project.pluginDescription
@@ -36,7 +40,7 @@ processResources {
     }
 
     from(sourceSets.main.resources.srcDirs) {
-        exclude 'META-INF/mods.toml'
+        exclude 'META-INF/neoforge.mods.toml'
     }
 }
 
