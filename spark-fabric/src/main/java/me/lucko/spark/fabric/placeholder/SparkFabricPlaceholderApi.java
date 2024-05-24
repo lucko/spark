@@ -42,7 +42,7 @@ public enum SparkFabricPlaceholderApi {
     public static void register(SparkPlatform platform) {
         for (SparkPlaceholder placeholder : SparkPlaceholder.values()) {
             Placeholders.register(
-                    new Identifier("spark", placeholder.getName()),
+                    Identifier.of("spark", placeholder.getName()),
                     new Handler(platform, placeholder)
             );
         }
