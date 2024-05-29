@@ -18,38 +18,35 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.bukkit;
+package me.lucko.spark.paper;
 
-import com.destroystokyo.paper.event.server.ServerTickStartEvent;
+import me.lucko.spark.common.platform.PlatformInfo;
+import org.bukkit.Server;
 
-import me.lucko.spark.common.tick.AbstractTickHook;
-import me.lucko.spark.common.tick.TickHook;
+public class PaperPlatformInfo implements PlatformInfo {
+    private final Server server;
 
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.Plugin;
-
-public class PaperTickHook extends AbstractTickHook implements TickHook, Listener {
-    private final Plugin plugin;
-
-    public PaperTickHook(Plugin plugin) {
-        this.plugin = plugin;
-    }
-
-    @EventHandler
-    public void onServerTickEvent(ServerTickStartEvent e) {
-        onTick();
+    public PaperPlatformInfo(Server server) {
+        this.server = server;
     }
 
     @Override
-    public void start() {
-        this.plugin.getServer().getPluginManager().registerEvents(this, this.plugin);
+    public Type getType() {
+        return Type.SERVER;
     }
 
     @Override
-    public void close() {
-        HandlerList.unregisterAll(this);
+    public String getName() {
+        return "Paper";
     }
 
+    @Override
+    public String getVersion() {
+        return this.server.getVersion();
+    }
+
+    @Override
+    public String getMinecraftVersion() {
+        return this.server.getMinecraftVersion();
+    }
 }

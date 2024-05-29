@@ -1,0 +1,28 @@
+plugins {
+
+}
+
+dependencies {
+    implementation project(':spark-common')
+    compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
+
+    // placeholders
+    compileOnly 'me.clip:placeholderapi:2.10.3'
+    compileOnly('be.maximvdw:MVdWPlaceholderAPI:3.0.1-SNAPSHOT') {
+        exclude(module: 'MVdWUpdater')
+    }
+}
+
+repositories {
+    maven { url "https://repo.papermc.io/repository/maven-public/" }
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        expand (
+                'pluginVersion': project.pluginVersion,
+                'pluginDescription': project.pluginDescription
+        )
+        include 'plugin.yml'
+    }
+}

@@ -1,0 +1,17 @@
+name: spark
+version: ${pluginVersion}
+description: ${pluginDescription}
+author: Luck
+website: https://spark.lucko.me/
+main: me.lucko.spark.paper.PaperSparkPlugin
+
+# Mark the plugin as 1.13 compatible to avoid CB having to perform quite as much unnecessary
+# remapping when the plugin is loaded. Note that despite what this setting might otherwise imply,
+# spark is still compatible with pre-1.13 releases.
+api-version: 1.13
+
+softdepend: [PlaceholderAPI, MVdWPlaceholderAPI]
+
+commands:
+  spark:
+    description: Main plugin command

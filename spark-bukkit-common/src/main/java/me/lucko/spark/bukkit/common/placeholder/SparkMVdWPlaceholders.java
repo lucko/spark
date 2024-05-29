@@ -18,20 +18,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.bukkit.placeholder;
+package me.lucko.spark.bukkit.common.placeholder;
 
-import me.lucko.spark.bukkit.BukkitSparkPlugin;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.util.SparkPlaceholder;
 
 import be.maximvdw.placeholderapi.PlaceholderAPI;
 import be.maximvdw.placeholderapi.PlaceholderReplaceEvent;
 import be.maximvdw.placeholderapi.PlaceholderReplacer;
+import org.bukkit.plugin.Plugin;
 
 public class SparkMVdWPlaceholders implements PlaceholderReplacer {
     private final SparkPlatform platform;
 
-    public SparkMVdWPlaceholders(BukkitSparkPlugin plugin, SparkPlatform platform) {
+    public SparkMVdWPlaceholders(Plugin plugin, SparkPlatform platform) {
         this.platform = platform;
         PlaceholderAPI.registerPlaceholder(plugin, "spark_*", this);
     }

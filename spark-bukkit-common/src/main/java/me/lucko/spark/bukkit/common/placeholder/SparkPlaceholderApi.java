@@ -18,21 +18,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.bukkit.placeholder;
+package me.lucko.spark.bukkit.common.placeholder;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.lucko.spark.bukkit.BukkitSparkPlugin;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.util.SparkPlaceholder;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 public class SparkPlaceholderApi extends PlaceholderExpansion {
-    private final BukkitSparkPlugin plugin;
+    private final Plugin plugin;
     private final SparkPlatform platform;
 
-    public SparkPlaceholderApi(BukkitSparkPlugin plugin, SparkPlatform platform) {
+    public SparkPlaceholderApi(Plugin plugin, SparkPlatform platform) {
         this.plugin = plugin;
         this.platform = platform;
         register();
@@ -60,7 +60,7 @@ public class SparkPlaceholderApi extends PlaceholderExpansion {
 
     @Override
     public String getVersion() {
-        return this.plugin.getVersion();
+        return this.plugin.getDescription().getVersion();
     }
 
     @Override

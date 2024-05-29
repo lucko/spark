@@ -24,7 +24,9 @@ rootProject.name = 'spark'
 include (
         'spark-api',
         'spark-common',
+        'spark-bukkit-common',
         'spark-bukkit',
+        'spark-paper',
         'spark-bungeecord',
         'spark-velocity',
         'spark-velocity4',
