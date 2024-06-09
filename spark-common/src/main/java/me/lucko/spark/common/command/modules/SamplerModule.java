@@ -479,6 +479,20 @@ public class SamplerModule implements CommandModule {
                     .build()
             );
 
+            String cmd = "/" + platform.getPlugin().getCommandName() + " profiler stop";
+            resp.broadcastPrefixed(text()
+                    .append(text("(Note: this link is temporary and will expire after a short period of time. " +
+                            "If you need a link to share with other people (e.g. in a bug report), please use ", GRAY))
+                    .append(text()
+                            .content(cmd)
+                            .color(WHITE)
+                            .clickEvent(ClickEvent.runCommand(cmd))
+                            .build()
+                    )
+                    .append(text(" instead.)", GRAY))
+                    .build()
+            );
+
             platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler (live)", url));
         } catch (Exception e) {
             resp.replyPrefixed(text("An error occurred whilst opening the live profiler.", RED));
