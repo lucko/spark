@@ -60,6 +60,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
@@ -480,8 +481,9 @@ public class SamplerModule implements CommandModule {
             );
 
             String cmd = "/" + platform.getPlugin().getCommandName() + " profiler stop";
-            resp.broadcastPrefixed(text()
-                    .append(text("(Note: this link is temporary and will expire after a short period of time. " +
+            resp.broadcast(empty());
+            resp.broadcast(text()
+                    .append(text("(NOTE: this link is temporary and will expire after a short period of time. " +
                             "If you need a link to share with other people (e.g. in a bug report), please use ", GRAY))
                     .append(text()
                             .content(cmd)
