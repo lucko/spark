@@ -1,15 +1,10 @@
-import org.cadixdev.gradle.licenser.LicenseExtension
-
 plugins {
-    id 'com.google.protobuf' version '0.9.1'
+    id 'com.google.protobuf' version '0.9.4'
 }
 
 license {
     exclude '**/sampler/async/jfr/**'
-}
-
-extensions.configure(LicenseExtension.class) {
-    it.exclude {
+    exclude {
         it.file.toString().startsWith(buildDir.toString())
     }
 }
@@ -17,9 +12,9 @@ extensions.configure(LicenseExtension.class) {
 dependencies {
     api project(':spark-api')
     implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.3'
-    implementation 'org.ow2.asm:asm:9.1'
-    implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
-    implementation 'com.google.protobuf:protobuf-javalite:3.21.11'
+    implementation 'org.ow2.asm:asm:9.7'
+    implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
+    implementation 'com.google.protobuf:protobuf-javalite:4.27.1'
 
     implementation('me.lucko:bytesocks-java-client:1.0-20230828.145440-5') {
         exclude(module: 'slf4j-api')
@@ -44,12 +39,12 @@ dependencies {
     }
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
-    compileOnly 'org.checkerframework:checker-qual:3.8.0'
+    compileOnly 'org.checkerframework:checker-qual:3.44.0'
 }
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.21.11'
+        artifact = 'com.google.protobuf:protoc:4.27.1'
     }
     generateProtoTasks {
         all().each { task ->
