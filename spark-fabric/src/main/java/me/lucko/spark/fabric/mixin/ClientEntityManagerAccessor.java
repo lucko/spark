@@ -20,8 +20,8 @@
 
 package me.lucko.spark.fabric.mixin;
 
-import net.minecraft.client.world.ClientEntityManager;
 import net.minecraft.entity.Entity;
+import net.minecraft.world.entity.ClientEntityManager;
 import net.minecraft.world.entity.EntityIndex;
 import net.minecraft.world.entity.SectionedEntityCache;
 
