@@ -1,6 +1,6 @@
 plugins {
     id 'io.github.goooler.shadow' version '8.1.7'
-    id 'net.neoforged.gradle.userdev' version '7.0.105'
+    id 'net.neoforged.gradle.userdev' version '7.0.142'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -26,7 +26,7 @@ configurations {
 }
 
 dependencies {
-    implementation "net.neoforged:neoforge:20.6.1-beta"
+    implementation "net.neoforged:neoforge:21.0.10-beta"
     shade project(':spark-common')
 }
 

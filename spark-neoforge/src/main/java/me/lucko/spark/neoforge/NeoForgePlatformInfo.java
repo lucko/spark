@@ -21,8 +21,7 @@
 package me.lucko.spark.neoforge;
 
 import me.lucko.spark.common.platform.PlatformInfo;
-import net.neoforged.neoforge.internal.versions.neoforge.NeoForgeVersion;
-import net.neoforged.neoforge.internal.versions.neoform.NeoFormVersion;
+import net.neoforged.fml.loading.FMLLoader;
 
 public class NeoForgePlatformInfo implements PlatformInfo {
     private final Type type;
@@ -43,11 +42,11 @@ public class NeoForgePlatformInfo implements PlatformInfo {
 
     @Override
     public String getVersion() {
-        return NeoForgeVersion.getVersion();
+        return FMLLoader.versionInfo().neoForgeVersion();
     }
 
     @Override
     public String getMinecraftVersion() {
-        return NeoFormVersion.getMCVersion();
+        return FMLLoader.versionInfo().mcVersion();
     }
 }
