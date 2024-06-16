@@ -32,7 +32,6 @@ import me.lucko.spark.fabric.mixin.ServerEntityManagerAccessor;
 import me.lucko.spark.fabric.mixin.ServerWorldAccessor;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientEntityManager;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -40,6 +39,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerEntityManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.entity.ClientEntityManager;
 import net.minecraft.world.entity.EntityIndex;
 import net.minecraft.world.entity.EntityTrackingSection;
 import net.minecraft.world.entity.SectionedEntityCache;
