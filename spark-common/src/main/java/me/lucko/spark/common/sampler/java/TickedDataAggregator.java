@@ -110,7 +110,7 @@ public class TickedDataAggregator extends JavaDataAggregator {
         }
 
         // approximate how long the tick lasted
-        int tickLengthMicros = currentData.getList().size() * this.interval;
+        int tickLengthMicros = currentData.sizeWithoutTrailingSleeping() * this.interval;
 
         // don't push data below the threshold
         if (tickLengthMicros < this.tickLengthThreshold) {
@@ -149,6 +149,17 @@ public class TickedDataAggregator extends JavaDataAggregator {
 
         public List<ThreadInfo> getList() {
             return this.list;
+        }
+
+        public int sizeWithoutTrailingSleeping() {
+            // find the last index at which the thread wasn't sleeping
+            int i;
+            for (i = this.list.size() - 1; i >= 0; i--) {
+                if (!isSleeping(this.list.get(i))) {
+                    return i;
+                }
+            }
+            return 0;
         }
 
         public void addData(ThreadInfo data) {
