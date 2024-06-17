@@ -18,8 +18,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.bukkit;
+package me.lucko.spark.paper;
 
+import java.util.List;
+import java.util.stream.Stream;
 import me.lucko.spark.bukkit.common.AbstractSparkPlugin;
 import me.lucko.spark.bukkit.common.BukkitClassSourceLookup;
 import me.lucko.spark.bukkit.common.BukkitServerConfigProvider;
@@ -36,22 +38,15 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.List;
-import java.util.stream.Stream;
-
-public class BukkitSparkPlugin extends JavaPlugin implements AbstractSparkPlugin {
-    private BukkitAudiences audienceFactory;
+public class PaperSparkPlugin extends JavaPlugin implements AbstractSparkPlugin {
     private ThreadDumper gameThreadDumper;
-    private BukkitCommandMapUtil commandMapUtil;
+    private PaperCommandMapUtil commandMapUtil;
 
     private SparkPlatform platform;
 
@@ -59,9 +54,8 @@ public class BukkitSparkPlugin extends JavaPlugin implements AbstractSparkPlugin
 
     @Override
     public void onEnable() {
-        this.audienceFactory = BukkitAudiences.create(this);
         this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
-        this.commandMapUtil = new BukkitCommandMapUtil(this.getServer());
+        this.commandMapUtil = new PaperCommandMapUtil(this.getServer());
 
         this.platform = new SparkPlatform(this);
         this.platform.enable();
@@ -74,7 +68,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements AbstractSparkPlugin
                     return true;
                 }
 
-                BukkitCommandSender s = new BukkitCommandSender(sender, this.audienceFactory) {
+                PaperCommandSender s = new PaperCommandSender(sender) {
                     @Override
                     public boolean hasPermission(String permission) {
                         return true;
@@ -106,21 +100,21 @@ public class BukkitSparkPlugin extends JavaPlugin implements AbstractSparkPlugin
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        this.platform.executeCommand(new BukkitCommandSender(sender, this.audienceFactory), args);
+        this.platform.executeCommand(new PaperCommandSender(sender), args);
         return true;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        return this.platform.tabCompleteCommand(new BukkitCommandSender(sender, this.audienceFactory), args);
+        return this.platform.tabCompleteCommand(new PaperCommandSender(sender), args);
     }
 
     @Override
-    public Stream<BukkitCommandSender> getCommandSenders() {
+    public Stream<PaperCommandSender> getCommandSenders() {
         return Stream.concat(
                 getServer().getOnlinePlayers().stream(),
                 Stream.of(getServer().getConsoleSender())
-        ).map(sender -> new BukkitCommandSender(sender, this.audienceFactory));
+        ).map(PaperCommandSender::new);
     }
 
     @Override
@@ -130,21 +124,12 @@ public class BukkitSparkPlugin extends JavaPlugin implements AbstractSparkPlugin
 
     @Override
     public TickHook createTickHook() {
-        if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
-            getLogger().info("Using Paper ServerTickStartEvent for tick monitoring");
-            return new PaperTickHook(this);
-        } else {
-            getLogger().info("Using Bukkit scheduler for tick monitoring");
-            return new BukkitTickHook(this);
-        }
+        return new PaperTickHook(this);
     }
 
     @Override
     public TickReporter createTickReporter() {
-        if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
-            return new PaperTickReporter(this);
-        }
-        return null;
+        return new PaperTickReporter(this);
     }
 
     @Override
@@ -154,11 +139,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements AbstractSparkPlugin
 
     @Override
     public PlayerPingProvider createPlayerPingProvider() {
-        if (BukkitPlayerPingProvider.isSupported()) {
-            return new BukkitPlayerPingProvider(getServer());
-        } else {
-            return null;
-        }
+        return new PaperPlayerPingProvider(getServer());
     }
 
     @Override
@@ -168,20 +149,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements AbstractSparkPlugin
 
     @Override
     public WorldInfoProvider createWorldInfoProvider() {
-        return new BukkitWorldInfoProvider(getServer());
+        return new PaperWorldInfoProvider(getServer());
     }
 
     @Override
     public PlatformInfo getPlatformInfo() {
-        return new BukkitPlatformInfo(getServer());
-    }
-
-    private static boolean classExists(String className) {
-        try {
-            Class.forName(className);
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
+        return new PaperPlatformInfo(getServer());
     }
 }

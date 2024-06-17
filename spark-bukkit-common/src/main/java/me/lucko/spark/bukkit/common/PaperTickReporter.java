@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.bukkit;
+package me.lucko.spark.bukkit.common;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
 

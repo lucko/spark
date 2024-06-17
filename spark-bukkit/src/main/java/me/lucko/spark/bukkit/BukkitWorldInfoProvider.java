@@ -20,21 +20,15 @@
 
 package me.lucko.spark.bukkit;
 
-import me.lucko.spark.common.platform.world.AbstractChunkInfo;
-import me.lucko.spark.common.platform.world.CountMap;
+import me.lucko.spark.bukkit.common.AbstractWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 
 import org.bukkit.Chunk;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.EntityType;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class BukkitWorldInfoProvider implements WorldInfoProvider {
+public class BukkitWorldInfoProvider extends AbstractWorldInfoProvider implements WorldInfoProvider {
     private static final boolean SUPPORTS_PAPER_COUNT_METHODS;
 
     static {
@@ -50,10 +44,8 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
         SUPPORTS_PAPER_COUNT_METHODS = supportsPaperCountMethods;
     }
 
-    private final Server server;
-
     public BukkitWorldInfoProvider(Server server) {
-        this.server = server;
+        super(server);
     }
 
     @Override
@@ -90,52 +82,4 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
 
         return new CountsResult(players, entities, tileEntities, chunks);
     }
-
-    @Override
-    public ChunksResult<BukkitChunkInfo> pollChunks() {
-        ChunksResult<BukkitChunkInfo> data = new ChunksResult<>();
-
-        for (World world : this.server.getWorlds()) {
-            Chunk[] chunks = world.getLoadedChunks();
-
-            List<BukkitChunkInfo> list = new ArrayList<>(chunks.length);
-            for (Chunk chunk : chunks) {
-                if (chunk != null) {
-                    list.add(new BukkitChunkInfo(chunk));
-                }
-            }
-
-            data.put(world.getName(), list);
-        }
-
-        return data;
-    }
-
-    static final class BukkitChunkInfo extends AbstractChunkInfo<EntityType> {
-        private final CountMap<EntityType> entityCounts;
-
-        BukkitChunkInfo(Chunk chunk) {
-            super(chunk.getX(), chunk.getZ());
-
-            this.entityCounts = new CountMap.EnumKeyed<>(EntityType.class);
-            for (Entity entity : chunk.getEntities()) {
-                if (entity != null) {
-                    this.entityCounts.increment(entity.getType());
-                }
-            }
-        }
-
-        @Override
-        public CountMap<EntityType> getEntityCounts() {
-            return this.entityCounts;
-        }
-
-        @SuppressWarnings("deprecation")
-        @Override
-        public String entityTypeName(EntityType type) {
-            return type.getName();
-        }
-
-    }
-
 }
