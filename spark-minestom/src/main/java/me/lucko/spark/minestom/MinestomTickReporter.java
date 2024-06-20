@@ -21,7 +21,6 @@
 package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.tick.AbstractTickReporter;
-
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.event.Event;
 import net.minestom.server.event.EventNode;

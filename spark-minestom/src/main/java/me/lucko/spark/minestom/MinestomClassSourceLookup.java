@@ -21,8 +21,7 @@
 package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-
-import net.minestom.server.MinecraftServer;
+import net.hollowcube.minestom.extensions.ExtensionBootstrap;
 import net.minestom.server.extensions.Extension;
 import net.minestom.server.extensions.ExtensionClassLoader;
 
@@ -34,7 +33,7 @@ public class MinestomClassSourceLookup extends ClassSourceLookup.ByClassLoader {
 
     public MinestomClassSourceLookup() {
         this.classLoaderToExtensions = new HashMap<>();
-        for (Extension extension : MinecraftServer.getExtensionManager().getExtensions()) {
+        for (Extension extension : ExtensionBootstrap.getExtensionManager().getExtensions()) {
             this.classLoaderToExtensions.put(extension.getClass().getClassLoader(), extension.getOrigin().getName());
         }
     }

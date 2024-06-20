@@ -3,13 +3,15 @@ plugins {
 }
 
 tasks.withType(JavaCompile) {
-    // override, compile targeting J17
-    options.release = 17
+    // override, compile targeting J21
+    options.release = 21
 }
 
 dependencies {
     implementation project(':spark-common')
-    compileOnly 'com.github.Minestom.Minestom:Minestom:master-SNAPSHOT'
+
+    compileOnly 'net.minestom:minestom-snapshots:f1d5940855'
+    compileOnly 'dev.hollowcube:minestom-ce-extensions:1.2.0'
     implementation 'com.google.guava:guava:19.0'
 }
 

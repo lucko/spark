@@ -28,7 +28,7 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-
+import net.hollowcube.minestom.extensions.ExtensionBootstrap;
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.command.CommandSender;
 import net.minestom.server.command.builder.Command;
@@ -41,7 +41,6 @@ import net.minestom.server.command.builder.suggestion.SuggestionCallback;
 import net.minestom.server.command.builder.suggestion.SuggestionEntry;
 import net.minestom.server.extensions.Extension;
 import net.minestom.server.timer.ExecutionType;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -122,7 +121,7 @@ public class MinestomSparkPlugin extends Extension implements SparkPlugin {
     @Override
     public Collection<SourceMetadata> getKnownSources() {
         return SourceMetadata.gather(
-                MinecraftServer.getExtensionManager().getExtensions(),
+                ExtensionBootstrap.getExtensionManager().getExtensions(),
                 extension -> extension.getOrigin().getName(),
                 extension -> extension.getOrigin().getVersion(),
                 extension -> String.join(", ", extension.getOrigin().getAuthors())
