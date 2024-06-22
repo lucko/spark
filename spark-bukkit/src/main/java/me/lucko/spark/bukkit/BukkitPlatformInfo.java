@@ -41,7 +41,7 @@ public class BukkitPlatformInfo implements PlatformInfo {
 
     @Override
     public String getName() {
-        return "Bukkit";
+        return this.server.getName();
     }
 
     @Override
