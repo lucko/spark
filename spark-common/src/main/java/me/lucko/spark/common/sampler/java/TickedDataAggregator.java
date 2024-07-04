@@ -153,10 +153,9 @@ public class TickedDataAggregator extends JavaDataAggregator {
 
         public int sizeWithoutTrailingSleeping() {
             // find the last index at which the thread wasn't sleeping
-            int i;
-            for (i = this.list.size() - 1; i >= 0; i--) {
+            for (int i = this.list.size() - 1; i >= 0; i--) {
                 if (!isSleeping(this.list.get(i))) {
-                    return i;
+                    return i + 1; // add one to go from index to size
                 }
             }
             return 0;
