@@ -47,7 +47,15 @@ public class BukkitPlatformInfo implements PlatformInfo {
 
     @Override
     public String getVersion() {
-        return Bukkit.getName() + " " + this.server.getVersion();
+        final String version = this.server.getVersion();
+        String brand;
+
+        if (version.contains("Spigot")) {
+            brand = null;
+        } else {
+            brand = Bukkit.getName();
+        }
+        return (brand == null ? "" : brand + " ") + this.server.getVersion();
     }
 
     @Override
