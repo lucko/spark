@@ -22,7 +22,6 @@ package me.lucko.spark.bukkit;
 
 import me.lucko.spark.common.platform.PlatformInfo;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Server;
 
 import java.lang.reflect.Field;
@@ -53,7 +52,7 @@ public class BukkitPlatformInfo implements PlatformInfo {
         if (version.contains("Spigot")) {
             brand = null;
         } else {
-            brand = Bukkit.getName();
+            brand = this.server.getName();
         }
         return (brand == null ? "" : brand + " ") + this.server.getVersion();
     }
