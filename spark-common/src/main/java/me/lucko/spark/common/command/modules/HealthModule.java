@@ -38,7 +38,6 @@ import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.common.util.StatisticFormatter;
-
 import net.kyori.adventure.text.Component;
 
 import java.lang.management.ManagementFactory;

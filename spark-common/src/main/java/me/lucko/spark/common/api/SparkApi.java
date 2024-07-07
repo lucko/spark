@@ -21,7 +21,6 @@
 package me.lucko.spark.common.api;
 
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.gc.GarbageCollector;
@@ -32,7 +31,6 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 

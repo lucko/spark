@@ -23,9 +23,7 @@ package me.lucko.spark.common.sampler.async;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import com.google.common.io.ByteStreams;
-
 import me.lucko.spark.common.SparkPlatform;
-
 import one.profiler.AsyncProfiler;
 import one.profiler.Events;
 

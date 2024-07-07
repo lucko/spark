@@ -22,7 +22,6 @@ package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.tick.AbstractTickHook;
 import me.lucko.spark.common.tick.TickHook;
-
 import org.spongepowered.api.Game;
 import org.spongepowered.api.scheduler.ScheduledTask;
 import org.spongepowered.api.scheduler.Task;

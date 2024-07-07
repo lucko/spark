@@ -22,7 +22,6 @@ package me.lucko.spark.common.api;
 
 import me.lucko.spark.api.gc.GarbageCollector;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
-
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 public class GarbageCollectorInfo implements GarbageCollector {

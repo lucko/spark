@@ -23,7 +23,6 @@ package me.lucko.spark.common.sampler.node;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Objects;

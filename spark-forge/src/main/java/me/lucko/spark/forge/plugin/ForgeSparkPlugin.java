@@ -30,7 +30,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
@@ -39,11 +38,9 @@ import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
-
 import net.minecraft.commands.CommandSource;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

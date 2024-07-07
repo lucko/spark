@@ -23,7 +23,6 @@ package me.lucko.spark.velocity;
 import com.google.common.collect.ImmutableMap;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.connection.Player;
-
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 
 import java.util.Map;

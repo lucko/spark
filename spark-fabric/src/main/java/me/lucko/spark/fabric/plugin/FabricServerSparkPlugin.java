@@ -27,7 +27,6 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.MetadataProvider;
@@ -47,7 +46,6 @@ import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
 import me.lucko.spark.fabric.FabricWorldInfoProvider;
 import me.lucko.spark.fabric.placeholder.SparkFabricPlaceholderApi;
-
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;

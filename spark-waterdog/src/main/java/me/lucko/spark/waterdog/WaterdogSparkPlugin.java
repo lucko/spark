@@ -20,17 +20,16 @@
 
 package me.lucko.spark.waterdog;
 
+import dev.waterdog.waterdogpe.ProxyServer;
+import dev.waterdog.waterdogpe.command.Command;
+import dev.waterdog.waterdogpe.command.CommandSender;
+import dev.waterdog.waterdogpe.plugin.Plugin;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
-
-import dev.waterdog.waterdogpe.ProxyServer;
-import dev.waterdog.waterdogpe.command.Command;
-import dev.waterdog.waterdogpe.command.CommandSender;
-import dev.waterdog.waterdogpe.plugin.Plugin;
 
 import java.nio.file.Path;
 import java.util.Collection;

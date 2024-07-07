@@ -23,7 +23,6 @@ package me.lucko.spark.common.util;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;

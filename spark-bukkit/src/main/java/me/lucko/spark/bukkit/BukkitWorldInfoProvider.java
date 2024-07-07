@@ -23,7 +23,6 @@ package me.lucko.spark.bukkit;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
-
 import org.bukkit.Chunk;
 import org.bukkit.Server;
 import org.bukkit.World;

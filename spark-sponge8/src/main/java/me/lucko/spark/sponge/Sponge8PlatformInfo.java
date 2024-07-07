@@ -21,9 +21,9 @@
 package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.platform.PlatformInfo;
-
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Platform;
+import org.spongepowered.plugin.metadata.PluginMetadata;
 
 public class Sponge8PlatformInfo implements PlatformInfo {
     private final Game game;
@@ -40,6 +40,12 @@ public class Sponge8PlatformInfo implements PlatformInfo {
     @Override
     public String getName() {
         return "Sponge";
+    }
+
+    @Override
+    public String getBrand() {
+        PluginMetadata brandMetadata = this.game.platform().container(Platform.Component.IMPLEMENTATION).metadata();
+        return brandMetadata.name().orElseGet(brandMetadata::id);
     }
 
     @Override

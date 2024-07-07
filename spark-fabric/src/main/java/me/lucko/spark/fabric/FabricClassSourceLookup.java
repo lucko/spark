@@ -21,16 +21,13 @@
 package me.lucko.spark.fabric;
 
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.util.ClassFinder;
 import me.lucko.spark.fabric.smap.MixinUtils;
 import me.lucko.spark.fabric.smap.SourceMap;
 import me.lucko.spark.fabric.smap.SourceMapProvider;
-
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-
 import org.objectweb.asm.Type;
 import org.spongepowered.asm.mixin.FabricUtil;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfig;

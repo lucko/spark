@@ -25,9 +25,11 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.proto.SparkHeapProtos.HeapData;
 import me.lucko.spark.proto.SparkHeapProtos.HeapEntry;
 import me.lucko.spark.proto.SparkHeapProtos.HeapMetadata;
-
 import org.objectweb.asm.Type;
 
+import javax.management.JMX;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
@@ -35,10 +37,6 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import javax.management.JMX;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 /**
  * Represents a "heap dump summary" from the VM.

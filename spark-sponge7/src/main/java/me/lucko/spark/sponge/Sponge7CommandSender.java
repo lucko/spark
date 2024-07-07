@@ -21,10 +21,8 @@
 package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.text.serializer.TextSerializers;

@@ -21,7 +21,6 @@
 package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-
 import org.spongepowered.api.Game;
 
 import java.nio.file.Path;

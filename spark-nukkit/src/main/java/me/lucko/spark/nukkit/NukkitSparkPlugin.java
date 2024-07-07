@@ -20,17 +20,16 @@
 
 package me.lucko.spark.nukkit;
 
+import cn.nukkit.command.Command;
+import cn.nukkit.command.CommandSender;
+import cn.nukkit.plugin.PluginBase;
+import cn.nukkit.plugin.service.ServicePriority;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-
-import cn.nukkit.command.Command;
-import cn.nukkit.command.CommandSender;
-import cn.nukkit.plugin.PluginBase;
-import cn.nukkit.plugin.service.ServicePriority;
 
 import java.nio.file.Path;
 import java.util.logging.Level;

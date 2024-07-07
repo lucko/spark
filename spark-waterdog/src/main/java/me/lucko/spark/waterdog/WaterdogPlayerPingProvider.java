@@ -21,11 +21,9 @@
 package me.lucko.spark.waterdog;
 
 import com.google.common.collect.ImmutableMap;
-
-import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-
 import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.player.ProxiedPlayer;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 
 import java.util.Map;
 

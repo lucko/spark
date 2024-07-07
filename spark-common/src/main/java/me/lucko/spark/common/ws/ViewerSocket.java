@@ -21,7 +21,6 @@
 package me.lucko.spark.common.ws;
 
 import com.google.protobuf.ByteString;
-
 import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;

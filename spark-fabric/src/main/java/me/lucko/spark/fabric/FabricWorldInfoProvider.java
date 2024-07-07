@@ -22,7 +22,6 @@ package me.lucko.spark.fabric;
 
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongSet;
-
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -30,7 +29,6 @@ import me.lucko.spark.fabric.mixin.ClientEntityManagerAccessor;
 import me.lucko.spark.fabric.mixin.ClientWorldAccessor;
 import me.lucko.spark.fabric.mixin.ServerEntityManagerAccessor;
 import me.lucko.spark.fabric.mixin.ServerWorldAccessor;
-
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;

@@ -21,7 +21,6 @@
 package me.lucko.spark.common.sampler.source;
 
 import com.google.common.collect.ImmutableList;
-
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 
 import java.util.Collection;

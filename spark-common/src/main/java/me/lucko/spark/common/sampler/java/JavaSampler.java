@@ -21,7 +21,6 @@
 package me.lucko.spark.common.sampler.java;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;

@@ -34,7 +34,6 @@ import me.lucko.spark.common.util.Compression;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.proto.SparkHeapProtos;
-
 import net.kyori.adventure.text.event.ClickEvent;
 
 import java.io.IOException;

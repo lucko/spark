@@ -22,7 +22,6 @@ package me.lucko.spark.fabric;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.entity.player.PlayerEntity;

@@ -22,9 +22,7 @@ package me.lucko.spark.fabric;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
 import me.lucko.spark.common.platform.MetadataProvider;
-
 import net.minecraft.resource.ResourcePackManager;
 import net.minecraft.resource.ResourcePackProfile;
 import net.minecraft.resource.ResourcePackSource;

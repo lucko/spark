@@ -24,16 +24,13 @@ import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.PlaceholderHandler;
 import eu.pb4.placeholders.api.PlaceholderResult;
 import eu.pb4.placeholders.api.Placeholders;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.util.SparkPlaceholder;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-
 import org.jetbrains.annotations.Nullable;
 
 public enum SparkFabricPlaceholderApi {

@@ -21,7 +21,6 @@
 package me.lucko.spark.sponge;
 
 import com.google.inject.Inject;
-
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
@@ -31,7 +30,6 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
-
 import org.slf4j.Logger;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.command.CommandCallable;
@@ -50,13 +48,12 @@ import org.spongepowered.api.text.Text;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
 
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.stream.Stream;
-
-import javax.annotation.Nullable;
 
 @Plugin(
         id = "spark",

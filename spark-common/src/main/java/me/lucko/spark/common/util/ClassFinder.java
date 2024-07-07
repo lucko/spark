@@ -21,7 +21,6 @@
 package me.lucko.spark.common.util;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.instrument.Instrumentation;

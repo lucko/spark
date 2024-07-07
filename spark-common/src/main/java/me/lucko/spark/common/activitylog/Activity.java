@@ -23,7 +23,6 @@ package me.lucko.spark.common.activitylog;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import me.lucko.spark.common.command.sender.CommandSender;
 
 import java.util.concurrent.TimeUnit;

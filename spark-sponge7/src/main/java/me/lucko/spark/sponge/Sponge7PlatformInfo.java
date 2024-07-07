@@ -21,7 +21,6 @@
 package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.platform.PlatformInfo;
-
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Platform;
 
@@ -40,6 +39,11 @@ public class Sponge7PlatformInfo implements PlatformInfo {
     @Override
     public String getName() {
         return "Sponge";
+    }
+
+    @Override
+    public String getBrand() {
+        return this.game.getPlatform().getContainer(Platform.Component.IMPLEMENTATION).getName();
     }
 
     @Override

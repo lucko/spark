@@ -20,9 +20,8 @@
 
 package me.lucko.spark.nukkit;
 
-import me.lucko.spark.common.platform.PlatformInfo;
-
 import cn.nukkit.Server;
+import me.lucko.spark.common.platform.PlatformInfo;
 
 public class NukkitPlatformInfo implements PlatformInfo {
     private final Server server;
@@ -39,6 +38,11 @@ public class NukkitPlatformInfo implements PlatformInfo {
     @Override
     public String getName() {
         return "Nukkit";
+    }
+
+    @Override
+    public String getBrand() {
+        return this.server.getName();
     }
 
     @Override
