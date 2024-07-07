@@ -22,6 +22,7 @@ package me.lucko.spark.bukkit;
 
 import me.lucko.spark.common.platform.PlatformInfo;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Server;
 
 import java.lang.reflect.Field;
@@ -41,12 +42,12 @@ public class BukkitPlatformInfo implements PlatformInfo {
 
     @Override
     public String getName() {
-        return this.server.getName();
+        return "Bukkit";
     }
 
     @Override
     public String getVersion() {
-        return this.server.getVersion();
+        return Bukkit.getName() + " " + this.server.getVersion();
     }
 
     @Override
