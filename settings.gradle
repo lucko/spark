@@ -30,9 +30,9 @@ include (
         'spark-velocity4',
         'spark-sponge7',
         'spark-sponge8',
-        'spark-forge',
-        'spark-neoforge',
-        'spark-fabric',
+//        'spark-forge',
+//        'spark-neoforge', // Commented because NeoForge breaks IntellIJ Reload - Remove comments after approval
+//        'spark-fabric',
         'spark-nukkit',
         'spark-waterdog',
         //'spark-minestom', // disabled until minestom publish their maven artifacts to a proper repo

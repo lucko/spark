@@ -223,7 +223,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
         getServer().getServicesManager().register(Spark.class, api, this, ServicePriority.Normal);
     }
 
-    private static boolean classExists(String className) {
+    protected static boolean classExists(String className) {
         try {
             Class.forName(className);
             return true;
