@@ -436,7 +436,7 @@ public class SamplerModule implements CommandModule {
                         .build()
                 );
 
-                platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
+                platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Profiler", url));
             } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the results. Attempting to save to disk instead.", RED));
                 e.printStackTrace();
@@ -453,7 +453,7 @@ public class SamplerModule implements CommandModule {
                 resp.broadcastPrefixed(text("Data has been written to: " + file));
                 resp.broadcastPrefixed(text("You can view the profile file using the web app @ " + platform.getViewerUrl(), GRAY));
 
-                platform.getActivityLog().addToLog(Activity.fileActivity(resp.sender(), System.currentTimeMillis(), "Profiler", file.toString()));
+                platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Profiler", file.toString()));
             } catch (IOException e) {
                 resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
                 e.printStackTrace();
@@ -495,7 +495,7 @@ public class SamplerModule implements CommandModule {
                     .build()
             );
 
-            platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler (live)", url));
+            platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Profiler (live)", url));
         } catch (Exception e) {
             resp.replyPrefixed(text("An error occurred whilst opening the live profiler.", RED));
             e.printStackTrace();
@@ -504,7 +504,7 @@ public class SamplerModule implements CommandModule {
 
     private Sampler.ExportProps getExportProps(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
         return new Sampler.ExportProps()
-                .creator(resp.sender().toData())
+                .creator(resp.senderData())
                 .comment(Iterables.getFirst(arguments.stringFlag("comment"), null))
                 .mergeMode(() -> {
                     MethodDisambiguator methodDisambiguator = new MethodDisambiguator();

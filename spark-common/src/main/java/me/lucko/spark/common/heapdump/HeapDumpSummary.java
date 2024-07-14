@@ -123,10 +123,10 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
-    public HeapData toProto(SparkPlatform platform, CommandSender creator) {
+    public HeapData toProto(SparkPlatform platform, CommandSender.Data creator) {
         HeapMetadata.Builder metadata = HeapMetadata.newBuilder()
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setCreator(creator.toData().toProto());
+                .setCreator(creator.toProto());
         try {
             metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null, true));
         } catch (Exception e) {
