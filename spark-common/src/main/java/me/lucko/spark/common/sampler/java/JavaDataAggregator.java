@@ -99,7 +99,7 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
         return super.exportData();
     }
 
-    private static boolean isSleeping(ThreadInfo thread) {
+    static boolean isSleeping(ThreadInfo thread) {
         if (thread.getThreadState() == Thread.State.WAITING || thread.getThreadState() == Thread.State.TIMED_WAITING) {
             return true;
         }
