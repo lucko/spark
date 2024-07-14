@@ -22,11 +22,12 @@ package me.lucko.spark.common.util;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 public class SparkThreadFactory implements ThreadFactory {
 
     public static final Thread.UncaughtExceptionHandler EXCEPTION_HANDLER = (t, e) -> {
-        System.err.println("Uncaught exception thrown by thread " + t.getName());
+        SparkStaticLogger.log(Level.SEVERE, "Uncaught exception thrown by thread " + t.getName());
         e.printStackTrace();
     };
 

@@ -53,6 +53,7 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.Configuration;
+import me.lucko.spark.common.util.SparkStaticLogger;
 import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.common.ws.TrustedKeyStore;
 import net.kyori.adventure.text.Component;
@@ -116,6 +117,7 @@ public class SparkPlatform {
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
+        SparkStaticLogger.setLogger(plugin::log);
 
         this.temporaryFiles = new TemporaryFiles(this.plugin.getPluginDirectory().resolve("tmp"));
         this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));

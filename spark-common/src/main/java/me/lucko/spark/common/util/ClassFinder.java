@@ -26,6 +26,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.lang.instrument.Instrumentation;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * Uses {@link Instrumentation} to find a class reference for given class names.
@@ -34,15 +35,27 @@ import java.util.Map;
  */
 public class ClassFinder {
 
+    private static boolean warned = false;
+
+    private static Instrumentation loadInstrumentation() {
+        Instrumentation instrumentation = null;
+        try {
+            instrumentation = ByteBuddyAgent.install();
+            if (!warned && JavaVersion.getJavaVersion() >= 21) {
+                warned = true;
+                SparkStaticLogger.log(Level.INFO, "If you see a warning above that says \"WARNING: A Java agent has been loaded dynamically\", it can be safely ignored.");
+                SparkStaticLogger.log(Level.INFO, "See here for more information: https://spark.lucko.me/docs/misc/Java-agent-warning");
+            }
+        } catch (Exception e) {
+            // ignored
+        }
+        return instrumentation;
+    }
+
     private final Map<String, Class<?>> classes = new HashMap<>();
 
     public ClassFinder() {
-        Instrumentation instrumentation;
-        try {
-            instrumentation = ByteBuddyAgent.install();
-        } catch (Exception e) {
-            return;
-        }
+        Instrumentation instrumentation = loadInstrumentation();
         if (instrumentation == null) {
             return;
         }
