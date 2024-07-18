@@ -55,6 +55,7 @@ import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.SparkStaticLogger;
 import me.lucko.spark.common.util.TemporaryFiles;
+import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.ws.TrustedKeyStore;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -283,6 +284,10 @@ public class SparkPlatform {
 
     public ClassSourceLookup createClassSourceLookup() {
         return this.plugin.createClassSourceLookup();
+    }
+
+    public ClassFinder createClassFinder() {
+        return this.plugin.createClassFinder();
     }
 
     public TickStatistics getTickStatistics() {

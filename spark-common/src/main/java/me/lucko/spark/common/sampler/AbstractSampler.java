@@ -32,6 +32,7 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
+import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
@@ -44,6 +45,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 /**
  * Base implementation class for {@link Sampler}s.
@@ -230,11 +232,11 @@ public abstract class AbstractSampler implements Sampler {
         proto.setMetadata(metadata);
     }
 
-    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, MergeMode mergeMode, ClassSourceLookup classSourceLookup, Supplier<ClassFinder> classFinderSupplier) {
         List<ThreadNode> data = dataAggregator.exportData();
         data.sort(Comparator.comparing(ThreadNode::getThreadLabel));
 
-        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
+        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup, classFinderSupplier);
 
         ProtoTimeEncoder timeEncoder = new ProtoTimeEncoder(getMode().valueTransformer(), data);
         int[] timeWindows = timeEncoder.getKeys();

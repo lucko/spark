@@ -109,7 +109,7 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
 
     @Override
     public ClassSourceLookup createClassSourceLookup() {
-        return new FabricClassSourceLookup();
+        return new FabricClassSourceLookup(createClassFinder());
     }
 
     @Override

@@ -22,7 +22,7 @@ package me.lucko.spark.fabric;
 
 import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.util.ClassFinder;
+import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.fabric.smap.MixinUtils;
 import me.lucko.spark.fabric.smap.SourceMap;
 import me.lucko.spark.fabric.smap.SourceMapProvider;
@@ -41,14 +41,15 @@ import java.util.Collection;
 import java.util.Map;
 
 public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
-
-    private final ClassFinder classFinder = new ClassFinder();
-    private final SourceMapProvider smapProvider = new SourceMapProvider();
-
+    private final ClassFinder classFinder;
+    private final SourceMapProvider smapProvider;
     private final Path modsDirectory;
     private final Map<String, String> pathToModMap;
 
-    public FabricClassSourceLookup() {
+    public FabricClassSourceLookup(ClassFinder classFinder) {
+        this.classFinder = classFinder;
+        this.smapProvider = new SourceMapProvider();
+
         FabricLoader loader = FabricLoader.getInstance();
         this.modsDirectory = loader.getGameDir().resolve("mods").toAbsolutePath().normalize();
         this.pathToModMap = constructPathToModIdMap(loader.getAllMods());

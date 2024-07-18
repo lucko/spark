@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ListMultimap;
 import me.lucko.spark.common.sampler.node.StackTraceNode;
+import me.lucko.spark.common.util.classfinder.ClassFinder;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
@@ -43,8 +44,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * to a method (method name + method description).
  */
 public final class MethodDisambiguator {
-    private final Map<String, ComputedClass> cache = new ConcurrentHashMap<>();
-    private final ClassFinder classFinder = new ClassFinder();
+    private final ClassFinder classFinder;
+    private final Map<String, ComputedClass> cache;
+
+    public MethodDisambiguator(ClassFinder classFinder) {
+        this.classFinder = classFinder;
+        this.cache = new ConcurrentHashMap<>();
+    }
 
     public Optional<MethodDescription> disambiguate(StackTraceNode element) {
         String desc = element.getMethodDescription();

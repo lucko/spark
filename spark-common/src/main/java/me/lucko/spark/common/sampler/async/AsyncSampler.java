@@ -221,7 +221,7 @@ public class AsyncSampler extends AbstractSampler {
             proto.setChannelInfo(exportProps.channelInfo());
         }
         writeMetadataToProto(proto, platform, exportProps.creator(), exportProps.comment(), this.dataAggregator);
-        writeDataToProto(proto, this.dataAggregator, exportProps.mergeMode().get(), exportProps.classSourceLookup().get());
+        writeDataToProto(proto, this.dataAggregator, exportProps.mergeMode().get(), exportProps.classSourceLookup().get(), platform::createClassFinder);
         return proto.build();
     }
 

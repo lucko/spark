@@ -507,7 +507,7 @@ public class SamplerModule implements CommandModule {
                 .creator(resp.senderData())
                 .comment(Iterables.getFirst(arguments.stringFlag("comment"), null))
                 .mergeMode(() -> {
-                    MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
+                    MethodDisambiguator methodDisambiguator = new MethodDisambiguator(platform.createClassFinder());
                     return arguments.boolFlag("separate-parent-calls")
                             ? MergeMode.separateParentCalls(methodDisambiguator)
                             : MergeMode.sameMethod(methodDisambiguator);
