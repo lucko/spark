@@ -101,6 +101,12 @@ public class PlatformStatisticsProvider {
                         .setVendorVersion(System.getProperty("java.vendor.version", "unknown"))
                         .setVmArgs(String.join(" ", runtimeBean.getInputArguments()))
                         .build()
+                )
+                .setJvm(SystemStatistics.Jvm.newBuilder()
+                        .setName(System.getProperty("java.vm.name", "unknown"))
+                        .setVendor(System.getProperty("java.vm.vendor", "unknown"))
+                        .setVersion(System.getProperty("java.vm.version", "unknown"))
+                        .build()
                 );
 
         long uptime = runtimeBean.getUptime();

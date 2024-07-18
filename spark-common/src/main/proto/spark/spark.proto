@@ -33,6 +33,7 @@ message SystemStatistics {
   Java java = 6;
   int64 uptime = 7;
   map<string, NetInterface> net = 8;
+  Jvm jvm = 9;
 
   message Cpu {
     int32 threads = 1;
@@ -78,6 +79,12 @@ message SystemStatistics {
     string version = 2;
     string vendor_version = 3;
     string vm_args = 4;
+  }
+
+  message Jvm {
+    string name = 1;
+    string vendor = 2;
+    string version = 3;
   }
 
   message NetInterface {
