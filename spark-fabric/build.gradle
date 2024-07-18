@@ -86,6 +86,8 @@ shadowJar {
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+    exclude '**/*.proto'
+    exclude '**/*.proto.bin'
 
     dependencies {
         exclude(dependency('org.ow2.asm::'))
