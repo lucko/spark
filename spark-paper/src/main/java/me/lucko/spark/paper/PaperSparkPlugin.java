@@ -103,7 +103,7 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
 
     @Override
     public String getVersion() {
-        return "TODO"; // TODO - get from package implementation version?
+        return "@version@";
     }
 
     @Override
