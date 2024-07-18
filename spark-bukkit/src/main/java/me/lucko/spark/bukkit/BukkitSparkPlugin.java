@@ -60,6 +60,10 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void onEnable() {
+        getLogger().info("This Plugin has been included as a function in future Paper Builds, Replacing Timings.");
+        getLogger().info("spigot/craftbukkit builds can still use this plugin, however, you should avoid using Spigot/CraftBukkit, as they have unsupported");
+        getLogger().info("spark will start now.");
+        getLogger().info("Download PaperMC From: https://papermc.io");
         this.audienceFactory = BukkitAudiences.create(this);
         this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
 
