@@ -80,11 +80,19 @@ public class AsyncWorldInfoProvider {
         return async(WorldInfoProvider::pollChunks);
     }
 
+    public CompletableFuture<WorldInfoProvider.GameRulesResult> pollGameRules() {
+        return async(WorldInfoProvider::pollGameRules);
+    }
+
     public WorldInfoProvider.CountsResult getCounts() {
         return get(pollCounts());
     }
 
     public WorldInfoProvider.ChunksResult<? extends ChunkInfo<?>> getChunks() {
         return get(pollChunks());
+    }
+
+    public WorldInfoProvider.GameRulesResult getGameRules() {
+        return get(pollGameRules());
     }
 }

@@ -39,7 +39,6 @@ import me.lucko.spark.paper.api.PaperSparkModule;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.ServicePriority;
 
 import java.nio.file.Path;
 import java.util.Arrays;

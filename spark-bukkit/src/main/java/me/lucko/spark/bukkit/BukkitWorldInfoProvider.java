@@ -24,6 +24,7 @@ import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import org.bukkit.Chunk;
+import org.bukkit.GameRule;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.block.BlockState;
@@ -32,6 +33,7 @@ import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BukkitWorldInfoProvider implements WorldInfoProvider {
     private static final boolean SUPPORTS_PAPER_COUNT_METHODS;
@@ -105,6 +107,33 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
             }
 
             data.put(world.getName(), list);
+        }
+
+        return data;
+    }
+
+    @Override
+    public GameRulesResult pollGameRules() {
+        GameRulesResult data = new GameRulesResult();
+
+        boolean addDefaults = true; // add defaults in the first iteration
+        for (World world : this.server.getWorlds()) {
+            for (String gameRule : world.getGameRules()) {
+                GameRule<?> ruleObj = GameRule.getByName(gameRule);
+                if (ruleObj == null) {
+                    continue;
+                }
+
+                if (addDefaults) {
+                    Object defaultValue = world.getGameRuleDefault(ruleObj);
+                    data.putDefault(gameRule, Objects.toString(defaultValue));
+                }
+
+                Object value = world.getGameRuleValue(ruleObj);
+                data.put(gameRule, world.getName(), Objects.toString(value));
+            }
+
+            addDefaults = false;
         }
 
         return data;

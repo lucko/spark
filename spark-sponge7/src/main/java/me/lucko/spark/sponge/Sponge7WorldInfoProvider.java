@@ -34,6 +34,7 @@ import org.spongepowered.api.world.World;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Sponge7WorldInfoProvider implements WorldInfoProvider {
     private final Server server;
@@ -74,6 +75,21 @@ public class Sponge7WorldInfoProvider implements WorldInfoProvider {
         }
 
         return data;
+    }
+
+    @Override
+    public GameRulesResult pollGameRules() {
+        // No way to get defaults info on sponge API 7 :(
+
+        // GameRulesResult data = new GameRulesResult();
+        // for (World world : this.server.getWorlds()) {
+        //     for (Map.Entry<String, String> entry : world.getGameRules().entrySet()) {
+        //         data.put(entry.getKey(), world.getName(), entry.getValue());
+        //     }
+        // }
+        // return data;
+
+        return null;
     }
 
     static final class Sponge7ChunkInfo extends AbstractChunkInfo<EntityType> {
