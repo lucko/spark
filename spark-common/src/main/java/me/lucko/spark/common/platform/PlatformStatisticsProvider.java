@@ -43,6 +43,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.lang.management.RuntimeMXBean;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class PlatformStatisticsProvider {
     private final SparkPlatform platform;
@@ -54,6 +55,8 @@ public class PlatformStatisticsProvider {
     public SystemStatistics getSystemStatistics() {
         RuntimeMXBean runtimeBean = ManagementFactory.getRuntimeMXBean();
         OperatingSystemInfo osInfo = OperatingSystemInfo.poll();
+
+        String vmArgs = String.join(" ", runtimeBean.getInputArguments());
 
         SystemStatistics.Builder builder = SystemStatistics.newBuilder()
                 .setCpu(SystemStatistics.Cpu.newBuilder()
@@ -99,7 +102,7 @@ public class PlatformStatisticsProvider {
                         .setVendor(System.getProperty("java.vendor", "unknown"))
                         .setVersion(System.getProperty("java.version", "unknown"))
                         .setVendorVersion(System.getProperty("java.vendor.version", "unknown"))
-                        .setVmArgs(String.join(" ", runtimeBean.getInputArguments()))
+                        .setVmArgs(VmArgRedactor.replace(vmArgs))
                         .build()
                 )
                 .setJvm(SystemStatistics.Jvm.newBuilder()
@@ -220,6 +223,19 @@ public class PlatformStatisticsProvider {
                 .setMedian(info.median())
                 .setPercentile95(info.percentile95th())
                 .build();
+    }
+
+    static final class VmArgRedactor {
+        private static final Pattern WINDOWS_USERNAME = Pattern.compile("C:\\\\Users\\\\\\w+");
+        private static final Pattern MACOS_USERNAME = Pattern.compile("/Users/\\w+");
+        private static final Pattern LINUX_USERNAME = Pattern.compile("/home/\\w+");
+
+        static String replace(String input) {
+            input = WINDOWS_USERNAME.matcher(input).replaceAll("C:\\\\Users\\\\<redacted>");
+            input = MACOS_USERNAME.matcher(input).replaceAll("/Users/<redacted>");
+            input = LINUX_USERNAME.matcher(input).replaceAll("/home/<redacted>");
+            return input;
+        }
     }
 
 }
