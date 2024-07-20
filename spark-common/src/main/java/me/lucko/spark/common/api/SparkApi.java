@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.api.SparkProvider;
 import me.lucko.spark.api.gc.GarbageCollector;
+import me.lucko.spark.api.placeholder.PlaceholderResolver;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
@@ -31,6 +32,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.util.SparkPlaceholder;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -170,6 +172,21 @@ public class SparkApi implements Spark {
             map.put(entry.getKey(), new GarbageCollectorInfo(entry.getKey(), entry.getValue(), serverUptime));
         }
         return ImmutableMap.copyOf(map);
+    }
+
+    @Override
+    public @NonNull PlaceholderResolver placeholders() {
+        return new PlaceholderResolver() {
+            @Override
+            public @Nullable String resolveLegacyFormatting(@NonNull String placeholder) {
+                return SparkPlaceholder.resolveFormattingCode(SparkApi.this.platform, placeholder);
+            }
+
+            @Override
+            public @Nullable String resolveComponentJson(@NonNull String placeholder) {
+                return SparkPlaceholder.resolveComponentJson(SparkApi.this.platform, placeholder);
+            }
+        };
     }
 
     public static void register(Spark spark) {

@@ -26,6 +26,7 @@
 package me.lucko.spark.api;
 
 import me.lucko.spark.api.gc.GarbageCollector;
+import me.lucko.spark.api.placeholder.PlaceholderResolver;
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
@@ -82,5 +83,13 @@ public interface Spark {
      * @return the garbage collector statistics
      */
     @NonNull @Unmodifiable Map<String, GarbageCollector> gc();
+
+    /**
+     * Gets a placeholder resolver.
+     *
+     * @return a placeholder resolver
+     */
+    @NonNull
+    PlaceholderResolver placeholders();
 
 }
