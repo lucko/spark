@@ -200,9 +200,9 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
         return PaperPlatformInfo.INSTANCE;
     }
 
-    @SuppressWarnings("DataFlowIssue") // null plugin
+    // @SuppressWarnings("DataFlowIssue") // null plugin
     @Override
     public void registerApi(Spark api) {
-        this.server.getServicesManager().register(Spark.class, api, null, ServicePriority.Normal);
+        // this.server.getServicesManager().register(Spark.class, api, null, ServicePriority.Normal);
     }
 }
