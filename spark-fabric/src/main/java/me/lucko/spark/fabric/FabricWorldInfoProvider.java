@@ -37,6 +37,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerEntityManager;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.entity.ClientEntityManager;
 import net.minecraft.world.entity.EntityIndex;
 import net.minecraft.world.entity.EntityTrackingSection;
@@ -101,6 +102,28 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
 
             return data;
         }
+
+        @Override
+        public GameRulesResult pollGameRules() {
+            GameRulesResult data = new GameRulesResult();
+            Iterable<ServerWorld> worlds = this.server.getWorlds();
+
+            GameRules.accept(new GameRules.Visitor() {
+                @Override
+                public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                    String defaultValue = type.createRule().serialize();
+                    data.putDefault(key.getName(), defaultValue);
+
+                    for (ServerWorld world : worlds) {
+                        String worldName = world.getRegistryKey().getValue().getPath();
+
+                        String value = world.getGameRules().get(key).serialize();
+                        data.put(key.getName(), worldName, value);
+                    }
+                }
+            });
+            return data;
+        }
     }
 
     public static final class Client extends FabricWorldInfoProvider {
@@ -128,18 +151,44 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
 
         @Override
         public ChunksResult<FabricChunkInfo> pollChunks() {
-            ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
-
             ClientWorld world = this.client.world;
             if (world == null) {
                 return null;
             }
+
+            ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
 
             ClientEntityManager<Entity> entityManager = ((ClientWorldAccessor) world).getEntityManager();
             SectionedEntityCache<Entity> cache = ((ClientEntityManagerAccessor) entityManager).getCache();
 
             List<FabricChunkInfo> list = getChunksFromCache(cache);
             data.put(world.getRegistryKey().getValue().getPath(), list);
+
+            return data;
+        }
+
+        @Override
+        public GameRulesResult pollGameRules() {
+            ClientWorld world = this.client.world;
+            if (world == null) {
+                return null;
+            }
+
+            GameRulesResult data = new GameRulesResult();
+
+            String worldName = world.getRegistryKey().getValue().getPath();
+            GameRules worldRules = world.getGameRules();
+
+            GameRules.accept(new GameRules.Visitor() {
+                @Override
+                public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                    String defaultValue = type.createRule().serialize();
+                    data.putDefault(key.getName(), defaultValue);
+
+                    String value = worldRules.get(key).serialize();
+                    data.put(key.getName(), worldName, value);
+                }
+            });
 
             return data;
         }

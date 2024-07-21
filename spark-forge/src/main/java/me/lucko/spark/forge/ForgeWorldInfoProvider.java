@@ -32,6 +32,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.entity.EntityLookup;
 import net.minecraft.world.level.entity.EntitySection;
 import net.minecraft.world.level.entity.EntitySectionStorage;
@@ -97,6 +98,29 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
 
             return data;
         }
+
+        @Override
+        public GameRulesResult pollGameRules() {
+            GameRulesResult data = new GameRulesResult();
+            Iterable<ServerLevel> levels = this.server.getAllLevels();
+
+            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
+                @Override
+                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                    String defaultValue = type.createRule().serialize();
+                    data.putDefault(key.getId(), defaultValue);
+
+                    for (ServerLevel level : levels) {
+                        String levelName = level.dimension().location().getPath();
+
+                        String value = level.getGameRules().getRule(key).serialize();
+                        data.put(key.getId(), levelName, value);
+                    }
+                }
+            });
+
+            return data;
+        }
     }
 
     public static final class Client extends ForgeWorldInfoProvider {
@@ -124,18 +148,44 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
 
         @Override
         public ChunksResult<ForgeChunkInfo> pollChunks() {
-            ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
-
             ClientLevel level = this.client.level;
             if (level == null) {
                 return null;
             }
+
+            ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
             TransientEntitySectionManager<Entity> entityManager = level.entityStorage;
             EntitySectionStorage<Entity> cache = entityManager.sectionStorage;
 
             List<ForgeChunkInfo> list = getChunksFromCache(cache);
             data.put(level.dimension().location().getPath(), list);
+
+            return data;
+        }
+
+        @Override
+        public GameRulesResult pollGameRules() {
+            ClientLevel level = this.client.level;
+            if (level == null) {
+                return null;
+            }
+
+            GameRulesResult data = new GameRulesResult();
+
+            String levelName = level.dimension().location().getPath();
+            GameRules levelRules = level.getGameRules();
+
+            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
+                @Override
+                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                    String defaultValue = type.createRule().serialize();
+                    data.putDefault(key.getId(), defaultValue);
+
+                    String value = levelRules.getRule(key).serialize();
+                    data.put(key.getId(), levelName, value);
+                }
+            });
 
             return data;
         }

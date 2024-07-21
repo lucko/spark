@@ -39,6 +39,11 @@ public interface WorldInfoProvider {
         public ChunksResult<? extends ChunkInfo<?>> pollChunks() {
             return null;
         }
+
+        @Override
+        public GameRulesResult pollGameRules() {
+            return null;
+        }
     };
 
     /**
@@ -54,6 +59,13 @@ public interface WorldInfoProvider {
      * @return the chunk information
      */
     ChunksResult<? extends ChunkInfo<?>> pollChunks();
+
+    /**
+     * Polls for game rules.
+     *
+     * @return the game rules
+     */
+    GameRulesResult pollGameRules();
 
     default boolean mustCallSync() {
         return true;
@@ -98,6 +110,39 @@ public interface WorldInfoProvider {
 
         public int chunks() {
             return this.chunks;
+        }
+    }
+
+    final class GameRulesResult {
+        private final Map<String, GameRule> rules = new HashMap<>();
+
+        private GameRule rule(String name) {
+            return this.rules.computeIfAbsent(name, k -> new GameRule());
+        }
+
+        public void put(String gameRuleName, String worldName, String value) {
+            rule(gameRuleName).worldValues.put(worldName, value);
+        }
+
+        public void putDefault(String gameRuleName, String value) {
+            rule(gameRuleName).defaultValue = value;
+        }
+
+        public Map<String, GameRule> getRules() {
+            return this.rules;
+        }
+
+        public static final class GameRule {
+            Map<String, String> worldValues = new HashMap<>();
+            String defaultValue = null;
+
+            public String getDefaultValue() {
+                return this.defaultValue;
+            }
+
+            public Map<String, String> getWorldValues() {
+                return this.worldValues;
+            }
         }
     }
 

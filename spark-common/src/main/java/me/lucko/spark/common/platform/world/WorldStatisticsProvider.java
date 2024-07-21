@@ -38,7 +38,7 @@ public class WorldStatisticsProvider {
     }
 
     public WorldStatistics getWorldStatistics() {
-        WorldInfoProvider.ChunksResult<? extends ChunkInfo<?>> result = provider.getChunks();
+        WorldInfoProvider.ChunksResult<? extends ChunkInfo<?>> result = this.provider.getChunks();
         if (result == null) {
             return null;
         }
@@ -69,6 +69,16 @@ public class WorldStatisticsProvider {
 
         stats.setTotalEntities(combinedTotal.get());
         combined.asMap().forEach((key, value) -> stats.putEntityCounts(key, value.get()));
+
+        WorldInfoProvider.GameRulesResult gameRules = this.provider.getGameRules();
+        if (gameRules != null) {
+            gameRules.getRules().forEach((ruleName, rule) -> stats.addGameRules(WorldStatistics.GameRule.newBuilder()
+                    .setName(ruleName)
+                    .setDefaultValue(rule.getDefaultValue())
+                    .putAllWorldValues(rule.getWorldValues())
+                    .build()
+            ));
+        }
 
         return stats.build();
     }
