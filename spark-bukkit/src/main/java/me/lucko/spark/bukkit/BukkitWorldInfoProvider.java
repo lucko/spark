@@ -33,12 +33,22 @@ import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class BukkitWorldInfoProvider implements WorldInfoProvider {
+
+    private static final boolean SUPPORTS_BUKKIT_GAMERULES;
     private static final boolean SUPPORTS_PAPER_COUNT_METHODS;
 
     static {
+        boolean supportsGameRules = false;
+        try {
+            Class.forName("org.bukkit.GameRule");
+            supportsGameRules = true;
+        } catch (final Throwable ignored) {
+            // ignored
+        }
+        SUPPORTS_BUKKIT_GAMERULES = supportsGameRules;
+
         boolean supportsPaperCountMethods = false;
         try {
             World.class.getMethod("getEntityCount");
@@ -113,24 +123,30 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public GameRulesResult pollGameRules() {
         GameRulesResult data = new GameRulesResult();
 
         boolean addDefaults = true; // add defaults in the first iteration
-        for (World world : this.server.getWorlds()) {
-            for (String gameRule : world.getGameRules()) {
-                GameRule<?> ruleObj = GameRule.getByName(gameRule);
-                if (ruleObj == null) {
-                    continue;
+        for (final World world : this.server.getWorlds()) {
+            for (final String gameRule : world.getGameRules()) {
+                final Object value;
+                if (SUPPORTS_BUKKIT_GAMERULES) {
+                    GameRule<?> ruleObj = GameRule.getByName(gameRule);
+                    if (ruleObj == null) {
+                        continue;
+                    }
+                    value = world.getGameRuleValue(ruleObj);
+
+                    if (addDefaults) {
+                        Object defaultValue = world.getGameRuleDefault(ruleObj);
+                        data.putDefault(gameRule, String.valueOf(defaultValue));
+                    }
+                } else {
+                    value = world.getGameRuleValue(gameRule);
                 }
 
-                if (addDefaults) {
-                    Object defaultValue = world.getGameRuleDefault(ruleObj);
-                    data.putDefault(gameRule, Objects.toString(defaultValue));
-                }
-
-                Object value = world.getGameRuleValue(ruleObj);
-                data.put(gameRule, world.getName(), Objects.toString(value));
+                data.put(gameRule, world.getName(), String.valueOf(value));
             }
 
             addDefaults = false;
