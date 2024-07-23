@@ -37,6 +37,7 @@ import java.util.Objects;
 
 public class BukkitWorldInfoProvider implements WorldInfoProvider {
     private static final boolean SUPPORTS_PAPER_COUNT_METHODS;
+    private static final boolean SUPPORTS_GAMERULES;
 
     static {
         boolean supportsPaperCountMethods = false;
@@ -48,7 +49,18 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
         } catch (Exception e) {
             // ignored
         }
+
+        boolean supportsGameRules = false;
+        try {
+            Class.forName("org.bukkit.GameRule");
+            World.class.getMethod("getGameRuleValue", GameRule.class);
+            supportsGameRules = true;
+        } catch (Exception e) {
+            // ignored
+        }
+
         SUPPORTS_PAPER_COUNT_METHODS = supportsPaperCountMethods;
+        SUPPORTS_GAMERULES = supportsGameRules;
     }
 
     private final Server server;
@@ -114,6 +126,10 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
 
     @Override
     public GameRulesResult pollGameRules() {
+        if (!SUPPORTS_GAMERULES) {
+            return null;
+        }
+
         GameRulesResult data = new GameRulesResult();
 
         boolean addDefaults = true; // add defaults in the first iteration
