@@ -372,6 +372,10 @@ public class SparkPlatform {
             int warningIntervalSeconds = 5;
 
             try {
+                if (completed.get()) {
+                    return;
+                }
+                
                 for (int i = 1; i <= 3; i++) {
                     try {
                         Thread.sleep(warningIntervalSeconds * 1000);
