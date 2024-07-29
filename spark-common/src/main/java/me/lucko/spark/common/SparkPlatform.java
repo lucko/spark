@@ -45,6 +45,7 @@ import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.SparkTickStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
 import me.lucko.spark.common.sampler.BackgroundSamplerManager;
 import me.lucko.spark.common.sampler.SamplerContainer;
@@ -123,7 +124,10 @@ public class SparkPlatform {
         this.plugin = plugin;
         SparkStaticLogger.setLogger(plugin::log);
 
-        this.temporaryFiles = new TemporaryFiles(this.plugin.getPluginDirectory().resolve("tmp"));
+        this.temporaryFiles = new TemporaryFiles(this.plugin.getPlatformInfo().getType() == PlatformInfo.Type.CLIENT
+                ? this.plugin.getPluginDirectory().resolve("tmp")
+                : this.plugin.getPluginDirectory().resolve("tmp-client")
+        );
         this.configuration = Configuration.combining(
                 RuntimeConfiguration.SYSTEM_PROPERTIES,
                 RuntimeConfiguration.ENVIRONMENT_VARIABLES,
