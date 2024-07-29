@@ -362,12 +362,10 @@ public class SparkPlatform {
             int warningIntervalSeconds = 5;
 
             try {
-                // check once before the initial sleep
-                // this is especially relevant if the executor is/was saturated and runs this task
-                // only after the other already finished
                 if (completed.get()) {
                     return;
                 }
+                
                 for (int i = 1; i <= 3; i++) {
                     try {
                         Thread.sleep(warningIntervalSeconds * 1000);
