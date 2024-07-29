@@ -20,12 +20,12 @@
 
 package me.lucko.spark.common.heapdump;
 
-import com.google.common.annotations.VisibleForTesting;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.proto.SparkHeapProtos.HeapData;
 import me.lucko.spark.proto.SparkHeapProtos.HeapEntry;
 import me.lucko.spark.proto.SparkHeapProtos.HeapMetadata;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.objectweb.asm.Type;
 
 import javax.management.JMX;

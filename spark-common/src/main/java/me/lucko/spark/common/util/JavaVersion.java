@@ -20,9 +20,9 @@
 
 package me.lucko.spark.common.util;
 
-import com.google.common.annotations.VisibleForTesting;
+import org.jetbrains.annotations.VisibleForTesting;
 
-public class JavaVersion {
+public enum JavaVersion {
     ;
 
     private static final int JAVA_VERSION;

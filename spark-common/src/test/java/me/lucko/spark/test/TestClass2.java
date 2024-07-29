@@ -18,23 +18,35 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common;
+package me.lucko.spark.test;
 
-import me.lucko.spark.test.plugin.TestSparkPlugin;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+public class TestClass2 implements Runnable {
 
-import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class SparkPlatformTest {
-
-    @Test
-    public void testEnableDisable(@TempDir Path directory) {
-        try (TestSparkPlugin plugin = new TestSparkPlugin(directory)) {
-            assertTrue(plugin.platform().hasEnabled());
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                test();
+            } catch (InterruptedException e) {
+                return;
+            }
         }
     }
 
+    public void test() throws InterruptedException {
+        for (int i = 0; i < 10; i++) {
+            testA();
+            Thread.sleep(100);
+            testB();
+        }
+    }
+
+    public void testA() throws InterruptedException {
+        Thread.sleep(100);
+    }
+
+    public void testB() throws InterruptedException {
+        Thread.sleep(100);
+
+    }
 }

@@ -20,9 +20,14 @@
 
 package me.lucko.spark.common.heapdump;
 
+import me.lucko.spark.proto.SparkHeapProtos;
 import me.lucko.spark.test.TestClass;
+import me.lucko.spark.test.plugin.TestCommandSender;
+import me.lucko.spark.test.plugin.TestSparkPlugin;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class HeapDumpSummaryTest {
 
     @Test
-    public void testHeapDumpSummary() throws Exception {
+    public void testHeapDumpSummary(@TempDir Path directory) throws Exception {
         TestClass testClass1 = new TestClass();
         TestClass testClass2 = new TestClass();
 
@@ -42,6 +47,17 @@ public class HeapDumpSummaryTest {
         assertNotNull(thisClassEntry);
         assertEquals(2, thisClassEntry.getInstances());
         assertEquals(32, thisClassEntry.getBytes());
+
+        SparkHeapProtos.HeapData proto;
+        try (TestSparkPlugin plugin = new TestSparkPlugin(directory)) {
+            proto = dump.toProto(plugin.platform(), TestCommandSender.INSTANCE.toData());
+        }
+        assertNotNull(proto);
+
+        SparkHeapProtos.HeapEntry protoEntry = proto.getEntriesList().stream().filter(entry -> entry.getType().equals(TestClass.class.getName())).findAny().orElse(null);
+        assertNotNull(protoEntry);
+        assertEquals(2, protoEntry.getInstances());
+        assertEquals(32, protoEntry.getSize());
     }
 
 }

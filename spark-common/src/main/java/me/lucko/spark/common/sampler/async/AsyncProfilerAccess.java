@@ -73,14 +73,10 @@ public class AsyncProfilerAccess {
 
         try {
             profiler = load(platform);
-
             if (isEventSupported(profiler, ProfilingEvent.ALLOC, false)) {
                 allocationProfilingEvent = ProfilingEvent.ALLOC;
             }
-
-            if (isEventSupported(profiler, ProfilingEvent.CPU, false)) {
-                profilingEvent = ProfilingEvent.CPU;
-            } else if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
+            if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
                 profilingEvent = ProfilingEvent.WALL;
             }
         } catch (Exception e) {
@@ -213,8 +209,7 @@ public class AsyncProfilerAccess {
         return false;
     }
 
-    enum ProfilingEvent {
-        CPU(Events.CPU),
+    public enum ProfilingEvent {
         WALL(Events.WALL),
         ALLOC(Events.ALLOC);
 

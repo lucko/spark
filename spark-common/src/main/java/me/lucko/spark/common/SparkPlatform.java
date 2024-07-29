@@ -317,6 +317,10 @@ public class SparkPlatform {
         return this.serverNormalOperationStartTime;
     }
 
+    public boolean hasEnabled() {
+        return this.enabled.get();
+    }
+
     public Path resolveSaveFile(String prefix, String extension) {
         Path pluginFolder = this.plugin.getPluginDirectory();
         try {
