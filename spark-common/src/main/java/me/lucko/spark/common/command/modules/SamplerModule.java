@@ -59,6 +59,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.space;
@@ -208,7 +209,7 @@ public class SamplerModule implements CommandModule {
             }
         }
 
-        ThreadGrouper threadGrouper;
+        Supplier<ThreadGrouper> threadGrouper;
         if (arguments.boolFlag("combine-all")) {
             threadGrouper = ThreadGrouper.AS_ONE;
         } else if (arguments.boolFlag("not-combined")) {

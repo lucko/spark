@@ -18,30 +18,37 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.util.config;
 
-import com.google.common.annotations.VisibleForTesting;
+import java.util.List;
 
-public class JavaVersion {
-    ;
+public interface Configuration {
 
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+    static Configuration combining(Configuration... configurations) {
+        return new CombinedConfiguration(configurations);
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
-    }
+    void load();
 
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
-    }
+    void save();
+
+    String getString(String path, String def);
+
+    boolean getBoolean(String path, boolean def);
+
+    int getInteger(String path, int def);
+
+    List<String> getStringList(String path);
+
+    void setString(String path, String value);
+
+    void setBoolean(String path, boolean value);
+
+    void setInteger(String path, int value);
+
+    void setStringList(String path, List<String> value);
+
+    boolean contains(String path);
+
+    void remove(String path);
 }

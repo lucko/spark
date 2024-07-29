@@ -18,30 +18,32 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.platform.world;
 
-import com.google.common.annotations.VisibleForTesting;
+import org.junit.jupiter.api.Test;
 
-public class JavaVersion {
-    ;
+import java.util.HashMap;
 
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class CountMapTest {
+
+    @Test
+    public void testSimple() {
+        CountMap.Simple<String> countMap = new CountMap.Simple<>(new HashMap<>());
+        assertTrue(countMap.asMap().isEmpty());
+
+        countMap.increment("test");
+        assertTrue(countMap.asMap().containsKey("test"));
+        assertEquals(1, countMap.asMap().get("test").get());
+
+        countMap.add("test", 5);
+        assertEquals(6, countMap.asMap().get("test").get());
+
+        countMap.increment("test2");
+
+        assertEquals(7, countMap.total().get());
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
-    }
-
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
-    }
 }

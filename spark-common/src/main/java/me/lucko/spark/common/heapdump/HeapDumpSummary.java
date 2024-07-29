@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.heapdump;
 
+import com.google.common.annotations.VisibleForTesting;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.proto.SparkHeapProtos.HeapData;
@@ -123,6 +124,11 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
+    @VisibleForTesting
+    List<Entry> getEntries() {
+        return this.entries;
+    }
+
     public HeapData toProto(SparkPlatform platform, CommandSender.Data creator) {
         HeapMetadata.Builder metadata = HeapMetadata.newBuilder()
                 .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
@@ -185,6 +191,16 @@ public final class HeapDumpSummary {
                     .setSize(this.bytes)
                     .setType(this.type)
                     .build();
+        }
+
+        @Override
+        public String toString() {
+            return "Entry{" +
+                    "order=" + this.order +
+                    ", instances=" + this.instances +
+                    ", bytes=" + this.bytes +
+                    ", type='" + this.type + '\'' +
+                    '}';
         }
     }
 

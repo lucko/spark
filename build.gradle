@@ -2,6 +2,9 @@ plugins {
     id 'org.cadixdev.licenser' version '0.6.1' apply false
 }
 
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 allprojects {
     group = 'me.lucko'
     version = '1.10-SNAPSHOT'
@@ -23,6 +26,16 @@ subprojects {
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
         options.release = 8
+    }
+
+    tasks.withType(Test).configureEach {
+        testLogging {
+            events = [TestLogEvent.PASSED, TestLogEvent.FAILED, TestLogEvent.SKIPPED]
+            exceptionFormat = TestExceptionFormat.FULL
+            showExceptions = true
+            showCauses = true
+            showStackTraces = true
+        }
     }
 
     processResources {

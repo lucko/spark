@@ -52,10 +52,12 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
-import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.SparkStaticLogger;
 import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
+import me.lucko.spark.common.util.config.Configuration;
+import me.lucko.spark.common.util.config.FileConfiguration;
+import me.lucko.spark.common.util.config.RuntimeConfiguration;
 import me.lucko.spark.common.ws.TrustedKeyStore;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -71,6 +73,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -121,7 +124,11 @@ public class SparkPlatform {
         SparkStaticLogger.setLogger(plugin::log);
 
         this.temporaryFiles = new TemporaryFiles(this.plugin.getPluginDirectory().resolve("tmp"));
-        this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
+        this.configuration = Configuration.combining(
+                RuntimeConfiguration.SYSTEM_PROPERTIES,
+                RuntimeConfiguration.ENVIRONMENT_VARIABLES,
+                new FileConfiguration(this.plugin.getPluginDirectory().resolve("config.json"))
+        );
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
         String bytebinUrl = this.configuration.getString("bytebinUrl", "https://spark-usercontent.lucko.me/");
@@ -330,7 +337,8 @@ public class SparkPlatform {
         return !getAvailableCommands(sender).isEmpty();
     }
 
-    public void executeCommand(CommandSender sender, String[] args) {
+    public CompletableFuture<Void> executeCommand(CommandSender sender, String[] args) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
         AtomicReference<Thread> executorThread = new AtomicReference<>();
         AtomicReference<Thread> timeoutThread = new AtomicReference<>();
         AtomicBoolean completed = new AtomicBoolean(false);
@@ -341,9 +349,11 @@ public class SparkPlatform {
             this.commandExecuteLock.lock();
             try {
                 executeCommand0(sender, args);
+                future.complete(null);
             } catch (Exception e) {
                 this.plugin.log(Level.SEVERE, "Exception occurred whilst executing a spark command");
                 e.printStackTrace();
+                future.completeExceptionally(e);
             } finally {
                 this.commandExecuteLock.unlock();
                 executorThread.set(null);
@@ -393,6 +403,8 @@ public class SparkPlatform {
                 timeoutThread.set(null);
             }
         });
+
+        return future;
     }
 
     private void executeCommand0(CommandSender sender, String[] args) {

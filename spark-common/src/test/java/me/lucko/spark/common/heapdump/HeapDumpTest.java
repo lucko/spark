@@ -18,30 +18,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.heapdump;
 
-import com.google.common.annotations.VisibleForTesting;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class JavaVersion {
-    ;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class HeapDumpTest {
+
+    @Test
+    public void testHeapDump(@TempDir Path tempDir) throws Exception {
+        Path file = tempDir.resolve("heapdump.hprof");
+        HeapDump.dumpHeap(file, false);
+        assertTrue(Files.exists(file));
+        Files.delete(file);
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
-    }
-
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
-    }
 }

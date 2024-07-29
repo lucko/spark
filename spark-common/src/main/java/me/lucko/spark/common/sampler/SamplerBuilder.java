@@ -28,6 +28,7 @@ import me.lucko.spark.common.sampler.java.JavaSampler;
 import me.lucko.spark.common.tick.TickHook;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * Builds {@link Sampler} instances.
@@ -44,7 +45,7 @@ public class SamplerBuilder {
     private long autoEndTime = -1;
     private boolean background = false;
     private ThreadDumper threadDumper = ThreadDumper.ALL;
-    private ThreadGrouper threadGrouper = ThreadGrouper.BY_NAME;
+    private Supplier<ThreadGrouper> threadGrouper = ThreadGrouper.BY_NAME;
 
     private int ticksOver = -1;
     private TickHook tickHook = null;
@@ -80,7 +81,7 @@ public class SamplerBuilder {
         return this;
     }
 
-    public SamplerBuilder threadGrouper(ThreadGrouper threadGrouper) {
+    public SamplerBuilder threadGrouper(Supplier<ThreadGrouper> threadGrouper) {
         this.threadGrouper = threadGrouper;
         return this;
     }
@@ -131,7 +132,7 @@ public class SamplerBuilder {
                 this.samplingInterval
         );
 
-        SamplerSettings settings = new SamplerSettings(interval, this.threadDumper, this.threadGrouper, this.autoEndTime, this.background);
+        SamplerSettings settings = new SamplerSettings(interval, this.threadDumper, this.threadGrouper.get(), this.autoEndTime, this.background);
 
         Sampler sampler;
         if (this.mode == SamplerMode.ALLOCATION) {

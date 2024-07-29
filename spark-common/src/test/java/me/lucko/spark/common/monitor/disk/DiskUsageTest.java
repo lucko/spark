@@ -18,30 +18,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.monitor.disk;
 
-import com.google.common.annotations.VisibleForTesting;
+import org.junit.jupiter.api.Test;
 
-public class JavaVersion {
-    ;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+public class DiskUsageTest {
+
+    @Test
+    public void testDiskUsage() {
+        assertTrue(DiskUsage.getUsed() > 0);
+        assertTrue(DiskUsage.getTotal() > 0);
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
-    }
-
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
-    }
 }

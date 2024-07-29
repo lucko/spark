@@ -18,30 +18,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.test.plugin;
 
-import com.google.common.annotations.VisibleForTesting;
+import me.lucko.spark.common.command.sender.CommandSender;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.ansi.ANSIComponentSerializer;
 
-public class JavaVersion {
-    ;
+import java.util.UUID;
 
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+public enum TestCommandSender implements CommandSender {
+    INSTANCE;
+
+    private final UUID uniqueId = new UUID(0, 0);
+
+    @Override
+    public String getName() {
+        return "Test";
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
+    @Override
+    public UUID getUniqueId() {
+        return this.uniqueId;
     }
 
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
+    @Override
+    public void sendMessage(Component message) {
+        System.out.println(ANSIComponentSerializer.ansi().serialize(message));
+    }
+
+    @Override
+    public boolean hasPermission(String permission) {
+        return true;
     }
 }

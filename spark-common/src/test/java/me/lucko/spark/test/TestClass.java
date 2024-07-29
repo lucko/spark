@@ -18,30 +18,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.test;
 
-import com.google.common.annotations.VisibleForTesting;
-
-public class JavaVersion {
-    ;
-
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+public class TestClass {
+    public void test(String string) {
+        System.out.println("Hello, world!");
+        System.out.println("Hello, world!");
+        System.out.println("Hello, world!");
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
+    public void test(int integer) {
+        System.out.println("Hello, world!");
+        System.out.println("Hello, world!");
+        System.out.println("Hello, world!");
     }
 
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
+    public void test(boolean bool) {
+        System.out.println("Hello, world!");
+        System.out.println("Hello, world!");
+        System.out.println("Hello, world!");
     }
 }

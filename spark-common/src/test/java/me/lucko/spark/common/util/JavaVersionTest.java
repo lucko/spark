@@ -20,28 +20,22 @@
 
 package me.lucko.spark.common.util;
 
-import com.google.common.annotations.VisibleForTesting;
+import org.junit.jupiter.api.Test;
 
-public class JavaVersion {
-    ;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+public class JavaVersionTest {
+
+    @Test
+    public void testJavaVersion() {
+        assertEquals(7, JavaVersion.parseJavaVersion("1.7"));
+        assertEquals(8, JavaVersion.parseJavaVersion("1.8"));
+        assertEquals(9, JavaVersion.parseJavaVersion("9"));
+        assertEquals(11, JavaVersion.parseJavaVersion("11"));
+        assertEquals(17, JavaVersion.parseJavaVersion("17"));
+        assertEquals(9, JavaVersion.parseJavaVersion("9.0.1"));
+        assertEquals(11, JavaVersion.parseJavaVersion("11.0.1"));
+        assertEquals(17, JavaVersion.parseJavaVersion("17.0.1"));
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
-    }
-
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
-    }
 }

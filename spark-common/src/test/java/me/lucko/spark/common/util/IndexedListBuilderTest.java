@@ -20,28 +20,23 @@
 
 package me.lucko.spark.common.util;
 
-import com.google.common.annotations.VisibleForTesting;
+import org.junit.jupiter.api.Test;
 
-public class JavaVersion {
-    ;
+import java.util.Arrays;
 
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class IndexedListBuilderTest {
+
+    @Test
+    public void testIndexes() {
+        IndexedListBuilder<String> builder = new IndexedListBuilder<>();
+
+        assertEquals(0, builder.add("a"));
+        assertEquals(1, builder.add("b"));
+        assertEquals(2, builder.add("c"));
+
+        assertEquals(Arrays.asList("a", "b", "c"), builder.build());
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
-    }
-
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
-    }
 }

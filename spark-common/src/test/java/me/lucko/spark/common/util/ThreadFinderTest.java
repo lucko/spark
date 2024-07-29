@@ -20,28 +20,31 @@
 
 package me.lucko.spark.common.util;
 
-import com.google.common.annotations.VisibleForTesting;
+import org.junit.jupiter.api.Test;
 
-public class JavaVersion {
-    ;
+import java.util.List;
+import java.util.stream.Collectors;
 
-    private static final int JAVA_VERSION;
-    static {
-        JAVA_VERSION = parseJavaVersion(System.getProperty("java.version"));
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class ThreadFinderTest {
+
+    @Test
+    public void testFindThread() {
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(100_000);
+            } catch (InterruptedException e) {
+                // ignore
+            }
+        }, "test-thread-1");
+        thread.start();
+
+        ThreadFinder threadFinder = new ThreadFinder();
+        List<Thread> threads = threadFinder.getThreads().collect(Collectors.toList());
+        assertTrue(threads.contains(thread));
+
+        thread.interrupt();
     }
 
-    @VisibleForTesting
-    static int parseJavaVersion(String version) {
-        if (version.startsWith("1.")) {
-            // Java 8 and below
-            return Integer.parseInt(version.substring(2, 3));
-        } else {
-            // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
-        }
-    }
-
-    public static int getJavaVersion() {
-        return JAVA_VERSION;
-    }
 }

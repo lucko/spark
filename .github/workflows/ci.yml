@@ -16,7 +16,12 @@ env:
 
 jobs:
   build-gradle:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -34,11 +39,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
-      - name: Run build with Gradle wrapper
-        run: ./gradlew build
+      - name: Run build and tests with Gradle wrapper
+        run: ./gradlew test build
 
       - name: Upload all artifacts
         uses: actions/upload-artifact@v3
+        if: matrix.os == 'ubuntu-latest'
         with:
           name: jars
           path: |
