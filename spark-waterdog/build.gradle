@@ -35,6 +35,7 @@ shadowJar {
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
