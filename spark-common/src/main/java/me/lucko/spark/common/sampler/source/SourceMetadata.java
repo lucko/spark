@@ -21,7 +21,7 @@
 package me.lucko.spark.common.sampler.source;
 
 import com.google.common.collect.ImmutableList;
-import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkProtos.PluginOrModMetadata;
 
 import java.util.Collection;
 import java.util.List;
@@ -70,10 +70,11 @@ public class SourceMetadata {
         return this.author;
     }
 
-    public SamplerMetadata.SourceMetadata toProto() {
-        return SamplerMetadata.SourceMetadata.newBuilder()
+    public PluginOrModMetadata toProto() {
+        return PluginOrModMetadata.newBuilder()
                 .setName(this.name)
                 .setVersion(this.version)
+                .setAuthor(this.author)
                 .build();
     }
 

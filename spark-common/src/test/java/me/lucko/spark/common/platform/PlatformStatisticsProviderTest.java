@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -42,7 +43,7 @@ public class PlatformStatisticsProviderTest {
     @Test
     public void testPlatformStatistics(@TempDir Path directory) {
         try (TestSparkPlugin plugin = new TestSparkPlugin(directory)) {
-            SparkProtos.PlatformStatistics platformStatistics = new PlatformStatisticsProvider(plugin.platform()).getPlatformStatistics(null, true);
+            SparkProtos.PlatformStatistics platformStatistics = new PlatformStatisticsProvider(plugin.platform()).getPlatformStatistics(Collections.emptyMap(), true);
             assertNotNull(platformStatistics);
         }
     }

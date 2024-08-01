@@ -17,6 +17,10 @@ message HeapMetadata {
   PlatformMetadata platform_metadata = 2;
   PlatformStatistics platform_statistics = 3;
   SystemStatistics system_statistics = 4;
+  int64 generated_time = 5;
+  map<string, string> server_configurations = 6;
+  map<string, PluginOrModMetadata> sources = 7;
+  map<string, string> extra_platform_metadata = 8;
 }
 
 message HeapEntry {

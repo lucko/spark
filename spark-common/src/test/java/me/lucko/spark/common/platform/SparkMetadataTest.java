@@ -18,13 +18,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.platform;
 
-public enum MediaTypes {
-    ;
+import me.lucko.spark.test.plugin.TestCommandSender;
+import me.lucko.spark.test.plugin.TestSparkPlugin;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-    public static final String SPARK_SAMPLER_MEDIA_TYPE = "application/x-spark-sampler";
-    public static final String SPARK_HEAP_MEDIA_TYPE = "application/x-spark-heap";
-    public static final String SPARK_HEALTH_MEDIA_TYPE = "application/x-spark-health";
+import java.nio.file.Path;
+import java.util.Collections;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+public class SparkMetadataTest {
+
+    @Test
+    public void testGather(@TempDir Path directory) {
+        try (TestSparkPlugin plugin = new TestSparkPlugin(directory)) {
+            SparkMetadata metadata = SparkMetadata.gather(plugin.platform(), TestCommandSender.INSTANCE.toData(), Collections.emptyMap());
+            assertNotNull(metadata);
+        }
+    }
 
 }

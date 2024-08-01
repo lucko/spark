@@ -34,6 +34,10 @@ public interface CommandSender {
 
     UUID getUniqueId();
 
+    default boolean isPlayer() {
+        return getUniqueId() != null;
+    }
+
     void sendMessage(Component message);
 
     boolean hasPermission(String permission);

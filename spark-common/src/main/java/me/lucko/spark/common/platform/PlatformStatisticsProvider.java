@@ -22,6 +22,7 @@ package me.lucko.spark.common.platform;
 
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.cpu.CpuInfo;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.disk.DiskUsage;
@@ -40,10 +41,16 @@ import me.lucko.spark.proto.SparkProtos.SystemStatistics;
 import me.lucko.spark.proto.SparkProtos.WorldStatistics;
 
 import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
 import java.lang.management.RuntimeMXBean;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.logging.Level;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PlatformStatisticsProvider {
     private final SparkPlatform platform;
@@ -139,18 +146,37 @@ public class PlatformStatisticsProvider {
         return builder.build();
     }
 
-    public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, boolean includeWorld) {
+    public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, boolean detailed) {
         PlatformStatistics.Builder builder = PlatformStatistics.newBuilder();
 
-        MemoryUsage memoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
-        builder.setMemory(PlatformStatistics.Memory.newBuilder()
-                .setHeap(PlatformStatistics.Memory.MemoryPool.newBuilder()
-                        .setUsed(memoryUsage.getUsed())
-                        .setTotal(memoryUsage.getCommitted())
+        PlatformStatistics.Memory.Builder memory = PlatformStatistics.Memory.newBuilder()
+                .setHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getHeapMemoryUsage()))
+                .setNonHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage()));
+
+        if (detailed) {
+            List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
+            for (MemoryPoolMXBean memoryPool : memoryPoolMXBeans) {
+                if (memoryPool.getType() != MemoryType.HEAP) {
+                    continue;
+                }
+
+                MemoryUsage usage = memoryPool.getUsage();
+                MemoryUsage collectionUsage = memoryPool.getCollectionUsage();
+
+                if (usage.getMax() == -1) {
+                    usage = new MemoryUsage(usage.getInit(), usage.getUsed(), usage.getCommitted(), usage.getCommitted());
+                }
+
+                memory.addPools(PlatformStatistics.Memory.MemoryPool.newBuilder()
+                        .setName(memoryPool.getName())
+                        .setUsage(memoryUsageProto(usage))
+                        .setCollectionUsage(memoryUsageProto(collectionUsage))
                         .build()
-                )
-                .build()
-        );
+                );
+            }
+        }
+
+        builder.setMemory(memory.build());
 
         long uptime = System.currentTimeMillis() - this.platform.getServerNormalOperationStartTime();
         builder.setUptime(uptime);
@@ -192,13 +218,29 @@ public class PlatformStatisticsProvider {
             );
         }
 
+        List<CommandSender> senders = this.platform.getPlugin().getCommandSenders().collect(Collectors.toList());
+
         PlatformInfo.Type platformType = this.platform.getPlugin().getPlatformInfo().getType();
         if (platformType != PlatformInfo.Type.CLIENT) {
-            long playerCount = this.platform.getPlugin().getCommandSenders().count() - 1; // includes console
+            long playerCount = senders.size() - 1; // includes console
             builder.setPlayerCount(playerCount);
         }
 
-        if (includeWorld) {
+        UUID anyOnlinePlayerUniqueId = senders.stream()
+                .filter(CommandSender::isPlayer)
+                .map(CommandSender::getUniqueId)
+                .filter(uniqueId -> uniqueId.version() == 4 || uniqueId.version() == 3)
+                .findAny()
+                .orElse(null);
+
+        builder.setOnlineMode(anyOnlinePlayerUniqueId == null
+                ? PlatformStatistics.OnlineMode.UNKNOWN
+                : anyOnlinePlayerUniqueId.version() == 4
+                    ? PlatformStatistics.OnlineMode.ONLINE
+                    : PlatformStatistics.OnlineMode.OFFLINE
+        );
+
+        if (detailed) {
             try {
                 WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
                         new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
@@ -208,7 +250,7 @@ public class PlatformStatisticsProvider {
                     builder.setWorld(worldStatistics);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                this.platform.getPlugin().log(Level.WARNING, "Failed to gather world statistics - " + e);
             }
         }
 
@@ -222,6 +264,15 @@ public class PlatformStatisticsProvider {
                 .setMin(info.min())
                 .setMedian(info.median())
                 .setPercentile95(info.percentile95th())
+                .build();
+    }
+
+    public static PlatformStatistics.Memory.MemoryUsage memoryUsageProto(MemoryUsage usage) {
+        return PlatformStatistics.Memory.MemoryUsage.newBuilder()
+                .setUsed(usage.getUsed())
+                .setCommitted(usage.getCommitted())
+                .setInit(usage.getInit())
+                .setMax(usage.getMax())
                 .build();
     }
 
