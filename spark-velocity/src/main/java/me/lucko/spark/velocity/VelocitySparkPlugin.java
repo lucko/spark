@@ -88,6 +88,11 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
     }
 
     @Override
+    public boolean hasPermission(Invocation inv) {
+        return this.platform.hasPermissionForAnyCommand(new VelocityCommandSender(inv.source()));
+    }
+
+    @Override
     public String getVersion() {
         return VelocitySparkPlugin.class.getAnnotation(Plugin.class).version();
     }
