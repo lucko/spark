@@ -88,6 +88,11 @@ public class Velocity4SparkPlugin implements SparkPlugin, SimpleCommand {
     }
 
     @Override
+    public boolean hasPermission(Invocation inv) {
+        return this.platform.hasPermissionForAnyCommand(new Velocity4CommandSender(inv.source()));
+    }
+
+    @Override
     public String getVersion() {
         return Velocity4SparkPlugin.class.getAnnotation(Plugin.class).version();
     }
