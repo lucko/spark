@@ -129,5 +129,10 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
             return this.plugin.platform.tabCompleteCommand(new BungeeCordCommandSender(sender, this.plugin.audienceFactory), args);
         }
+
+        @Override
+        public boolean hasPermission(CommandSender sender) {
+            return this.plugin.platform.hasPermissionForAnyCommand(new BungeeCordCommandSender(sender, this.plugin.audienceFactory));
+        }
     }
 }
