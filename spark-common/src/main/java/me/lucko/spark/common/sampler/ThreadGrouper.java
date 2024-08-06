@@ -181,6 +181,6 @@ public interface ThreadGrouper {
         public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
             return SamplerMetadata.DataAggregator.ThreadGrouper.AS_ONE;
         }
-    };
+    }
 
 }

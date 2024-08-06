@@ -24,6 +24,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.platform.MetadataProvider;
+import me.lucko.spark.common.platform.SparkMetadata;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.MergeMode;
@@ -123,6 +124,11 @@ public abstract class AbstractSampler implements Sampler {
     }
 
     @Override
+    public Map<Integer, SparkProtos.WindowStatistics> exportWindowStatistics() {
+        return this.windowStatisticsCollector.export();
+    }
+
+    @Override
     public void start() {
         this.startTime = System.currentTimeMillis();
     }
@@ -177,13 +183,12 @@ public abstract class AbstractSampler implements Sampler {
     protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender.Data creator, String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
                 .setSamplerMode(getMode().asProto())
-                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setCreator(creator.toProto())
                 .setStartTime(this.startTime)
-                .setEndTime(System.currentTimeMillis())
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())
                 .setDataAggregator(dataAggregator.getMetadata());
+
+        SparkMetadata.gather(platform, creator, getInitialGcStats()).writeTo(metadata);
 
         if (comment != null) {
             metadata.setComment(comment);
@@ -192,41 +197,6 @@ public abstract class AbstractSampler implements Sampler {
         int totalTicks = this.windowStatisticsCollector.getTotalTicks();
         if (totalTicks != -1) {
             metadata.setNumberOfTicks(totalTicks);
-        }
-
-        try {
-            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats(), true));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            metadata.setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            ServerConfigProvider serverConfigProvider = platform.getPlugin().createServerConfigProvider();
-            if (serverConfigProvider != null) {
-                metadata.putAllServerConfigurations(serverConfigProvider.export());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            MetadataProvider extraMetadataProvider = platform.getPlugin().createExtraMetadataProvider();
-            if (extraMetadataProvider != null) {
-                metadata.putAllExtraPlatformMetadata(extraMetadataProvider.export());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Collection<SourceMetadata> knownSources = platform.getPlugin().getKnownSources();
-        for (SourceMetadata source : knownSources) {
-            metadata.putSources(source.getName().toLowerCase(Locale.ROOT), source.toProto());
         }
 
         proto.setMetadata(metadata);

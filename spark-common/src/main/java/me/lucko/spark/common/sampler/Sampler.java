@@ -25,10 +25,12 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.ws.ViewerSocket;
+import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 import me.lucko.spark.proto.SparkSamplerProtos.SocketChannelInfo;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
@@ -95,6 +97,13 @@ public interface Sampler {
      * @return a future
      */
     CompletableFuture<Sampler> getFuture();
+
+    /**
+     * Exports the current set of window statistics.
+     *
+     * @return the window statistics
+     */
+    Map<Integer, SparkProtos.WindowStatistics> exportWindowStatistics();
 
     // Methods used to export the sampler data to the web viewer.
     SamplerData toProto(SparkPlatform platform, ExportProps exportProps);

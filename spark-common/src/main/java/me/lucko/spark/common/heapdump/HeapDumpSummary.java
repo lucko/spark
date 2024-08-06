@@ -22,6 +22,7 @@ package me.lucko.spark.common.heapdump;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.platform.SparkMetadata;
 import me.lucko.spark.proto.SparkHeapProtos.HeapData;
 import me.lucko.spark.proto.SparkHeapProtos.HeapEntry;
 import me.lucko.spark.proto.SparkHeapProtos.HeapMetadata;
@@ -130,20 +131,8 @@ public final class HeapDumpSummary {
     }
 
     public HeapData toProto(SparkPlatform platform, CommandSender.Data creator) {
-        HeapMetadata.Builder metadata = HeapMetadata.newBuilder()
-                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setCreator(creator.toProto());
-        try {
-            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null, true));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            metadata.setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        HeapMetadata.Builder metadata = HeapMetadata.newBuilder();
+        SparkMetadata.gather(platform, creator, platform.getStartupGcStatistics()).writeTo(metadata);
 
         HeapData.Builder proto = HeapData.newBuilder();
         proto.setMetadata(metadata);
