@@ -154,7 +154,7 @@ public class PlatformStatisticsProvider {
         long uptime = System.currentTimeMillis() - this.platform.getServerNormalOperationStartTime();
         builder.setUptime(uptime);
 
-        addGcStatistics(startingGcStatistics, builder, uptime);
+        addGarbageCollectorStatistics(startingGcStatistics, builder, uptime);
 
         addTickStatistics(builder);
 
@@ -213,7 +213,7 @@ public class PlatformStatisticsProvider {
         );
     }
 
-    private static void addGcStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, PlatformStatistics.Builder builder, long uptime) {
+    private static void addGarbageCollectorStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, PlatformStatistics.Builder builder, long uptime) {
         if (startingGcStatistics != null) {
             Map<String, GarbageCollectorStatistics> gcStats = GarbageCollectorStatistics.pollStatsSubtractInitial(startingGcStatistics);
             gcStats.forEach((name, statistics) -> builder.putGc(
