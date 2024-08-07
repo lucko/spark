@@ -242,8 +242,8 @@ public class HealthModule implements CommandModule {
         }
     }
 
-    private static void uploadHealthReportWithBroadcast(SparkPlatform platform, CommandResponseHandler responseHandler, SparkProtos.HealthData.Builder data) {
-        String key = platform.getBytebinClient().postContent(data.build(), MediaTypes.SPARK_HEALTH_MEDIA_TYPE).key();
+    private static void uploadHealthReportWithBroadcast(SparkPlatform platform, CommandResponseHandler responseHandler, SparkProtos.HealthData.Builder healthData) {
+        String key = platform.getBytebinClient().postContent(healthData.build(), MediaTypes.SPARK_HEALTH_MEDIA_TYPE).key();
         String url = platform.getViewerUrl() + key;
 
         responseHandler.broadcastPrefixed(text("Health report:", GOLD));
