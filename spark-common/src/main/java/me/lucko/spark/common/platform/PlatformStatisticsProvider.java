@@ -149,58 +149,37 @@ public class PlatformStatisticsProvider {
     public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, boolean detailed) {
         PlatformStatistics.Builder builder = PlatformStatistics.newBuilder();
 
-        PlatformStatistics.Memory.Builder memory = PlatformStatistics.Memory.newBuilder()
-                .setHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getHeapMemoryUsage()))
-                .setNonHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage()));
-
-        if (detailed) {
-            ManagementFactory.getMemoryPoolMXBeans().stream()
-                    .filter(memoryPool -> memoryPool.getType() == MemoryType.HEAP)
-                    .forEach(memoryPool -> {
-                        MemoryUsage usage = adjustMemoryUsage(memoryPool.getUsage());
-                        MemoryUsage collectionUsage = memoryPool.getCollectionUsage();
-                        memory.addPools(PlatformStatistics.Memory.MemoryPool.newBuilder()
-                                .setName(memoryPool.getName())
-                                .setUsage(memoryUsageProto(usage))
-                                .setCollectionUsage(memoryUsageProto(collectionUsage))
-                                .build());
-                    });
-        }
-
-        builder.setMemory(memory.build());
+        addMemoryStatistics(detailed, builder);
 
         long uptime = System.currentTimeMillis() - this.platform.getServerNormalOperationStartTime();
         builder.setUptime(uptime);
 
-        if (startingGcStatistics != null) {
-            Map<String, GarbageCollectorStatistics> gcStats = GarbageCollectorStatistics.pollStatsSubtractInitial(startingGcStatistics);
-            gcStats.forEach((name, statistics) -> builder.putGc(
-                    name,
-                    PlatformStatistics.Gc.newBuilder()
-                            .setTotal(statistics.getCollectionCount())
-                            .setAvgTime(statistics.getAverageCollectionTime())
-                            .setAvgFrequency(statistics.getAverageCollectionFrequency(uptime))
-                            .build()
-            ));
-        }
+        addGcStatistics(startingGcStatistics, builder, uptime);
 
-        TickStatistics tickStatistics = this.platform.getTickStatistics();
-        if (tickStatistics != null) {
-            builder.setTps(PlatformStatistics.Tps.newBuilder()
-                    .setLast1M(tickStatistics.tps1Min())
-                    .setLast5M(tickStatistics.tps5Min())
-                    .setLast15M(tickStatistics.tps15Min())
-                    .build()
-            );
-            if (tickStatistics.isDurationSupported()) {
-                builder.setMspt(PlatformStatistics.Mspt.newBuilder()
-                        .setLast1M(rollingAvgProto(tickStatistics.duration1Min()))
-                        .setLast5M(rollingAvgProto(tickStatistics.duration5Min()))
-                        .build()
+        addTickStatistics(builder);
+
+        addPingStatistics(builder);
+
+        addPlayerStatistics(builder);
+
+        if (detailed) {
+            try {
+                WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
+                        new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
                 );
+                WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
+                if (worldStatistics != null) {
+                    builder.setWorld(worldStatistics);
+                }
+            } catch (Exception e) {
+                this.platform.getPlugin().log(Level.WARNING, "Failed to gather world statistics - " + e);
             }
         }
 
+        return builder.build();
+    }
+
+    private void addPingStatistics(PlatformStatistics.Builder builder) {
         PingStatistics pingStatistics = this.platform.getPingStatistics();
         if (pingStatistics != null && pingStatistics.getPingAverage().getSamples() != 0) {
             builder.setPing(PlatformStatistics.Ping.newBuilder()
@@ -208,7 +187,9 @@ public class PlatformStatisticsProvider {
                     .build()
             );
         }
+    }
 
+    private void addPlayerStatistics(PlatformStatistics.Builder builder) {
         List<CommandSender> senders = this.platform.getPlugin().getCommandSenders().collect(Collectors.toList());
 
         PlatformInfo.Type platformType = this.platform.getPlugin().getPlatformInfo().getType();
@@ -230,22 +211,61 @@ public class PlatformStatisticsProvider {
                     ? PlatformStatistics.OnlineMode.ONLINE
                     : PlatformStatistics.OnlineMode.OFFLINE
         );
+    }
 
-        if (detailed) {
-            try {
-                WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
-                        new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())
+    private static void addGcStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, PlatformStatistics.Builder builder, long uptime) {
+        if (startingGcStatistics != null) {
+            Map<String, GarbageCollectorStatistics> gcStats = GarbageCollectorStatistics.pollStatsSubtractInitial(startingGcStatistics);
+            gcStats.forEach((name, statistics) -> builder.putGc(
+                    name,
+                    PlatformStatistics.Gc.newBuilder()
+                            .setTotal(statistics.getCollectionCount())
+                            .setAvgTime(statistics.getAverageCollectionTime())
+                            .setAvgFrequency(statistics.getAverageCollectionFrequency(uptime))
+                            .build()
+            ));
+        }
+    }
+
+    private void addTickStatistics(PlatformStatistics.Builder builder) {
+        TickStatistics tickStatistics = this.platform.getTickStatistics();
+        if (tickStatistics != null) {
+            builder.setTps(PlatformStatistics.Tps.newBuilder()
+                    .setLast1M(tickStatistics.tps1Min())
+                    .setLast5M(tickStatistics.tps5Min())
+                    .setLast15M(tickStatistics.tps15Min())
+                    .build()
+            );
+            if (tickStatistics.isDurationSupported()) {
+                builder.setMspt(PlatformStatistics.Mspt.newBuilder()
+                        .setLast1M(rollingAvgProto(tickStatistics.duration1Min()))
+                        .setLast5M(rollingAvgProto(tickStatistics.duration5Min()))
+                        .build()
                 );
-                WorldStatistics worldStatistics = worldStatisticsProvider.getWorldStatistics();
-                if (worldStatistics != null) {
-                    builder.setWorld(worldStatistics);
-                }
-            } catch (Exception e) {
-                this.platform.getPlugin().log(Level.WARNING, "Failed to gather world statistics - " + e);
             }
         }
+    }
 
-        return builder.build();
+    private static void addMemoryStatistics(boolean detailed, PlatformStatistics.Builder builder) {
+        PlatformStatistics.Memory.Builder memory = PlatformStatistics.Memory.newBuilder()
+                .setHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getHeapMemoryUsage()))
+                .setNonHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage()));
+
+        if (detailed) {
+            ManagementFactory.getMemoryPoolMXBeans().stream()
+                    .filter(memoryPool -> memoryPool.getType() == MemoryType.HEAP)
+                    .forEach(memoryPool -> {
+                        MemoryUsage usage = adjustMemoryUsage(memoryPool.getUsage());
+                        MemoryUsage collectionUsage = memoryPool.getCollectionUsage();
+                        memory.addPools(PlatformStatistics.Memory.MemoryPool.newBuilder()
+                                .setName(memoryPool.getName())
+                                .setUsage(memoryUsageProto(usage))
+                                .setCollectionUsage(memoryUsageProto(collectionUsage))
+                                .build());
+                    });
+        }
+
+        builder.setMemory(memory.build());
     }
 
     private static MemoryUsage adjustMemoryUsage(MemoryUsage usage) {
