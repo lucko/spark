@@ -154,26 +154,17 @@ public class PlatformStatisticsProvider {
                 .setNonHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage()));
 
         if (detailed) {
-            List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
-            for (MemoryPoolMXBean memoryPool : memoryPoolMXBeans) {
-                if (memoryPool.getType() != MemoryType.HEAP) {
-                    continue;
-                }
-
-                MemoryUsage usage = memoryPool.getUsage();
-                MemoryUsage collectionUsage = memoryPool.getCollectionUsage();
-
-                if (usage.getMax() == -1) {
-                    usage = new MemoryUsage(usage.getInit(), usage.getUsed(), usage.getCommitted(), usage.getCommitted());
-                }
-
-                memory.addPools(PlatformStatistics.Memory.MemoryPool.newBuilder()
-                        .setName(memoryPool.getName())
-                        .setUsage(memoryUsageProto(usage))
-                        .setCollectionUsage(memoryUsageProto(collectionUsage))
-                        .build()
-                );
-            }
+            ManagementFactory.getMemoryPoolMXBeans().stream()
+                    .filter(memoryPool -> memoryPool.getType() == MemoryType.HEAP)
+                    .forEach(memoryPool -> {
+                        MemoryUsage usage = adjustMemoryUsage(memoryPool.getUsage());
+                        MemoryUsage collectionUsage = memoryPool.getCollectionUsage();
+                        memory.addPools(PlatformStatistics.Memory.MemoryPool.newBuilder()
+                                .setName(memoryPool.getName())
+                                .setUsage(memoryUsageProto(usage))
+                                .setCollectionUsage(memoryUsageProto(collectionUsage))
+                                .build());
+                    });
         }
 
         builder.setMemory(memory.build());
@@ -255,6 +246,12 @@ public class PlatformStatisticsProvider {
         }
 
         return builder.build();
+    }
+
+    private static MemoryUsage adjustMemoryUsage(MemoryUsage usage) {
+        return usage.getMax() == -1
+                ? new MemoryUsage(usage.getInit(), usage.getUsed(), usage.getCommitted(), usage.getCommitted())
+                : usage;
     }
 
     public static SparkProtos.RollingAverageValues rollingAvgProto(DoubleAverageInfo info) {
