@@ -226,31 +226,35 @@ public class HealthModule implements CommandModule {
         SparkProtos.HealthMetadata.Builder metadata = SparkProtos.HealthMetadata.newBuilder();
         SparkMetadata.gather(platform, sender.toData(), platform.getStartupGcStatistics()).writeTo(metadata);
 
-        SparkProtos.HealthData.Builder data = SparkProtos.HealthData.newBuilder()
+        SparkProtos.HealthData.Builder healthData = SparkProtos.HealthData.newBuilder()
                 .setMetadata(metadata);
 
         Sampler activeSampler = platform.getSamplerContainer().getActiveSampler();
         if (activeSampler != null) {
-            data.putAllTimeWindowStatistics(activeSampler.exportWindowStatistics());
+            healthData.putAllTimeWindowStatistics(activeSampler.exportWindowStatistics());
         }
 
         try {
-            String key = platform.getBytebinClient().postContent(data.build(), MediaTypes.SPARK_HEALTH_MEDIA_TYPE).key();
-            String url = platform.getViewerUrl() + key;
-
-            resp.broadcastPrefixed(text("Health report:", GOLD));
-            resp.broadcast(text()
-                    .content(url)
-                    .color(GRAY)
-                    .clickEvent(ClickEvent.openUrl(url))
-                    .build()
-            );
-
-            platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Health report", url));
+            uploadHealthReportWithBroadcast(platform, resp, healthData);
         } catch (Exception e) {
-            resp.broadcastPrefixed(text("An error occurred whilst uploading the data.", RED));
+            resp.broadcastPrefixed(text("An error occurred whilst uploading the healthData.", RED));
             e.printStackTrace();
         }
+    }
+
+    private static void uploadHealthReportWithBroadcast(SparkPlatform platform, CommandResponseHandler responseHandler, SparkProtos.HealthData.Builder data) {
+        String key = platform.getBytebinClient().postContent(data.build(), MediaTypes.SPARK_HEALTH_MEDIA_TYPE).key();
+        String url = platform.getViewerUrl() + key;
+
+        responseHandler.broadcastPrefixed(text("Health report:", GOLD));
+        responseHandler.broadcast(text()
+                .content(url)
+                .color(GRAY)
+                .clickEvent(ClickEvent.openUrl(url))
+                .build()
+        );
+
+        platform.getActivityLog().addToLog(Activity.urlActivity(responseHandler.senderData(), System.currentTimeMillis(), "Health report", url));
     }
 
     private static void addTickStats(List<Component> report, TickStatistics tickStatistics) {
