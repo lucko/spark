@@ -71,11 +71,14 @@ public class SourceMetadata {
     }
 
     public PluginOrModMetadata toProto() {
-        return PluginOrModMetadata.newBuilder()
-                .setName(this.name)
-                .setVersion(this.version)
-                .setAuthor(this.author)
-                .build();
+        PluginOrModMetadata.Builder builder = PluginOrModMetadata.newBuilder().setName(this.name);
+        if (this.version != null) {
+            builder.setVersion(this.version);
+        }
+        if (this.author != null) {
+            builder.setAuthor(this.author);
+        }
+        return builder.build();
     }
 
 }
