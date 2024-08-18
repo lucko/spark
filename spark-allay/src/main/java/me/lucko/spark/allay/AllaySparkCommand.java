@@ -18,6 +18,7 @@ public class AllaySparkCommand extends SimpleCommand {
     public AllaySparkCommand(SparkPlatform platform) {
         super("spark", "spark");
         this.platform = platform;
+        this.permissions.add("spark");
     }
 
     // only for game overloads
