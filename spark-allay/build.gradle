@@ -28,7 +28,7 @@ processResources {
                 'pluginVersion': project.pluginVersion,
                 'pluginDescription': project.pluginDescription
         )
-        include 'plugin.yml'
+        include 'plugin.json'
     }
 }
 
