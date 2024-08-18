@@ -1,0 +1,9 @@
+{
+  "entrance": "me.lucko.spark.allay.AllaySparkPlugin",
+  "name": "spark",
+  "description": "${pluginDescription}",
+  "version": "${pluginVersion}",
+  "authors": [
+    "IWareQ"
+  ]
+}
