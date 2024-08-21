@@ -20,8 +20,10 @@
 
 package me.lucko.spark.neoforge;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import java.lang.reflect.Method;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -36,6 +38,7 @@ import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.entity.EntityLookup;
 import net.minecraft.world.level.entity.EntitySection;
 import net.minecraft.world.level.entity.EntitySectionStorage;
+import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.level.entity.TransientEntitySectionManager;
 
@@ -62,6 +65,7 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 
     public static final class Server extends NeoForgeWorldInfoProvider {
         private final MinecraftServer server;
+        private Method getEntityCount;
 
         public Server(MinecraftServer server) {
             this.server = server;
@@ -75,9 +79,27 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 
             for (ServerLevel level : this.server.getAllLevels()) {
                 PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
-                EntityLookup<Entity> entityIndex = entityManager.visibleEntityStorage;
 
-                entities += entityIndex.count();
+                if (entityManager == null) {
+                    // Moonrise compatibility
+                    LevelEntityGetter<Entity> getter = level.getEntities();
+                    if (this.getEntityCount == null) {
+                        try {
+                            this.getEntityCount = getter.getClass().getMethod("getEntityCount");
+                        } catch (final ReflectiveOperationException e) {
+                            throw new RuntimeException("entityManager is null and cannot find Moonrise getEntityCount method", e);
+                        }
+                    }
+                    try {
+                        entities += (int) this.getEntityCount.invoke(getter);
+                    } catch (final ReflectiveOperationException e) {
+                        throw new RuntimeException("Failed to invoke Moonrise getEntityCount method", e);
+                    }
+                } else {
+                    EntityLookup<Entity> entityIndex = entityManager.visibleEntityStorage;
+                    entities += entityIndex.count();
+                }
+
                 chunks += level.getChunkSource().getLoadedChunksCount();
             }
 
@@ -89,11 +111,16 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
             ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
             for (ServerLevel level : this.server.getAllLevels()) {
-                PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
-                EntitySectionStorage<Entity> cache = entityManager.sectionStorage;
+                Long2ObjectOpenHashMap<ForgeChunkInfo> levelInfos = new Long2ObjectOpenHashMap<>();
 
-                List<ForgeChunkInfo> list = getChunksFromCache(cache);
-                data.put(level.dimension().location().getPath(), list);
+                for (Entity entity : level.getEntities().getAll()) {
+                    ForgeChunkInfo info = levelInfos.computeIfAbsent(
+                        entity.chunkPosition().toLong(),
+                        key -> new ForgeChunkInfo(key, Stream.of()));
+                    info.entityCounts.increment(entity.getType());
+                }
+
+                data.put(level.dimension().location().getPath(), List.copyOf(levelInfos.values()));
             }
 
             return data;

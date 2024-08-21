@@ -20,8 +20,10 @@
 
 package me.lucko.spark.fabric;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import java.lang.reflect.Method;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -29,6 +31,7 @@ import me.lucko.spark.fabric.mixin.ClientEntityManagerAccessor;
 import me.lucko.spark.fabric.mixin.ClientWorldAccessor;
 import me.lucko.spark.fabric.mixin.ServerEntityManagerAccessor;
 import me.lucko.spark.fabric.mixin.ServerWorldAccessor;
+import me.lucko.spark.fabric.mixin.WorldAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
@@ -40,6 +43,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.entity.ClientEntityManager;
 import net.minecraft.world.entity.EntityIndex;
+import net.minecraft.world.entity.EntityLookup;
 import net.minecraft.world.entity.EntityTrackingSection;
 import net.minecraft.world.entity.SectionedEntityCache;
 
@@ -66,6 +70,7 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
 
     public static final class Server extends FabricWorldInfoProvider {
         private final MinecraftServer server;
+        private Method getEntityCount;
 
         public Server(MinecraftServer server) {
             this.server = server;
@@ -79,9 +84,27 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
 
             for (ServerWorld world : this.server.getWorlds()) {
                 ServerEntityManager<Entity> entityManager = ((ServerWorldAccessor) world).getEntityManager();
-                EntityIndex<?> entityIndex = ((ServerEntityManagerAccessor) entityManager).getIndex();
 
-                entities += entityIndex.size();
+                if (entityManager == null) {
+                    // Moonrise compatibility
+                    EntityLookup<Entity> getter = ((WorldAccessor) world).spark$getEntityLookup();
+                    if (this.getEntityCount == null) {
+                        try {
+                            this.getEntityCount = getter.getClass().getMethod("getEntityCount");
+                        } catch (final ReflectiveOperationException e) {
+                            throw new RuntimeException("entityManager is null and cannot find Moonrise getEntityCount method", e);
+                        }
+                    }
+                    try {
+                        entities += (int) this.getEntityCount.invoke(getter);
+                    } catch (final ReflectiveOperationException e) {
+                        throw new RuntimeException("Failed to invoke Moonrise getEntityCount method", e);
+                    }
+                } else {
+                    EntityIndex<?> entityIndex = ((ServerEntityManagerAccessor) entityManager).getIndex();
+                    entities += entityIndex.size();
+                }
+
                 chunks += world.getChunkManager().getLoadedChunkCount();
             }
 
@@ -93,11 +116,16 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
 
             for (ServerWorld world : this.server.getWorlds()) {
-                ServerEntityManager<Entity> entityManager = ((ServerWorldAccessor) world).getEntityManager();
-                SectionedEntityCache<Entity> cache = ((ServerEntityManagerAccessor) entityManager).getCache();
+                Long2ObjectOpenHashMap<FabricChunkInfo> worldInfos = new Long2ObjectOpenHashMap<>();
 
-                List<FabricChunkInfo> list = getChunksFromCache(cache);
-                data.put(world.getRegistryKey().getValue().getPath(), list);
+                for (Entity entity : ((WorldAccessor) world).spark$getEntityLookup().iterate()) {
+                    FabricChunkInfo info = worldInfos.computeIfAbsent(
+                        entity.getChunkPos().toLong(),
+                        key -> new FabricChunkInfo(key, Stream.of()));
+                    info.entityCounts.increment(entity.getType());
+                }
+
+                data.put(world.getRegistryKey().getValue().getPath(), List.copyOf(worldInfos.values()));
             }
 
             return data;
