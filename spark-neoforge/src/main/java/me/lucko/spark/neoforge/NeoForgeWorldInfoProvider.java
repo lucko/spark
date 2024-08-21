@@ -220,7 +220,7 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
                 try {
                     getEntityCount = getter.getClass().getMethod("getEntityCount");
                 } catch (final ReflectiveOperationException e) {
-                    throw new RuntimeException("entityManager is null and cannot find Moonrise getEntityCount method", e);
+                    throw new RuntimeException("Cannot find Moonrise getEntityCount method", e);
                 }
             }
             return getEntityCount;
