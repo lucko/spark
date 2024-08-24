@@ -8,7 +8,8 @@
   ],
   "mixins": [
     "ServerEntityManagerAccessor",
-    "ServerWorldAccessor"
+    "ServerWorldAccessor",
+    "WorldAccessor"
   ],
   "plugin": "me.lucko.spark.fabric.plugin.FabricSparkMixinPlugin"
 }
