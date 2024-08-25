@@ -22,6 +22,7 @@ package me.lucko.spark.geyser;
 
 import me.lucko.spark.common.platform.PlatformInfo;
 
+import org.geysermc.api.util.ApiVersion;
 import org.geysermc.geyser.api.GeyserApi;
 
 public class GeyserPlatformInfo implements PlatformInfo {
@@ -43,7 +44,8 @@ public class GeyserPlatformInfo implements PlatformInfo {
 
     @Override
     public String getVersion() {
-        return geyserApi.geyserApiVersion().toString();
+        ApiVersion version = geyserApi.geyserApiVersion();
+        return version.human() + "." + version.major() + "." + version.minor();
     }
 
     @Override
