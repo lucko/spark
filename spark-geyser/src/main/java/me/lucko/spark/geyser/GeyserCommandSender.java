@@ -26,7 +26,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import org.geysermc.geyser.api.command.CommandSource;
-import org.geysermc.geyser.session.GeyserSession;
 
 import java.util.UUID;
 
@@ -43,10 +42,7 @@ public class GeyserCommandSender extends AbstractCommandSender<CommandSource> {
 
     @Override
     public UUID getUniqueId() {
-        if (this.delegate instanceof GeyserSession) {
-            return ((GeyserSession) this.delegate).javaUuid();
-        }
-        return null;
+        return this.delegate.playerUuid();
     }
 
     @Override

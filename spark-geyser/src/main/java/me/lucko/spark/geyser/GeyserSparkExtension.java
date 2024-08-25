@@ -48,7 +48,7 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
     private SparkPlatform platform;
 
     @Subscribe
-    public void onPreInitialize(GeyserPreInitializeEvent event) {
+    public void onPreInitialize(GeyserPreInitializeEvent ignored) {
         if (this.geyserApi().platformType() != PlatformType.STANDALONE) {
             this.logger().severe("spark is only supported on standalone Geyser instances! If you wish to use it on other platforms please download the spark version for that platform.");
             this.disable();
@@ -57,12 +57,12 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
     }
 
     @Subscribe
-    public void onPostInitialize(GeyserPostInitializeEvent event) {
+    public void onPostInitialize(GeyserPostInitializeEvent ignored) {
         this.platform.enable();
     }
 
     @Subscribe
-    public void onShutdown(GeyserShutdownEvent event) {
+    public void onShutdown(GeyserShutdownEvent ignored) {
         if (this.platform != null) {
             this.platform.disable();
         }
@@ -104,7 +104,7 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
     public Stream<GeyserCommandSender> getCommandSenders() {
         return Stream.concat(
                 this.geyserApi().onlineConnections().stream(),
-                Stream.of(((GeyserImpl) this.geyserApi()).getLogger())
+                Stream.of(geyserApi().consoleCommandSource())
         ).map(GeyserCommandSender::new);
     }
 

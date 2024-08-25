@@ -22,15 +22,13 @@ package me.lucko.spark.geyser;
 
 import me.lucko.spark.common.platform.PlatformInfo;
 
-import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.api.GeyserApi;
-import org.geysermc.geyser.network.GameProtocol;
 
 public class GeyserPlatformInfo implements PlatformInfo {
-    private final GeyserApi server;
+    private final GeyserApi geyserApi;
 
-    public GeyserPlatformInfo(GeyserApi server) {
-        this.server = server;
+    public GeyserPlatformInfo(GeyserApi geyserApi) {
+        this.geyserApi = geyserApi;
     }
 
     @Override
@@ -45,11 +43,11 @@ public class GeyserPlatformInfo implements PlatformInfo {
 
     @Override
     public String getVersion() {
-        return GeyserImpl.VERSION; // TODO Move to API
+        return geyserApi.geyserApiVersion().toString();
     }
 
     @Override
     public String getMinecraftVersion() {
-        return GameProtocol.getJavaMinecraftVersion();
+        return geyserApi.supportedJavaVersion().versionString();
     }
 }

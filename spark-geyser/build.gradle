@@ -5,9 +5,10 @@ plugins {
 dependencies {
     implementation project(':spark-common')
     implementation 'net.kyori:adventure-text-serializer-legacy:4.14.0'
-    compileOnly 'org.geysermc.geyser:api:2.2.3-SNAPSHOT'
-    // TODO Remove
-    compileOnly 'org.geysermc.geyser:core:2.2.3-SNAPSHOT'
+    compileOnly 'org.geysermc.geyser:api:2.4.2-SNAPSHOT'
+    compileOnly('org.geysermc.geyser:core:2.4.2-SNAPSHOT') {
+        transitive(false)
+    }
 }
 
 repositories {
