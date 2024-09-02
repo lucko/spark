@@ -21,7 +21,6 @@
 package me.lucko.spark.fabric;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import java.lang.reflect.Method;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -44,6 +43,7 @@ import net.minecraft.world.entity.ClientEntityManager;
 import net.minecraft.world.entity.EntityIndex;
 import net.minecraft.world.entity.EntityLookup;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 

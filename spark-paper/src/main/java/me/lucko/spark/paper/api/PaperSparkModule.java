@@ -26,7 +26,6 @@ import org.bukkit.command.CommandSender;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 /**

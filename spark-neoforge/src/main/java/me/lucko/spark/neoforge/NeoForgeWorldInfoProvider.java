@@ -21,7 +21,6 @@
 package me.lucko.spark.neoforge;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import java.lang.reflect.Method;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -37,10 +36,11 @@ import net.minecraft.world.level.entity.EntityLookup;
 import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.level.entity.TransientEntitySectionManager;
+import net.neoforged.fml.ModList;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
-import net.neoforged.fml.ModList;
 
 public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 

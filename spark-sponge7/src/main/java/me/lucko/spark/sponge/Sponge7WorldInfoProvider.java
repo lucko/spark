@@ -34,7 +34,6 @@ import org.spongepowered.api.world.World;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Sponge7WorldInfoProvider implements WorldInfoProvider {
     private final Server server;
