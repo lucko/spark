@@ -91,6 +91,16 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
     }
 
     @Override
+    public boolean hasPermission(CommandSender sender) {
+        return this.platform.hasPermissionForAnyCommand(new PaperCommandSender(sender));
+    }
+
+    @Override
+    public Collection<String> getPermissions() {
+        return this.platform.getAllSparkPermissions();
+    }
+
+    @Override
     public void onServerTickStart() {
         this.tickHook.onTick();
     }
