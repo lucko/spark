@@ -9,6 +9,7 @@ main: me.lucko.spark.bukkit.BukkitSparkPlugin
 # remapping when the plugin is loaded. Note that despite what this setting might otherwise imply,
 # spark is still compatible with pre-1.13 releases.
 api-version: 1.13
+folia-supported: true
 
 softdepend: [PlaceholderAPI, MVdWPlaceholderAPI]
 
