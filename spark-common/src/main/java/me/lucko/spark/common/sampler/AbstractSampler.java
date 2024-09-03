@@ -25,8 +25,8 @@ import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.platform.SparkMetadata;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
-import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.node.exporter.NodeExporter;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -198,7 +199,7 @@ public abstract class AbstractSampler implements Sampler {
         proto.setMetadata(metadata);
     }
 
-    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, MergeMode mergeMode, ClassSourceLookup classSourceLookup, Supplier<ClassFinder> classFinderSupplier) {
+    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, Function<ProtoTimeEncoder, NodeExporter> nodeExporterFunction, ClassSourceLookup classSourceLookup, Supplier<ClassFinder> classFinderSupplier) {
         List<ThreadNode> data = dataAggregator.exportData();
         data.sort(Comparator.comparing(ThreadNode::getThreadLabel));
 
@@ -213,8 +214,10 @@ public abstract class AbstractSampler implements Sampler {
         this.windowStatisticsCollector.ensureHasStatisticsForAllWindows(timeWindows);
         proto.putAllTimeWindowStatistics(this.windowStatisticsCollector.export());
 
+        NodeExporter exporter = nodeExporterFunction.apply(timeEncoder);
+
         for (ThreadNode entry : data) {
-            proto.addThreads(entry.toProto(mergeMode, timeEncoder));
+            proto.addThreads(exporter.export(entry));
             classSourceVisitor.visit(entry);
         }
 

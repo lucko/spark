@@ -18,35 +18,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.sampler.node;
+package me.lucko.spark.common.sampler.java;
 
+import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.util.MethodDisambiguator;
 
 import java.util.Objects;
 
 /**
- * Function to determine if {@link StackTraceNode}s should be merged.
+ * Strategy used to determine if {@link StackTraceNode}s should be merged.
  */
-public final class MergeMode {
+public enum MergeStrategy {
 
-    public static MergeMode sameMethod(MethodDisambiguator methodDisambiguator) {
-        return new MergeMode(methodDisambiguator, false);
-    }
+    SAME_METHOD(false),
+    SEPARATE_PARENT_CALLS(true);
 
-    public static MergeMode separateParentCalls(MethodDisambiguator methodDisambiguator) {
-        return new MergeMode(methodDisambiguator, true);
-    }
-
-    private final MethodDisambiguator methodDisambiguator;
     private final boolean separateParentCalls;
 
-    MergeMode(MethodDisambiguator methodDisambiguator, boolean separateParentCalls) {
-        this.methodDisambiguator = methodDisambiguator;
+    MergeStrategy(boolean separateParentCalls) {
         this.separateParentCalls = separateParentCalls;
-    }
-
-    public MethodDisambiguator getMethodDisambiguator() {
-        return this.methodDisambiguator;
     }
 
     public boolean separateParentCalls() {
@@ -56,11 +46,12 @@ public final class MergeMode {
     /**
      * Test if two stack trace nodes should be considered the same and merged.
      *
+     * @param disambiguator the method disambiguator
      * @param n1 the first node
      * @param n2 the second node
      * @return if the nodes should be merged
      */
-    public boolean shouldMerge(StackTraceNode n1, StackTraceNode n2) {
+    public boolean shouldMerge(MethodDisambiguator disambiguator, StackTraceNode n1, StackTraceNode n2) {
         // are the class names the same?
         if (!n1.getClassName().equals(n2.getClassName())) {
             return false;
@@ -77,8 +68,8 @@ public final class MergeMode {
         }
 
         // are the method descriptions the same? (is it the same method?)
-        String desc1 = this.methodDisambiguator.disambiguate(n1).map(MethodDisambiguator.MethodDescription::getDesc).orElse(null);
-        String desc2 = this.methodDisambiguator.disambiguate(n2).map(MethodDisambiguator.MethodDescription::getDesc).orElse(null);
+        String desc1 = disambiguator.disambiguate(n1).map(MethodDisambiguator.MethodDescription::getDescription).orElse(null);
+        String desc2 = disambiguator.disambiguate(n2).map(MethodDisambiguator.MethodDescription::getDescription).orElse(null);
 
         if (desc1 == null && desc2 == null) {
             return true;

@@ -22,9 +22,8 @@ package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.java.JavaSampler;
-import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import me.lucko.spark.test.TestClass2;
 import me.lucko.spark.test.plugin.TestCommandSender;
@@ -74,8 +73,11 @@ public class SamplerTest {
 
             Sampler.ExportProps exportProps = new Sampler.ExportProps()
                     .creator(TestCommandSender.INSTANCE.toData())
-                    .mergeMode(() -> MergeMode.sameMethod(new MethodDisambiguator(plugin.platform().createClassFinder())))
                     .classSourceLookup(() -> ClassSourceLookup.create(plugin.platform()));
+
+            if (profilerType == ProfilerType.JAVA) {
+                exportProps.mergeStrategy(MergeStrategy.SAME_METHOD);
+            }
 
             SparkSamplerProtos.SamplerData proto = sampler.toProto(plugin.platform(), exportProps);
             assertNotNull(proto);

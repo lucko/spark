@@ -23,9 +23,9 @@ package me.lucko.spark.common.sampler.node;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import me.lucko.spark.common.sampler.SamplerMode;
+import me.lucko.spark.common.sampler.async.AsyncNodeExporter;
 import me.lucko.spark.common.sampler.async.AsyncStackTraceElement;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
-import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NodeTest {
 
-    private static final StackTraceNode.Describer<AsyncStackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) -> new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getMethodDescription());
+    private static final StackTraceNode.Describer<AsyncStackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) -> new StackTraceNode.AsyncDescription(element.getClassName(), element.getMethodName(), element.getMethodDescription());
     private static final int WINDOW = 10;
 
     private static final AsyncStackTraceElement NODE_0 = new AsyncStackTraceElement("java.lang.Thread", "run", "()V");
@@ -104,10 +104,7 @@ public class NodeTest {
         int[] keys = timeEncoder.getKeys();
         assertArrayEquals(new int[]{WINDOW, WINDOW + 1}, keys);
 
-        SparkSamplerProtos.ThreadNode proto = threadNode.toProto(
-                MergeMode.sameMethod(new MethodDisambiguator(null)),
-                timeEncoder
-        );
+        SparkSamplerProtos.ThreadNode proto = new AsyncNodeExporter(timeEncoder).export(threadNode);
 
         SparkSamplerProtos.ThreadNode expected = SparkSamplerProtos.ThreadNode.newBuilder()
                 .setName("Test Thread")
