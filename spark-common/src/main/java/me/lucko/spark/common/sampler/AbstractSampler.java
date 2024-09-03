@@ -179,6 +179,7 @@ public abstract class AbstractSampler implements Sampler {
 
     protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender.Data creator, String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
+                .setSamplerEngine(getType().asProto())
                 .setSamplerMode(getMode().asProto())
                 .setStartTime(this.startTime)
                 .setInterval(this.interval)

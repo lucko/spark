@@ -85,6 +85,13 @@ public interface Sampler {
     boolean isRunningInBackground();
 
     /**
+     * Gets the sampler type.
+     *
+     * @return the sampler type
+     */
+    SamplerType getType();
+
+    /**
      * Gets the sampler mode.
      *
      * @return the sampler mode

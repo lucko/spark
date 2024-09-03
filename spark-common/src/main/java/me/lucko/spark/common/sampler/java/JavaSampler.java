@@ -25,6 +25,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
+import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
@@ -200,6 +201,11 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         writeDataToProto(proto, this.dataAggregator, timeEncoder -> new JavaNodeExporter(timeEncoder, exportProps.mergeStrategy(), methodDisambiguator), exportProps.classSourceLookup().get(), platform::createClassFinder);
 
         return proto.build();
+    }
+
+    @Override
+    public SamplerType getType() {
+        return SamplerType.JAVA;
     }
 
     @Override

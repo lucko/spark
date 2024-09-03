@@ -25,6 +25,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
+import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.SparkThreadFactory;
@@ -207,6 +208,11 @@ public class AsyncSampler extends AbstractSampler {
         if (this.socketStatisticsTask == null) {
             this.socketStatisticsTask = this.scheduler.scheduleAtFixedRate(this::sendStatisticsToSocket, 10, 10, TimeUnit.SECONDS);
         }
+    }
+
+    @Override
+    public SamplerType getType() {
+        return SamplerType.ASYNC;
     }
 
     @Override
