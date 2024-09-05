@@ -158,6 +158,7 @@ message WorldStatistics {
   map<string, int32> entity_counts = 2;
   repeated World worlds = 3;
   repeated GameRule game_rules = 4;
+  repeated DataPack data_packs = 5;
 
   message World {
     string name = 1;
@@ -181,6 +182,12 @@ message WorldStatistics {
     string name = 1;
     string default_value = 2;
     map<string, string> world_values = 3;
+  }
+
+  message DataPack {
+    string name = 1;
+    string description = 2;
+    string source = 3;
   }
 }
 
@@ -227,6 +234,7 @@ message PluginOrModMetadata {
   string name = 1;
   string version = 2;
   string author = 3;
+  string description = 4;
 }
 
 message HealthData {

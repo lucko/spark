@@ -31,8 +31,11 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class PaperWorldInfoProvider implements WorldInfoProvider {
     private final Server server;
@@ -102,6 +105,18 @@ public class PaperWorldInfoProvider implements WorldInfoProvider {
         }
 
         return data;
+    }
+
+    @SuppressWarnings("removal")
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        return this.server.getDataPackManager().getDataPacks().stream()
+                .map(pack -> new DataPackInfo(
+                        pack.getTitle(),
+                        pack.getDescription(),
+                        pack.getSource().name().toLowerCase(Locale.ROOT).replace("_", "")
+                ))
+                .collect(Collectors.toList());
     }
 
     static final class PaperChunkInfo extends AbstractChunkInfo<EntityType> {

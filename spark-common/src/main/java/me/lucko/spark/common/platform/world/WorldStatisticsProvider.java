@@ -23,6 +23,7 @@ package me.lucko.spark.common.platform.world;
 import me.lucko.spark.proto.SparkProtos.WorldStatistics;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -76,6 +77,16 @@ public class WorldStatisticsProvider {
                     .setName(ruleName)
                     .setDefaultValue(rule.getDefaultValue())
                     .putAllWorldValues(rule.getWorldValues())
+                    .build()
+            ));
+        }
+
+        Collection<WorldInfoProvider.DataPackInfo> dataPacks = this.provider.getDataPacks();
+        if (dataPacks != null) {
+            dataPacks.forEach(dataPack -> stats.addDataPacks(WorldStatistics.DataPack.newBuilder()
+                    .setName(dataPack.name())
+                    .setDescription(dataPack.description())
+                    .setSource(dataPack.source())
                     .build()
             ));
         }

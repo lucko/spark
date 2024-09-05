@@ -185,7 +185,8 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
                 Arrays.asList(this.server.getPluginManager().getPlugins()),
                 Plugin::getName,
                 plugin -> plugin.getPluginMeta().getVersion(),
-                plugin -> String.join(", ", plugin.getPluginMeta().getAuthors())
+                plugin -> String.join(", ", plugin.getPluginMeta().getAuthors()),
+                plugin -> plugin.getPluginMeta().getDescription()
         );
     }
 
@@ -209,7 +210,6 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
         return PaperPlatformInfo.INSTANCE;
     }
 
-    // @SuppressWarnings("DataFlowIssue") // null plugin
     @Override
     public void registerApi(Spark api) {
         // this.server.getServicesManager().register(Spark.class, api, null, ServicePriority.Normal);

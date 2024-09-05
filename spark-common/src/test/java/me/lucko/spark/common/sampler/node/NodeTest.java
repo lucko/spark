@@ -94,7 +94,7 @@ public class NodeTest {
     }
 
     @Test
-    public void testToProto() {
+    public void testExport() {
         ThreadNode threadNode = new ThreadNode("Test Thread");
         threadNode.log(STACK_TRACE_DESCRIBER, STACK_1, TimeUnit.SECONDS.toMicros(1), WINDOW);
         threadNode.log(STACK_TRACE_DESCRIBER, STACK_1, TimeUnit.SECONDS.toMicros(1), WINDOW + 1);

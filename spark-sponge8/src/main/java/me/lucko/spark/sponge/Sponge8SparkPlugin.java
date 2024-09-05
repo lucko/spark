@@ -185,7 +185,8 @@ public class Sponge8SparkPlugin implements SparkPlugin {
                 plugin -> plugin.metadata().version().toString(),
                 plugin -> plugin.metadata().contributors().stream()
                         .map(PluginContributor::name)
-                        .collect(Collectors.joining(", "))
+                        .collect(Collectors.joining(", ")),
+                plugin -> plugin.metadata().description().orElse(null)
         );
     }
 

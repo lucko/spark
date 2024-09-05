@@ -34,6 +34,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.resource.ResourcePackManager;
+import net.minecraft.resource.ResourcePackSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerEntityManager;
 import net.minecraft.server.world.ServerWorld;
@@ -44,10 +46,39 @@ import net.minecraft.world.entity.EntityIndex;
 import net.minecraft.world.entity.EntityLookup;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
+
+    protected abstract ResourcePackManager getResourcePackManager();
+
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        return getResourcePackManager().getEnabledProfiles().stream()
+                .map(pack -> new DataPackInfo(
+                        pack.getId(),
+                        pack.getDescription().getString(),
+                        resourcePackSource(pack.getSource())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    private static String resourcePackSource(ResourcePackSource source) {
+        if (source == ResourcePackSource.NONE) {
+            return "none";
+        } else if (source == ResourcePackSource.BUILTIN) {
+            return "builtin";
+        } else if (source == ResourcePackSource.WORLD) {
+            return "world";
+        } else if (source == ResourcePackSource.SERVER) {
+            return "server";
+        } else {
+            return "unknown";
+        }
+    }
 
     public static final class Server extends FabricWorldInfoProvider {
         private final MinecraftServer server;
@@ -117,6 +148,11 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
                 }
             });
             return data;
+        }
+
+        @Override
+        protected ResourcePackManager getResourcePackManager() {
+            return this.server.getDataPackManager();
         }
     }
 
@@ -194,6 +230,11 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             });
 
             return data;
+        }
+
+        @Override
+        protected ResourcePackManager getResourcePackManager() {
+            return this.client.getResourcePackManager();
         }
     }
 

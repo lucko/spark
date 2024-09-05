@@ -98,7 +98,8 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
                 getProxy().getPluginManager().getPlugins(),
                 plugin -> plugin.getDescription().getName(),
                 plugin -> plugin.getDescription().getVersion(),
-                plugin -> plugin.getDescription().getAuthor()
+                plugin -> plugin.getDescription().getAuthor(),
+                plugin -> plugin.getDescription().getDescription()
         );
     }
 

@@ -120,7 +120,8 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
                 mod -> mod.getMetadata().getVersion().getFriendlyString(),
                 mod -> mod.getMetadata().getAuthors().stream()
                         .map(Person::getName)
-                        .collect(Collectors.joining(", "))
+                        .collect(Collectors.joining(", ")),
+                mod -> mod.getMetadata().getDescription()
         );
     }
 

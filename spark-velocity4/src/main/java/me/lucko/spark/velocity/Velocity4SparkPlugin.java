@@ -144,7 +144,8 @@ public class Velocity4SparkPlugin implements SparkPlugin, SimpleCommand {
                 this.proxy.pluginManager().plugins(),
                 plugin -> plugin.description().id(),
                 plugin -> plugin.description().version(),
-                plugin -> String.join(", ", plugin.description().authors())
+                plugin -> String.join(", ", plugin.description().authors()),
+                plugin -> plugin.description().description()
         );
     }
 

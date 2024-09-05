@@ -2,10 +2,14 @@ plugins {
     id 'com.gradleup.shadow' version '8.3.0'
 }
 
+java {
+    disableAutoTargetJvm()
+}
+
 dependencies {
     implementation project(':spark-common')
     implementation 'net.kyori:adventure-platform-bukkit:4.3.3'
-    compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
     
     // placeholders
     compileOnly 'me.clip:placeholderapi:2.10.3'
