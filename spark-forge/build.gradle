@@ -11,6 +11,7 @@ tasks.withType(JavaCompile) {
 minecraft {
     mappings channel: 'official', version: '1.21.1'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    reobf = false
 }
 
 configurations {
@@ -61,11 +62,4 @@ shadowJar {
 artifacts {
     archives shadowJar
     shadow shadowJar
-}
-
-reobf {
-    shadowJar {
-        dependsOn createMcpToSrg
-        mappings = createMcpToSrg.outputs.files.singleFile
-    }
 }
