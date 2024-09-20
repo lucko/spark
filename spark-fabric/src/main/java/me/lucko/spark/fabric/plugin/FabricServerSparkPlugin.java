@@ -27,10 +27,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -38,7 +36,6 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.fabric.FabricCommandSender;
-import me.lucko.spark.fabric.FabricExtraMetadataProvider;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricPlayerPingProvider;
 import me.lucko.spark.fabric.FabricServerConfigProvider;
@@ -47,7 +44,6 @@ import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
 import me.lucko.spark.fabric.FabricWorldInfoProvider;
 import me.lucko.spark.fabric.placeholder.SparkFabricPlaceholderApi;
-
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
@@ -169,11 +165,6 @@ public class FabricServerSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public ServerConfigProvider createServerConfigProvider() {
         return new FabricServerConfigProvider();
-    }
-
-    @Override
-    public MetadataProvider createExtraMetadataProvider() {
-        return new FabricExtraMetadataProvider(this.server.getDataPackManager());
     }
 
     @Override

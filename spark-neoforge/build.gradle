@@ -1,18 +1,36 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'net.neoforged.gradle.userdev' version '7.0.97'
+    id 'com.gradleup.shadow' version '8.3.0'
+    id 'net.neoforged.moddev' version '1.0.19'
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
-
-tasks.withType(JavaCompile) {
-    // override, compile targeting J17
-    options.release = 17
+tasks.withType(JavaCompile).configureEach {
+    // override, compile targeting J21
+    options.release = 21
 }
 
-minecraft {
-    accessTransformers {
-        file('src/main/resources/META-INF/accesstransformer.cfg')
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+neoForge {
+    version = "21.1.22"
+    validateAccessTransformers = true
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+    }
+
+    mods {
+        spark {
+            sourceSet sourceSets.main
+        }
     }
 }
 
@@ -22,13 +40,12 @@ configurations {
 }
 
 dependencies {
-    implementation "net.neoforged:neoforge:20.4.223"
     shade project(':spark-common')
 }
 
 processResources {
     from(sourceSets.main.resources.srcDirs) {
-        include 'META-INF/mods.toml'
+        include 'META-INF/neoforge.mods.toml'
         expand (
                 'pluginVersion': project.pluginVersion,
                 'pluginDescription': project.pluginDescription
@@ -36,7 +53,7 @@ processResources {
     }
 
     from(sourceSets.main.resources.srcDirs) {
-        exclude 'META-INF/mods.toml'
+        exclude 'META-INF/neoforge.mods.toml'
     }
 }
 
@@ -46,6 +63,7 @@ shadowJar {
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
@@ -56,6 +74,8 @@ shadowJar {
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+    exclude '**/*.proto'
+    exclude '**/*.proto.bin'
 }
 
 artifacts {

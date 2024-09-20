@@ -37,12 +37,11 @@ import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
-import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
-import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import net.kyori.adventure.text.Component;
@@ -59,7 +58,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
+import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
@@ -207,7 +208,7 @@ public class SamplerModule implements CommandModule {
             }
         }
 
-        ThreadGrouper threadGrouper;
+        Supplier<ThreadGrouper> threadGrouper;
         if (arguments.boolFlag("combine-all")) {
             threadGrouper = ThreadGrouper.AS_ONE;
         } else if (arguments.boolFlag("not-combined")) {
@@ -435,7 +436,7 @@ public class SamplerModule implements CommandModule {
                         .build()
                 );
 
-                platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
+                platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Profiler", url));
             } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the results. Attempting to save to disk instead.", RED));
                 e.printStackTrace();
@@ -452,7 +453,7 @@ public class SamplerModule implements CommandModule {
                 resp.broadcastPrefixed(text("Data has been written to: " + file));
                 resp.broadcastPrefixed(text("You can view the profile file using the web app @ " + platform.getViewerUrl(), GRAY));
 
-                platform.getActivityLog().addToLog(Activity.fileActivity(resp.sender(), System.currentTimeMillis(), "Profiler", file.toString()));
+                platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Profiler", file.toString()));
             } catch (IOException e) {
                 resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
                 e.printStackTrace();
@@ -479,7 +480,22 @@ public class SamplerModule implements CommandModule {
                     .build()
             );
 
-            platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler (live)", url));
+            String cmd = "/" + platform.getPlugin().getCommandName() + " profiler stop";
+            resp.broadcast(empty());
+            resp.broadcast(text()
+                    .append(text("(NOTE: this link is temporary and will expire after a short period of time. " +
+                            "If you need a link to share with other people (e.g. in a bug report), please use ", GRAY))
+                    .append(text()
+                            .content(cmd)
+                            .color(WHITE)
+                            .clickEvent(ClickEvent.runCommand(cmd))
+                            .build()
+                    )
+                    .append(text(" instead.)", GRAY))
+                    .build()
+            );
+
+            platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Profiler (live)", url));
         } catch (Exception e) {
             resp.replyPrefixed(text("An error occurred whilst opening the live profiler.", RED));
             e.printStackTrace();
@@ -488,14 +504,9 @@ public class SamplerModule implements CommandModule {
 
     private Sampler.ExportProps getExportProps(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
         return new Sampler.ExportProps()
-                .creator(resp.sender().toData())
+                .creator(resp.senderData())
                 .comment(Iterables.getFirst(arguments.stringFlag("comment"), null))
-                .mergeMode(() -> {
-                    MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
-                    return arguments.boolFlag("separate-parent-calls")
-                            ? MergeMode.separateParentCalls(methodDisambiguator)
-                            : MergeMode.sameMethod(methodDisambiguator);
-                })
+                .mergeStrategy(arguments.boolFlag("separate-parent-calls") ? MergeStrategy.SEPARATE_PARENT_CALLS : MergeStrategy.SAME_METHOD)
                 .classSourceLookup(() -> ClassSourceLookup.create(platform));
     }
 

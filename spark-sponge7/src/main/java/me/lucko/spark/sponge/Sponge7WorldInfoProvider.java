@@ -22,11 +22,9 @@ package me.lucko.spark.sponge;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
-
 import org.spongepowered.api.Server;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityType;
@@ -34,6 +32,7 @@ import org.spongepowered.api.world.Chunk;
 import org.spongepowered.api.world.World;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -76,6 +75,26 @@ public class Sponge7WorldInfoProvider implements WorldInfoProvider {
         }
 
         return data;
+    }
+
+    @Override
+    public GameRulesResult pollGameRules() {
+        // No way to get defaults info on sponge API 7 :(
+
+        // GameRulesResult data = new GameRulesResult();
+        // for (World world : this.server.getWorlds()) {
+        //     for (Map.Entry<String, String> entry : world.getGameRules().entrySet()) {
+        //         data.put(entry.getKey(), world.getName(), entry.getValue());
+        //     }
+        // }
+        // return data;
+
+        return null;
+    }
+
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        return null;
     }
 
     static final class Sponge7ChunkInfo extends AbstractChunkInfo<EntityType> {

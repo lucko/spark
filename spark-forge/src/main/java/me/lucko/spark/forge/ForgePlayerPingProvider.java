@@ -21,9 +21,7 @@
 package me.lucko.spark.forge;
 
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 

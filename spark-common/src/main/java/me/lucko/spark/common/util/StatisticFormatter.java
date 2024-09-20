@@ -21,9 +21,7 @@
 package me.lucko.spark.common.util;
 
 import com.google.common.base.Strings;
-
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;

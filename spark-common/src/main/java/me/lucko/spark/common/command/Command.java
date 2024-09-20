@@ -21,10 +21,8 @@
 package me.lucko.spark.common.command;
 
 import com.google.common.collect.ImmutableList;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-
 import net.kyori.adventure.text.Component;
 
 import java.util.Collections;

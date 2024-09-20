@@ -21,7 +21,6 @@
 package me.lucko.spark.bukkit;
 
 import me.lucko.spark.common.platform.PlatformInfo;
-
 import org.bukkit.Server;
 
 import java.lang.reflect.Field;
@@ -42,6 +41,11 @@ public class BukkitPlatformInfo implements PlatformInfo {
     @Override
     public String getName() {
         return "Bukkit";
+    }
+
+    @Override
+    public String getBrand() {
+        return this.server.getName();
     }
 
     @Override

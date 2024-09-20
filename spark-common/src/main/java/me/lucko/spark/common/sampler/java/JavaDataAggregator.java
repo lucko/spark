@@ -39,7 +39,7 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
     /** A describer for java.lang.StackTraceElement */
     private static final StackTraceNode.Describer<StackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) -> {
         int parentLineNumber = parent == null ? StackTraceNode.NULL_LINE_NUMBER : parent.getLineNumber();
-        return new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getLineNumber(), parentLineNumber);
+        return new StackTraceNode.JavaDescription(element.getClassName(), element.getMethodName(), element.getLineNumber(), parentLineNumber);
     };
 
     /** The worker pool for inserting stack nodes */
@@ -99,7 +99,7 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
         return super.exportData();
     }
 
-    private static boolean isSleeping(ThreadInfo thread) {
+    static boolean isSleeping(ThreadInfo thread) {
         if (thread.getThreadState() == Thread.State.WAITING || thread.getThreadState() == Thread.State.TIMED_WAITING) {
             return true;
         }

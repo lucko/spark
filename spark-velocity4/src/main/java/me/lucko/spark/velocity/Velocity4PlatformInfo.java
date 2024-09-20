@@ -21,7 +21,6 @@
 package me.lucko.spark.velocity;
 
 import com.velocitypowered.api.proxy.ProxyServer;
-
 import me.lucko.spark.common.platform.PlatformInfo;
 
 public class Velocity4PlatformInfo implements PlatformInfo {
@@ -39,6 +38,11 @@ public class Velocity4PlatformInfo implements PlatformInfo {
     @Override
     public String getName() {
         return "Velocity";
+    }
+
+    @Override
+    public String getBrand() {
+        return this.proxy.version().name();
     }
 
     @Override

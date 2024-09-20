@@ -18,32 +18,46 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.util.classfinder;
 
+import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.util.JavaVersion;
 import net.bytebuddy.agent.ByteBuddyAgent;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.instrument.Instrumentation;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 /**
  * Uses {@link Instrumentation} to find a class reference for given class names.
  *
  * <p>This is necessary as we don't always have access to the classloader for a given class.</p>
  */
-public class ClassFinder {
+public class InstrumentationClassFinder implements ClassFinder {
+
+    private static boolean warned = false;
+
+    private static Instrumentation loadInstrumentation(SparkPlugin plugin) {
+        Instrumentation instrumentation = null;
+        try {
+            instrumentation = ByteBuddyAgent.install();
+            if (!warned && JavaVersion.getJavaVersion() >= 21) {
+                warned = true;
+                plugin.log(Level.INFO, "If you see a warning above that says \"WARNING: A Java agent has been loaded dynamically\", it can be safely ignored.");
+                plugin.log(Level.INFO, "See here for more information: https://spark.lucko.me/docs/misc/Java-agent-warning");
+            }
+        } catch (Exception e) {
+            // ignored
+        }
+        return instrumentation;
+    }
 
     private final Map<String, Class<?>> classes = new HashMap<>();
 
-    public ClassFinder() {
-        Instrumentation instrumentation;
-        try {
-            instrumentation = ByteBuddyAgent.install();
-        } catch (Exception e) {
-            return;
-        }
+    public InstrumentationClassFinder(SparkPlugin plugin) {
+        Instrumentation instrumentation = loadInstrumentation(plugin);
         if (instrumentation == null) {
             return;
         }
@@ -54,21 +68,9 @@ public class ClassFinder {
         }
     }
 
+    @Override
     public @Nullable Class<?> findClass(String className) {
-        // try instrumentation
-        Class<?> clazz = this.classes.get(className);
-        if (clazz != null) {
-            return clazz;
-        }
-
-        // try Class.forName
-        try {
-            return Class.forName(className);
-        } catch (Throwable e) {
-            // ignore
-        }
-
-        return null;
+        return this.classes.get(className);
     }
 
 }

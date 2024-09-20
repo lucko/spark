@@ -23,8 +23,7 @@ package me.lucko.spark.common.sampler.source;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
-import me.lucko.spark.common.util.ClassFinder;
-
+import me.lucko.spark.common.util.classfinder.ClassFinder;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
@@ -43,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -204,11 +204,11 @@ public interface ClassSourceLookup {
         Map<String, String> getLineSourceMapping();
     }
 
-    static Visitor createVisitor(ClassSourceLookup lookup) {
+    static Visitor createVisitor(ClassSourceLookup lookup, Supplier<ClassFinder> classFinderSupplier) {
         if (lookup == ClassSourceLookup.NO_OP) {
             return NoOpVisitor.INSTANCE; // don't bother!
         }
-        return new VisitorImpl(lookup);
+        return new VisitorImpl(lookup, classFinderSupplier.get());
     }
 
     enum NoOpVisitor implements Visitor {
@@ -255,14 +255,15 @@ public interface ClassSourceLookup {
      */
     class VisitorImpl implements Visitor {
         private final ClassSourceLookup lookup;
-        private final ClassFinder classFinder = new ClassFinder();
+        private final ClassFinder classFinder;
 
         private final SourcesMap<String> classSources = new SourcesMap<>(Function.identity());
         private final SourcesMap<MethodCall> methodSources = new SourcesMap<>(MethodCall::toString);
         private final SourcesMap<MethodCallByLine> lineSources = new SourcesMap<>(MethodCallByLine::toString);
 
-        VisitorImpl(ClassSourceLookup lookup) {
+        VisitorImpl(ClassSourceLookup lookup, ClassFinder classFinder) {
             this.lookup = lookup;
+            this.classFinder = classFinder;
         }
 
         @Override
@@ -288,7 +289,7 @@ public interface ClassSourceLookup {
             if (node.getMethodDescription() != null) {
                 MethodCall methodCall = new MethodCall(node.getClassName(), node.getMethodName(), node.getMethodDescription());
                 this.methodSources.computeIfAbsent(methodCall, this.lookup::identify);
-            } else {
+            } else if (node.getLineNumber() != StackTraceNode.NULL_LINE_NUMBER) {
                 MethodCallByLine methodCall = new MethodCallByLine(node.getClassName(), node.getMethodName(), node.getLineNumber());
                 this.lineSources.computeIfAbsent(methodCall, this.lookup::identify);
             }

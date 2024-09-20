@@ -11,6 +11,7 @@ message PlatformMetadata {
   string version = 3;
   string minecraft_version = 4; // optional
   int32 spark_version = 7;
+  string brand = 8;
 
   // replaced
   reserved 5, 6;
@@ -32,6 +33,7 @@ message SystemStatistics {
   Java java = 6;
   int64 uptime = 7;
   map<string, NetInterface> net = 8;
+  Jvm jvm = 9;
 
   message Cpu {
     int32 threads = 1;
@@ -79,6 +81,12 @@ message SystemStatistics {
     string vm_args = 4;
   }
 
+  message Jvm {
+    string name = 1;
+    string vendor = 2;
+    string version = 3;
+  }
+
   message NetInterface {
     RollingAverageValues rx_bytes_per_second = 1;
     RollingAverageValues tx_bytes_per_second = 2;
@@ -96,13 +104,24 @@ message PlatformStatistics {
   Ping ping = 6; // optional
   int64 player_count = 7; // optional
   WorldStatistics world = 8; // optional
+  OnlineMode online_mode = 9; // optional
 
   message Memory {
-    MemoryPool heap = 1;
+    MemoryUsage heap = 1;
+    MemoryUsage non_heap = 2;
+    repeated MemoryPool pools = 3;
 
     message MemoryPool {
+      string name = 1;
+      MemoryUsage usage = 2;
+      MemoryUsage collection_usage = 3;
+    }
+
+    message MemoryUsage {
       int64 used = 1;
-      int64 total = 2;
+      int64 committed = 2; // previously called 'total'
+      int64 init = 3; // optional
+      int64 max = 4; // optional
     }
   }
 
@@ -126,12 +145,20 @@ message PlatformStatistics {
   message Ping {
     RollingAverageValues last15m = 1;
   }
+
+  enum OnlineMode {
+    UNKNOWN = 0;
+    OFFLINE = 1;
+    ONLINE = 2;
+  }
 }
 
 message WorldStatistics {
   int32 total_entities = 1;
   map<string, int32> entity_counts = 2;
   repeated World worlds = 3;
+  repeated GameRule game_rules = 4;
+  repeated DataPack data_packs = 5;
 
   message World {
     string name = 1;
@@ -149,6 +176,18 @@ message WorldStatistics {
     int32 z = 2;
     int32 total_entities = 3;
     map<string, int32> entity_counts = 4;
+  }
+
+  message GameRule {
+    string name = 1;
+    string default_value = 2;
+    map<string, string> world_values = 3;
+  }
+
+  message DataPack {
+    string name = 1;
+    string description = 2;
+    string source = 3;
   }
 }
 
@@ -189,4 +228,27 @@ message CommandSenderMetadata {
     OTHER = 0;
     PLAYER = 1;
   }
+}
+
+message PluginOrModMetadata {
+  string name = 1;
+  string version = 2;
+  string author = 3;
+  string description = 4;
+}
+
+message HealthData {
+  HealthMetadata metadata = 1;
+  map<int32, WindowStatistics> time_window_statistics = 2;
+}
+
+message HealthMetadata {
+  CommandSenderMetadata creator = 1;
+  PlatformMetadata platform_metadata = 2;
+  PlatformStatistics platform_statistics = 3;
+  SystemStatistics system_statistics = 4;
+  int64 generated_time = 5;
+  map<string, string> server_configurations = 6;
+  map<string, PluginOrModMetadata> sources = 7;
+  map<string, string> extra_platform_metadata = 8;
 }

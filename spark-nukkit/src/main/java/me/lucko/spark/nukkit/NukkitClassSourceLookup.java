@@ -20,9 +20,8 @@
 
 package me.lucko.spark.nukkit;
 
-import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-
 import cn.nukkit.plugin.PluginClassLoader;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

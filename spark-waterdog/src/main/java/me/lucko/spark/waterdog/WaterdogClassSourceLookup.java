@@ -20,11 +20,10 @@
 
 package me.lucko.spark.waterdog;
 
-import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-
 import dev.waterdog.waterdogpe.ProxyServer;
 import dev.waterdog.waterdogpe.plugin.Plugin;
 import dev.waterdog.waterdogpe.plugin.PluginClassLoader;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import java.util.Map;
 import java.util.WeakHashMap;

@@ -23,7 +23,6 @@ package me.lucko.spark.common.activitylog;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-
 import me.lucko.spark.common.command.sender.CommandSender;
 
 import java.util.concurrent.TimeUnit;
@@ -39,12 +38,12 @@ public final class Activity {
     private final String dataType;
     private final String dataValue;
 
-    public static Activity urlActivity(CommandSender user, long time, String type, String url) {
-        return new Activity(user.toData(), time, type, DATA_TYPE_URL, url);
+    public static Activity urlActivity(CommandSender.Data user, long time, String type, String url) {
+        return new Activity(user, time, type, DATA_TYPE_URL, url);
     }
 
-    public static Activity fileActivity(CommandSender user, long time, String type, String filePath) {
-        return new Activity(user.toData(), time, type, DATA_TYPE_FILE, filePath);
+    public static Activity fileActivity(CommandSender.Data user, long time, String type, String filePath) {
+        return new Activity(user, time, type, DATA_TYPE_FILE, filePath);
     }
 
     private Activity(CommandSender.Data user, long time, String type, String dataType, String dataValue) {

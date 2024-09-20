@@ -23,40 +23,11 @@ package me.lucko.spark.neoforge;
 import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-public class NeoForgeTickReporter extends SimpleTickReporter implements TickReporter {
-    private final TickEvent.Type type;
-
-    public NeoForgeTickReporter(TickEvent.Type type) {
-        this.type = type;
-    }
-
-    @SubscribeEvent
-    public void onTick(TickEvent.ServerTickEvent e) {
-        if (e.type != this.type) {
-            return;
-        }
-
-        switch (e.phase) {
-            case START -> onStart();
-            case END -> onEnd();
-            default -> throw new AssertionError(e.phase);
-        }
-    }
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent e) {
-        if (e.type != this.type) {
-            return;
-        }
-
-        switch (e.phase) {
-            case START -> onStart();
-            case END -> onEnd();
-            default -> throw new AssertionError(e.phase);
-        }
-    }
+public abstract class NeoForgeTickReporter extends SimpleTickReporter implements TickReporter {
 
     @Override
     public void start() {
@@ -67,6 +38,32 @@ public class NeoForgeTickReporter extends SimpleTickReporter implements TickRepo
     public void close() {
         NeoForge.EVENT_BUS.unregister(this);
         super.close();
+    }
+
+    public static final class Server extends NeoForgeTickReporter {
+
+        @SubscribeEvent
+        public void onTickStart(ServerTickEvent.Pre e) {
+            onStart();
+        }
+
+        @SubscribeEvent
+        public void onTickEnd(ServerTickEvent.Post e) {
+            onEnd();
+        }
+    }
+
+    public static final class Client extends NeoForgeTickReporter {
+
+        @SubscribeEvent
+        public void onTickStart(ClientTickEvent.Pre e) {
+            onStart();
+        }
+
+        @SubscribeEvent
+        public void onTickEnd(ClientTickEvent.Post e) {
+            onEnd();
+        }
     }
 
 }

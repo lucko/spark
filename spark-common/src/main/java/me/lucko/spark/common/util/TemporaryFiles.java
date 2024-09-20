@@ -25,8 +25,11 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -58,16 +61,21 @@ public final class TemporaryFiles {
     private final Set<Path> files = Collections.synchronizedSet(new HashSet<>());
 
     public TemporaryFiles(Path tmpDirectory) {
-        this.tmpDirectory = tmpDirectory;
+        boolean useOsTmpDir = Boolean.parseBoolean(System.getProperty("spark.useOsTmpDir", "false"));
+        if (useOsTmpDir) {
+            this.tmpDirectory = null;
+        } else {
+            this.tmpDirectory = init(tmpDirectory);
+        }
     }
 
     public Path create(String prefix, String suffix) throws IOException {
         Path file;
-        if (ensureDirectoryIsReady()) {
+        if (this.tmpDirectory == null) {
+            file = Files.createTempFile(prefix, suffix);
+        } else {
             String name = prefix + Long.toHexString(System.nanoTime()) + suffix;
             file = Files.createFile(this.tmpDirectory.resolve(name), OWNER_ONLY_FILE_PERMISSIONS);
-        } else {
-            file = Files.createTempFile(prefix, suffix);
         }
         return register(file);
     }
@@ -92,19 +100,33 @@ public final class TemporaryFiles {
         }
     }
 
-    private boolean ensureDirectoryIsReady() {
-        if (Boolean.parseBoolean(System.getProperty("spark.useOsTmpDir", "false"))) {
-            return false;
-        }
-
-        if (Files.isDirectory(this.tmpDirectory)) {
-            return true;
-        }
-
+    private static Path init(Path tmpDirectory) {
         try {
-            Files.createDirectories(this.tmpDirectory);
+            Files.createDirectories(tmpDirectory);
+            Path readmePath = tmpDirectory.resolve("about.txt");
 
-            Files.write(this.tmpDirectory.resolve("about.txt"), ImmutableList.of(
+            Files.walkFileTree(
+                    tmpDirectory,
+                    new SimpleFileVisitor<Path>() {
+                        @Override
+                        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                            if (!dir.equals(tmpDirectory)) {
+                                Files.delete(dir);
+                            }
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                            if (!file.equals(readmePath)) {
+                                Files.delete(file);
+                            }
+                            return FileVisitResult.CONTINUE;
+                        }
+                    }
+            );
+
+            Files.write(readmePath, ImmutableList.of(
                     "# What is this directory?",
                     "",
                     "* In order to perform certain functions, spark sometimes needs to write temporary data to the disk. ",
@@ -116,11 +138,10 @@ public final class TemporaryFiles {
                     "",
                     "tl;dr: spark uses this folder to store some temporary data."
             ), StandardCharsets.UTF_8);
-
-            return true;
         } catch (IOException e) {
-            return false;
+            // ignore
         }
+        return tmpDirectory;
     }
 
 }

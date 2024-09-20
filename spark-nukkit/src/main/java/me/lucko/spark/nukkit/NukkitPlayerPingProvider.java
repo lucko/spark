@@ -20,12 +20,10 @@
 
 package me.lucko.spark.nukkit;
 
-import com.google.common.collect.ImmutableMap;
-
-import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-
 import cn.nukkit.Player;
 import cn.nukkit.Server;
+import com.google.common.collect.ImmutableMap;
+import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 
 import java.util.Map;
 

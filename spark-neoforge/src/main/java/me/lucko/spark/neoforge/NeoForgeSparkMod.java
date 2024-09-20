@@ -24,7 +24,6 @@ import me.lucko.spark.neoforge.plugin.NeoForgeClientSparkPlugin;
 import me.lucko.spark.neoforge.plugin.NeoForgeServerSparkPlugin;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.IExtensionPoint;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
@@ -49,8 +48,6 @@ public class NeoForgeSparkMod {
         eventBus.addListener(this::setup);
         eventBus.addListener(this::clientInit);
         NeoForge.EVENT_BUS.register(this);
-
-        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> IExtensionPoint.DisplayTest.IGNORESERVERONLY, (a, b) -> true));
     }
 
     public String getVersion() {

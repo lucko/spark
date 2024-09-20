@@ -22,7 +22,6 @@ package me.lucko.spark.common.platform.serverconfig;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
-
 import me.lucko.spark.common.platform.MetadataProvider;
 
 import java.util.Arrays;

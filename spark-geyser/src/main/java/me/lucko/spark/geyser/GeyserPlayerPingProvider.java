@@ -24,11 +24,8 @@ import com.google.common.collect.ImmutableMap;
 
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 
-import org.cloudburstmc.netty.channel.raknet.RakChildChannel;
-import org.cloudburstmc.netty.handler.codec.raknet.common.RakSessionCodec;
 import org.geysermc.geyser.api.GeyserApi;
 import org.geysermc.geyser.api.connection.GeyserConnection;
-import org.geysermc.geyser.session.GeyserSession;
 
 import java.util.Map;
 
@@ -43,9 +40,7 @@ public class GeyserPlayerPingProvider implements PlayerPingProvider {
     public Map<String, Integer> poll() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
         for (GeyserConnection player : this.server.onlineConnections()) {
-            if (player.isConsole()) continue;
-            RakSessionCodec rakSessionCodec = ((RakChildChannel) ((GeyserSession) player).getUpstream().getSession().getPeer().getChannel()).rakPipeline().get(RakSessionCodec.class);
-            builder.put(player.name(), (int) rakSessionCodec.getPing());
+            builder.put(player.name(), player.ping());
         }
         return builder.build();
     }

@@ -34,7 +34,6 @@ import me.lucko.spark.common.util.Compression;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.proto.SparkHeapProtos;
-
 import net.kyori.adventure.text.event.ClickEvent;
 
 import java.io.IOException;
@@ -90,7 +89,7 @@ public class HeapAnalysisModule implements CommandModule {
             return;
         }
 
-        SparkHeapProtos.HeapData output = heapDump.toProto(platform, sender);
+        SparkHeapProtos.HeapData output = heapDump.toProto(platform, resp.senderData());
 
         boolean saveToFile = false;
         if (arguments.boolFlag("save-to-file")) {
@@ -108,7 +107,7 @@ public class HeapAnalysisModule implements CommandModule {
                         .build()
                 );
 
-                platform.getActivityLog().addToLog(Activity.urlActivity(sender, System.currentTimeMillis(), "Heap dump summary", url));
+                platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Heap dump summary", url));
             } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the data. Attempting to save to disk instead.", RED));
                 e.printStackTrace();
@@ -129,7 +128,7 @@ public class HeapAnalysisModule implements CommandModule {
                 );
                 resp.broadcastPrefixed(text("You can read the heap dump summary file using the viewer web-app - " + platform.getViewerUrl(), GRAY));
 
-                platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump summary", file.toString()));
+                platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Heap dump summary", file.toString()));
             } catch (IOException e) {
                 resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
                 e.printStackTrace();
@@ -164,7 +163,7 @@ public class HeapAnalysisModule implements CommandModule {
                 .append(text(file.toString(), GRAY))
                 .build()
         );
-        platform.getActivityLog().addToLog(Activity.fileActivity(sender, System.currentTimeMillis(), "Heap dump", file.toString()));
+        platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Heap dump", file.toString()));
 
 
         Compression compressionMethod = null;

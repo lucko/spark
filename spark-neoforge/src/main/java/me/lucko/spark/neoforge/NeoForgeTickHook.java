@@ -23,43 +23,11 @@ package me.lucko.spark.neoforge;
 import me.lucko.spark.common.tick.AbstractTickHook;
 import me.lucko.spark.common.tick.TickHook;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-public class NeoForgeTickHook extends AbstractTickHook implements TickHook {
-    private final TickEvent.Type type;
-
-    public NeoForgeTickHook(TickEvent.Type type) {
-        this.type = type;
-    }
-
-    @SubscribeEvent
-    public void onTick(TickEvent.ServerTickEvent e) {
-        if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
-        if (e.type != this.type) {
-            return;
-        }
-
-        onTick();
-    }
-
-    @SubscribeEvent
-    public void onTick(TickEvent.ClientTickEvent e) {
-        if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
-        if (e.type != this.type) {
-            return;
-        }
-
-        onTick();
-    }
-
-
+public abstract class NeoForgeTickHook extends AbstractTickHook implements TickHook {
     @Override
     public void start() {
         NeoForge.EVENT_BUS.register(this);
@@ -68,6 +36,22 @@ public class NeoForgeTickHook extends AbstractTickHook implements TickHook {
     @Override
     public void close() {
         NeoForge.EVENT_BUS.unregister(this);
+    }
+
+    public static final class Server extends NeoForgeTickHook {
+
+        @SubscribeEvent
+        public void onTickStart(ServerTickEvent.Pre e) {
+            onTick();
+        }
+    }
+
+    public static final class Client extends NeoForgeTickHook {
+
+        @SubscribeEvent
+        public void onTickStart(ClientTickEvent.Pre e) {
+            onTick();
+        }
     }
 
 }

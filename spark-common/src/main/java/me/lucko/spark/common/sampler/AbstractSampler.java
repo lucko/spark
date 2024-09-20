@@ -23,15 +23,14 @@ package me.lucko.spark.common.sampler;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
-import me.lucko.spark.common.platform.MetadataProvider;
-import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
+import me.lucko.spark.common.platform.SparkMetadata;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
-import me.lucko.spark.common.sampler.node.MergeMode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import me.lucko.spark.common.sampler.node.exporter.NodeExporter;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
+import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
@@ -40,10 +39,11 @@ import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Base implementation class for {@link Sampler}s.
@@ -121,6 +121,11 @@ public abstract class AbstractSampler implements Sampler {
     }
 
     @Override
+    public Map<Integer, SparkProtos.WindowStatistics> exportWindowStatistics() {
+        return this.windowStatisticsCollector.export();
+    }
+
+    @Override
     public void start() {
         this.startTime = System.currentTimeMillis();
     }
@@ -174,14 +179,14 @@ public abstract class AbstractSampler implements Sampler {
 
     protected void writeMetadataToProto(SamplerData.Builder proto, SparkPlatform platform, CommandSender.Data creator, String comment, DataAggregator dataAggregator) {
         SamplerMetadata.Builder metadata = SamplerMetadata.newBuilder()
+                .setSamplerEngine(getType().asProto())
                 .setSamplerMode(getMode().asProto())
-                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setCreator(creator.toProto())
                 .setStartTime(this.startTime)
-                .setEndTime(System.currentTimeMillis())
                 .setInterval(this.interval)
                 .setThreadDumper(this.threadDumper.getMetadata())
                 .setDataAggregator(dataAggregator.getMetadata());
+
+        SparkMetadata.gather(platform, creator, getInitialGcStats()).writeTo(metadata);
 
         if (comment != null) {
             metadata.setComment(comment);
@@ -192,49 +197,14 @@ public abstract class AbstractSampler implements Sampler {
             metadata.setNumberOfTicks(totalTicks);
         }
 
-        try {
-            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats(), true));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            metadata.setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            ServerConfigProvider serverConfigProvider = platform.getPlugin().createServerConfigProvider();
-            if (serverConfigProvider != null) {
-                metadata.putAllServerConfigurations(serverConfigProvider.export());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        try {
-            MetadataProvider extraMetadataProvider = platform.getPlugin().createExtraMetadataProvider();
-            if (extraMetadataProvider != null) {
-                metadata.putAllExtraPlatformMetadata(extraMetadataProvider.export());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Collection<SourceMetadata> knownSources = platform.getPlugin().getKnownSources();
-        for (SourceMetadata source : knownSources) {
-            metadata.putSources(source.getName().toLowerCase(Locale.ROOT), source.toProto());
-        }
-
         proto.setMetadata(metadata);
     }
 
-    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, MergeMode mergeMode, ClassSourceLookup classSourceLookup) {
+    protected void writeDataToProto(SamplerData.Builder proto, DataAggregator dataAggregator, Function<ProtoTimeEncoder, NodeExporter> nodeExporterFunction, ClassSourceLookup classSourceLookup, Supplier<ClassFinder> classFinderSupplier) {
         List<ThreadNode> data = dataAggregator.exportData();
         data.sort(Comparator.comparing(ThreadNode::getThreadLabel));
 
-        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup);
+        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup, classFinderSupplier);
 
         ProtoTimeEncoder timeEncoder = new ProtoTimeEncoder(getMode().valueTransformer(), data);
         int[] timeWindows = timeEncoder.getKeys();
@@ -245,8 +215,10 @@ public abstract class AbstractSampler implements Sampler {
         this.windowStatisticsCollector.ensureHasStatisticsForAllWindows(timeWindows);
         proto.putAllTimeWindowStatistics(this.windowStatisticsCollector.export());
 
+        NodeExporter exporter = nodeExporterFunction.apply(timeEncoder);
+
         for (ThreadNode entry : data) {
-            proto.addThreads(entry.toProto(mergeMode, timeEncoder));
+            proto.addThreads(exporter.export(entry));
             classSourceVisitor.visit(entry);
         }
 

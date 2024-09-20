@@ -29,14 +29,12 @@ import com.velocitypowered.api.event.lifecycle.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
-
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -87,6 +85,11 @@ public class Velocity4SparkPlugin implements SparkPlugin, SimpleCommand {
     @Override
     public List<String> suggest(Invocation inv) {
         return this.platform.tabCompleteCommand(new Velocity4CommandSender(inv.source()), inv.arguments());
+    }
+
+    @Override
+    public boolean hasPermission(Invocation inv) {
+        return this.platform.hasPermissionForAnyCommand(new Velocity4CommandSender(inv.source()));
     }
 
     @Override
@@ -141,7 +144,8 @@ public class Velocity4SparkPlugin implements SparkPlugin, SimpleCommand {
                 this.proxy.pluginManager().plugins(),
                 plugin -> plugin.description().id(),
                 plugin -> plugin.description().version(),
-                plugin -> String.join(", ", plugin.description().authors())
+                plugin -> String.join(", ", plugin.description().authors()),
+                plugin -> plugin.description().description()
         );
     }
 
