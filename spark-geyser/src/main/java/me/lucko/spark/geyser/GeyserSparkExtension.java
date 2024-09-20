@@ -151,7 +151,7 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
                 Extension::name,
                 extension -> extension.description().version(),
                 extension -> String.join(", ", extension.description().authors()),
-                $ -> ""
+                extension -> null
         );
     }
 }
