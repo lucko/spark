@@ -26,6 +26,7 @@ import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.api.command.Command;
@@ -40,6 +41,7 @@ import org.geysermc.geyser.api.util.PlatformType;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -50,8 +52,9 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent ignored) {
         if (this.geyserApi().platformType() != PlatformType.STANDALONE) {
-            this.logger().severe("spark is only supported on standalone Geyser instances! If you wish to use it on other platforms please download the spark version for that platform.");
+            this.logger().severe("spark is only supported on Geyser-Standalone instances! If you wish to use it on other platforms, use the spark version for that platform.");
             this.disable();
+            return;
         }
         this.platform = new SparkPlatform(this);
     }
@@ -139,5 +142,16 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
     @Override
     public PlatformInfo getPlatformInfo() {
         return new GeyserPlatformInfo(this.geyserApi());
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                geyserApi().extensionManager().extensions(),
+                Extension::name,
+                extension -> extension.description().version(),
+                extension -> String.join(", ", extension.description().authors()),
+                $ -> ""
+        );
     }
 }

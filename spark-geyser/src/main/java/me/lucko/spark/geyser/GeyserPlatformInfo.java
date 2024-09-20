@@ -43,6 +43,11 @@ public class GeyserPlatformInfo implements PlatformInfo {
     }
 
     @Override
+    public String getBrand() {
+        return "Geyser";
+    }
+
+    @Override
     public String getVersion() {
         ApiVersion version = geyserApi.geyserApiVersion();
         return version.human() + "." + version.major() + "." + version.minor();
