@@ -11,7 +11,7 @@ dependencies {
     implementation project(':spark-common')
     implementation 'org.projectlombok:lombok:1.18.32'
 
-    compileOnly 'org.allaymc:Allay-API:1.0.0'
+    compileOnly 'org.allaymc.allay:api:master-SNAPSHOT'
 
     annotationProcessor('org.projectlombok:lombok:1.18.32')
 }
