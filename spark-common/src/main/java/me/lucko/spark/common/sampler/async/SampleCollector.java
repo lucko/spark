@@ -21,7 +21,6 @@
 package me.lucko.spark.common.sampler.async;
 
 import com.google.common.collect.ImmutableList;
-
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.async.AsyncProfilerAccess.ProfilingEvent;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader.AllocationSample;

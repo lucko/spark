@@ -30,6 +30,8 @@ public interface PlatformInfo {
 
     String getName();
 
+    String getBrand();
+
     String getVersion();
 
     String getMinecraftVersion();
@@ -40,7 +42,7 @@ public interface PlatformInfo {
     }
 
     default Data toData() {
-        return new Data(getType(), getName(), getVersion(), getMinecraftVersion(), getSparkVersion());
+        return new Data(getType(), getName(), getBrand(), getVersion(), getMinecraftVersion(), getSparkVersion());
     }
 
     enum Type {
@@ -62,13 +64,15 @@ public interface PlatformInfo {
     final class Data {
         private final Type type;
         private final String name;
+        private final String brand;
         private final String version;
         private final String minecraftVersion;
         private final int sparkVersion;
 
-        public Data(Type type, String name, String version, String minecraftVersion, int sparkVersion) {
+        public Data(Type type, String name, String brand, String version, String minecraftVersion, int sparkVersion) {
             this.type = type;
             this.name = name;
+            this.brand = brand;
             this.version = version;
             this.minecraftVersion = minecraftVersion;
             this.sparkVersion = sparkVersion;
@@ -80,6 +84,10 @@ public interface PlatformInfo {
 
         public String getName() {
             return this.name;
+        }
+
+        public String getBrand() {
+            return this.brand;
         }
 
         public String getVersion() {
@@ -98,6 +106,7 @@ public interface PlatformInfo {
             PlatformMetadata.Builder proto = PlatformMetadata.newBuilder()
                     .setType(this.type.toProto())
                     .setName(this.name)
+                    .setBrand(this.brand)
                     .setVersion(this.version)
                     .setSparkVersion(this.sparkVersion);
 

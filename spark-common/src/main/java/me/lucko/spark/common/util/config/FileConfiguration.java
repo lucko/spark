@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.util.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -37,17 +37,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class Configuration {
+public class FileConfiguration implements Configuration {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final Path file;
     private JsonObject root;
 
-    public Configuration(Path file) {
+    public FileConfiguration(Path file) {
         this.file = file;
         load();
     }
 
+    @Override
     public void load() {
         JsonObject root = null;
         if (Files.exists(this.file)) {
@@ -64,6 +65,7 @@ public final class Configuration {
         this.root = root;
     }
 
+    @Override
     public void save() {
         try {
             Files.createDirectories(this.file.getParent());
@@ -78,6 +80,7 @@ public final class Configuration {
         }
     }
 
+    @Override
     public String getString(String path, String def) {
         JsonElement el = this.root.get(path);
         if (el == null || !el.isJsonPrimitive()) {
@@ -87,6 +90,7 @@ public final class Configuration {
         return el.getAsJsonPrimitive().getAsString();
     }
 
+    @Override
     public boolean getBoolean(String path, boolean def) {
         JsonElement el = this.root.get(path);
         if (el == null || !el.isJsonPrimitive()) {
@@ -97,6 +101,7 @@ public final class Configuration {
         return val.isBoolean() ? val.getAsBoolean() : def;
     }
 
+    @Override
     public int getInteger(String path, int def) {
         JsonElement el = this.root.get(path);
         if (el == null || !el.isJsonPrimitive()) {
@@ -107,6 +112,7 @@ public final class Configuration {
         return val.isNumber() ? val.getAsInt() : def;
     }
 
+    @Override
     public List<String> getStringList(String path) {
         JsonElement el = this.root.get(path);
         if (el == null || !el.isJsonArray()) {
@@ -122,18 +128,22 @@ public final class Configuration {
         return list;
     }
 
+    @Override
     public void setString(String path, String value) {
         this.root.add(path, new JsonPrimitive(value));
     }
 
+    @Override
     public void setBoolean(String path, boolean value) {
         this.root.add(path, new JsonPrimitive(value));
     }
 
+    @Override
     public void setInteger(String path, int value) {
         this.root.add(path, new JsonPrimitive(value));
     }
 
+    @Override
     public void setStringList(String path, List<String> value) {
         JsonArray array = new JsonArray();
         for (String str : value) {
@@ -142,10 +152,12 @@ public final class Configuration {
         this.root.add(path, array);
     }
 
+    @Override
     public boolean contains(String path) {
         return this.root.has(path);
     }
 
+    @Override
     public void remove(String path) {
         this.root.remove(path);
     }

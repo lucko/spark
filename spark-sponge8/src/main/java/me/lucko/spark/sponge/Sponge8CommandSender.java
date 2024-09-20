@@ -21,11 +21,9 @@
 package me.lucko.spark.sponge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.text.Component;
-
 import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.service.permission.Subject;
 import org.spongepowered.api.util.Identifiable;

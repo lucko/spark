@@ -21,9 +21,7 @@
 package me.lucko.spark.sponge;
 
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-
 import org.spongepowered.api.Server;
 import org.spongepowered.api.entity.living.player.Player;
 

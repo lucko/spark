@@ -22,10 +22,7 @@ package me.lucko.spark.common.sampler.node;
 
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,7 +83,7 @@ public abstract class AbstractNode {
      *
      * @return the total times
      */
-    protected double[] encodeTimesForProto(ProtoTimeEncoder encoder) {
+    public double[] encodeTimesForProto(ProtoTimeEncoder encoder) {
         return encoder.encode(this.times);
     }
 
@@ -107,35 +104,11 @@ public abstract class AbstractNode {
      *
      * @param other the other node
      */
-    protected void merge(AbstractNode other) {
+    public void merge(AbstractNode other) {
         other.times.forEach((key, value) -> getTimeAccumulator(key).add(value.longValue()));
         for (Map.Entry<StackTraceNode.Description, StackTraceNode> child : other.children.entrySet()) {
             resolveChild(child.getKey()).merge(child.getValue());
         }
-    }
-
-    protected List<StackTraceNode> exportChildren(MergeMode mergeMode) {
-        if (this.children.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<StackTraceNode> list = new ArrayList<>(this.children.size());
-
-        outer:
-        for (StackTraceNode child : this.children.values()) {
-            // attempt to find an existing node we can merge into
-            for (StackTraceNode other : list) {
-                if (mergeMode.shouldMerge(other, child)) {
-                    other.merge(child);
-                    continue outer;
-                }
-            }
-
-            // just add
-            list.add(child);
-        }
-
-        return list;
     }
 
 }

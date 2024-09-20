@@ -1,15 +1,15 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+    id 'com.gradleup.shadow' version '8.3.0'
+    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
 }
 
 tasks.withType(JavaCompile) {
-    // override, compile targeting J17
-    options.release = 17
+    // override, compile targeting J21
+    options.release = 21
 }
 
 minecraft {
-    mappings channel: 'official', version: '1.20.4'
+    mappings channel: 'official', version: '1.21.1'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 }
 
@@ -19,7 +19,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.20.4-49.0.3'
+    minecraft 'net.minecraftforge:forge:1.21.1-52.0.2'
     shade project(':spark-common')
 }
 
@@ -43,6 +43,7 @@ shadowJar {
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
@@ -53,6 +54,8 @@ shadowJar {
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+    exclude '**/*.proto'
+    exclude '**/*.proto.bin'
 }
 
 artifacts {

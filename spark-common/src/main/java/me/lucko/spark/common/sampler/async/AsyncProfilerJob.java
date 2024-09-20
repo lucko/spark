@@ -21,11 +21,9 @@
 package me.lucko.spark.common.sampler.async;
 
 import com.google.common.collect.ImmutableList;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
-
 import one.profiler.AsyncProfiler;
 
 import java.io.IOException;

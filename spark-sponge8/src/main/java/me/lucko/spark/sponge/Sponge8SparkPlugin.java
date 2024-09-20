@@ -22,7 +22,6 @@ package me.lucko.spark.sponge;
 
 import com.google.common.base.Suppliers;
 import com.google.inject.Inject;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
@@ -33,9 +32,7 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
-
 import net.kyori.adventure.text.Component;
-
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.Game;
@@ -188,7 +185,8 @@ public class Sponge8SparkPlugin implements SparkPlugin {
                 plugin -> plugin.metadata().version().toString(),
                 plugin -> plugin.metadata().contributors().stream()
                         .map(PluginContributor::name)
-                        .collect(Collectors.joining(", "))
+                        .collect(Collectors.joining(", ")),
+                plugin -> plugin.metadata().description().orElse(null)
         );
     }
 

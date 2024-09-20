@@ -21,8 +21,7 @@
 package me.lucko.spark.common.sampler.source;
 
 import com.google.common.collect.ImmutableList;
-
-import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
+import me.lucko.spark.proto.SparkProtos.PluginOrModMetadata;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,15 +33,16 @@ import java.util.function.Function;
  */
 public class SourceMetadata {
 
-    public static <T> List<SourceMetadata> gather(Collection<T> sources, Function<? super T, String> nameFunction, Function<? super T, String> versionFunction, Function<? super T, String> authorFunction) {
+    public static <T> List<SourceMetadata> gather(Collection<T> sources, Function<? super T, String> name, Function<? super T, String> version, Function<? super T, String> author, Function<? super T, String> description) {
         ImmutableList.Builder<SourceMetadata> builder = ImmutableList.builder();
 
         for (T source : sources) {
-            String name = nameFunction.apply(source);
-            String version = versionFunction.apply(source);
-            String author = authorFunction.apply(source);
-
-            SourceMetadata metadata = new SourceMetadata(name, version, author);
+            SourceMetadata metadata = new SourceMetadata(
+                    name.apply(source),
+                    version.apply(source),
+                    author.apply(source),
+                    description.apply(source)
+            );
             builder.add(metadata);
         }
 
@@ -52,11 +52,13 @@ public class SourceMetadata {
     private final String name;
     private final String version;
     private final String author;
+    private final String description;
 
-    public SourceMetadata(String name, String version, String author) {
+    public SourceMetadata(String name, String version, String author, String description) {
         this.name = name;
         this.version = version;
         this.author = author;
+        this.description = description;
     }
 
     public String getName() {
@@ -71,11 +73,18 @@ public class SourceMetadata {
         return this.author;
     }
 
-    public SamplerMetadata.SourceMetadata toProto() {
-        return SamplerMetadata.SourceMetadata.newBuilder()
-                .setName(this.name)
-                .setVersion(this.version)
-                .build();
+    public PluginOrModMetadata toProto() {
+        PluginOrModMetadata.Builder builder = PluginOrModMetadata.newBuilder().setName(this.name);
+        if (this.version != null) {
+            builder.setVersion(this.version);
+        }
+        if (this.author != null) {
+            builder.setAuthor(this.author);
+        }
+        if (this.description != null) {
+            builder.setDescription(this.description);
+        }
+        return builder.build();
     }
 
 }

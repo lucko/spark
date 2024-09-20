@@ -117,7 +117,8 @@ public abstract class NeoForgeSparkPlugin implements SparkPlugin {
                 ModList.get().getMods(),
                 IModInfo::getModId,
                 mod -> mod.getVersion().toString(),
-                mod -> null // ?
+                mod -> null, // ?
+                IModInfo::getDescription
         );
     }
 

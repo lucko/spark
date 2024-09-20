@@ -21,7 +21,6 @@
 package me.lucko.spark.fabric;
 
 import me.lucko.spark.common.platform.PlatformInfo;
-
 import net.fabricmc.loader.api.FabricLoader;
 
 import java.util.Optional;
@@ -41,6 +40,13 @@ public class FabricPlatformInfo implements PlatformInfo {
     @Override
     public String getName() {
         return "Fabric";
+    }
+
+    @Override
+    public String getBrand() {
+        return FabricLoader.getInstance().getModContainer("fabric")
+                .map(container -> container.getMetadata().getName())
+                .orElse("Fabric");
     }
 
     @Override

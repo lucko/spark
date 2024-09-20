@@ -1,11 +1,15 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'com.gradleup.shadow' version '8.3.0'
+}
+
+java {
+    disableAutoTargetJvm()
 }
 
 dependencies {
     implementation project(':spark-common')
-    implementation 'net.kyori:adventure-platform-bukkit:4.3.1'
-    compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
+    implementation 'net.kyori:adventure-platform-bukkit:4.3.3'
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
     
     // placeholders
     compileOnly 'me.clip:placeholderapi:2.10.3'
@@ -33,6 +37,7 @@ shadowJar {
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
@@ -43,6 +48,8 @@ shadowJar {
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+    exclude '**/*.proto'
+    exclude '**/*.proto.bin'
 }
 
 artifacts {

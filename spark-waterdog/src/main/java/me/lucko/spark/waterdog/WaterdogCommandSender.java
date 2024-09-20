@@ -20,13 +20,11 @@
 
 package me.lucko.spark.waterdog;
 
-import me.lucko.spark.common.command.sender.AbstractCommandSender;
-
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-
 import dev.waterdog.waterdogpe.command.CommandSender;
 import dev.waterdog.waterdogpe.player.ProxiedPlayer;
+import me.lucko.spark.common.command.sender.AbstractCommandSender;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.UUID;
 

@@ -20,9 +20,8 @@
 
 package me.lucko.spark.waterdog;
 
-import me.lucko.spark.common.platform.PlatformInfo;
-
 import dev.waterdog.waterdogpe.WaterdogPE;
+import me.lucko.spark.common.platform.PlatformInfo;
 
 public class WaterdogPlatformInfo implements PlatformInfo {
 
@@ -33,6 +32,11 @@ public class WaterdogPlatformInfo implements PlatformInfo {
 
     @Override
     public String getName() {
+        return "Waterdog";
+    }
+
+    @Override
+    public String getBrand() {
         return "Waterdog";
     }
 

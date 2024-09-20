@@ -33,6 +33,9 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
+import me.lucko.spark.common.util.classfinder.ClassFinder;
+import me.lucko.spark.common.util.classfinder.FallbackClassFinder;
+import me.lucko.spark.common.util.classfinder.InstrumentationClassFinder;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -147,6 +150,18 @@ public interface SparkPlugin {
      */
     default ClassSourceLookup createClassSourceLookup() {
         return ClassSourceLookup.NO_OP;
+    }
+
+    /**
+     * Creates a class finder for the platform.
+     *
+     * @return the class finder
+     */
+    default ClassFinder createClassFinder() {
+        return ClassFinder.combining(
+                new InstrumentationClassFinder(this),
+                FallbackClassFinder.INSTANCE
+        );
     }
 
     /**

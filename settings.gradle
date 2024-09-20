@@ -1,5 +1,6 @@
 pluginManagement {
     repositories {
+        gradlePluginPortal()
         maven {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
@@ -12,7 +13,6 @@ pluginManagement {
             name = 'NeoForge'
             url = 'https://maven.neoforged.net/releases'
         }
-        gradlePluginPortal()
     }
 }
 
@@ -25,6 +25,7 @@ include (
         'spark-api',
         'spark-common',
         'spark-bukkit',
+        'spark-paper',
         'spark-bungeecord',
         'spark-velocity',
         'spark-velocity4',

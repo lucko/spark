@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.ws;
 
-import me.lucko.spark.common.util.Configuration;
+import me.lucko.spark.common.util.config.Configuration;
 
 import java.security.KeyPair;
 import java.security.PrivateKey;

@@ -28,9 +28,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -38,7 +36,6 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeCommandSender;
-import me.lucko.spark.forge.ForgeExtraMetadataProvider;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgePlayerPingProvider;
 import me.lucko.spark.forge.ForgeServerConfigProvider;
@@ -46,7 +43,6 @@ import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import me.lucko.spark.forge.ForgeWorldInfoProvider;
-
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
@@ -245,11 +241,6 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public ServerConfigProvider createServerConfigProvider() {
         return new ForgeServerConfigProvider();
-    }
-
-    @Override
-    public MetadataProvider createExtraMetadataProvider() {
-        return new ForgeExtraMetadataProvider(this.server.getPackRepository());
     }
 
     @Override

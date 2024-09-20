@@ -30,7 +30,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
@@ -39,11 +38,9 @@ import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.fabric.FabricClassSourceLookup;
 import me.lucko.spark.fabric.FabricSparkMod;
-
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.Person;
 import net.minecraft.server.command.CommandOutput;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -112,7 +109,7 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
 
     @Override
     public ClassSourceLookup createClassSourceLookup() {
-        return new FabricClassSourceLookup();
+        return new FabricClassSourceLookup(createClassFinder());
     }
 
     @Override
@@ -123,7 +120,8 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
                 mod -> mod.getMetadata().getVersion().getFriendlyString(),
                 mod -> mod.getMetadata().getAuthors().stream()
                         .map(Person::getName)
-                        .collect(Collectors.joining(", "))
+                        .collect(Collectors.joining(", ")),
+                mod -> mod.getMetadata().getDescription()
         );
     }
 
