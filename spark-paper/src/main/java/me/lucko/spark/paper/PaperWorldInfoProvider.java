@@ -108,7 +108,6 @@ public class PaperWorldInfoProvider implements WorldInfoProvider {
         return data;
     }
 
-    @SuppressWarnings("removal")
     @Override
     public Collection<DataPackInfo> pollDataPacks() {
         this.server.getDatapackManager().refreshPacks();
