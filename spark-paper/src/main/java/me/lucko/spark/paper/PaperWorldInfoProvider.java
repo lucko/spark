@@ -23,6 +23,7 @@ package me.lucko.spark.paper;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Chunk;
 import org.bukkit.GameRule;
 import org.bukkit.Server;
@@ -107,14 +108,14 @@ public class PaperWorldInfoProvider implements WorldInfoProvider {
         return data;
     }
 
-    @SuppressWarnings("removal")
     @Override
     public Collection<DataPackInfo> pollDataPacks() {
-        return this.server.getDataPackManager().getDataPacks().stream()
+        this.server.getDatapackManager().refreshPacks();
+        return this.server.getDatapackManager().getPacks().stream()
                 .map(pack -> new DataPackInfo(
-                        pack.getTitle(),
-                        pack.getDescription(),
-                        pack.getSource().name().toLowerCase(Locale.ROOT).replace("_", "")
+                        PlainTextComponentSerializer.plainText().serialize(pack.getTitle()),
+                        PlainTextComponentSerializer.plainText().serialize(pack.getDescription()),
+                        pack.getSource().toString().toLowerCase(Locale.ROOT).replace("_", "")
                 ))
                 .collect(Collectors.toList());
     }
