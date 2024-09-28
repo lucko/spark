@@ -76,6 +76,8 @@ shadowJar {
     exclude 'META-INF/proguard/**'
     exclude '**/*.proto'
     exclude '**/*.proto.bin'
+
+    mergeServiceFiles()
 }
 
 artifacts {
