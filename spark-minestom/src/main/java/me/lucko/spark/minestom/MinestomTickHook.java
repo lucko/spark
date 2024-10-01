@@ -21,7 +21,6 @@
 package me.lucko.spark.minestom;
 
 import me.lucko.spark.common.tick.AbstractTickHook;
-
 import net.minestom.server.MinecraftServer;
 import net.minestom.server.timer.Task;
 import net.minestom.server.timer.TaskSchedule;
