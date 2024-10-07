@@ -27,6 +27,7 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 import me.lucko.spark.common.sampler.source.SourceMetadata;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.api.command.Command;
@@ -74,7 +75,6 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
     @Subscribe
     public void onCommandDefine(GeyserDefineCommandsEvent event) {
         for (me.lucko.spark.common.command.Command command : this.platform.getCommands()) {
-            // TODO Allow registering executor at the base?
             event.register(Command.builder(this)
                 .source(CommandSource.class)
                 .name(command.primaryAlias())
@@ -100,7 +100,7 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
 
     @Override
     public String getCommandName() {
-        return "spark";
+        return "sparkg";
     }
 
     @Override
@@ -153,5 +153,10 @@ public class GeyserSparkExtension implements SparkPlugin, Extension {
                 extension -> String.join(", ", extension.description().authors()),
                 extension -> null
         );
+    }
+
+    @Override
+    public @NonNull String rootCommand() {
+        return "sparkg";
     }
 }
