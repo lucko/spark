@@ -1,0 +1,6 @@
+id: spark
+name: spark
+main: me.lucko.spark.geyser.GeyserSparkExtension
+api: 2.4.2
+version: ${pluginVersion}
+authors: [Luck]
