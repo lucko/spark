@@ -107,7 +107,8 @@ public class WaterdogSparkPlugin extends Plugin implements SparkPlugin {
                 getProxy().getPluginManager().getPlugins(),
                 Plugin::getName,
                 plugin -> plugin.getDescription().getVersion(),
-                plugin -> plugin.getDescription().getAuthor()
+                plugin -> plugin.getDescription().getAuthor(),
+                plugin -> null
         );
     }
 

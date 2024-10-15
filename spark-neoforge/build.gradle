@@ -1,6 +1,6 @@
 plugins {
     id 'com.gradleup.shadow' version '8.3.0'
-    id 'net.neoforged.gradle.userdev' version '7.0.145'
+    id 'net.neoforged.moddev' version '1.0.19'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -14,9 +14,23 @@ java {
     }
 }
 
-minecraft {
-    accessTransformers {
-        file('src/main/resources/META-INF/accesstransformer.cfg')
+neoForge {
+    version = "21.1.22"
+    validateAccessTransformers = true
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+    }
+
+    mods {
+        spark {
+            sourceSet sourceSets.main
+        }
     }
 }
 
@@ -26,7 +40,6 @@ configurations {
 }
 
 dependencies {
-    implementation "net.neoforged:neoforge:21.1.8"
     shade project(':spark-common')
 }
 
@@ -63,6 +76,8 @@ shadowJar {
     exclude 'META-INF/proguard/**'
     exclude '**/*.proto'
     exclude '**/*.proto.bin'
+
+    mergeServiceFiles()
 }
 
 artifacts {

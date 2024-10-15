@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.platform.world;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,11 @@ public interface WorldInfoProvider {
         public GameRulesResult pollGameRules() {
             return null;
         }
+
+        @Override
+        public Collection<DataPackInfo> pollDataPacks() {
+            return null;
+        }
     };
 
     /**
@@ -66,6 +72,13 @@ public interface WorldInfoProvider {
      * @return the game rules
      */
     GameRulesResult pollGameRules();
+
+    /**
+     * Polls for data packs.
+     *
+     * @return the data packs
+     */
+    Collection<DataPackInfo> pollDataPacks();
 
     default boolean mustCallSync() {
         return true;
@@ -143,6 +156,30 @@ public interface WorldInfoProvider {
             public Map<String, String> getWorldValues() {
                 return this.worldValues;
             }
+        }
+    }
+
+    final class DataPackInfo {
+        private final String name;
+        private final String description;
+        private final String source;
+
+        public DataPackInfo(String name, String description, String source) {
+            this.name = name;
+            this.description = description;
+            this.source = source;
+        }
+
+        public String name() {
+            return this.name;
+        }
+
+        public String description() {
+            return this.description;
+        }
+
+        public String source() {
+            return this.source;
         }
     }
 

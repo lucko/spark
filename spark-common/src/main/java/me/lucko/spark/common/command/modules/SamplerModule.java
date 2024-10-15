@@ -37,12 +37,11 @@ import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
-import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
-import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import net.kyori.adventure.text.Component;
@@ -507,12 +506,7 @@ public class SamplerModule implements CommandModule {
         return new Sampler.ExportProps()
                 .creator(resp.senderData())
                 .comment(Iterables.getFirst(arguments.stringFlag("comment"), null))
-                .mergeMode(() -> {
-                    MethodDisambiguator methodDisambiguator = new MethodDisambiguator(platform.createClassFinder());
-                    return arguments.boolFlag("separate-parent-calls")
-                            ? MergeMode.separateParentCalls(methodDisambiguator)
-                            : MergeMode.sameMethod(methodDisambiguator);
-                })
+                .mergeStrategy(arguments.boolFlag("separate-parent-calls") ? MergeStrategy.SEPARATE_PARENT_CALLS : MergeStrategy.SAME_METHOD)
                 .classSourceLookup(() -> ClassSourceLookup.create(platform));
     }
 

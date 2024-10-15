@@ -20,8 +20,7 @@
 
 package me.lucko.spark.neoforge;
 
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -29,35 +28,51 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.entity.EntityLookup;
-import net.minecraft.world.level.entity.EntitySection;
-import net.minecraft.world.level.entity.EntitySectionStorage;
+import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.level.entity.TransientEntitySectionManager;
+import net.neoforged.fml.ModList;
 
-import java.util.ArrayList;
+import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 
-    protected List<ForgeChunkInfo> getChunksFromCache(EntitySectionStorage<Entity> cache) {
-        LongSet loadedChunks = cache.getAllChunksWithExistingSections();
-        List<ForgeChunkInfo> list = new ArrayList<>(loadedChunks.size());
+    protected abstract PackRepository getPackRepository();
 
-        for (LongIterator iterator = loadedChunks.iterator(); iterator.hasNext(); ) {
-            long chunkPos = iterator.nextLong();
-            Stream<EntitySection<Entity>> sections = cache.getExistingSectionsInChunk(chunkPos);
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        return getPackRepository().getSelectedPacks().stream()
+                .map(pack -> new DataPackInfo(
+                        pack.getId(),
+                        pack.getDescription().getString(),
+                        resourcePackSource(pack.getPackSource())
+                ))
+                .collect(Collectors.toList());
+    }
 
-            list.add(new ForgeChunkInfo(chunkPos, sections));
+    private static String resourcePackSource(PackSource source) {
+        if (source == PackSource.DEFAULT) {
+            return "none";
+        } else if (source == PackSource.BUILT_IN) {
+            return "builtin";
+        } else if (source == PackSource.WORLD) {
+            return "world";
+        } else if (source == PackSource.SERVER) {
+            return "server";
+        } else {
+            return "unknown";
         }
-
-        return list;
     }
 
     public static final class Server extends NeoForgeWorldInfoProvider {
@@ -74,10 +89,15 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
             int chunks = 0;
 
             for (ServerLevel level : this.server.getAllLevels()) {
-                PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
-                EntityLookup<Entity> entityIndex = entityManager.visibleEntityStorage;
 
-                entities += entityIndex.count();
+                if (ModList.get().isLoaded("moonrise")) {
+                    entities += MoonriseMethods.getEntityCount(level.getEntities());
+                } else {
+                    PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
+                    EntityLookup<Entity> entityIndex = entityManager.visibleEntityStorage;
+                    entities += entityIndex.count();
+                }
+
                 chunks += level.getChunkSource().getLoadedChunksCount();
             }
 
@@ -89,11 +109,15 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
             ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
             for (ServerLevel level : this.server.getAllLevels()) {
-                PersistentEntitySectionManager<Entity> entityManager = level.entityManager;
-                EntitySectionStorage<Entity> cache = entityManager.sectionStorage;
+                Long2ObjectOpenHashMap<ForgeChunkInfo> levelInfos = new Long2ObjectOpenHashMap<>();
 
-                List<ForgeChunkInfo> list = getChunksFromCache(cache);
-                data.put(level.dimension().location().getPath(), list);
+                for (Entity entity : level.getEntities().getAll()) {
+                    ForgeChunkInfo info = levelInfos.computeIfAbsent(
+                        entity.chunkPosition().toLong(), ForgeChunkInfo::new);
+                    info.entityCounts.increment(entity.getType());
+                }
+
+                data.put(level.dimension().location().getPath(), List.copyOf(levelInfos.values()));
             }
 
             return data;
@@ -121,6 +145,11 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 
             return data;
         }
+
+        @Override
+        protected PackRepository getPackRepository() {
+            return this.server.getPackRepository();
+        }
     }
 
     public static final class Client extends NeoForgeWorldInfoProvider {
@@ -137,10 +166,15 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
                 return null;
             }
 
-            TransientEntitySectionManager<Entity> entityManager = level.entityStorage;
-            EntityLookup<Entity> entityIndex = entityManager.entityStorage;
+            int entities;
+            if (ModList.get().isLoaded("moonrise")) {
+                entities = MoonriseMethods.getEntityCount(level.getEntities());
+            } else {
+                TransientEntitySectionManager<Entity> entityManager = level.entityStorage;
+                EntityLookup<Entity> entityIndex = entityManager.entityStorage;
+                entities = entityIndex.count();
+            }
 
-            int entities = entityIndex.count();
             int chunks = level.getChunkSource().getLoadedChunksCount();
 
             return new CountsResult(-1, entities, -1, chunks);
@@ -155,11 +189,14 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 
             ChunksResult<ForgeChunkInfo> data = new ChunksResult<>();
 
-            TransientEntitySectionManager<Entity> entityManager = level.entityStorage;
-            EntitySectionStorage<Entity> cache = entityManager.sectionStorage;
+            Long2ObjectOpenHashMap<ForgeChunkInfo> levelInfos = new Long2ObjectOpenHashMap<>();
 
-            List<ForgeChunkInfo> list = getChunksFromCache(cache);
-            data.put(level.dimension().location().getPath(), list);
+            for (Entity entity : level.getEntities().getAll()) {
+                ForgeChunkInfo info = levelInfos.computeIfAbsent(entity.chunkPosition().toLong(), ForgeChunkInfo::new);
+                info.entityCounts.increment(entity.getType());
+            }
+
+            data.put(level.dimension().location().getPath(), List.copyOf(levelInfos.values()));
 
             return data;
         }
@@ -189,22 +226,20 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 
             return data;
         }
+
+        @Override
+        protected PackRepository getPackRepository() {
+            return this.client.getResourcePackRepository();
+        }
     }
 
     public static final class ForgeChunkInfo extends AbstractChunkInfo<EntityType<?>> {
         private final CountMap<EntityType<?>> entityCounts;
 
-        ForgeChunkInfo(long chunkPos, Stream<EntitySection<Entity>> entities) {
+        ForgeChunkInfo(long chunkPos) {
             super(ChunkPos.getX(chunkPos), ChunkPos.getZ(chunkPos));
 
             this.entityCounts = new CountMap.Simple<>(new HashMap<>());
-            entities.forEach(section -> {
-                if (section.getStatus().isAccessible()) {
-                    section.getEntities().forEach(entity ->
-                            this.entityCounts.increment(entity.getType())
-                    );
-                }
-            });
         }
 
         @Override
@@ -218,5 +253,27 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
         }
     }
 
+    private static final class MoonriseMethods {
+        private static Method getEntityCount;
+
+        private static Method getEntityCountMethod(LevelEntityGetter<Entity> getter) {
+            if (getEntityCount == null) {
+                try {
+                    getEntityCount = getter.getClass().getMethod("getEntityCount");
+                } catch (final ReflectiveOperationException e) {
+                    throw new RuntimeException("Cannot find Moonrise getEntityCount method", e);
+                }
+            }
+            return getEntityCount;
+        }
+
+        private static int getEntityCount(LevelEntityGetter<Entity> getter) {
+            try {
+                return (int) getEntityCountMethod(getter).invoke(getter);
+            } catch (final ReflectiveOperationException e) {
+                throw new RuntimeException("Failed to invoke Moonrise getEntityCount method", e);
+            }
+        }
+    }
 
 }

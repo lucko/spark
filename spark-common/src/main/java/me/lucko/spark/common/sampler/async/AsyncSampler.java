@@ -25,6 +25,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
+import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.SparkThreadFactory;
@@ -210,6 +211,11 @@ public class AsyncSampler extends AbstractSampler {
     }
 
     @Override
+    public SamplerType getType() {
+        return SamplerType.ASYNC;
+    }
+
+    @Override
     public SamplerMode getMode() {
         return this.sampleCollector.getMode();
     }
@@ -221,7 +227,7 @@ public class AsyncSampler extends AbstractSampler {
             proto.setChannelInfo(exportProps.channelInfo());
         }
         writeMetadataToProto(proto, platform, exportProps.creator(), exportProps.comment(), this.dataAggregator);
-        writeDataToProto(proto, this.dataAggregator, exportProps.mergeMode().get(), exportProps.classSourceLookup().get(), platform::createClassFinder);
+        writeDataToProto(proto, this.dataAggregator, AsyncNodeExporter::new, exportProps.classSourceLookup().get(), platform::createClassFinder);
         return proto.build();
     }
 

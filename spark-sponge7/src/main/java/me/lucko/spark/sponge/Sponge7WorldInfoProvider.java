@@ -32,9 +32,9 @@ import org.spongepowered.api.world.Chunk;
 import org.spongepowered.api.world.World;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class Sponge7WorldInfoProvider implements WorldInfoProvider {
     private final Server server;
@@ -89,6 +89,11 @@ public class Sponge7WorldInfoProvider implements WorldInfoProvider {
         // }
         // return data;
 
+        return null;
+    }
+
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
         return null;
     }
 

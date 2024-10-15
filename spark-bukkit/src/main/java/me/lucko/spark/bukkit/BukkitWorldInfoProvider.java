@@ -32,12 +32,16 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class BukkitWorldInfoProvider implements WorldInfoProvider {
     private static final boolean SUPPORTS_PAPER_COUNT_METHODS;
     private static final boolean SUPPORTS_GAMERULES;
+    private static final boolean SUPPORTS_DATAPACKS;
 
     static {
         boolean supportsPaperCountMethods = false;
@@ -59,8 +63,17 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
             // ignored
         }
 
+        boolean supportsDataPacks = false;
+        try {
+            Server.class.getMethod("getDataPackManager");
+            supportsDataPacks = true;
+        } catch (Exception e) {
+            // ignored
+        }
+
         SUPPORTS_PAPER_COUNT_METHODS = supportsPaperCountMethods;
         SUPPORTS_GAMERULES = supportsGameRules;
+        SUPPORTS_DATAPACKS = supportsDataPacks;
     }
 
     private final Server server;
@@ -153,6 +166,22 @@ public class BukkitWorldInfoProvider implements WorldInfoProvider {
         }
 
         return data;
+    }
+
+    @SuppressWarnings("removal")
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        if (!SUPPORTS_DATAPACKS) {
+            return null;
+        }
+
+        return this.server.getDataPackManager().getDataPacks().stream()
+                .map(pack -> new DataPackInfo(
+                        pack.getTitle(),
+                        pack.getDescription(),
+                        pack.getSource().name().toLowerCase(Locale.ROOT).replace("_", "")
+                ))
+                .collect(Collectors.toList());
     }
 
     static final class BukkitChunkInfo extends AbstractChunkInfo<EntityType> {

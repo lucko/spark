@@ -289,7 +289,7 @@ public interface ClassSourceLookup {
             if (node.getMethodDescription() != null) {
                 MethodCall methodCall = new MethodCall(node.getClassName(), node.getMethodName(), node.getMethodDescription());
                 this.methodSources.computeIfAbsent(methodCall, this.lookup::identify);
-            } else {
+            } else if (node.getLineNumber() != StackTraceNode.NULL_LINE_NUMBER) {
                 MethodCallByLine methodCall = new MethodCallByLine(node.getClassName(), node.getMethodName(), node.getLineNumber());
                 this.lineSources.computeIfAbsent(methodCall, this.lookup::identify);
             }

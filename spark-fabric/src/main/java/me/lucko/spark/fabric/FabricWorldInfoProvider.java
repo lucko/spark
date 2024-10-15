@@ -20,8 +20,7 @@
 
 package me.lucko.spark.fabric;
 
-import it.unimi.dsi.fastutil.longs.LongIterator;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -29,10 +28,14 @@ import me.lucko.spark.fabric.mixin.ClientEntityManagerAccessor;
 import me.lucko.spark.fabric.mixin.ClientWorldAccessor;
 import me.lucko.spark.fabric.mixin.ServerEntityManagerAccessor;
 import me.lucko.spark.fabric.mixin.ServerWorldAccessor;
+import me.lucko.spark.fabric.mixin.WorldAccessor;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.resource.ResourcePackManager;
+import net.minecraft.resource.ResourcePackSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerEntityManager;
 import net.minecraft.server.world.ServerWorld;
@@ -40,28 +43,41 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.entity.ClientEntityManager;
 import net.minecraft.world.entity.EntityIndex;
-import net.minecraft.world.entity.EntityTrackingSection;
-import net.minecraft.world.entity.SectionedEntityCache;
+import net.minecraft.world.entity.EntityLookup;
 
-import java.util.ArrayList;
+import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
 
-    protected List<FabricChunkInfo> getChunksFromCache(SectionedEntityCache<Entity> cache) {
-        LongSet loadedChunks = cache.getChunkPositions();
-        List<FabricChunkInfo> list = new ArrayList<>(loadedChunks.size());
+    protected abstract ResourcePackManager getResourcePackManager();
 
-        for (LongIterator iterator = loadedChunks.iterator(); iterator.hasNext(); ) {
-            long chunkPos = iterator.nextLong();
-            Stream<EntityTrackingSection<Entity>> sections = cache.getTrackingSections(chunkPos);
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        return getResourcePackManager().getEnabledProfiles().stream()
+                .map(pack -> new DataPackInfo(
+                        pack.getId(),
+                        pack.getDescription().getString(),
+                        resourcePackSource(pack.getSource())
+                ))
+                .collect(Collectors.toList());
+    }
 
-            list.add(new FabricChunkInfo(chunkPos, sections));
+    private static String resourcePackSource(ResourcePackSource source) {
+        if (source == ResourcePackSource.NONE) {
+            return "none";
+        } else if (source == ResourcePackSource.BUILTIN) {
+            return "builtin";
+        } else if (source == ResourcePackSource.WORLD) {
+            return "world";
+        } else if (source == ResourcePackSource.SERVER) {
+            return "server";
+        } else {
+            return "unknown";
         }
-
-        return list;
     }
 
     public static final class Server extends FabricWorldInfoProvider {
@@ -78,10 +94,15 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             int chunks = 0;
 
             for (ServerWorld world : this.server.getWorlds()) {
-                ServerEntityManager<Entity> entityManager = ((ServerWorldAccessor) world).getEntityManager();
-                EntityIndex<?> entityIndex = ((ServerEntityManagerAccessor) entityManager).getIndex();
 
-                entities += entityIndex.size();
+                if (FabricLoader.getInstance().isModLoaded("moonrise")) {
+                    entities += MoonriseMethods.getEntityCount(((WorldAccessor) world).spark$getEntityLookup());
+                } else {
+                    ServerEntityManager<Entity> entityManager = ((ServerWorldAccessor) world).getEntityManager();
+                    EntityIndex<?> entityIndex = ((ServerEntityManagerAccessor) entityManager).getIndex();
+                    entities += entityIndex.size();
+                }
+
                 chunks += world.getChunkManager().getLoadedChunkCount();
             }
 
@@ -93,11 +114,15 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
 
             for (ServerWorld world : this.server.getWorlds()) {
-                ServerEntityManager<Entity> entityManager = ((ServerWorldAccessor) world).getEntityManager();
-                SectionedEntityCache<Entity> cache = ((ServerEntityManagerAccessor) entityManager).getCache();
+                Long2ObjectOpenHashMap<FabricChunkInfo> worldInfos = new Long2ObjectOpenHashMap<>();
 
-                List<FabricChunkInfo> list = getChunksFromCache(cache);
-                data.put(world.getRegistryKey().getValue().getPath(), list);
+                for (Entity entity : ((WorldAccessor) world).spark$getEntityLookup().iterate()) {
+                    FabricChunkInfo info = worldInfos.computeIfAbsent(
+                        entity.getChunkPos().toLong(), FabricChunkInfo::new);
+                    info.entityCounts.increment(entity.getType());
+                }
+
+                data.put(world.getRegistryKey().getValue().getPath(), List.copyOf(worldInfos.values()));
             }
 
             return data;
@@ -124,6 +149,11 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             });
             return data;
         }
+
+        @Override
+        protected ResourcePackManager getResourcePackManager() {
+            return this.server.getDataPackManager();
+        }
     }
 
     public static final class Client extends FabricWorldInfoProvider {
@@ -140,10 +170,16 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
                 return null;
             }
 
-            ClientEntityManager<Entity> entityManager = ((ClientWorldAccessor) world).getEntityManager();
-            EntityIndex<?> entityIndex = ((ClientEntityManagerAccessor) entityManager).getIndex();
+            int entities;
 
-            int entities = entityIndex.size();
+            if (FabricLoader.getInstance().isModLoaded("moonrise")) {
+                entities = MoonriseMethods.getEntityCount(((WorldAccessor) world).spark$getEntityLookup());
+            } else {
+                ClientEntityManager<Entity> entityManager = ((ClientWorldAccessor) world).getEntityManager();
+                EntityIndex<?> entityIndex = ((ClientEntityManagerAccessor) entityManager).getIndex();
+                entities = entityIndex.size();
+            }
+
             int chunks = world.getChunkManager().getLoadedChunkCount();
 
             return new CountsResult(-1, entities, -1, chunks);
@@ -158,11 +194,14 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
 
             ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
 
-            ClientEntityManager<Entity> entityManager = ((ClientWorldAccessor) world).getEntityManager();
-            SectionedEntityCache<Entity> cache = ((ClientEntityManagerAccessor) entityManager).getCache();
+            Long2ObjectOpenHashMap<FabricChunkInfo> worldInfos = new Long2ObjectOpenHashMap<>();
 
-            List<FabricChunkInfo> list = getChunksFromCache(cache);
-            data.put(world.getRegistryKey().getValue().getPath(), list);
+            for (Entity entity : ((WorldAccessor) world).spark$getEntityLookup().iterate()) {
+                FabricChunkInfo info = worldInfos.computeIfAbsent(entity.getChunkPos().toLong(), FabricChunkInfo::new);
+                info.entityCounts.increment(entity.getType());
+            }
+
+            data.put(world.getRegistryKey().getValue().getPath(), List.copyOf(worldInfos.values()));
 
             return data;
         }
@@ -192,22 +231,20 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
 
             return data;
         }
+
+        @Override
+        protected ResourcePackManager getResourcePackManager() {
+            return this.client.getResourcePackManager();
+        }
     }
 
     static final class FabricChunkInfo extends AbstractChunkInfo<EntityType<?>> {
         private final CountMap<EntityType<?>> entityCounts;
 
-        FabricChunkInfo(long chunkPos, Stream<EntityTrackingSection<Entity>> entities) {
+        FabricChunkInfo(long chunkPos) {
             super(ChunkPos.getPackedX(chunkPos), ChunkPos.getPackedZ(chunkPos));
 
             this.entityCounts = new CountMap.Simple<>(new HashMap<>());
-            entities.forEach(section -> {
-                if (section.getStatus().shouldTrack()) {
-                    section.stream().forEach(entity ->
-                            this.entityCounts.increment(entity.getType())
-                    );
-                }
-            });
         }
 
         @Override
@@ -218,6 +255,29 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
         @Override
         public String entityTypeName(EntityType<?> type) {
             return EntityType.getId(type).toString();
+        }
+    }
+
+    private static final class MoonriseMethods {
+        private static Method getEntityCount;
+
+        private static Method getEntityCountMethod(EntityLookup<Entity> getter) {
+            if (getEntityCount == null) {
+                try {
+                    getEntityCount = getter.getClass().getMethod("getEntityCount");
+                } catch (final ReflectiveOperationException e) {
+                    throw new RuntimeException("Cannot find Moonrise getEntityCount method", e);
+                }
+            }
+            return getEntityCount;
+        }
+
+        private static int getEntityCount(EntityLookup<Entity> getter) {
+            try {
+                return (int) getEntityCountMethod(getter).invoke(getter);
+            } catch (final ReflectiveOperationException e) {
+                throw new RuntimeException("Failed to invoke Moonrise getEntityCount method", e);
+            }
         }
     }
 

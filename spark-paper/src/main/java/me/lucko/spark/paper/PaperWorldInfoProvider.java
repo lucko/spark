@@ -23,6 +23,7 @@ package me.lucko.spark.paper;
 import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Chunk;
 import org.bukkit.GameRule;
 import org.bukkit.Server;
@@ -31,8 +32,11 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class PaperWorldInfoProvider implements WorldInfoProvider {
     private final Server server;
@@ -102,6 +106,18 @@ public class PaperWorldInfoProvider implements WorldInfoProvider {
         }
 
         return data;
+    }
+
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        this.server.getDatapackManager().refreshPacks();
+        return this.server.getDatapackManager().getPacks().stream()
+                .map(pack -> new DataPackInfo(
+                        PlainTextComponentSerializer.plainText().serialize(pack.getTitle()),
+                        PlainTextComponentSerializer.plainText().serialize(pack.getDescription()),
+                        pack.getSource().toString().toLowerCase(Locale.ROOT).replace("_", "")
+                ))
+                .collect(Collectors.toList());
     }
 
     static final class PaperChunkInfo extends AbstractChunkInfo<EntityType> {

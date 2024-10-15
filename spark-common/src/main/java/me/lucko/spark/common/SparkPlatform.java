@@ -74,12 +74,14 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
@@ -339,6 +341,15 @@ public class SparkPlatform {
         return this.commands.stream()
                 .filter(c -> sender.hasPermission("spark." + c.primaryAlias()))
                 .collect(Collectors.toList());
+    }
+
+    public Set<String> getAllSparkPermissions() {
+        return Stream.concat(
+                Stream.of("spark"),
+                this.commands.stream()
+                        .map(Command::primaryAlias)
+                        .map(alias -> "spark." + alias)
+        ).collect(Collectors.toSet());
     }
 
     public boolean hasPermissionForAnyCommand(CommandSender sender) {

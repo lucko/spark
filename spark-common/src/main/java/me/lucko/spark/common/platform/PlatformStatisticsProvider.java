@@ -146,34 +146,32 @@ public class PlatformStatisticsProvider {
         return builder.build();
     }
 
-    public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, boolean detailed) {
+    public PlatformStatistics getPlatformStatistics(Map<String, GarbageCollectorStatistics> startingGcStatistics, boolean includeWorldStatistics) {
         PlatformStatistics.Builder builder = PlatformStatistics.newBuilder();
 
         PlatformStatistics.Memory.Builder memory = PlatformStatistics.Memory.newBuilder()
                 .setHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getHeapMemoryUsage()))
                 .setNonHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage()));
 
-        if (detailed) {
-            List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
-            for (MemoryPoolMXBean memoryPool : memoryPoolMXBeans) {
-                if (memoryPool.getType() != MemoryType.HEAP) {
-                    continue;
-                }
-
-                MemoryUsage usage = memoryPool.getUsage();
-                MemoryUsage collectionUsage = memoryPool.getCollectionUsage();
-
-                if (usage.getMax() == -1) {
-                    usage = new MemoryUsage(usage.getInit(), usage.getUsed(), usage.getCommitted(), usage.getCommitted());
-                }
-
-                memory.addPools(PlatformStatistics.Memory.MemoryPool.newBuilder()
-                        .setName(memoryPool.getName())
-                        .setUsage(memoryUsageProto(usage))
-                        .setCollectionUsage(memoryUsageProto(collectionUsage))
-                        .build()
-                );
+        List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
+        for (MemoryPoolMXBean memoryPool : memoryPoolMXBeans) {
+            if (memoryPool.getType() != MemoryType.HEAP) {
+                continue;
             }
+
+            MemoryUsage usage = memoryPool.getUsage();
+            MemoryUsage collectionUsage = memoryPool.getCollectionUsage();
+
+            if (usage.getMax() == -1) {
+                usage = new MemoryUsage(usage.getInit(), usage.getUsed(), usage.getCommitted(), usage.getCommitted());
+            }
+
+            memory.addPools(PlatformStatistics.Memory.MemoryPool.newBuilder()
+                    .setName(memoryPool.getName())
+                    .setUsage(memoryUsageProto(usage))
+                    .setCollectionUsage(memoryUsageProto(collectionUsage))
+                    .build()
+            );
         }
 
         builder.setMemory(memory.build());
@@ -240,7 +238,7 @@ public class PlatformStatisticsProvider {
                     : PlatformStatistics.OnlineMode.OFFLINE
         );
 
-        if (detailed) {
+        if (includeWorldStatistics) {
             try {
                 WorldStatisticsProvider worldStatisticsProvider = new WorldStatisticsProvider(
                         new AsyncWorldInfoProvider(this.platform, this.platform.getPlugin().createWorldInfoProvider())

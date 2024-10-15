@@ -25,9 +25,11 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
+import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
@@ -192,9 +194,18 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         if (exportProps.channelInfo() != null) {
             proto.setChannelInfo(exportProps.channelInfo());
         }
+
         writeMetadataToProto(proto, platform, exportProps.creator(), exportProps.comment(), this.dataAggregator);
-        writeDataToProto(proto, this.dataAggregator, exportProps.mergeMode().get(), exportProps.classSourceLookup().get(), platform::createClassFinder);
+
+        MethodDisambiguator methodDisambiguator = new MethodDisambiguator(platform.createClassFinder());
+        writeDataToProto(proto, this.dataAggregator, timeEncoder -> new JavaNodeExporter(timeEncoder, exportProps.mergeStrategy(), methodDisambiguator), exportProps.classSourceLookup().get(), platform::createClassFinder);
+
         return proto.build();
+    }
+
+    @Override
+    public SamplerType getType() {
+        return SamplerType.JAVA;
     }
 
     @Override

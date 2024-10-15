@@ -20,11 +20,8 @@
 
 package me.lucko.spark.common.sampler;
 
-import me.lucko.spark.common.sampler.async.AsyncSampler;
-import me.lucko.spark.common.sampler.java.JavaSampler;
-import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import me.lucko.spark.test.TestClass2;
 import me.lucko.spark.test.plugin.TestCommandSender;
@@ -49,8 +46,8 @@ public class SamplerTest {
 
     @ParameterizedTest
     @EnumSource
-    public void testSampler(ProfilerType profilerType, @TempDir Path directory) {
-        if (profilerType == ProfilerType.ASYNC) {
+    public void testSampler(SamplerType samplerType, @TempDir Path directory) {
+        if (samplerType == SamplerType.ASYNC) {
             String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
             assumeTrue(os.equals("linux") || os.equals("macosx"), "async profiler is only supported on Linux and macOS");
         }
@@ -63,19 +60,23 @@ public class SamplerTest {
                     .threadDumper(new ThreadDumper.Specific(thread))
                     .threadGrouper(ThreadGrouper.BY_POOL)
                     .samplingInterval(10)
-                    .forceJavaSampler(profilerType == ProfilerType.JAVA)
+                    .forceJavaSampler(samplerType == SamplerType.JAVA)
                     .completeAfter(2, TimeUnit.SECONDS)
                     .start(plugin.platform());
 
-            assertInstanceOf(profilerType.expectedClass, sampler);
+            assertInstanceOf(samplerType.implClass(), sampler);
+            assertEquals(samplerType, sampler.getType());
 
             assertNotEquals(-1, sampler.getAutoEndTime());
             sampler.getFuture().join();
 
             Sampler.ExportProps exportProps = new Sampler.ExportProps()
                     .creator(TestCommandSender.INSTANCE.toData())
-                    .mergeMode(() -> MergeMode.sameMethod(new MethodDisambiguator(plugin.platform().createClassFinder())))
                     .classSourceLookup(() -> ClassSourceLookup.create(plugin.platform()));
+
+            if (samplerType == SamplerType.JAVA) {
+                exportProps.mergeStrategy(MergeStrategy.SAME_METHOD);
+            }
 
             SparkSamplerProtos.SamplerData proto = sampler.toProto(plugin.platform(), exportProps);
             assertNotNull(proto);
@@ -88,17 +89,6 @@ public class SamplerTest {
             assertTrue(protoThread.getChildrenList().stream().anyMatch(n -> n.getClassName().equals("me.lucko.spark.test.TestClass2") && n.getMethodName().equals("test")));
             assertTrue(protoThread.getChildrenList().stream().anyMatch(n -> n.getClassName().equals("me.lucko.spark.test.TestClass2") && n.getMethodName().equals("testA")));
             assertTrue(protoThread.getChildrenList().stream().anyMatch(n -> n.getClassName().equals("me.lucko.spark.test.TestClass2") && n.getMethodName().equals("testB")));
-        }
-    }
-
-    public enum ProfilerType {
-        JAVA(JavaSampler.class),
-        ASYNC(AsyncSampler.class);
-
-        private final Class<? extends Sampler> expectedClass;
-
-        ProfilerType(Class<? extends Sampler> expectedClass) {
-            this.expectedClass = expectedClass;
         }
     }
 

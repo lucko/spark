@@ -20,8 +20,8 @@
 
 package me.lucko.spark.common.sampler.window;
 
-import me.lucko.spark.common.sampler.async.jfr.Dictionary;
 import me.lucko.spark.common.sampler.node.ThreadNode;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,22 +43,23 @@ public class ProtoTimeEncoder {
     /** A map of key value -> index in the keys array */
     private final Map<Integer, Integer> keysToIndex;
 
-    public ProtoTimeEncoder(LongToDoubleFunction valueTransformer, List<ThreadNode> sourceData) {
+    @VisibleForTesting
+    ProtoTimeEncoder(LongToDoubleFunction valueTransformer, IntStream keys) {
         this.valueTransformer = valueTransformer;
-
-        // get an array of all keys that show up in the source data
-        this.keys = sourceData.stream()
-                .map(n -> n.getTimeWindows().stream().mapToInt(i -> i))
-                .reduce(IntStream.empty(), IntStream::concat)
-                .distinct()
-                .sorted()
-                .toArray();
+        this.keys = keys.distinct().sorted().toArray();
 
         // construct a reverse index lookup
         this.keysToIndex = new HashMap<>(this.keys.length);
         for (int i = 0; i < this.keys.length; i++) {
             this.keysToIndex.put(this.keys[i], i);
         }
+    }
+
+    public ProtoTimeEncoder(LongToDoubleFunction valueTransformer, List<ThreadNode> sourceData) {
+        this(valueTransformer, sourceData.stream()
+                .map(n -> n.getTimeWindows().stream().mapToInt(i -> i))
+                .reduce(IntStream.empty(), IntStream::concat)
+        );
     }
 
     /**
@@ -71,7 +72,7 @@ public class ProtoTimeEncoder {
     }
 
     /**
-     * Encode a {@link Dictionary} (map) of times/durations into a double array.
+     * Encode a map of times/durations into a double array.
      *
      * @param times a dictionary of times (unix-time millis -> duration in microseconds)
      * @return the times encoded as a double array

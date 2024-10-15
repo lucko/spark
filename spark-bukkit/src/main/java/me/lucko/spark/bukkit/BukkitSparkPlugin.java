@@ -188,7 +188,8 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
                 Arrays.asList(getServer().getPluginManager().getPlugins()),
                 Plugin::getName,
                 plugin -> plugin.getDescription().getVersion(),
-                plugin -> String.join(", ", plugin.getDescription().getAuthors())
+                plugin -> String.join(", ", plugin.getDescription().getAuthors()),
+                plugin -> plugin.getDescription().getDescription()
         );
     }
 
