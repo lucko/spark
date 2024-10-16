@@ -1,6 +1,5 @@
 package me.lucko.spark.allay;
 
-import lombok.extern.slf4j.Slf4j;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
@@ -21,7 +20,6 @@ import java.util.stream.Stream;
 /**
  * @author IWareQ
  */
-@Slf4j
 public class AllaySparkPlugin extends Plugin implements SparkPlugin {
 
     private SparkPlatform platform;
@@ -65,18 +63,12 @@ public class AllaySparkPlugin extends Plugin implements SparkPlugin {
 
     @Override
     public void executeAsync(Runnable task) {
-        Server.getInstance().getScheduler().scheduleRepeating(this, () -> {
-            task.run();
-            return false;
-        }, 1, true);
+        Server.getInstance().getScheduler().runLaterAsync(this, task);
     }
 
     @Override
     public void executeSync(Runnable task) {
-        Server.getInstance().getScheduler().scheduleRepeating(this, () -> {
-            task.run();
-            return false;
-        }, 1);
+        Server.getInstance().getScheduler().runLater(this, task);
     }
 
     // https://stackoverflow.com/questions/20795373/how-to-map-levels-of-java-util-logging-and-slf4j-logger
@@ -90,7 +82,7 @@ public class AllaySparkPlugin extends Plugin implements SparkPlugin {
             default -> org.slf4j.event.Level.ERROR;
         };
 
-        log.atLevel(slf4jLevel).log(msg);
+        pluginLogger.atLevel(slf4jLevel).log(msg);
     }
 
     @Override
@@ -109,7 +101,8 @@ public class AllaySparkPlugin extends Plugin implements SparkPlugin {
                 Server.getInstance().getPluginManager().getPlugins().values(),
                 container -> container.descriptor().getName(),
                 container -> container.descriptor().getVersion(),
-                container -> String.join(", ", container.descriptor().getAuthors())
+                container -> String.join(", ", container.descriptor().getAuthors()),
+                container -> container.descriptor().getDescription()
         );
     }
 

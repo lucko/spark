@@ -1,6 +1,7 @@
 package me.lucko.spark.allay;
 
 import me.lucko.spark.common.platform.PlatformInfo;
+import org.allaymc.api.AllayAPI;
 import org.allaymc.api.network.ProtocolInfo;
 
 /**
@@ -25,11 +26,11 @@ public class AllayPlatformInfo implements PlatformInfo {
 
     @Override
     public String getVersion() {
-        return "1.0.0";
+        return AllayAPI.API_VERSION;
     }
 
     @Override
     public String getMinecraftVersion() {
-        return ProtocolInfo.PACKET_CODEC.getMinecraftVersion();
+        return ProtocolInfo.getMinecraftVersionStr();
     }
 }
