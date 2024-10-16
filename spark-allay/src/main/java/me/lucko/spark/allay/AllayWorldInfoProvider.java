@@ -6,9 +6,13 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import org.allaymc.api.server.Server;
 import org.allaymc.api.utils.Identifier;
 import org.allaymc.api.world.DimensionInfo;
+import org.allaymc.api.world.World;
 import org.allaymc.api.world.chunk.Chunk;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author IWareQ
@@ -54,8 +58,19 @@ public class AllayWorldInfoProvider implements WorldInfoProvider {
     }
 
     @Override
-    public GameRulesResult pollGameRules() {
-        // TODO
+    public GameRulesResult pollGameRules() {GameRulesResult data = new GameRulesResult();
+        for (World world : Server.getInstance().getWorldPool().getWorlds().values()) {
+            for (var gameRuleEntry : world.getWorldData().getGameRules().getGameRules().entrySet()) {
+                Object value = gameRuleEntry.getValue();
+                data.put(gameRuleEntry.getKey().getName(), world.getWorldData().getName(), Objects.toString(value));
+            }
+        }
+
+        return data;
+    }
+
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
         return null;
     }
 
@@ -83,7 +98,7 @@ public class AllayWorldInfoProvider implements WorldInfoProvider {
 
         @Override
         public String entityTypeName(Identifier identifier) {
-            return identifier.path();
+            return identifier.toString();
         }
     }
 }
