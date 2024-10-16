@@ -18,8 +18,8 @@ subprojects {
 
     ext {
         baseVersion = '1.10'
-//        patchVersion = determinePatchVersion()
-        pluginVersion = baseVersion/* + '.' + patchVersion*/
+        patchVersion = determinePatchVersion()
+        pluginVersion = baseVersion + '.' + patchVersion
         pluginDescription = 'spark is a performance profiling plugin/mod for Minecraft clients, servers and proxies.'
     }
 

@@ -17,9 +17,10 @@ dependencies {
 }
 
 repositories {
-    maven { url 'https://repo.opencollab.dev/main/' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.opencollab.dev/maven-releases/' }
+    maven { url 'https://repo.opencollab.dev/maven-snapshots/' }
     maven { url 'https://storehouse.okaeri.eu/repository/maven-public/' }
-    mavenLocal()
 }
 
 processResources {
