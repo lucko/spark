@@ -33,7 +33,7 @@ public class AllaySparkCommand extends SimpleCommand {
                         "--only-ticks-over",
                         "--interval",
                         "--alloc"
-                ).str("value").optional().up(2)
+                ).str("value").optional().up(3)
                 .key("stop").up()
                 .key("cancel").root()
                 .key("tps").root()
