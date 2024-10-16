@@ -1,9 +1,12 @@
 {
-  "entrance": "me.lucko.spark.allay.AllaySparkPlugin",
   "name": "spark",
-  "description": "${pluginDescription}",
   "version": "${pluginVersion}",
+  "description": "${pluginDescription}",
   "authors": [
-    "IWareQ"
-  ]
+    "Luck",
+    "IWareQ",
+    "daoge_cmd"
+  ],
+  "website": "https://spark.lucko.me/",
+  "entrance": "me.lucko.spark.allay.AllaySparkPlugin"
 }
