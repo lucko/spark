@@ -4,8 +4,6 @@ import me.lucko.spark.common.platform.PlatformInfo;
 import org.allaymc.api.network.ProtocolInfo;
 
 /**
- * Allay Project 08/02/2024
- *
  * @author IWareQ
  */
 public class AllayPlatformInfo implements PlatformInfo {

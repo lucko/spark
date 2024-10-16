@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Allay Project 08/02/2024
- *
  * @author IWareQ
  */
 public class AllayPlayerPingProvider implements PlayerPingProvider {

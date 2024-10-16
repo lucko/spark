@@ -19,8 +19,6 @@ import java.util.logging.Level;
 import java.util.stream.Stream;
 
 /**
- * Allay Project 08/02/2024
- *
  * @author IWareQ
  */
 @Slf4j

@@ -7,8 +7,6 @@ import org.allaymc.api.command.SimpleCommand;
 import org.allaymc.api.command.tree.CommandTree;
 
 /**
- * Allay Project 08/02/2024
- *
  * @author IWareQ
  */
 public class AllaySparkCommand extends SimpleCommand {

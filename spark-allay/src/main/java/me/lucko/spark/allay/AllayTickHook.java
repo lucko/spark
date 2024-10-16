@@ -7,9 +7,7 @@ import org.allaymc.api.server.Server;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Allay Project 10/02/2024
- *
+/*
  * @author IWareQ
  */
 public class AllayTickHook extends AbstractTickHook implements TickHook, Task {

@@ -9,8 +9,6 @@ import org.allaymc.api.entity.interfaces.EntityPlayer;
 import java.util.UUID;
 
 /**
- * Allay Project 08/02/2024
- *
  * @author IWareQ
  */
 public class AllayCommandSender extends AbstractCommandSender<CommandSender> {

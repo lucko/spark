@@ -11,8 +11,6 @@ import org.allaymc.api.world.chunk.Chunk;
 import java.util.HashMap;
 
 /**
- * Allay Project 10/02/2024
- *
  * @author IWareQ
  */
 public class AllayWorldInfoProvider implements WorldInfoProvider {
