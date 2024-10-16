@@ -57,7 +57,8 @@ public class AllayWorldInfoProvider implements WorldInfoProvider {
     }
 
     @Override
-    public GameRulesResult pollGameRules() {GameRulesResult data = new GameRulesResult();
+    public GameRulesResult pollGameRules() {
+        GameRulesResult data = new GameRulesResult();
         for (World world : Server.getInstance().getWorldPool().getWorlds().values()) {
             for (var gameRuleEntry : world.getWorldData().getGameRules().getGameRules().entrySet()) {
                 Object value = gameRuleEntry.getValue();
