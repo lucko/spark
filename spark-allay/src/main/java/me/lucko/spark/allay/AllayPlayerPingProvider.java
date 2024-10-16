@@ -20,8 +20,9 @@ public class AllayPlayerPingProvider implements PlayerPingProvider {
     @Override
     public Map<String, Integer> poll() {
         Map<String, Integer> result = new HashMap<>();
-        for (var player : this.server.getOnlinePlayers().values())
+        for (var player : this.server.getOnlinePlayers().values()) {
             result.put(player.getCommandSenderName(), player.getPing());
+        }
         return result;
     }
 }
