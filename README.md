@@ -37,8 +37,8 @@ It is:
 It works by sampling statistical data about the systems activity, and constructing a call graph based on this data. The call graph is then displayed in an online viewer for further analysis by the user.
 
 There are two different profiler engines:
-* Native `AsyncGetCallTrace` + `perf_events` - uses [async-profiler](https://github.com/jvm-profiling-tools/async-profiler) (*only available on Linux x86_64 systems*)
-* Built-in Java `ThreadMXBean` - an improved version of the popular [WarmRoast profiler](https://github.com/sk89q/WarmRoast) by sk89q.
+* Native/Async - uses the [async-profiler](https://github.com/async-profiler/async-profiler) library (*only available on Linux & macOS systems*)
+* Java - uses `ThreadMXBean`, an improved version of the popular [WarmRoast profiler](https://github.com/sk89q/WarmRoast) by sk89q.
 
 ### :zap: Memory Inspection
 
