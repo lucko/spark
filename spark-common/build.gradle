@@ -1,5 +1,6 @@
 plugins {
     id 'com.google.protobuf' version '0.9.4'
+    id 'maven-publish'
 }
 
 license {
@@ -14,7 +15,7 @@ dependencies {
     implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.3'
     implementation 'org.ow2.asm:asm:9.7'
     implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
-    implementation 'com.google.protobuf:protobuf-javalite:4.27.1'
+    implementation 'com.google.protobuf:protobuf-javalite:4.28.2'
 
     implementation('me.lucko:bytesocks-java-client:1.0-20230828.145440-5') {
         exclude(module: 'slf4j-api')
@@ -60,7 +61,7 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:4.27.1'
+        artifact = 'com.google.protobuf:protoc:4.28.2'
     }
     generateProtoTasks {
         all().each { task ->
@@ -76,4 +77,31 @@ protobuf {
 test {
     useJUnitPlatform {}
     systemProperty('net.kyori.ansi.colorLevel', 'indexed16')
+}
+
+publishing {
+    //repositories {
+    //    maven {
+    //        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    //        credentials {
+    //            username = sonatypeUsername
+    //            password = sonatypePassword
+    //        }
+    //    }
+    //}
+    //repositories {
+    //    maven {
+    //        url = 'https://nexus.lucko.me/repository/maven-snapshots/'
+    //        credentials {
+    //            username = luckoNexusUsername
+    //            password = luckoNexusPassword
+    //        }
+    //    }
+    //}
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            version = "${project.pluginVersion}-SNAPSHOT"
+        }
+    }
 }
