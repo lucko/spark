@@ -21,55 +21,47 @@
 package me.lucko.spark.fabric;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandOutput;
-import net.minecraft.server.rcon.RconCommandOutput;
 import net.minecraft.text.Text;
 
 import java.util.UUID;
 
-public class FabricCommandSender extends AbstractCommandSender<CommandOutput> {
-    private final FabricSparkPlugin plugin;
+public class FabricClientCommandSender extends AbstractCommandSender<FabricClientCommandSource> {
+    public FabricClientCommandSender(FabricClientCommandSource commandSource) {
+        super(commandSource);
+    }
 
-    public FabricCommandSender(CommandOutput commandOutput, FabricSparkPlugin plugin) {
-        super(commandOutput);
-        this.plugin = plugin;
+    public FabricClientCommandSender(ClientCommandSource commandSource) {
+        this((FabricClientCommandSource) commandSource);
     }
 
     @Override
     public String getName() {
-        if (super.delegate instanceof PlayerEntity) {
-            return ((PlayerEntity) super.delegate).getGameProfile().getName();
-        } else if (super.delegate instanceof MinecraftServer) {
-            return "Console";
-        } else if (super.delegate instanceof RconCommandOutput) {
-            return "RCON Console";
-        } else {
-            return "unknown:" + super.delegate.getClass().getSimpleName();
-        }
+        return this.delegate.getPlayer().getGameProfile().getName();
     }
 
     @Override
     public UUID getUniqueId() {
-        if (super.delegate instanceof PlayerEntity) {
-            return ((PlayerEntity) super.delegate).getUuid();
-        }
-        return null;
+        return this.delegate.getPlayer().getUuid();
     }
 
     @Override
     public void sendMessage(Component message) {
         Text component = Text.Serialization.fromJsonTree(GsonComponentSerializer.gson().serializeToTree(message), DynamicRegistryManager.EMPTY);
-        super.delegate.sendMessage(component);
+        this.delegate.sendFeedback(component);
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.plugin.hasPermission(super.delegate, permission);
+        return true;
+    }
+
+    @Override
+    protected Object getObjectForComparison() {
+        return this.delegate.getPlayer();
     }
 }

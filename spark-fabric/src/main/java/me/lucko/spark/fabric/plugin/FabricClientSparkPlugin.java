@@ -32,7 +32,7 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.fabric.FabricCommandSender;
+import me.lucko.spark.fabric.FabricClientCommandSender;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
@@ -43,8 +43,8 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.server.command.CommandOutput;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
@@ -91,7 +91,7 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
             return 0;
         }
 
-        this.platform.executeCommand(new FabricCommandSender(context.getSource().getEntity(), this), args);
+        this.platform.executeCommand(new FabricClientCommandSender(context.getSource()), args);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -102,17 +102,16 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new FabricCommandSender(context.getSource().getEntity(), this), args, builder);
+        return generateSuggestions(new FabricClientCommandSender(context.getSource()), args, builder);
     }
 
     @Override
-    public boolean hasPermission(CommandOutput sender, String permission) {
-        return true;
-    }
-
-    @Override
-    public Stream<FabricCommandSender> getCommandSenders() {
-        return Stream.of(new FabricCommandSender(this.minecraft.player, this));
+    public Stream<FabricClientCommandSender> getCommandSenders() {
+        ClientPlayNetworkHandler networkHandler = this.minecraft.getNetworkHandler();
+        if (networkHandler == null) {
+            return Stream.empty();
+        }
+        return Stream.of(new FabricClientCommandSender(networkHandler.getCommandSource()));
     }
 
     @Override
