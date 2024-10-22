@@ -133,20 +133,19 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             GameRulesResult data = new GameRulesResult();
             Iterable<ServerWorld> worlds = this.server.getWorlds();
 
-            GameRules.accept(new GameRules.Visitor() {
-                @Override
-                public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                    String defaultValue = type.createRule().serialize();
-                    data.putDefault(key.getName(), defaultValue);
+            for (ServerWorld world : worlds) {
+                world.getGameRules().accept(new GameRules.Visitor() {
+                    @Override
+                    public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                        String defaultValue = type.createRule().serialize();
+                        data.putDefault(key.getName(), defaultValue);
 
-                    for (ServerWorld world : worlds) {
                         String worldName = world.getRegistryKey().getValue().getPath();
-
                         String value = world.getGameRules().get(key).serialize();
                         data.put(key.getName(), worldName, value);
                     }
-                }
-            });
+                });
+            }
             return data;
         }
 
@@ -208,28 +207,8 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
 
         @Override
         public GameRulesResult pollGameRules() {
-            ClientWorld world = this.client.world;
-            if (world == null) {
-                return null;
-            }
-
-            GameRulesResult data = new GameRulesResult();
-
-            String worldName = world.getRegistryKey().getValue().getPath();
-            GameRules worldRules = world.getGameRules();
-
-            GameRules.accept(new GameRules.Visitor() {
-                @Override
-                public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                    String defaultValue = type.createRule().serialize();
-                    data.putDefault(key.getName(), defaultValue);
-
-                    String value = worldRules.get(key).serialize();
-                    data.put(key.getName(), worldName, value);
-                }
-            });
-
-            return data;
+            // Not available on client since 24w39a
+            return null;
         }
 
         @Override

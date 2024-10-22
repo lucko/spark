@@ -40,7 +40,6 @@ import me.lucko.spark.fabric.FabricClassSourceLookup;
 import me.lucko.spark.fabric.FabricSparkMod;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.Person;
-import net.minecraft.server.command.CommandOutput;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -76,8 +75,6 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
         this.platform.disable();
         this.scheduler.shutdown();
     }
-
-    public abstract boolean hasPermission(CommandOutput sender, String permission);
 
     @Override
     public String getVersion() {
