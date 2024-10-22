@@ -38,7 +38,6 @@ import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.neoforge.NeoForgeClassSourceLookup;
 import me.lucko.spark.neoforge.NeoForgeSparkMod;
-import net.minecraft.commands.CommandSource;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModInfo;
 import org.apache.logging.log4j.LogManager;
@@ -75,8 +74,6 @@ public abstract class NeoForgeSparkPlugin implements SparkPlugin {
         this.platform.disable();
         this.scheduler.shutdown();
     }
-
-    public abstract boolean hasPermission(CommandSource sender, String permission);
 
     @Override
     public String getVersion() {

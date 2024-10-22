@@ -31,17 +31,17 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.neoforge.NeoForgeCommandSender;
+import me.lucko.spark.neoforge.NeoForgeClientCommandSender;
 import me.lucko.spark.neoforge.NeoForgePlatformInfo;
 import me.lucko.spark.neoforge.NeoForgeSparkMod;
 import me.lucko.spark.neoforge.NeoForgeTickHook;
 import me.lucko.spark.neoforge.NeoForgeTickReporter;
 import me.lucko.spark.neoforge.NeoForgeWorldInfoProvider;
 import net.minecraft.client.Minecraft;
-import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.ClientCommandHandler;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -84,7 +84,7 @@ public class NeoForgeClientSparkPlugin extends NeoForgeSparkPlugin implements Co
             return 0;
         }
 
-        this.platform.executeCommand(new NeoForgeCommandSender(context.getSource().getEntity(), this), args);
+        this.platform.executeCommand(new NeoForgeClientCommandSender(context.getSource()), args);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -95,17 +95,12 @@ public class NeoForgeClientSparkPlugin extends NeoForgeSparkPlugin implements Co
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new NeoForgeCommandSender(context.getSource().getEntity(), this), args, builder);
+        return generateSuggestions(new NeoForgeClientCommandSender(context.getSource()), args, builder);
     }
 
     @Override
-    public boolean hasPermission(CommandSource sender, String permission) {
-        return true;
-    }
-
-    @Override
-    public Stream<NeoForgeCommandSender> getCommandSenders() {
-        return Stream.of(new NeoForgeCommandSender(this.minecraft.player, this));
+    public Stream<NeoForgeClientCommandSender> getCommandSenders() {
+        return Stream.of(new NeoForgeClientCommandSender(ClientCommandHandler.getSource()));
     }
 
     @Override

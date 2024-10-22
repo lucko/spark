@@ -21,47 +21,39 @@
 package me.lucko.spark.neoforge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import me.lucko.spark.neoforge.plugin.NeoForgeSparkPlugin;
+import me.lucko.spark.neoforge.plugin.NeoForgeServerSparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component.Serializer;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.rcon.RconConsoleSource;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.Entity;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public class NeoForgeCommandSender extends AbstractCommandSender<CommandSource> {
-    private final NeoForgeSparkPlugin plugin;
+public class NeoForgeServerCommandSender extends AbstractCommandSender<CommandSourceStack> {
+    private final NeoForgeServerSparkPlugin plugin;
 
-    public NeoForgeCommandSender(CommandSource source, NeoForgeSparkPlugin plugin) {
-        super(source);
+    public NeoForgeServerCommandSender(CommandSourceStack commandSource, NeoForgeServerSparkPlugin plugin) {
+        super(commandSource);
         this.plugin = plugin;
     }
 
     @Override
     public String getName() {
-        if (super.delegate instanceof Player) {
-            return ((Player) super.delegate).getGameProfile().getName();
-        } else if (super.delegate instanceof MinecraftServer) {
+        String name = this.delegate.getTextName();
+        if (this.delegate.getEntity() != null && name.equals("Server")) {
             return "Console";
-        } else if (super.delegate instanceof RconConsoleSource) {
-            return "RCON Console";
-        } else {
-            return "unknown:" + super.delegate.getClass().getSimpleName();
         }
+        return name;
     }
 
     @Override
     public UUID getUniqueId() {
-        if (super.delegate instanceof Player) {
-            return ((Player) super.delegate).getUUID();
-        }
-        return null;
+        Entity entity = this.delegate.getEntity();
+        return entity != null ? entity.getUUID() : null;
     }
 
     @Override
@@ -73,6 +65,11 @@ public class NeoForgeCommandSender extends AbstractCommandSender<CommandSource> 
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.plugin.hasPermission(super.delegate, permission);
+        return this.plugin.hasPermission(this.delegate, permission);
+    }
+
+    @Override
+    protected Object getObjectForComparison() {
+        return this.delegate.getEntity();
     }
 }

@@ -35,15 +35,14 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.neoforge.NeoForgeCommandSender;
 import me.lucko.spark.neoforge.NeoForgePlatformInfo;
 import me.lucko.spark.neoforge.NeoForgePlayerPingProvider;
+import me.lucko.spark.neoforge.NeoForgeServerCommandSender;
 import me.lucko.spark.neoforge.NeoForgeServerConfigProvider;
 import me.lucko.spark.neoforge.NeoForgeSparkMod;
 import me.lucko.spark.neoforge.NeoForgeTickHook;
 import me.lucko.spark.neoforge.NeoForgeTickReporter;
 import me.lucko.spark.neoforge.NeoForgeWorldInfoProvider;
-import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -171,8 +170,7 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
             return 0;
         }
 
-        CommandSource source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
-        this.platform.executeCommand(new NeoForgeCommandSender(source, this), args);
+        this.platform.executeCommand(new NeoForgeServerCommandSender(context.getSource(), this), args);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -183,12 +181,12 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new NeoForgeCommandSender(context.getSource().getPlayerOrException(), this), args, builder);
+        return generateSuggestions(new NeoForgeServerCommandSender(context.getSource(), this), args, builder);
     }
 
-    @Override
-    public boolean hasPermission(CommandSource sender, String permission) {
-        if (sender instanceof ServerPlayer) {
+    public boolean hasPermission(CommandSourceStack source, String permission) {
+        ServerPlayer player = source.getPlayer();
+        if (player != null) {
             if (permission.equals("spark")) {
                 permission = "spark.all";
             }
@@ -197,18 +195,18 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
             if (permissionNode == null) {
                 throw new IllegalStateException("spark permission not registered: " + permission);
             }
-            return PermissionAPI.getPermission((ServerPlayer) sender, permissionNode);
+            return PermissionAPI.getPermission(player, permissionNode);
         } else {
             return true;
         }
     }
 
     @Override
-    public Stream<NeoForgeCommandSender> getCommandSenders() {
+    public Stream<NeoForgeServerCommandSender> getCommandSenders() {
         return Stream.concat(
-            this.server.getPlayerList().getPlayers().stream(),
-            Stream.of(this.server)
-        ).map(sender -> new NeoForgeCommandSender(sender, this));
+            this.server.getPlayerList().getPlayers().stream().map(ServerPlayer::createCommandSourceStack),
+            Stream.of(this.server.createCommandSourceStack())
+        ).map(stack -> new NeoForgeServerCommandSender(stack, this));
     }
 
     @Override

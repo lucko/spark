@@ -128,20 +128,19 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
             GameRulesResult data = new GameRulesResult();
             Iterable<ServerLevel> levels = this.server.getAllLevels();
 
-            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
-                @Override
-                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                    String defaultValue = type.createRule().serialize();
-                    data.putDefault(key.getId(), defaultValue);
+            for (ServerLevel level : levels) {
+                level.getGameRules().visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
+                    @Override
+                    public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                        String defaultValue = type.createRule().serialize();
+                        data.putDefault(key.getId(), defaultValue);
 
-                    for (ServerLevel level : levels) {
                         String levelName = level.dimension().location().getPath();
-
                         String value = level.getGameRules().getRule(key).serialize();
                         data.put(key.getId(), levelName, value);
                     }
-                }
-            });
+                });
+            }
 
             return data;
         }
@@ -203,28 +202,8 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
 
         @Override
         public GameRulesResult pollGameRules() {
-            ClientLevel level = this.client.level;
-            if (level == null) {
-                return null;
-            }
-
-            GameRulesResult data = new GameRulesResult();
-
-            String levelName = level.dimension().location().getPath();
-            GameRules levelRules = level.getGameRules();
-
-            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
-                @Override
-                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                    String defaultValue = type.createRule().serialize();
-                    data.putDefault(key.getId(), defaultValue);
-
-                    String value = levelRules.getRule(key).serialize();
-                    data.put(key.getId(), levelName, value);
-                }
-            });
-
-            return data;
+            // Not available on client since 24w39a
+            return null;
         }
 
         @Override
