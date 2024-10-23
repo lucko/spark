@@ -70,6 +70,14 @@ public class NeoForgeServerCommandSender extends AbstractCommandSender<CommandSo
 
     @Override
     protected Object getObjectForComparison() {
-        return this.delegate.getEntity();
+        UUID uniqueId = getUniqueId();
+        if (uniqueId != null) {
+            return uniqueId;
+        }
+        Entity entity = this.delegate.getEntity();
+        if (entity != null) {
+            return entity;
+        }
+        return getName();
     }
 }
