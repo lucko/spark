@@ -12,7 +12,7 @@ license {
 
 dependencies {
     api project(':spark-api')
-    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.3'
+    implementation 'tools.profiler:async-profiler:3.0'
     implementation 'org.ow2.asm:asm:9.7'
     implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
     implementation 'com.google.protobuf:protobuf-javalite:4.28.2'

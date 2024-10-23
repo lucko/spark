@@ -48,13 +48,7 @@ shadowJar {
     relocate 'me.lucko.spark.proto', 'me.lucko.spark.paper.proto'
     relocate 'spark-native', 'spark-paper-native'
 
-    exclude 'module-info.class'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
-    exclude '**/*.proto'
-    exclude '**/*.proto.bin'
-    exclude '**/*.proto'
-    exclude '**/*.proto.bin'
+    project.applyExcludes(delegate)
 }
 
 artifacts {
