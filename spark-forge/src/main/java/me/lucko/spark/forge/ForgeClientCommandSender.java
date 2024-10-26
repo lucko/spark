@@ -21,45 +21,33 @@
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import me.lucko.spark.forge.plugin.ForgeSparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.commands.CommandSource;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component.Serializer;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.rcon.RconConsoleSource;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.Entity;
 
 import java.util.Objects;
 import java.util.UUID;
 
-public class ForgeCommandSender extends AbstractCommandSender<CommandSource> {
-    private final ForgeSparkPlugin plugin;
-
-    public ForgeCommandSender(CommandSource source, ForgeSparkPlugin plugin) {
+public class ForgeClientCommandSender extends AbstractCommandSender<CommandSourceStack> {
+    public ForgeClientCommandSender(CommandSourceStack source) {
         super(source);
-        this.plugin = plugin;
     }
 
     @Override
     public String getName() {
-        if (super.delegate instanceof Player) {
-            return ((Player) super.delegate).getGameProfile().getName();
-        } else if (super.delegate instanceof MinecraftServer) {
-            return "Console";
-        } else if (super.delegate instanceof RconConsoleSource) {
-            return "RCON Console";
-        } else {
-            return "unknown:" + super.delegate.getClass().getSimpleName();
-        }
+        return this.delegate.getTextName();
     }
 
     @Override
     public UUID getUniqueId() {
-        if (super.delegate instanceof Player) {
-            return ((Player) super.delegate).getUUID();
+        Entity entity = this.delegate.getEntity();
+        if (entity instanceof LocalPlayer player) {
+            return player.getUUID();
         }
         return null;
     }
@@ -73,6 +61,11 @@ public class ForgeCommandSender extends AbstractCommandSender<CommandSource> {
 
     @Override
     public boolean hasPermission(String permission) {
-        return this.plugin.hasPermission(super.delegate, permission);
+        return true;
+    }
+
+    @Override
+    protected Object getObjectForComparison() {
+        return this.delegate.getEntity();
     }
 }

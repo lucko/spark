@@ -38,7 +38,6 @@ import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
-import net.minecraft.commands.CommandSource;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
 import org.apache.logging.log4j.LogManager;
@@ -75,8 +74,6 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
         this.platform.disable();
         this.scheduler.shutdown();
     }
-
-    public abstract boolean hasPermission(CommandSource sender, String permission);
 
     @Override
     public String getVersion() {

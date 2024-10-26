@@ -31,15 +31,15 @@ import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.forge.ForgeCommandSender;
+import me.lucko.spark.forge.ForgeClientCommandSender;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import me.lucko.spark.forge.ForgeWorldInfoProvider;
 import net.minecraft.client.Minecraft;
-import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
@@ -85,7 +85,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
             return 0;
         }
 
-        this.platform.executeCommand(new ForgeCommandSender(context.getSource().getEntity(), this), args);
+        this.platform.executeCommand(new ForgeClientCommandSender(context.getSource()), args);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -96,17 +96,12 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new ForgeCommandSender(context.getSource().getEntity(), this), args, builder);
+        return generateSuggestions(new ForgeClientCommandSender(context.getSource()), args, builder);
     }
 
     @Override
-    public boolean hasPermission(CommandSource sender, String permission) {
-        return true;
-    }
-
-    @Override
-    public Stream<ForgeCommandSender> getCommandSenders() {
-        return Stream.of(new ForgeCommandSender(this.minecraft.player, this));
+    public Stream<ForgeClientCommandSender> getCommandSenders() {
+        return Stream.of(new ForgeClientCommandSender(ClientCommandHandler.getSource()));
     }
 
     @Override
