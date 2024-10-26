@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.util.log;
 
 import java.util.logging.Level;
 
@@ -32,7 +32,7 @@ import java.util.logging.Level;
 public enum SparkStaticLogger {
     ;
 
-    private static Logger logger = null;
+    private static Logger logger = Logger.FALLBACK;
 
     public synchronized static void setLogger(Logger logger) {
         if (SparkStaticLogger.logger == null) {
@@ -40,22 +40,12 @@ public enum SparkStaticLogger {
         }
     }
 
-    public static void log(Level level, String msg) {
-        Logger logger = SparkStaticLogger.logger;
-        if (logger == null) {
-            if (level.intValue() >= 1000) {
-                System.err.println(msg);
-            } else {
-                System.out.println(msg);
-            }
-            return;
-        }
-
-        logger.log(level, msg);
+    public static void log(Level level, String msg, Throwable throwable) {
+        logger.log(level, msg, throwable);
     }
 
-    public interface Logger {
-        void log(Level level, String msg);
+    public static void log(Level level, String msg) {
+        logger.log(level, msg);
     }
 
 }

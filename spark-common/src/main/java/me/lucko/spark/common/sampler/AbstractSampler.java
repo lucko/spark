@@ -44,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 /**
  * Base implementation class for {@link Sampler}s.
@@ -173,7 +174,7 @@ public abstract class AbstractSampler implements Sampler {
                 viewerSocket.sendUpdatedStatistics(platform, system);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            platform.getPlugin().log(Level.WARNING, "Exception occurred while sending statistics to viewer", e);
         }
     }
 

@@ -190,7 +190,7 @@ public class WindowStatisticsCollector {
                 builder.setChunks(counts.chunks());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while getting world info", e);
         }
 
         return builder.build();

@@ -248,7 +248,7 @@ public class PlatformStatisticsProvider {
                     builder.setWorld(worldStatistics);
                 }
             } catch (Exception e) {
-                this.platform.getPlugin().log(Level.WARNING, "Failed to gather world statistics - " + e);
+                this.platform.getPlugin().log(Level.WARNING, "Failed to gather world statistics", e);
             }
         }
 

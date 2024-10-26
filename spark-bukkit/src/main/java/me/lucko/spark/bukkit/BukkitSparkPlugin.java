@@ -154,6 +154,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        getLogger().log(level, msg, throwable);
+    }
+
+    @Override
     public ThreadDumper getDefaultThreadDumper() {
         return this.gameThreadDumper;
     }

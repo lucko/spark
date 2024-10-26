@@ -46,14 +46,14 @@ public class SparkMetadata {
         try {
             platformStatistics = platform.getStatisticsProvider().getPlatformStatistics(initialGcStats, true);
         } catch (Exception e) {
-            platform.getPlugin().log(Level.WARNING, "Failed to gather platform statistics - " + e);
+            platform.getPlugin().log(Level.WARNING, "Failed to gather platform statistics", e);
         }
 
         SystemStatistics systemStatistics = null;
         try {
             systemStatistics = platform.getStatisticsProvider().getSystemStatistics();
         } catch (Exception e) {
-            platform.getPlugin().log(Level.WARNING, "Failed to gather system statistics - " + e);
+            platform.getPlugin().log(Level.WARNING, "Failed to gather system statistics", e);
         }
 
         long generatedTime = System.currentTimeMillis();
@@ -65,7 +65,7 @@ public class SparkMetadata {
                 serverConfigurations = serverConfigProvider.export();
             }
         } catch (Exception e) {
-            platform.getPlugin().log(Level.WARNING, "Failed to gather server configurations - " + e);
+            platform.getPlugin().log(Level.WARNING, "Failed to gather server configurations", e);
         }
 
         Collection<SourceMetadata> sources = platform.getPlugin().getKnownSources();
@@ -77,7 +77,7 @@ public class SparkMetadata {
                 extraPlatformMetadata = extraMetadataProvider.export();
             }
         } catch (Exception e) {
-            platform.getPlugin().log(Level.WARNING, "Failed to gather extra platform metadata - " + e);
+            platform.getPlugin().log(Level.WARNING, "Failed to gather extra platform metadata", e);
         }
 
         return new SparkMetadata(creator, platformMetadata, platformStatistics, systemStatistics, generatedTime, serverConfigurations, sources, extraPlatformMetadata);

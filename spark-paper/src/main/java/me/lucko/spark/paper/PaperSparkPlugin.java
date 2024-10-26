@@ -149,6 +149,11 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
     }
 
     @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        this.logger.log(level, msg, throwable);
+    }
+
+    @Override
     public ThreadDumper getDefaultThreadDumper() {
         return this.gameThreadDumper;
     }

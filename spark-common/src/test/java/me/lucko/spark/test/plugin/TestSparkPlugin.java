@@ -102,6 +102,11 @@ public class TestSparkPlugin implements SparkPlugin, AutoCloseable {
     }
 
     @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        LOGGER.log(level, msg, throwable);
+    }
+
+    @Override
     public PlatformInfo getPlatformInfo() {
         return new PlatformInfo() {
             @Override

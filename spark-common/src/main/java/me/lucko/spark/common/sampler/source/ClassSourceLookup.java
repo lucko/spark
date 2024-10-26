@@ -43,6 +43,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -92,7 +93,7 @@ public interface ClassSourceLookup {
         try {
             return platform.createClassSourceLookup();
         } catch (Exception e) {
-            e.printStackTrace();
+            platform.getPlugin().log(Level.WARNING, "Failed to create ClassSourceLookup", e);
             return NO_OP;
         }
     }
