@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class ProfileSegment {
 
+    private static final String UNKNOWN_THREAD_STATE = "<unknown>";
     /** The native thread id (does not correspond to Thread#getId) */
     private final int nativeThreadId;
     /** The name of the thread */
@@ -39,12 +40,15 @@ public class ProfileSegment {
     private final AsyncStackTraceElement[] stackTrace;
     /** The time spent executing this segment in microseconds */
     private final long value;
+    /** The state of the thread. {@value #UNKNOWN_THREAD_STATE} if state is unknown */
+    private final String threadState;
 
-    public ProfileSegment(int nativeThreadId, String threadName, AsyncStackTraceElement[] stackTrace, long value) {
+    private ProfileSegment(int nativeThreadId, String threadName, AsyncStackTraceElement[] stackTrace, long value, String threadState) {
         this.nativeThreadId = nativeThreadId;
         this.threadName = threadName;
         this.stackTrace = stackTrace;
         this.value = value;
+        this.threadState = threadState;
     }
 
     public int getNativeThreadId() {
@@ -63,6 +67,10 @@ public class ProfileSegment {
         return this.value;
     }
 
+    public String getThreadState() {
+        return threadState;
+    }
+
     public static ProfileSegment parseSegment(JfrReader reader, JfrReader.Event sample, String threadName, long value) {
         JfrReader.StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
         int len = stackTrace != null ? stackTrace.methods.length : 0;
@@ -71,8 +79,12 @@ public class ProfileSegment {
         for (int i = 0; i < len; i++) {
             stack[i] = parseStackFrame(reader, stackTrace.methods[i]);
         }
+        String threadState = UNKNOWN_THREAD_STATE;
+        if (sample instanceof JfrReader.ExecutionSample) {
+            threadState = reader.threadStates.get(((JfrReader.ExecutionSample) sample).threadState);
+        }
 
-        return new ProfileSegment(sample.tid, threadName, stack, value);
+        return new ProfileSegment(sample.tid, threadName, stack, value, threadState);
     }
 
     private static AsyncStackTraceElement parseStackFrame(JfrReader reader, long methodId) {

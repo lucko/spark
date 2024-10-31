@@ -120,7 +120,7 @@ public class SamplerBuilder {
         boolean onlyTicksOverMode = this.ticksOver != -1 && this.tickHook != null;
         boolean canUseAsyncProfiler = this.useAsyncProfiler &&
                 !onlyTicksOverMode &&
-                !(this.ignoreSleeping || this.ignoreNative) &&
+                !((this.ignoreSleeping && this.mode == SamplerMode.ALLOCATION) || this.ignoreNative) &&
                 AsyncProfilerAccess.getInstance(platform).checkSupported(platform);
 
         if (this.mode == SamplerMode.ALLOCATION && (!canUseAsyncProfiler || !AsyncProfilerAccess.getInstance(platform).checkAllocationProfilingSupported(platform))) {
@@ -136,9 +136,9 @@ public class SamplerBuilder {
 
         Sampler sampler;
         if (this.mode == SamplerMode.ALLOCATION) {
-            sampler = new AsyncSampler(platform, settings, new SampleCollector.Allocation(interval, this.allocLiveOnly));
+            sampler = new AsyncSampler(platform, settings, new SampleCollector.Allocation(interval, this.allocLiveOnly), this.ignoreSleeping);
         } else if (canUseAsyncProfiler) {
-            sampler = new AsyncSampler(platform, settings, new SampleCollector.Execution(interval));
+            sampler = new AsyncSampler(platform, settings, new SampleCollector.Execution(interval), this.ignoreSleeping);
         } else if (onlyTicksOverMode) {
             sampler = new JavaSampler(platform, settings, this.ignoreSleeping, this.ignoreNative, this.tickHook, this.ticksOver);
         } else {

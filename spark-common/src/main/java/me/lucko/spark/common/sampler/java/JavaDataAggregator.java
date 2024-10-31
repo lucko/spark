@@ -113,12 +113,7 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
         String clazz = call.getClassName();
         String method = call.getMethodName();
 
-        // java.lang.Thread.yield()
-        // jdk.internal.misc.Unsafe.park()
-        // sun.misc.Unsafe.park()
-        return (clazz.equals("java.lang.Thread") && method.equals("yield")) ||
-                (clazz.equals("jdk.internal.misc.Unsafe") && method.equals("park")) ||
-                (clazz.equals("sun.misc.Unsafe") && method.equals("park"));
+        return isSleeping(clazz, method);
     }
 
 }

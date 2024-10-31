@@ -65,4 +65,13 @@ public abstract class AbstractDataAggregator implements DataAggregator {
         }
         return data;
     }
+
+    protected static boolean isSleeping(String clazz, String method) {
+        // java.lang.Thread.yield()
+        // jdk.internal.misc.Unsafe.park()
+        // sun.misc.Unsafe.park()
+        return (clazz.equals("java.lang.Thread") && method.equals("yield")) ||
+               (clazz.equals("jdk.internal.misc.Unsafe") && method.equals("park")) ||
+               (clazz.equals("sun.misc.Unsafe") && method.equals("park"));
+    }
 }
