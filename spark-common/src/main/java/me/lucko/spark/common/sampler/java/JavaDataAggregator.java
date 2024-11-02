@@ -48,18 +48,10 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
     /** The interval to wait between sampling, in microseconds */
     protected final int interval;
 
-    /** If sleeping threads should be ignored */
-    private final boolean ignoreSleeping;
-
-    /** If threads executing native code should be ignored */
-    private final boolean ignoreNative;
-
-    public JavaDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, boolean ignoreNative) {
-        super(threadGrouper);
+    public JavaDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping) {
+        super(threadGrouper, ignoreSleeping);
         this.workerPool = workerPool;
         this.interval = interval;
-        this.ignoreSleeping = ignoreSleeping;
-        this.ignoreNative = ignoreNative;
     }
 
     /**
@@ -72,9 +64,6 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
 
     protected void writeData(ThreadInfo threadInfo, int window) {
         if (this.ignoreSleeping && isSleeping(threadInfo)) {
-            return;
-        }
-        if (this.ignoreNative && threadInfo.isInNative()) {
             return;
         }
 

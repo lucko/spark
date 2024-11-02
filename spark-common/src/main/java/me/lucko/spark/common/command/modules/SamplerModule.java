@@ -190,7 +190,6 @@ public class SamplerModule implements CommandModule {
         }
 
         boolean ignoreSleeping = arguments.boolFlag("ignore-sleeping");
-        boolean ignoreNative = arguments.boolFlag("ignore-native");
         boolean forceJavaSampler = arguments.boolFlag("force-java-sampler");
 
         Set<String> threads = arguments.stringFlag("thread");
@@ -239,7 +238,6 @@ public class SamplerModule implements CommandModule {
         }
         builder.samplingInterval(interval);
         builder.ignoreSleeping(ignoreSleeping);
-        builder.ignoreNative(ignoreNative);
         builder.forceJavaSampler(forceJavaSampler);
         builder.allocLiveOnly(allocLiveOnly);
         if (ticksOver != -1) {

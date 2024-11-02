@@ -40,8 +40,12 @@ public abstract class AbstractDataAggregator implements DataAggregator {
     /** The instance used to group threads together */
     protected final ThreadGrouper threadGrouper;
 
-    protected AbstractDataAggregator(ThreadGrouper threadGrouper) {
+    /** If sleeping threads should be ignored */
+    protected final boolean ignoreSleeping;
+
+    protected AbstractDataAggregator(ThreadGrouper threadGrouper, boolean ignoreSleeping) {
         this.threadGrouper = threadGrouper;
+        this.ignoreSleeping = ignoreSleeping;
     }
 
     protected ThreadNode getNode(String group) {

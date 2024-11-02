@@ -65,11 +65,11 @@ public class AsyncSampler extends AbstractSampler {
     /** The task to send statistics to the viewer socket */
     private ScheduledFuture<?> socketStatisticsTask;
 
-    public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector, boolean ignoreSleeping) {
+    public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector) {
         super(platform, settings);
         this.sampleCollector = collector;
         this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
-        this.dataAggregator = new AsyncDataAggregator(settings.threadGrouper(), ignoreSleeping);
+        this.dataAggregator = new AsyncDataAggregator(settings.threadGrouper(), settings.ignoreSleeping());
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactoryBuilder()
                         .setNameFormat("spark-async-sampler-worker-thread")

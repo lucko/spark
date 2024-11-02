@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
  * Implementation of {@link DataAggregator} which supports only including sampling data from "ticks"
  * which exceed a certain threshold in duration.
  */
-public class TickedDataAggregator extends JavaDataAggregator {
+public class TickedJavaDataAggregator extends JavaDataAggregator {
 
     /** Used to monitor the current "tick" of the server */
     private final TickHook tickHook;
@@ -59,8 +59,8 @@ public class TickedDataAggregator extends JavaDataAggregator {
     // guards currentData
     private final Object mutex = new Object();
 
-    public TickedDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
-        super(workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
+    public TickedJavaDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, TickHook tickHook, int tickLengthThreshold) {
+        super(workerPool, threadGrouper, interval, ignoreSleeping);
         this.tickHook = tickHook;
         this.tickLengthThreshold = TimeUnit.MILLISECONDS.toMicros(tickLengthThreshold);
         // 50 millis in a tick, plus 10 so we have a bit of room to go over

@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 public class ProfileSegment {
 
     private static final String UNKNOWN_THREAD_STATE = "<unknown>";
+
     /** The native thread id (does not correspond to Thread#getId) */
     private final int nativeThreadId;
     /** The name of the thread */
@@ -68,7 +69,7 @@ public class ProfileSegment {
     }
 
     public String getThreadState() {
-        return threadState;
+        return this.threadState;
     }
 
     public static ProfileSegment parseSegment(JfrReader reader, JfrReader.Event sample, String threadName, long value) {
@@ -81,7 +82,8 @@ public class ProfileSegment {
         }
         String threadState = UNKNOWN_THREAD_STATE;
         if (sample instanceof JfrReader.ExecutionSample) {
-            threadState = reader.threadStates.get(((JfrReader.ExecutionSample) sample).threadState);
+            JfrReader.ExecutionSample executionSample = (JfrReader.ExecutionSample) sample;
+            threadState = reader.threadStates.get(executionSample.threadState);
         }
 
         return new ProfileSegment(sample.tid, threadName, stack, value, threadState);

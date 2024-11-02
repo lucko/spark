@@ -26,6 +26,7 @@ import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.sampler.java.TickedJavaDataAggregator;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.proto.SparkProtos;
 
@@ -287,7 +288,7 @@ public class WindowStatisticsCollector {
      * Counts the number of ticks in a window according to the number of times
      * {@link #increment()} is called.
      *
-     * Used by the {@link me.lucko.spark.common.sampler.java.TickedDataAggregator}.
+     * Used by the {@link TickedJavaDataAggregator}.
      */
     public static final class ExplicitTickCounter extends BaseTickCounter {
         private final AtomicInteger counted = new AtomicInteger();

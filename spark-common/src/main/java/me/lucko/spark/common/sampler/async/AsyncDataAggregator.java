@@ -34,11 +34,9 @@ public class AsyncDataAggregator extends AbstractDataAggregator {
     /** A describer for async-profiler stack trace elements. */
     private static final StackTraceNode.Describer<AsyncStackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) ->
             new StackTraceNode.AsyncDescription(element.getClassName(), element.getMethodName(), element.getMethodDescription());
-    private final boolean ignoreSleeping;
 
     protected AsyncDataAggregator(ThreadGrouper threadGrouper, boolean ignoreSleeping) {
-        super(threadGrouper);
-        this.ignoreSleeping = ignoreSleeping;
+        super(threadGrouper, ignoreSleeping);
     }
 
     @Override

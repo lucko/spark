@@ -30,9 +30,9 @@ import java.util.concurrent.ExecutorService;
 /**
  * Basic implementation of {@link DataAggregator}.
  */
-public class SimpleDataAggregator extends JavaDataAggregator {
-    public SimpleDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping, boolean ignoreNative) {
-        super(workerPool, threadGrouper, interval, ignoreSleeping, ignoreNative);
+public class SimpleJavaDataAggregator extends JavaDataAggregator {
+    public SimpleJavaDataAggregator(ExecutorService workerPool, ThreadGrouper threadGrouper, int interval, boolean ignoreSleeping) {
+        super(workerPool, threadGrouper, interval, ignoreSleeping);
     }
 
     @Override
