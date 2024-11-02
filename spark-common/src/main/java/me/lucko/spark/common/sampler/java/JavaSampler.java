@@ -73,14 +73,14 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     /** The last window that was profiled */
     private final AtomicInteger lastWindow = new AtomicInteger();
     
-    public JavaSampler(SparkPlatform platform, SamplerSettings settings, boolean ignoreSleeping, boolean ignoreNative) {
+    public JavaSampler(SparkPlatform platform, SamplerSettings settings) {
         super(platform, settings);
-        this.dataAggregator = new SimpleDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), ignoreSleeping, ignoreNative);
+        this.dataAggregator = new SimpleJavaDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), settings.ignoreSleeping());
     }
 
-    public JavaSampler(SparkPlatform platform, SamplerSettings settings, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
+    public JavaSampler(SparkPlatform platform, SamplerSettings settings, TickHook tickHook, int tickLengthThreshold) {
         super(platform, settings);
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
+        this.dataAggregator = new TickedJavaDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), settings.ignoreSleeping(), tickHook, tickLengthThreshold);
     }
 
     @Override
@@ -89,9 +89,9 @@ public class JavaSampler extends AbstractSampler implements Runnable {
 
         TickHook tickHook = this.platform.getTickHook();
         if (tickHook != null) {
-            if (this.dataAggregator instanceof TickedDataAggregator) {
+            if (this.dataAggregator instanceof TickedJavaDataAggregator) {
                 WindowStatisticsCollector.ExplicitTickCounter counter = this.windowStatisticsCollector.startCountingTicksExplicit(tickHook);
-                ((TickedDataAggregator) this.dataAggregator).setTickCounter(counter);
+                ((TickedJavaDataAggregator) this.dataAggregator).setTickCounter(counter);
             } else {
                 this.windowStatisticsCollector.startCountingTicks(tickHook);
             }
