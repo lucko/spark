@@ -25,10 +25,8 @@ import me.lucko.spark.neoforge.plugin.NeoForgeServerSparkPlugin;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
@@ -38,25 +36,20 @@ import java.nio.file.Path;
 @Mod("spark")
 public class NeoForgeSparkMod {
 
-    private ModContainer container;
-    private Path configDirectory;
+    private final ModContainer container;
+    private final Path configDirectory;
 
-    private IEventBus eventBus;
+    public NeoForgeSparkMod(ModContainer container, IEventBus eventBus) {
+        this.container = container;
+        this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
 
-    public NeoForgeSparkMod(IEventBus eventBus) {
-        this.eventBus = eventBus;
-        eventBus.addListener(this::setup);
         eventBus.addListener(this::clientInit);
+
         NeoForge.EVENT_BUS.register(this);
     }
 
     public String getVersion() {
         return this.container.getModInfo().getVersion().toString();
-    }
-
-    public void setup(FMLCommonSetupEvent e) {
-        this.container = ModLoadingContext.get().getActiveContainer();
-        this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
     }
 
     public void clientInit(FMLClientSetupEvent e) {
@@ -69,9 +62,6 @@ public class NeoForgeSparkMod {
     }
 
     public Path getConfigDirectory() {
-        if (this.configDirectory == null) {
-            throw new IllegalStateException("Config directory not set");
-        }
         return this.configDirectory;
     }
 }

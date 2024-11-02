@@ -174,7 +174,7 @@ public abstract class AbstractSampler implements Sampler {
                 viewerSocket.sendUpdatedStatistics(platform, system);
             }
         } catch (Exception e) {
-            platform.getPlugin().log(Level.WARNING, "Exception occurred while sending statistics to viewer", e);
+            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while sending statistics to viewer", e);
         }
     }
 

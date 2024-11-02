@@ -43,7 +43,7 @@ dependencies {
         modImplementation(fabricApi.module(it, '0.106.1+1.21.3'))
     }
 
-    include(modImplementation('me.lucko:fabric-permissions-api:0.3.2'))
+    include(modImplementation('me.lucko:fabric-permissions-api:0.3.3'))
 
     modImplementation('eu.pb4:placeholder-api:2.5.0+1.21.2')
 
