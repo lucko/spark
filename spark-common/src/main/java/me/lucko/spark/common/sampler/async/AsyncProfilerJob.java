@@ -84,6 +84,8 @@ public class AsyncProfilerJob {
     private int window;
     /** If the profiler should run in quiet mode */
     private boolean quiet;
+    /** If the profiler needs to use the same clock as {@link System#nanoTime()} */
+    private boolean forceNanoTime;
 
     /** The file used by async-profiler to output data */
     private Path outputFile;
@@ -117,12 +119,13 @@ public class AsyncProfilerJob {
     }
 
     // Initialise the job
-    public void init(SparkPlatform platform, SampleCollector<?> collector, ThreadDumper threadDumper, int window, boolean quiet) {
+    public void init(SparkPlatform platform, SampleCollector<?> collector, ThreadDumper threadDumper, int window, boolean quiet, boolean forceNanoTime) {
         this.platform = platform;
         this.sampleCollector = collector;
         this.threadDumper = threadDumper;
         this.window = window;
         this.quiet = quiet;
+        this.forceNanoTime = forceNanoTime;
     }
 
     /**
@@ -150,6 +153,9 @@ public class AsyncProfilerJob {
             }
             if (this.threadDumper instanceof ThreadDumper.Specific) {
                 command.add("filter");
+            }
+            if (this.forceNanoTime) {
+                command.add("clock=monotonic");
             }
 
             // start the profiler

@@ -27,6 +27,7 @@ import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
+import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.ws.ViewerSocket;
@@ -66,10 +67,18 @@ public class AsyncSampler extends AbstractSampler {
     private ScheduledFuture<?> socketStatisticsTask;
 
     public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector) {
+        this(platform, settings, collector, new AsyncDataAggregator(settings.threadGrouper(), settings.ignoreSleeping()));
+    }
+
+    public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector, int tickLengthThreshold) {
+        this(platform, settings, collector, new TickedAsyncDataAggregator(settings.threadGrouper(), settings.ignoreSleeping(), platform.getTickReporter(), tickLengthThreshold));
+    }
+
+    private AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector, AsyncDataAggregator dataAggregator) {
         super(platform, settings);
         this.sampleCollector = collector;
+        this.dataAggregator = dataAggregator;
         this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
-        this.dataAggregator = new AsyncDataAggregator(settings.threadGrouper(), settings.ignoreSleeping());
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactoryBuilder()
                         .setNameFormat("spark-async-sampler-worker-thread")
@@ -87,13 +96,18 @@ public class AsyncSampler extends AbstractSampler {
 
         TickHook tickHook = this.platform.getTickHook();
         if (tickHook != null) {
-            this.windowStatisticsCollector.startCountingTicks(tickHook);
+            if (this.dataAggregator instanceof TickedAsyncDataAggregator) {
+                WindowStatisticsCollector.ExplicitTickCounter counter = this.windowStatisticsCollector.startCountingTicksExplicit(tickHook);
+                ((TickedAsyncDataAggregator) this.dataAggregator).setTickCounter(counter);
+            } else {
+                this.windowStatisticsCollector.startCountingTicks(tickHook);
+            };
         }
 
         int window = ProfilingWindowUtils.windowNow();
 
         AsyncProfilerJob job = this.profilerAccess.startNewProfilerJob();
-        job.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background);
+        job.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background, this.dataAggregator instanceof TickedAsyncDataAggregator);
         job.start();
         this.windowStatisticsCollector.recordWindowStartTime(window);
         this.currentJob = job;
@@ -131,7 +145,7 @@ public class AsyncSampler extends AbstractSampler {
                 // start a new job
                 int window = previousJob.getWindow() + 1;
                 AsyncProfilerJob newJob = this.profilerAccess.startNewProfilerJob();
-                newJob.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background);
+                newJob.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background, this.dataAggregator instanceof TickedAsyncDataAggregator);
                 newJob.start();
                 this.windowStatisticsCollector.recordWindowStartTime(window);
                 this.currentJob = newJob;
