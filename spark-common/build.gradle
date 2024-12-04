@@ -82,15 +82,6 @@ test {
 publishing {
     //repositories {
     //    maven {
-    //        url = 'https://oss.sonatype.org/content/repositories/snapshots'
-    //        credentials {
-    //            username = sonatypeUsername
-    //            password = sonatypePassword
-    //        }
-    //    }
-    //}
-    //repositories {
-    //    maven {
     //        url = 'https://nexus.lucko.me/repository/maven-snapshots/'
     //        credentials {
     //            username = luckoNexusUsername
