@@ -9,7 +9,7 @@ tasks.withType(JavaCompile) {
 }
 
 minecraft {
-    mappings channel: 'official', version: '1.21.3'
+    mappings channel: 'official', version: '1.21.4'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     reobf = false
 }
@@ -20,7 +20,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.21.3-53.0.0'
+    minecraft 'net.minecraftforge:forge:1.21.4-54.0.6'
     shade project(':spark-common')
 }
 

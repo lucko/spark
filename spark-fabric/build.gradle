@@ -40,7 +40,7 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.110.5+1.21.4'))
+        modImplementation(fabricApi.module(it, '0.111.0+1.21.4'))
     }
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.3.3'))
