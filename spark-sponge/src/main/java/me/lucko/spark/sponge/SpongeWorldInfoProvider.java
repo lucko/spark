@@ -31,8 +31,6 @@ import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityType;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.world.chunk.WorldChunk;
-import org.spongepowered.api.world.gamerule.GameRule;
-import org.spongepowered.api.world.gamerule.GameRules;
 import org.spongepowered.api.world.server.ServerWorld;
 
 import java.util.ArrayList;
@@ -65,15 +63,15 @@ public class SpongeWorldInfoProvider implements WorldInfoProvider {
     }
 
     @Override
-    public ChunksResult<Sponge7ChunkInfo> pollChunks() {
-        ChunksResult<Sponge7ChunkInfo> data = new ChunksResult<>();
+    public ChunksResult<SpongeChunkInfo> pollChunks() {
+        ChunksResult<SpongeChunkInfo> data = new ChunksResult<>();
 
         for (ServerWorld world : this.server.worldManager().worlds()) {
             List<WorldChunk> chunks = Lists.newArrayList(world.loadedChunks());
 
-            List<Sponge7ChunkInfo> list = new ArrayList<>(chunks.size());
+            List<SpongeChunkInfo> list = new ArrayList<>(chunks.size());
             for (WorldChunk chunk : chunks) {
-                list.add(new Sponge7ChunkInfo(chunk));
+                list.add(new SpongeChunkInfo(chunk));
             }
 
             data.put(world.key().value(), list);
@@ -86,12 +84,16 @@ public class SpongeWorldInfoProvider implements WorldInfoProvider {
     public GameRulesResult pollGameRules() {
         GameRulesResult data = new GameRulesResult();
 
-        List<GameRule<?>> rules = GameRules.registry().stream().collect(Collectors.toList());
-        for (GameRule<?> rule : rules) {
-            data.putDefault(rule.name(), rule.defaultValue().toString());
-            for (ServerWorld world : this.server.worldManager().worlds()) {
-                data.put(rule.name(), world.key().value(), world.properties().gameRule(rule).toString());
-            }
+        Collection<ServerWorld> worlds = this.server.worldManager().worlds();
+        for (ServerWorld world : worlds) {
+            String worldName = world.key().value();
+
+            world.properties().gameRules().forEach((gameRule, value) -> {
+                String defaultValue = gameRule.defaultValue().toString();
+                data.putDefault(gameRule.name(), defaultValue);
+
+                data.put(gameRule.name(), worldName, value.toString());
+            });
         }
 
         return data;
@@ -108,10 +110,10 @@ public class SpongeWorldInfoProvider implements WorldInfoProvider {
                 .collect(Collectors.toList());
     }
 
-    static final class Sponge7ChunkInfo extends AbstractChunkInfo<EntityType<?>> {
+    static final class SpongeChunkInfo extends AbstractChunkInfo<EntityType<?>> {
         private final CountMap<EntityType<?>> entityCounts;
 
-        Sponge7ChunkInfo(WorldChunk chunk) {
+        SpongeChunkInfo(WorldChunk chunk) {
             super(chunk.chunkPosition().x(), chunk.chunkPosition().z());
 
             this.entityCounts = new CountMap.Simple<>(new HashMap<>());

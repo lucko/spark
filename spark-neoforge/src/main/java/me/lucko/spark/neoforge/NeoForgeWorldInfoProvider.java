@@ -129,13 +129,14 @@ public abstract class NeoForgeWorldInfoProvider implements WorldInfoProvider {
             Iterable<ServerLevel> levels = this.server.getAllLevels();
 
             for (ServerLevel level : levels) {
+                String levelName = level.dimension().location().getPath();
+
                 level.getGameRules().visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
                     @Override
                     public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
                         String defaultValue = type.createRule().serialize();
                         data.putDefault(key.getId(), defaultValue);
 
-                        String levelName = level.dimension().location().getPath();
                         String value = level.getGameRules().getRule(key).serialize();
                         data.put(key.getId(), levelName, value);
                     }

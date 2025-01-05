@@ -134,13 +134,14 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             Iterable<ServerWorld> worlds = this.server.getWorlds();
 
             for (ServerWorld world : worlds) {
+                String worldName = world.getRegistryKey().getValue().getPath();
+
                 world.getGameRules().accept(new GameRules.Visitor() {
                     @Override
                     public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
                         String defaultValue = type.createRule().serialize();
                         data.putDefault(key.getName(), defaultValue);
 
-                        String worldName = world.getRegistryKey().getValue().getPath();
                         String value = world.getGameRules().get(key).serialize();
                         data.put(key.getName(), worldName, value);
                     }

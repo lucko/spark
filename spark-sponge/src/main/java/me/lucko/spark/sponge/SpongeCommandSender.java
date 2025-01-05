@@ -50,7 +50,8 @@ public class SpongeCommandSender extends AbstractCommandSender<Subject> {
 
     @Override
     public String getName() {
-        return super.delegate.friendlyIdentifier().orElse(super.delegate.identifier());
+        String name = super.delegate.friendlyIdentifier().orElse(super.delegate.identifier());
+        return name.equals("console") ? "Console" : name;
     }
 
     @Override
@@ -64,9 +65,11 @@ public class SpongeCommandSender extends AbstractCommandSender<Subject> {
 
         try {
             return UUID.fromString(super.delegate.identifier());
-        } catch (Exception e) {
-            return UUID.nameUUIDFromBytes(super.delegate.identifier().getBytes(UTF_8));
+        } catch (IllegalArgumentException e) {
+            // ignore
         }
+
+        return null;
     }
 
     @Override

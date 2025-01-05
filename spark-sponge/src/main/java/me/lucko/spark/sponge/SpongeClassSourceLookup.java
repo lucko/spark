@@ -25,12 +25,12 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import org.spongepowered.api.Game;
 import org.spongepowered.plugin.PluginCandidate;
 import org.spongepowered.plugin.PluginContainer;
-import org.spongepowered.plugin.builtin.jvm.JVMPluginContainer;
-import org.spongepowered.plugin.builtin.jvm.locator.JVMPluginResource;
+import org.spongepowered.plugin.builtin.StandardPluginContainer;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 public class SpongeClassSourceLookup extends ClassSourceLookup.ByCodeSource {
@@ -57,26 +57,25 @@ public class SpongeClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     }
 
     // pretty nasty, but if it fails it doesn't really matter
-    @SuppressWarnings("unchecked")
     private static Map<Path, String> constructPathToPluginIdMap(Collection<PluginContainer> plugins) {
-        ImmutableMap.Builder<Path, String> builder = ImmutableMap.builder();
+        Map<Path, String> map = new HashMap<>();
 
         try {
-            Field candidateField = JVMPluginContainer.class.getDeclaredField("candidate");
+            Field candidateField = StandardPluginContainer.class.getDeclaredField("candidate");
             candidateField.setAccessible(true);
 
             for (PluginContainer plugin : plugins) {
-                if (plugin instanceof JVMPluginContainer) {
-                    PluginCandidate<JVMPluginResource> candidate = (PluginCandidate<JVMPluginResource>) candidateField.get(plugin);
+                if (plugin instanceof StandardPluginContainer) {
+                    PluginCandidate candidate = (PluginCandidate) candidateField.get(plugin);
                     Path path = candidate.resource().path().toAbsolutePath().normalize();
-                    builder.put(path, plugin.metadata().id());
+                    map.putIfAbsent(path, plugin.metadata().id());
                 }
             }
         } catch (Exception e) {
             // ignore
         }
 
-        return builder.build();
+        return ImmutableMap.copyOf(map);
     }
 
 }
