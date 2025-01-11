@@ -57,7 +57,10 @@ public class InstrumentationClassFinder implements ClassFinder {
     private final Map<String, Class<?>> classes = new HashMap<>();
 
     public InstrumentationClassFinder(SparkPlugin plugin) {
-        Instrumentation instrumentation = loadInstrumentation(plugin);
+        this(loadInstrumentation(plugin));
+    }
+
+    public InstrumentationClassFinder(Instrumentation instrumentation) {
         if (instrumentation == null) {
             return;
         }
