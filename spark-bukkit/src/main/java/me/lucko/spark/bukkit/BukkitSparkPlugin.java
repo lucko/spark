@@ -60,6 +60,14 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void onEnable() {
+        if (classExists("me.lucko.spark.forge.ForgeSparkMod")
+                || classExists("me.lucko.spark.fabric.FabricSparkMod")
+                || classExists("me.lucko.spark.neoforge.NeoForgeSparkMod")
+        ) {
+            getLogger().warning("You have already installed spark as a mod. Installing spark both on Mod and Bukkit side will cause unexpected issues, disabling.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         this.audienceFactory = BukkitAudiences.create(this);
         this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
 
@@ -98,7 +106,9 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void onDisable() {
-        this.platform.disable();
+        if (this.platform != null) {
+            this.platform.disable();
+        }
         if (this.tpsCommand != null) {
             CommandMapUtil.unregisterCommand(this.tpsCommand);
         }
