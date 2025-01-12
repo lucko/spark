@@ -1,0 +1,62 @@
+plugins {
+    id 'net.kyori.blossom' version '1.3.0'
+    id 'com.gradleup.shadow' version '8.3.0'
+}
+
+dependencies {
+    implementation project(':spark-common')
+    implementation('net.kyori:adventure-text-serializer-ansi:4.17.0') {
+        exclude(module: 'adventure-bom')
+        exclude(module: 'adventure-api')
+        exclude(module: 'annotations')
+    }
+    implementation 'org.slf4j:slf4j-simple:2.0.16'
+    implementation 'com.google.code.gson:gson:2.9.0'
+    implementation 'com.google.guava:guava:31.1-jre'
+
+    implementation 'org.jline:jline-remote-ssh:3.28.0'
+    implementation 'org.apache.sshd:sshd-core:2.14.0'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['--add-modules', 'jdk.attach']
+    options.release = 11
+}
+
+blossom {
+    replaceTokenIn('src/main/java/me/lucko/spark/standalone/StandaloneSparkPlugin.java')
+    replaceToken '@version@', project.pluginVersion
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'me.lucko.spark.standalone.StandaloneSparkAgent',
+                'Agent-Class': 'me.lucko.spark.standalone.StandaloneSparkAgent',
+                'Premain-Class': 'me.lucko.spark.standalone.StandaloneSparkAgent'
+        )
+    }
+}
+
+shadowJar {
+    archiveFileName = "spark-${project.pluginVersion}-standalone-agent.jar"
+
+    relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
+    relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
+    relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+    relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
+    relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
+    relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
+    relocate 'com.google.gson', 'me.lucko.spark.lib.gson'
+    relocate 'com.google.common', 'me.lucko.spark.lib.guava'
+
+    project.applyExcludes(delegate)
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
+}

@@ -48,7 +48,8 @@ public interface PlatformInfo {
     enum Type {
         SERVER(PlatformMetadata.Type.SERVER),
         CLIENT(PlatformMetadata.Type.CLIENT),
-        PROXY(PlatformMetadata.Type.PROXY);
+        PROXY(PlatformMetadata.Type.PROXY),
+        APPLICATION(PlatformMetadata.Type.APPLICATION);
 
         private final PlatformMetadata.Type type;
 

@@ -369,7 +369,7 @@ public class SparkPlatform {
             try {
                 executeCommand0(sender, args);
                 future.complete(null);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 this.plugin.log(Level.SEVERE, "Exception occurred whilst executing a spark command", e);
                 future.completeExceptionally(e);
             } finally {
