@@ -23,7 +23,11 @@ package me.lucko.spark.standalone;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
+import java.io.File;
 import java.lang.instrument.Instrumentation;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -51,9 +55,9 @@ public class StandaloneSparkAgent {
 
         try {
             VirtualMachine vm = VirtualMachine.attach(args[0]);
-            String agentPath = StandaloneSparkAgent.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+            URI agentPath = StandaloneSparkAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI();
             String arguments = String.join(",", Arrays.copyOfRange(args, 1, args.length));
-            vm.loadAgent(agentPath, arguments);
+            vm.loadAgent(Paths.get(agentPath).toAbsolutePath().toString(), arguments);
             System.out.println("[spark] Agent loaded successfully.");
             vm.detach();
         } catch (Throwable e) {
