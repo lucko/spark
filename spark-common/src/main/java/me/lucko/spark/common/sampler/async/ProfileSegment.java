@@ -45,13 +45,16 @@ public class ProfileSegment {
     private final long value;
     /** The state of the thread. {@value #UNKNOWN_THREAD_STATE} if state is unknown */
     private final String threadState;
+    /** The time at which this segment was recorded, as if it was produced by {@link System#nanoTime()} */
+    private final long time;
 
-    private ProfileSegment(int nativeThreadId, String threadName, AsyncStackTraceElement[] stackTrace, long value, String threadState) {
+    private ProfileSegment(int nativeThreadId, String threadName, AsyncStackTraceElement[] stackTrace, long value, String threadState, long time) {
         this.nativeThreadId = nativeThreadId;
         this.threadName = threadName;
         this.stackTrace = stackTrace;
         this.value = value;
         this.threadState = threadState;
+        this.time = time;
     }
 
     public int getNativeThreadId() {
@@ -74,6 +77,10 @@ public class ProfileSegment {
         return this.threadState;
     }
 
+    public long getTime() {
+        return this.time;
+    }
+
     public static ProfileSegment parseSegment(JfrReader reader, JfrReader.Event sample, String threadName, long value) {
         JfrReader.StackTrace stackTrace = reader.stackTraces.get(sample.stackTraceId);
         int len = stackTrace != null ? stackTrace.methods.length : 0;
@@ -90,7 +97,7 @@ public class ProfileSegment {
             threadState = threadStateLookup.getOrDefault(executionSample.threadState, UNKNOWN_THREAD_STATE);
         }
 
-        return new ProfileSegment(sample.tid, threadName, stack, value, threadState);
+        return new ProfileSegment(sample.tid, threadName, stack, value, threadState, sample.time);
     }
 
     private static AsyncStackTraceElement parseStackFrame(JfrReader reader, long methodId) {

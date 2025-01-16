@@ -29,7 +29,7 @@ import me.lucko.spark.proto.SparkSamplerProtos.SamplerMetadata;
 /**
  * Data aggregator for {@link AsyncSampler}.
  */
-public class AsyncDataAggregator extends AbstractDataAggregator {
+public class AsyncDataAggregator extends AbstractDataAggregator implements AutoCloseable {
 
     /** A describer for async-profiler stack trace elements. */
     private static final StackTraceNode.Describer<AsyncStackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) ->
@@ -79,4 +79,8 @@ public class AsyncDataAggregator extends AbstractDataAggregator {
         return false;
     }
 
+    @Override
+    public void close() {
+
+    }
 }
