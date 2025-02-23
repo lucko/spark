@@ -12,7 +12,14 @@ dependencies {
     }
     implementation 'org.slf4j:slf4j-simple:2.0.16'
     implementation 'com.google.code.gson:gson:2.9.0'
-    implementation 'com.google.guava:guava:31.1-jre'
+    implementation('com.google.guava:guava:31.1-jre') {
+        exclude(module: 'jsr305')
+        exclude(module: 'error_prone_annotations')
+        exclude(module: 'failureaccess')
+        exclude(module: 'listenablefuture')
+        exclude(module: 'j2objc-annotations')
+        exclude(module: 'checker-qual')
+    }
 
     implementation 'org.jline:jline-remote-ssh:3.28.0'
     implementation 'org.apache.sshd:sshd-core:2.14.0'
@@ -44,6 +51,7 @@ shadowJar {
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
     relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
+    relocate 'net.kyori.ansi', 'me.lucko.spark.lib.adventure.ansi'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
@@ -52,8 +60,15 @@ shadowJar {
     relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
     relocate 'com.google.gson', 'me.lucko.spark.lib.gson'
     relocate 'com.google.common', 'me.lucko.spark.lib.guava'
+    relocate 'com.google.errorprone', 'me.lucko.spark.lib.google.errorprone'
+    relocate 'com.google.j2objc', 'me.lucko.spark.lib.google.j2objc'
+    relocate 'com.google.thirdparty', 'me.lucko.spark.lib.google.thirdparty'
+    relocate 'org.apache.sshd', 'me.lucko.spark.lib.sshd'
+    relocate 'org.jline.builtins.ssh', 'me.lucko.spark.lib.jline.builtins.ssh'
 
     project.applyExcludes(delegate)
+
+    exclude 'META-INF/services/java.nio.file.spi.FileSystemProvider'
 }
 
 artifacts {
