@@ -83,15 +83,11 @@ public class SpongeCommandSender extends AbstractCommandSender<Subject> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SpongeCommandSender that = (SpongeCommandSender) o;
-        return this.getUniqueId().equals(that.getUniqueId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getUniqueId().hashCode();
+    protected Object getObjectForComparison() {
+        UUID uniqueId = getUniqueId();
+        if (uniqueId != null) {
+            return uniqueId;
+        }
+        return getName();
     }
 }
