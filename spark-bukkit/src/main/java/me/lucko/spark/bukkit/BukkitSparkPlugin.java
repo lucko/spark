@@ -176,7 +176,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public TickReporter createTickReporter() {
-        if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
+        if (classExists("com.destroystokyo.paper.event.server.ServerTickEndEvent")) {
             return new PaperTickReporter(this);
         }
         return null;
