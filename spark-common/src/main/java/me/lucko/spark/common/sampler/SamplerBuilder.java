@@ -112,8 +112,8 @@ public class SamplerBuilder {
             throw new IllegalArgumentException("samplingInterval = " + this.samplingInterval);
         }
 
-        boolean canUseAsyncProfiler = AsyncProfilerAccess.getInstance(platform).checkSupported(platform);
         boolean onlyTicksOverMode = this.ticksOver != -1 && this.tickHook != null;
+        boolean canUseAsyncProfiler = AsyncProfilerAccess.getInstance(platform).checkSupported(platform) && (!onlyTicksOverMode || platform.getTickReporter() != null);
 
         if (this.mode == SamplerMode.ALLOCATION) {
             if (!canUseAsyncProfiler || !AsyncProfilerAccess.getInstance(platform).checkAllocationProfilingSupported(platform)) {
@@ -122,12 +122,9 @@ public class SamplerBuilder {
             if (this.ignoreSleeping) {
                 platform.getPlugin().log(Level.WARNING, "Ignoring sleeping threads is not supported in allocation profiling mode. Sleeping threads will be included in the results.");
             }
-            if (onlyTicksOverMode) {
-                platform.getPlugin().log(Level.WARNING, "'Only-ticks-over' is not supported in allocation profiling mode.");
-            }
         }
 
-        if (onlyTicksOverMode || this.forceJavaSampler) {
+        if (this.forceJavaSampler) {
             canUseAsyncProfiler = false;
         }
 
@@ -139,14 +136,24 @@ public class SamplerBuilder {
         SamplerSettings settings = new SamplerSettings(interval, this.threadDumper, this.threadGrouper.get(), this.autoEndTime, this.background, this.ignoreSleeping);
 
         Sampler sampler;
-        if (this.mode == SamplerMode.ALLOCATION) {
-            sampler = new AsyncSampler(platform, settings, new SampleCollector.Allocation(interval, this.allocLiveOnly));
-        } else if (canUseAsyncProfiler) {
-            sampler = new AsyncSampler(platform, settings, new SampleCollector.Execution(interval));
-        } else if (onlyTicksOverMode) {
-            sampler = new JavaSampler(platform, settings, this.tickHook, this.ticksOver);
+        if (canUseAsyncProfiler) {
+            SampleCollector<?> collector;
+            if (this.mode == SamplerMode.ALLOCATION) {
+                collector = new SampleCollector.Allocation(interval, this.allocLiveOnly);
+            } else {
+                collector = new SampleCollector.Execution(interval);
+            }
+            if (onlyTicksOverMode) {
+                sampler = new AsyncSampler(platform, settings, collector, this.ticksOver);
+            } else {
+                sampler = new AsyncSampler(platform, settings, collector);
+            }
         } else {
-            sampler = new JavaSampler(platform, settings);
+            if (onlyTicksOverMode) {
+                sampler = new JavaSampler(platform, settings, this.tickHook, this.ticksOver);
+            } else {
+                sampler = new JavaSampler(platform, settings);
+            }
         }
 
         sampler.start();
