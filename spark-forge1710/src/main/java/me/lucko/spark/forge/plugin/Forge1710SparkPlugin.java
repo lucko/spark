@@ -23,6 +23,7 @@ package me.lucko.spark.forge.plugin;
 import cpw.mods.fml.common.FMLCommonHandler;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.Forge1710CommandSender;
 import me.lucko.spark.forge.Forge1710SparkMod;
 import net.minecraft.command.ICommand;
@@ -43,21 +44,16 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
     private final Forge1710SparkMod mod;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
-    protected final SparkPlatform platform;
+    protected SparkPlatform platform;
 
     protected Forge1710SparkPlugin(Forge1710SparkMod mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = Executors.defaultThreadFactory().newThread(r);
-            thread.setName("spark-forge-async-worker");
-            thread.setDaemon(true);
-            return thread;
-        });
-        this.platform = new SparkPlatform(this);
+        this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
     }
 
     public void enable() {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
 
