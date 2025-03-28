@@ -1,27 +1,17 @@
-buildscript {
-    repositories {
-        maven { url = "https://maven.minecraftforge.net" }
-        mavenCentral()
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
-    }
-}
-
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.gradleup.shadow' version '8.3.0'
+    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
 }
-
-apply plugin: 'net.minecraftforge.gradle'
 
 tasks.withType(JavaCompile) {
-    // override, compile targeting J17
-    options.release = 17
+    // override, compile targeting J21
+    options.release = 21
 }
 
 minecraft {
-    mappings channel: 'official', version: '1.19.4'
+    mappings channel: 'official', version: '1.21.5'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    reobf = false
 }
 
 configurations {
@@ -30,7 +20,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.19.4-45.0.1'
+    minecraft 'net.minecraftforge:forge:1.21.5-55.0.0'
     shade project(':spark-common')
 }
 
@@ -49,30 +39,23 @@ processResources {
 }
 
 shadowJar {
-    archiveName = "spark-${project.pluginVersion}-forge.jar"
+    archiveFileName = "spark-${project.pluginVersion}-forge.jar"
     configurations = [project.configurations.shade]
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
+    relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
-    exclude 'module-info.class'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
+    project.applyExcludes(delegate)
 }
 
 artifacts {
     archives shadowJar
     shadow shadowJar
-}
-
-reobf {
-    shadowJar {
-        dependsOn createMcpToSrg
-        mappings = createMcpToSrg.outputs.files.singleFile
-    }
 }

@@ -23,9 +23,7 @@ package me.lucko.spark.common.sampler.async;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import com.google.common.io.ByteStreams;
-
 import me.lucko.spark.common.SparkPlatform;
-
 import one.profiler.AsyncProfiler;
 import one.profiler.Events;
 
@@ -75,14 +73,10 @@ public class AsyncProfilerAccess {
 
         try {
             profiler = load(platform);
-
             if (isEventSupported(profiler, ProfilingEvent.ALLOC, false)) {
                 allocationProfilingEvent = ProfilingEvent.ALLOC;
             }
-
-            if (isEventSupported(profiler, ProfilingEvent.CPU, false)) {
-                profilingEvent = ProfilingEvent.CPU;
-            } else if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
+            if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
                 profilingEvent = ProfilingEvent.WALL;
             }
         } catch (Exception e) {
@@ -116,13 +110,19 @@ public class AsyncProfilerAccess {
             if (this.setupException instanceof UnsupportedSystemException) {
                 platform.getPlugin().log(Level.INFO, "The async-profiler engine is not supported for your os/arch (" +
                         this.setupException.getMessage() + "), so the built-in Java engine will be used instead.");
+            } else if (this.setupException instanceof UnsupportedJvmException) {
+                platform.getPlugin().log(Level.INFO, "The async-profiler engine is not supported for your JVM (" +
+                        this.setupException.getMessage() + "), so the built-in Java engine will be used instead.");
             } else if (this.setupException instanceof NativeLoadingException && this.setupException.getCause().getMessage().contains("libstdc++")) {
                 platform.getPlugin().log(Level.WARNING, "Unable to initialise the async-profiler engine because libstdc++ is not installed.");
                 platform.getPlugin().log(Level.WARNING, "Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler#install-libstdc");
             } else {
-                platform.getPlugin().log(Level.WARNING, "Unable to initialise the async-profiler engine: " + this.setupException.getMessage());
+                String error = this.setupException.getMessage();
+                if (this.setupException.getCause() != null) {
+                    error += " (" + this.setupException.getCause().getMessage() + ")";
+                }
+                platform.getPlugin().log(Level.WARNING, "Unable to initialise the async-profiler engine: " + error);
                 platform.getPlugin().log(Level.WARNING, "Please see here for more information: https://spark.lucko.me/docs/misc/Using-async-profiler");
-                this.setupException.printStackTrace();
             }
 
         }
@@ -142,14 +142,10 @@ public class AsyncProfilerAccess {
         // check compatibility
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
         String arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
-
-        if (os.equals("linux") && arch.equals("amd64") && isLinuxMusl()) {
-            arch = "amd64-musl";
-        }
+        String jvm = System.getProperty("java.vm.name");
 
         Table<String, String, String> supported = ImmutableTable.<String, String, String>builder()
                 .put("linux", "amd64", "linux/amd64")
-                .put("linux", "amd64-musl", "linux/amd64-musl")
                 .put("linux", "aarch64", "linux/aarch64")
                 .put("macosx", "amd64", "macos")
                 .put("macosx", "aarch64", "macos")
@@ -161,7 +157,7 @@ public class AsyncProfilerAccess {
         }
 
         // extract the profiler binary from the spark jar file
-        String resource = "spark/" + libPath + "/libasyncProfiler.so";
+        String resource = "spark-native/" + libPath + "/libasyncProfiler.so";
         URL profilerResource = AsyncProfilerAccess.class.getClassLoader().getResource(resource);
         if (profilerResource == null) {
             throw new IllegalStateException("Could not find " + resource + " in spark jar file");
@@ -203,8 +199,7 @@ public class AsyncProfilerAccess {
         return false;
     }
 
-    enum ProfilingEvent {
-        CPU(Events.CPU),
+    public enum ProfilingEvent {
         WALL(Events.WALL),
         ALLOC(Events.ALLOC);
 
@@ -226,25 +221,15 @@ public class AsyncProfilerAccess {
         }
     }
 
-    private static final class NativeLoadingException extends RuntimeException {
-        public NativeLoadingException(Throwable cause) {
-            super("A runtime error occurred whilst loading the native library", cause);
+    private static final class UnsupportedJvmException extends UnsupportedOperationException {
+        public UnsupportedJvmException(String jvm) {
+            super(jvm);
         }
     }
 
-    // Checks if the system is using musl instead of glibc
-    private static boolean isLinuxMusl() {
-        try {
-            InputStream stream = new ProcessBuilder("sh", "-c", "ldd `which ls`")
-                    .start()
-                    .getInputStream();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-            String output = reader.lines().collect(Collectors.joining());
-            return output.contains("musl"); // shrug
-        } catch (Throwable e) {
-            // ignore
-            return false;
+    private static final class NativeLoadingException extends RuntimeException {
+        public NativeLoadingException(Throwable cause) {
+            super("A runtime error occurred whilst loading the native library", cause);
         }
     }
 }

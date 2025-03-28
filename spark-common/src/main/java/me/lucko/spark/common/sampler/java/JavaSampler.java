@@ -21,14 +21,15 @@
 package me.lucko.spark.common.sampler.java;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
+import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
@@ -72,14 +73,14 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     /** The last window that was profiled */
     private final AtomicInteger lastWindow = new AtomicInteger();
     
-    public JavaSampler(SparkPlatform platform, SamplerSettings settings, boolean ignoreSleeping, boolean ignoreNative) {
+    public JavaSampler(SparkPlatform platform, SamplerSettings settings) {
         super(platform, settings);
-        this.dataAggregator = new SimpleDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), ignoreSleeping, ignoreNative);
+        this.dataAggregator = new SimpleJavaDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), settings.ignoreSleeping());
     }
 
-    public JavaSampler(SparkPlatform platform, SamplerSettings settings, boolean ignoreSleeping, boolean ignoreNative, TickHook tickHook, int tickLengthThreshold) {
+    public JavaSampler(SparkPlatform platform, SamplerSettings settings, TickHook tickHook, int tickLengthThreshold) {
         super(platform, settings);
-        this.dataAggregator = new TickedDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), ignoreSleeping, ignoreNative, tickHook, tickLengthThreshold);
+        this.dataAggregator = new TickedJavaDataAggregator(this.workerPool, settings.threadGrouper(), settings.interval(), settings.ignoreSleeping(), tickHook, tickLengthThreshold);
     }
 
     @Override
@@ -88,9 +89,9 @@ public class JavaSampler extends AbstractSampler implements Runnable {
 
         TickHook tickHook = this.platform.getTickHook();
         if (tickHook != null) {
-            if (this.dataAggregator instanceof TickedDataAggregator) {
+            if (this.dataAggregator instanceof TickedJavaDataAggregator) {
                 WindowStatisticsCollector.ExplicitTickCounter counter = this.windowStatisticsCollector.startCountingTicksExplicit(tickHook);
-                ((TickedDataAggregator) this.dataAggregator).setTickCounter(counter);
+                ((TickedJavaDataAggregator) this.dataAggregator).setTickCounter(counter);
             } else {
                 this.windowStatisticsCollector.startCountingTicks(tickHook);
             }
@@ -193,9 +194,18 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         if (exportProps.channelInfo() != null) {
             proto.setChannelInfo(exportProps.channelInfo());
         }
+
         writeMetadataToProto(proto, platform, exportProps.creator(), exportProps.comment(), this.dataAggregator);
-        writeDataToProto(proto, this.dataAggregator, exportProps.mergeMode().get(), exportProps.classSourceLookup().get());
+
+        MethodDisambiguator methodDisambiguator = new MethodDisambiguator(platform.createClassFinder());
+        writeDataToProto(proto, this.dataAggregator, timeEncoder -> new JavaNodeExporter(timeEncoder, exportProps.mergeStrategy(), methodDisambiguator), exportProps.classSourceLookup().get(), platform::createClassFinder);
+
         return proto.build();
+    }
+
+    @Override
+    public SamplerType getType() {
+        return SamplerType.JAVA;
     }
 
     @Override

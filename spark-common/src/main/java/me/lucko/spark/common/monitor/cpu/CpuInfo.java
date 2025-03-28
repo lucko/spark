@@ -21,6 +21,7 @@
 package me.lucko.spark.common.monitor.cpu;
 
 import me.lucko.spark.common.monitor.LinuxProc;
+import me.lucko.spark.common.monitor.MacosSysctl;
 import me.lucko.spark.common.monitor.WindowsWmic;
 
 import java.util.regex.Pattern;
@@ -49,6 +50,12 @@ public enum CpuInfo {
         for (String line : WindowsWmic.CPU_GET_NAME.read()) {
             if (line.startsWith("Name")) {
                 return line.substring(5).trim();
+            }
+        }
+
+        for (String line : MacosSysctl.SYSCTL.read()) {
+            if (line.startsWith("machdep.cpu.brand_string:")) {
+                return line.substring("machdep.cpu.brand_string:".length()).trim();
             }
         }
 

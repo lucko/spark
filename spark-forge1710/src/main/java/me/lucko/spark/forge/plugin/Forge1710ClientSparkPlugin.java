@@ -20,6 +20,7 @@
 
 package me.lucko.spark.forge.plugin;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -32,6 +33,7 @@ import net.minecraft.command.ICommandSender;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
@@ -53,7 +55,7 @@ public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
     public Forge1710ClientSparkPlugin(Forge1710SparkMod mod, Minecraft minecraft) {
         super(mod);
         this.minecraft = minecraft;
-        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.mcThread);
+        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.field_152352_aC);
     }
 
     @Override
@@ -88,7 +90,12 @@ public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
 
     @Override
     public void executeSync(Runnable task) {
-        this.minecraft.addScheduledTask(task);
+        ListenableFuture<?> future = this.minecraft.func_152344_a(task);
+        try {
+            future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

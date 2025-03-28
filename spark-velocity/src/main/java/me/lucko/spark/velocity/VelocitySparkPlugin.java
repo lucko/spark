@@ -29,14 +29,12 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
-
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -90,6 +88,11 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
     }
 
     @Override
+    public boolean hasPermission(Invocation inv) {
+        return this.platform.hasPermissionForAnyCommand(new VelocityCommandSender(inv.source()));
+    }
+
+    @Override
     public String getVersion() {
         return VelocitySparkPlugin.class.getAnnotation(Plugin.class).version();
     }
@@ -119,14 +122,23 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
 
     @Override
     public void log(Level level, String msg) {
-        if (level == Level.INFO) {
-            this.logger.info(msg);
-        } else if (level == Level.WARNING) {
-            this.logger.warn(msg);
-        } else if (level == Level.SEVERE) {
+        if (level.intValue() >= 1000) { // severe
             this.logger.error(msg);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg);
         } else {
-            throw new IllegalArgumentException(level.getName());
+            this.logger.info(msg);
+        }
+    }
+
+    @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        if (level.intValue() >= 1000) { // severe
+            this.logger.error(msg, throwable);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg, throwable);
+        } else {
+            this.logger.info(msg, throwable);
         }
     }
 
@@ -141,7 +153,8 @@ public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {
                 this.proxy.getPluginManager().getPlugins(),
                 plugin -> plugin.getDescription().getId(),
                 plugin -> plugin.getDescription().getVersion().orElse("unspecified"),
-                plugin -> String.join(", ", plugin.getDescription().getAuthors())
+                plugin -> String.join(", ", plugin.getDescription().getAuthors()),
+                plugin -> plugin.getDescription().getDescription().orElse(null)
         );
     }
 

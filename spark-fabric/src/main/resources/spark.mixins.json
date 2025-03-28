@@ -1,7 +1,6 @@
 {
   "required": true,
   "package": "me.lucko.spark.fabric.mixin",
-  "compatibilityLevel": "JAVA_17",
   "client": [
     "ClientEntityManagerAccessor",
     "ClientWorldAccessor",
@@ -9,7 +8,8 @@
   ],
   "mixins": [
     "ServerEntityManagerAccessor",
-    "ServerWorldAccessor"
+    "ServerWorldAccessor",
+    "WorldAccessor"
   ],
   "plugin": "me.lucko.spark.fabric.plugin.FabricSparkMixinPlugin"
 }

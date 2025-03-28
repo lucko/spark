@@ -22,43 +22,36 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
-
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.network.NetworkConstants;
 
 import java.nio.file.Path;
 
 @Mod("spark")
 public class ForgeSparkMod {
 
-    private ModContainer container;
-    private Path configDirectory;
+    private final ModContainer container;
+    private final Path configDirectory;
 
-    public ForgeSparkMod() {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientInit);
+    public ForgeSparkMod(FMLJavaModLoadingContext ctx) {
+        this.container = ctx.getContainer();
+        this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
+
+        ctx.getModEventBus().addListener(this::clientInit);
+        ctx.registerDisplayTest(IExtensionPoint.DisplayTest.IGNORE_ALL_VERSION);
+
         MinecraftForge.EVENT_BUS.register(this);
-
-        ModLoadingContext.get().registerExtensionPoint(IExtensionPoint.DisplayTest.class, () -> new IExtensionPoint.DisplayTest(() -> NetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
 
     public String getVersion() {
         return this.container.getModInfo().getVersion().toString();
-    }
-
-    public void setup(FMLCommonSetupEvent e) {
-        this.container = ModLoadingContext.get().getActiveContainer();
-        this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
     }
 
     public void clientInit(FMLClientSetupEvent e) {
@@ -71,9 +64,6 @@ public class ForgeSparkMod {
     }
 
     public Path getConfigDirectory() {
-        if (this.configDirectory == null) {
-            throw new IllegalStateException("Config directory not set");
-        }
         return this.configDirectory;
     }
 }

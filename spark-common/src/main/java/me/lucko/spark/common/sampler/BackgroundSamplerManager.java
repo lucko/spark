@@ -22,8 +22,9 @@ package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.util.Configuration;
+import me.lucko.spark.common.util.config.Configuration;
 
+import java.util.function.Supplier;
 import java.util.logging.Level;
 
 public class BackgroundSamplerManager {
@@ -88,7 +89,7 @@ public class BackgroundSamplerManager {
             }
 
         } catch (Throwable e) {
-            e.printStackTrace();
+            this.platform.getPlugin().log(Level.WARNING, "Failed to start background profiler.");
         }
     }
 
@@ -103,7 +104,7 @@ public class BackgroundSamplerManager {
     private void startSampler() {
         boolean forceJavaEngine = this.configuration.getString(OPTION_ENGINE, "async").equals("java");
 
-        ThreadGrouper threadGrouper = ThreadGrouper.parseConfigSetting(this.configuration.getString(OPTION_THREAD_GROUPER, "by-pool"));
+        Supplier<ThreadGrouper> threadGrouper = ThreadGrouper.parseConfigSetting(this.configuration.getString(OPTION_THREAD_GROUPER, "by-pool"));
         ThreadDumper threadDumper = ThreadDumper.parseConfigSetting(this.configuration.getString(OPTION_THREAD_DUMPER, "default"));
         if (threadDumper == null) {
             threadDumper = this.platform.getPlugin().getDefaultThreadDumper();

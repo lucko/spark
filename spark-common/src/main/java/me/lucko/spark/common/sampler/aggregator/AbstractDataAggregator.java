@@ -40,8 +40,12 @@ public abstract class AbstractDataAggregator implements DataAggregator {
     /** The instance used to group threads together */
     protected final ThreadGrouper threadGrouper;
 
-    protected AbstractDataAggregator(ThreadGrouper threadGrouper) {
+    /** If sleeping threads should be ignored */
+    protected final boolean ignoreSleeping;
+
+    protected AbstractDataAggregator(ThreadGrouper threadGrouper, boolean ignoreSleeping) {
         this.threadGrouper = threadGrouper;
+        this.ignoreSleeping = ignoreSleeping;
     }
 
     protected ThreadNode getNode(String group) {
@@ -64,5 +68,14 @@ public abstract class AbstractDataAggregator implements DataAggregator {
             node.setThreadLabel(this.threadGrouper.getLabel(node.getThreadGroup()));
         }
         return data;
+    }
+
+    protected static boolean isSleeping(String clazz, String method) {
+        // java.lang.Thread.yield()
+        // jdk.internal.misc.Unsafe.park()
+        // sun.misc.Unsafe.park()
+        return (clazz.equals("java.lang.Thread") && method.equals("yield")) ||
+               (clazz.equals("jdk.internal.misc.Unsafe") && method.equals("park")) ||
+               (clazz.equals("sun.misc.Unsafe") && method.equals("park"));
     }
 }

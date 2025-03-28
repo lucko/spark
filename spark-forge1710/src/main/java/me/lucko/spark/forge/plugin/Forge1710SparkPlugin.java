@@ -85,14 +85,23 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public void log(Level level, String msg) {
-        if (level == Level.INFO) {
-            this.logger.info(msg);
-        } else if (level == Level.WARNING) {
-            this.logger.warn(msg);
-        } else if (level == Level.SEVERE) {
+        if (level.intValue() >= 1000) { // severe
             this.logger.error(msg);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg);
         } else {
-            throw new IllegalArgumentException(level.getName());
+            this.logger.info(msg);
+        }
+    }
+
+    @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        if (level.intValue() >= 1000) { // severe
+            this.logger.error(msg, throwable);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg, throwable);
+        } else {
+            this.logger.info(msg, throwable);
         }
     }
 
@@ -139,7 +148,7 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
     }
     
     protected boolean isOp(EntityPlayer player) {
-       return FMLCommonHandler.instance().getMinecraftServerInstance().getConfigurationManager().canSendCommands(player.getGameProfile());
+       return FMLCommonHandler.instance().getMinecraftServerInstance().getConfigurationManager().func_152596_g(player.getGameProfile());
     }
 
 }

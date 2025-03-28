@@ -33,15 +33,31 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        return Collections.emptyList();
+    }
+
+    protected void encodeGameRules(GameRulesResult result, GameRules rules, String worldName) {
+        for (String rule : rules.getRules()) {
+            if (rule == null) {
+                continue;
+            }
+            String value = rules.getGameRuleStringValue(rule);
+            if (value != null) {
+                result.put(rule, worldName, value);
+            }
+        }
+    }
+
     public static final class Server extends Forge1710WorldInfoProvider {
         private final MinecraftServer server;
 
@@ -76,6 +92,16 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
             }
 
             return new CountsResult(players, entities, -1, chunks);
+        }
+
+        @Override
+        public GameRulesResult pollGameRules() {
+            GameRulesResult data = new GameRulesResult();
+
+            for (WorldServer world : server.worldServers) {
+                encodeGameRules(data, world.getGameRules(), world.provider.getDimensionName());
+            }
+            return data;
         }
     }
 
@@ -118,6 +144,17 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
             }
 
             return new CountsResult(-1, level.loadedEntityList.size(), -1, level.getChunkProvider().getLoadedChunkCount());
+        }
+
+        @Override
+        public GameRulesResult pollGameRules() {
+            WorldClient world = Minecraft.getMinecraft().theWorld;
+
+            GameRulesResult data = new GameRulesResult();
+
+            encodeGameRules(data, world.getGameRules(), world.provider.getDimensionName());
+
+            return data;
         }
     }
 

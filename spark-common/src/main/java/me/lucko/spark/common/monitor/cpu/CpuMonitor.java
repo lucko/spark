@@ -23,13 +23,12 @@ package me.lucko.spark.common.monitor.cpu;
 import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.util.RollingAverage;
 
-import java.lang.management.ManagementFactory;
-import java.math.BigDecimal;
-import java.util.concurrent.TimeUnit;
-
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
+import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Exposes and monitors the system/process CPU usage.

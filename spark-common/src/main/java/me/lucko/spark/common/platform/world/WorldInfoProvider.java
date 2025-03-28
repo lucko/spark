@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.platform.world;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,16 @@ public interface WorldInfoProvider {
         public ChunksResult<? extends ChunkInfo<?>> pollChunks() {
             return null;
         }
+
+        @Override
+        public GameRulesResult pollGameRules() {
+            return null;
+        }
+
+        @Override
+        public Collection<DataPackInfo> pollDataPacks() {
+            return null;
+        }
     };
 
     /**
@@ -54,6 +65,20 @@ public interface WorldInfoProvider {
      * @return the chunk information
      */
     ChunksResult<? extends ChunkInfo<?>> pollChunks();
+
+    /**
+     * Polls for game rules.
+     *
+     * @return the game rules
+     */
+    GameRulesResult pollGameRules();
+
+    /**
+     * Polls for data packs.
+     *
+     * @return the data packs
+     */
+    Collection<DataPackInfo> pollDataPacks();
 
     default boolean mustCallSync() {
         return true;
@@ -98,6 +123,63 @@ public interface WorldInfoProvider {
 
         public int chunks() {
             return this.chunks;
+        }
+    }
+
+    final class GameRulesResult {
+        private final Map<String, GameRule> rules = new HashMap<>();
+
+        private GameRule rule(String name) {
+            return this.rules.computeIfAbsent(name, k -> new GameRule());
+        }
+
+        public void put(String gameRuleName, String worldName, String value) {
+            rule(gameRuleName).worldValues.put(worldName, value);
+        }
+
+        public void putDefault(String gameRuleName, String value) {
+            rule(gameRuleName).defaultValue = value;
+        }
+
+        public Map<String, GameRule> getRules() {
+            return this.rules;
+        }
+
+        public static final class GameRule {
+            Map<String, String> worldValues = new HashMap<>();
+            String defaultValue = null;
+
+            public String getDefaultValue() {
+                return this.defaultValue;
+            }
+
+            public Map<String, String> getWorldValues() {
+                return this.worldValues;
+            }
+        }
+    }
+
+    final class DataPackInfo {
+        private final String name;
+        private final String description;
+        private final String source;
+
+        public DataPackInfo(String name, String description, String source) {
+            this.name = name;
+            this.description = description;
+            this.source = source;
+        }
+
+        public String name() {
+            return this.name;
+        }
+
+        public String description() {
+            return this.description;
+        }
+
+        public String source() {
+            return this.source;
         }
     }
 

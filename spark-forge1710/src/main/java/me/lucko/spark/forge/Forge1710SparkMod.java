@@ -36,7 +36,7 @@ import java.nio.file.Path;
 @Mod(
         modid = "spark",
         name = "spark",
-        version = "@version@",
+        version = Tags.VERSION,
         acceptableRemoteVersions = "*"
 )
 public class Forge1710SparkMod {
