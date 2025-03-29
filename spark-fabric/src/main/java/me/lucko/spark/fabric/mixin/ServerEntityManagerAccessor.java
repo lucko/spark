@@ -24,7 +24,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.server.world.ServerEntityManager;
 import net.minecraft.world.entity.EntityIndex;
 import net.minecraft.world.entity.SectionedEntityCache;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 

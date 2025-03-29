@@ -1,39 +1,39 @@
-import org.cadixdev.gradle.licenser.LicenseExtension
-
 plugins {
-    id 'com.google.protobuf' version '0.9.1'
+    id 'com.google.protobuf' version '0.9.4'
+    id 'maven-publish'
 }
 
 license {
     exclude '**/sampler/async/jfr/**'
-}
-
-extensions.configure(LicenseExtension.class) {
-    it.exclude {
+    exclude {
         it.file.toString().startsWith(buildDir.toString())
     }
 }
 
 dependencies {
     api project(':spark-api')
-    implementation 'com.github.jvm-profiling-tools:async-profiler:v2.8.3'
-    implementation 'org.ow2.asm:asm:9.1'
-    implementation 'net.bytebuddy:byte-buddy-agent:1.11.0'
-    implementation 'com.google.protobuf:protobuf-javalite:3.21.11'
-    implementation 'me.lucko:bytesocks-java-client-api:1.0-SNAPSHOT'
+
+    implementation 'tools.profiler:async-profiler:3.0' // spark native version: 3cf733d
+    implementation 'org.ow2.asm:asm:9.7'
+    implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
+    implementation 'com.google.protobuf:protobuf-javalite:4.28.2'
     implementation 'com.neovisionaries:nv-websocket-client:2.14'
 
-    api('net.kyori:adventure-api:4.12.0') {
+    implementation('me.lucko:bytesocks-java-client:1.0-20230828.145440-5') {
+        exclude(module: 'slf4j-api')
+    }
+
+    api('net.kyori:adventure-api:4.17.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')
     }
-    api('net.kyori:adventure-text-serializer-gson:4.12.0') {
+    api('net.kyori:adventure-text-serializer-gson:4.17.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
         exclude(module: 'gson')
     }
-    api('net.kyori:adventure-text-serializer-legacy:4.12.0') {
+    api('net.kyori:adventure-text-serializer-legacy:4.17.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
     }
@@ -42,12 +42,28 @@ dependencies {
     }
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
-    compileOnly 'org.checkerframework:checker-qual:3.8.0'
+    compileOnly 'org.checkerframework:checker-qual:3.44.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0-M2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.11.0-M2'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.11.0-M2'
+    // testImplementation "org.testcontainers:junit-jupiter:1.19.8"
+    // testImplementation 'org.mockito:mockito-core:5.12.0'
+    // testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
+
+    testImplementation 'com.google.code.gson:gson:2.7'
+    testImplementation 'com.google.guava:guava:19.0'
+    testImplementation 'org.checkerframework:checker-qual:3.44.0'
+
+    testImplementation('net.kyori:adventure-text-serializer-ansi:4.17.0') {
+        exclude(module: 'adventure-bom')
+        exclude(module: 'adventure-api')
+    }
 }
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.21.11'
+        artifact = 'com.google.protobuf:protoc:4.28.2'
     }
     generateProtoTasks {
         all().each { task ->
@@ -56,6 +72,29 @@ protobuf {
                     option 'lite'
                 }
             }
+        }
+    }
+}
+
+test {
+    useJUnitPlatform {}
+    systemProperty('net.kyori.ansi.colorLevel', 'indexed16')
+}
+
+publishing {
+    //repositories {
+    //    maven {
+    //        url = 'https://nexus.lucko.me/repository/maven-snapshots/'
+    //        credentials {
+    //            username = luckoNexusUsername
+    //            password = luckoNexusPassword
+    //        }
+    //    }
+    //}
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            version = "${project.pluginVersion}-SNAPSHOT"
         }
     }
 }

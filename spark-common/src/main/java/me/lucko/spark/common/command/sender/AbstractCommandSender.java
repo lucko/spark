@@ -27,16 +27,20 @@ public abstract class AbstractCommandSender<S> implements CommandSender {
         this.delegate = delegate;
     }
 
+    protected Object getObjectForComparison() {
+        return this.delegate;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AbstractCommandSender<?> that = (AbstractCommandSender<?>) o;
-        return this.delegate.equals(that.delegate);
+        return this.getObjectForComparison().equals(that.getObjectForComparison());
     }
 
     @Override
     public int hashCode() {
-        return this.delegate.hashCode();
+        return this.getObjectForComparison().hashCode();
     }
 }

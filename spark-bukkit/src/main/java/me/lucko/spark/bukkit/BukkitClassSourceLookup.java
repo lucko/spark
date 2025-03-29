@@ -21,7 +21,6 @@
 package me.lucko.spark.bukkit;
 
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
@@ -30,11 +29,22 @@ public class BukkitClassSourceLookup extends ClassSourceLookup.ByClassLoader {
     private static final Class<?> PLUGIN_CLASS_LOADER;
     private static final Field PLUGIN_FIELD;
 
+    private static final Class<?> PAPER_PLUGIN_CLASS_LOADER;
+    private static final Field PAPER_PLUGIN_FIELD;
+
     static {
         try {
             PLUGIN_CLASS_LOADER = Class.forName("org.bukkit.plugin.java.PluginClassLoader");
             PLUGIN_FIELD = PLUGIN_CLASS_LOADER.getDeclaredField("plugin");
             PLUGIN_FIELD.setAccessible(true);
+
+            PAPER_PLUGIN_CLASS_LOADER = getPaperPluginClassLoader();
+            if (PAPER_PLUGIN_CLASS_LOADER != null) {
+                PAPER_PLUGIN_FIELD = PAPER_PLUGIN_CLASS_LOADER.getDeclaredField("loadedJavaPlugin");
+                PAPER_PLUGIN_FIELD.setAccessible(true);
+            } else {
+                PAPER_PLUGIN_FIELD = null;
+            }
         } catch (ReflectiveOperationException e) {
             throw new ExceptionInInitializerError(e);
         }
@@ -45,8 +55,19 @@ public class BukkitClassSourceLookup extends ClassSourceLookup.ByClassLoader {
         if (PLUGIN_CLASS_LOADER.isInstance(loader)) {
             JavaPlugin plugin = (JavaPlugin) PLUGIN_FIELD.get(loader);
             return plugin.getName();
+        } else if (PAPER_PLUGIN_CLASS_LOADER != null && PAPER_PLUGIN_CLASS_LOADER.isInstance(loader)) {
+            JavaPlugin plugin = (JavaPlugin) PAPER_PLUGIN_FIELD.get(loader);
+            return plugin.getName();
         }
         return null;
+    }
+
+    private static Class<?> getPaperPluginClassLoader() {
+        try {
+            return Class.forName("io.papermc.paper.plugin.entrypoint.classloader.PaperPluginClassLoader");
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 }
 

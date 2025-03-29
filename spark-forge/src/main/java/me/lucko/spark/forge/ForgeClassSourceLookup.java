@@ -20,9 +20,8 @@
 
 package me.lucko.spark.forge;
 
-import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-
 import cpw.mods.modlauncher.TransformingClassLoader;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 public class ForgeClassSourceLookup implements ClassSourceLookup {
 

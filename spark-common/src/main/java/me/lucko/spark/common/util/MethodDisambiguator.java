@@ -23,9 +23,8 @@ package me.lucko.spark.common.util;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ListMultimap;
-
 import me.lucko.spark.common.sampler.node.StackTraceNode;
-
+import me.lucko.spark.common.util.classfinder.ClassFinder;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
@@ -45,8 +44,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * to a method (method name + method description).
  */
 public final class MethodDisambiguator {
-    private final Map<String, ComputedClass> cache = new ConcurrentHashMap<>();
-    private final ClassFinder classFinder = new ClassFinder();
+    private final ClassFinder classFinder;
+    private final Map<String, ComputedClass> cache;
+
+    public MethodDisambiguator(ClassFinder classFinder) {
+        this.classFinder = classFinder;
+        this.cache = new ConcurrentHashMap<>();
+    }
 
     public Optional<MethodDescription> disambiguate(StackTraceNode element) {
         String desc = element.getMethodDescription();
@@ -81,6 +85,29 @@ public final class MethodDisambiguator {
         }
     }
 
+    private ComputedClass compute(String className) throws IOException {
+        final ImmutableListMultimap.Builder<String, MethodDescription> descriptionsByName = ImmutableListMultimap.builder();
+        final Map<Integer, MethodDescription> descriptionsByLine = new HashMap<>();
+
+        ClassReader classReader = getClassReader(className);
+        classReader.accept(new ClassVisitor(Opcodes.ASM7) {
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                MethodDescription description = new MethodDescription(name, descriptor);
+                descriptionsByName.put(name, description);
+
+                return new MethodVisitor(Opcodes.ASM7) {
+                    @Override
+                    public void visitLineNumber(int line, Label start) {
+                        descriptionsByLine.put(line, description);
+                    }
+                };
+            }
+        }, Opcodes.ASM7);
+
+        return new ComputedClass(descriptionsByName.build(), ImmutableMap.copyOf(descriptionsByLine));
+    }
+
     private ClassReader getClassReader(String className) throws IOException {
         String resource = className.replace('.', '/') + ".class";
 
@@ -102,28 +129,6 @@ public final class MethodDisambiguator {
         throw new IOException("Unable to get resource: " + className);
     }
 
-    private ComputedClass compute(String className) throws IOException {
-        ImmutableListMultimap.Builder<String, MethodDescription> descriptionsByName = ImmutableListMultimap.builder();
-        Map<Integer, MethodDescription> descriptionsByLine = new HashMap<>();
-
-        getClassReader(className).accept(new ClassVisitor(Opcodes.ASM7) {
-            @Override
-            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-                MethodDescription description = new MethodDescription(name, descriptor);
-                descriptionsByName.put(name, description);
-
-                return new MethodVisitor(Opcodes.ASM7) {
-                    @Override
-                    public void visitLineNumber(int line, Label start) {
-                        descriptionsByLine.put(line, description);
-                    }
-                };
-            }
-        }, Opcodes.ASM7);
-
-        return new ComputedClass(descriptionsByName.build(), ImmutableMap.copyOf(descriptionsByLine));
-    }
-
     private static final class ComputedClass {
         private static final ComputedClass EMPTY = new ComputedClass(ImmutableListMultimap.of(), ImmutableMap.of());
 
@@ -138,24 +143,24 @@ public final class MethodDisambiguator {
 
     public static final class MethodDescription {
         private final String name;
-        private final String desc;
+        private final String description;
 
-        private MethodDescription(String name, String desc) {
+        private MethodDescription(String name, String description) {
             this.name = name;
-            this.desc = desc;
+            this.description = description;
         }
 
         public String getName() {
             return this.name;
         }
 
-        public String getDesc() {
-            return this.desc;
+        public String getDescription() {
+            return this.description;
         }
 
         @Override
         public String toString() {
-            return this.name + this.desc;
+            return this.name + this.description;
         }
     }
 

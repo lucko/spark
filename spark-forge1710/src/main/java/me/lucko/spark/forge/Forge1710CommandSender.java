@@ -80,7 +80,7 @@ public class Forge1710CommandSender extends AbstractCommandSender<ICommandSender
         String output = serializer.serialize(message);
         for(String line : output.split("\n")) {
             Component deserialized = serializer.deserialize(line);
-            IChatComponent mcComponent = IChatComponent.Serializer.jsonToComponent(GsonComponentSerializer.gson().serialize(deserialized));
+            IChatComponent mcComponent = IChatComponent.Serializer.func_150699_a(GsonComponentSerializer.gson().serialize(deserialized));
             super.delegate.addChatMessage(mcComponent);
         }
     }

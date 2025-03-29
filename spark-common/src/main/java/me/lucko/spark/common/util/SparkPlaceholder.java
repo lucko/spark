@@ -23,9 +23,9 @@ package me.lucko.spark.common.util;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.Locale;
@@ -186,6 +186,14 @@ public enum SparkPlaceholder {
             return null;
         }
         return LegacyComponentSerializer.legacySection().serialize(result);
+    }
+
+    public static String resolveComponentJson(SparkPlatform platform, String placeholder) {
+        TextComponent result = resolveComponent(platform, placeholder);
+        if (result == null) {
+            return null;
+        }
+        return GsonComponentSerializer.gson().serialize(result);
     }
     
 }

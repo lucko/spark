@@ -21,7 +21,6 @@
 package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.platform.PlatformInfo;
-
 import net.md_5.bungee.api.ProxyServer;
 
 public class BungeeCordPlatformInfo implements PlatformInfo {
@@ -39,6 +38,11 @@ public class BungeeCordPlatformInfo implements PlatformInfo {
     @Override
     public String getName() {
         return "BungeeCord";
+    }
+
+    @Override
+    public String getBrand() {
+        return this.proxy.getName();
     }
 
     @Override

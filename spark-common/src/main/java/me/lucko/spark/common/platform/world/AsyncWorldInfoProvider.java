@@ -23,6 +23,7 @@ package me.lucko.spark.common.platform.world;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 
+import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -80,11 +81,27 @@ public class AsyncWorldInfoProvider {
         return async(WorldInfoProvider::pollChunks);
     }
 
+    public CompletableFuture<WorldInfoProvider.GameRulesResult> pollGameRules() {
+        return async(WorldInfoProvider::pollGameRules);
+    }
+
+    public CompletableFuture<Collection<WorldInfoProvider.DataPackInfo>> pollDataPacks() {
+        return async(WorldInfoProvider::pollDataPacks);
+    }
+
     public WorldInfoProvider.CountsResult getCounts() {
         return get(pollCounts());
     }
 
     public WorldInfoProvider.ChunksResult<? extends ChunkInfo<?>> getChunks() {
         return get(pollChunks());
+    }
+
+    public WorldInfoProvider.GameRulesResult getGameRules() {
+        return get(pollGameRules());
+    }
+
+    public Collection<WorldInfoProvider.DataPackInfo> getDataPacks() {
+        return get(pollDataPacks());
     }
 }

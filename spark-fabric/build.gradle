@@ -1,13 +1,13 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '1.1-SNAPSHOT'
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'fabric-loom' version '1.10-SNAPSHOT'
+    id 'com.gradleup.shadow' version '8.3.0'
 }
 
 tasks.withType(JavaCompile) {
-    // override, compile targeting J17
-    options.release = 17
+    // override, compile targeting J21
+    options.release = 21
 }
 
 repositories {
@@ -28,9 +28,9 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.19.4'
-    mappings 'net.fabricmc:yarn:1.19.4+build.1:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.14.17'
+    minecraft 'com.mojang:minecraft:1.21.5'
+    mappings 'net.fabricmc:yarn:1.21.5+build.1:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.16.10'
 
     Set<String> apiModules = [
             "fabric-api-base",
@@ -40,12 +40,12 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.76.0+1.19.4'))
+        modImplementation(fabricApi.module(it, '0.119.0+1.21.5'))
     }
 
-    include(modImplementation('me.lucko:fabric-permissions-api:0.1-SNAPSHOT'))
+    include(modImplementation('me.lucko:fabric-permissions-api:0.3.3'))
 
-    modImplementation('eu.pb4:placeholder-api:2.0.0-beta.4+1.19')
+    modImplementation('eu.pb4:placeholder-api:2.5.1+1.21.3')
 
     shade project(':spark-common')
 }
@@ -76,15 +76,15 @@ shadowJar {
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
 //    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
+    relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
-    exclude 'module-info.class'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
+    project.applyExcludes(delegate)
 
     dependencies {
         exclude(dependency('org.ow2.asm::'))

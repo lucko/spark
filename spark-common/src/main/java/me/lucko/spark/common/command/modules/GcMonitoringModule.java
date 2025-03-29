@@ -21,7 +21,6 @@
 package me.lucko.spark.common.command.modules;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -29,7 +28,6 @@ import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.util.FormatUtil;
-
 import net.kyori.adventure.text.Component;
 
 import java.lang.management.MemoryUsage;

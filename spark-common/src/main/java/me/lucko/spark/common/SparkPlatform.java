@@ -22,7 +22,6 @@ package me.lucko.spark.common;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.activitylog.ActivityLog;
 import me.lucko.spark.common.api.SparkApi;
@@ -47,6 +46,7 @@ import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.SparkTickStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
 import me.lucko.spark.common.sampler.BackgroundSamplerManager;
 import me.lucko.spark.common.sampler.SamplerContainer;
@@ -54,10 +54,13 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
-import me.lucko.spark.common.util.Configuration;
 import me.lucko.spark.common.util.TemporaryFiles;
+import me.lucko.spark.common.util.classfinder.ClassFinder;
+import me.lucko.spark.common.util.config.Configuration;
+import me.lucko.spark.common.util.config.FileConfiguration;
+import me.lucko.spark.common.util.config.RuntimeConfiguration;
+import me.lucko.spark.common.util.log.SparkStaticLogger;
 import me.lucko.spark.common.ws.TrustedKeyStore;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -72,11 +75,14 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
@@ -119,9 +125,17 @@ public class SparkPlatform {
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
+        SparkStaticLogger.setLogger(plugin);
 
-        this.temporaryFiles = new TemporaryFiles(this.plugin.getPluginDirectory().resolve("tmp"));
-        this.configuration = new Configuration(this.plugin.getPluginDirectory().resolve("config.json"));
+        this.temporaryFiles = new TemporaryFiles(this.plugin.getPlatformInfo().getType() == PlatformInfo.Type.CLIENT
+                ? this.plugin.getPluginDirectory().resolve("tmp")
+                : this.plugin.getPluginDirectory().resolve("tmp-client")
+        );
+        this.configuration = Configuration.combining(
+                RuntimeConfiguration.SYSTEM_PROPERTIES,
+                RuntimeConfiguration.ENVIRONMENT_VARIABLES,
+                new FileConfiguration(this.plugin.getPluginDirectory().resolve("config.json"))
+        );
 
         this.viewerUrl = this.configuration.getString("viewerUrl", "https://spark.lucko.me/");
         String bytebinUrl = this.configuration.getString("bytebinUrl", "https://spark-usercontent.lucko.me/");
@@ -129,6 +143,7 @@ public class SparkPlatform {
 
         this.bytebinClient = new BytebinClient(bytebinUrl, "spark-plugin");
         this.bytesocksClient = LegacyBytesocksClientFactory.newClient(bytesocksHost, "spark-plugin");
+        //this.bytesocksClient = BytesocksClient.create(bytesocksHost, "spark-plugin");
         this.trustedKeyStore = new TrustedKeyStore(this.configuration);
 
         this.disableResponseBroadcast = this.configuration.getBoolean("disableResponseBroadcast", false);
@@ -286,6 +301,10 @@ public class SparkPlatform {
         return this.plugin.createClassSourceLookup();
     }
 
+    public ClassFinder createClassFinder() {
+        return this.plugin.createClassFinder();
+    }
+
     public TickStatistics getTickStatistics() {
         return this.tickStatistics;
     }
@@ -300,6 +319,10 @@ public class SparkPlatform {
 
     public long getServerNormalOperationStartTime() {
         return this.serverNormalOperationStartTime;
+    }
+
+    public boolean hasEnabled() {
+        return this.enabled.get();
     }
 
     public Path resolveSaveFile(String prefix, String extension) {
@@ -322,11 +345,21 @@ public class SparkPlatform {
                 .collect(Collectors.toList());
     }
 
+    public Set<String> getAllSparkPermissions() {
+        return Stream.concat(
+                Stream.of("spark"),
+                this.commands.stream()
+                        .map(Command::primaryAlias)
+                        .map(alias -> "spark." + alias)
+        ).collect(Collectors.toSet());
+    }
+
     public boolean hasPermissionForAnyCommand(CommandSender sender) {
         return !getAvailableCommands(sender).isEmpty();
     }
 
-    public void executeCommand(CommandSender sender, String[] args) {
+    public CompletableFuture<Void> executeCommand(CommandSender sender, String[] args) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
         AtomicReference<Thread> executorThread = new AtomicReference<>();
         AtomicReference<Thread> timeoutThread = new AtomicReference<>();
         AtomicBoolean completed = new AtomicBoolean(false);
@@ -337,9 +370,10 @@ public class SparkPlatform {
             this.commandExecuteLock.lock();
             try {
                 executeCommand0(sender, args);
-            } catch (Exception e) {
-                this.plugin.log(Level.SEVERE, "Exception occurred whilst executing a spark command");
-                e.printStackTrace();
+                future.complete(null);
+            } catch (Throwable e) {
+                this.plugin.log(Level.SEVERE, "Exception occurred whilst executing a spark command", e);
+                future.completeExceptionally(e);
             } finally {
                 this.commandExecuteLock.unlock();
                 executorThread.set(null);
@@ -355,10 +389,16 @@ public class SparkPlatform {
         // schedule a task to detect timeouts
         this.plugin.executeAsync(() -> {
             timeoutThread.set(Thread.currentThread());
+            int warningIntervalSeconds = 5;
+
             try {
+                if (completed.get()) {
+                    return;
+                }
+                
                 for (int i = 1; i <= 3; i++) {
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(warningIntervalSeconds * 1000);
                     } catch (InterruptedException e) {
                         // ignore
                     }
@@ -370,7 +410,8 @@ public class SparkPlatform {
                     Thread executor = executorThread.get();
                     if (executor == null) {
                         getPlugin().log(Level.WARNING, "A command execution has not completed after " +
-                                (i * 5) + " seconds but there is no executor present. Perhaps the executor shutdown?");
+                                (i * warningIntervalSeconds) + " seconds but there is no executor present. Perhaps the executor shutdown?");
+                        getPlugin().log(Level.WARNING, "If the command subsequently completes without any errors, this warning should be ignored. :)");
 
                     } else {
                         String stackTrace = Arrays.stream(executor.getStackTrace())
@@ -378,13 +419,16 @@ public class SparkPlatform {
                                 .collect(Collectors.joining("\n"));
 
                         getPlugin().log(Level.WARNING, "A command execution has not completed after " +
-                                (i * 5) + " seconds, it might be stuck. Trace: \n" + stackTrace);
+                                (i * warningIntervalSeconds) + " seconds, it *might* be stuck. Trace: \n" + stackTrace);
+                        getPlugin().log(Level.WARNING, "If the command subsequently completes without any errors, this warning should be ignored. :)");
                     }
                 }
             } finally {
                 timeoutThread.set(null);
             }
         });
+
+        return future;
     }
 
     private void executeCommand0(CommandSender sender, String[] args) {

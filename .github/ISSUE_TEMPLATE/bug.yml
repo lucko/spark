@@ -1,0 +1,91 @@
+name: 🐛 ​ Bug report
+description: Report an issue or problem.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hello! Thanks for reporting a bug to the spark team.
+        
+        Before going any further, please check to see if your bug has already been:
+        
+        * fixed (check the [changelog](https://spark.lucko.me/changelog))
+        * reported by someone else (check the [open issues](https://github.com/lucko/spark/issues))
+        
+        Please also consider raising the issue in our [Discord](https://discord.gg/PAGT2fu) before reporting it here. (more often you can get help faster there!)
+        
+        Thanks! :)
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please provide a short description of the issue in the space below.
+      placeholder: Description goes here!
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Reproduction Steps
+      description: Please provide a clear list of steps we should follow in order to reproduce your issue in the space below.
+      placeholder: List reproduction steps here, please!
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behaviour
+    attributes:
+      label: Expected Behaviour
+      description: Please provide a description of what you expected to happen.
+      placeholder: Describe what you expected to happen here.
+    validations:
+      required: true
+  - type: textarea
+    id: platform-version
+    attributes:
+      label: Platform Information
+      description: |
+        Please provide details about the platform that spark is running on.
+        
+        This *must* include the versions of all relevant components.
+        
+        * Minecraft Version - e.g. "Minecraft 1.19.4"
+        * Platform Type - e.g. "server", "client" or "proxy"
+        * Platform Brand - e.g. "Forge", "Fabric", "Paper"
+        * Platform Version - e.g. "Forge 47.1.44", "Paper git-Paper-124"
+      value: |
+        * Minecraft Version: 
+        * Platform Type: 
+        * Platform Brand: 
+        * Platform Version:
+    validations:
+      required: true
+  - type: input
+    id: spark-version
+    attributes:
+      label: Spark Version
+      description: Please provide the exact version number of spark you are using.
+      placeholder: v1.10.50
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and Configs
+      description: If you think it would be helpful, please also include a pastebin of any relevant config files or log output. You should use https://gist.github.com/ to upload, then include the link below.
+      placeholder: https://gist.github.com/HelpfulBugReporter/ThisIsAVeryUsefulLogOutput
+    validations:
+      required: false
+  - type: textarea
+    id: extra-info
+    attributes:
+      label: Extra Details
+      description: Please include any other relevant details in the space below.
+      placeholder: I was able to reproduce this only at the end of a rainbow.
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        Please fill in the fields above with as much detail as possible before submitting. :)
+        
+        Thanks!

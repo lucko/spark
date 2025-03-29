@@ -27,7 +27,6 @@ package me.lucko.spark.api.statistic.types;
 
 import me.lucko.spark.api.statistic.Statistic;
 import me.lucko.spark.api.statistic.StatisticWindow;
-
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**

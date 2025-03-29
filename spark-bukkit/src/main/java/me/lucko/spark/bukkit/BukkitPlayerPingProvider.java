@@ -21,9 +21,7 @@
 package me.lucko.spark.bukkit;
 
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 

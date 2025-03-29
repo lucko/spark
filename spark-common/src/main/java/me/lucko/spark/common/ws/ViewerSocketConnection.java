@@ -21,7 +21,6 @@
 package me.lucko.spark.common.ws;
 
 import com.google.protobuf.ByteString;
-
 import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.proto.SparkWebSocketProtos.PacketWrapper;
@@ -87,7 +86,7 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
      * @return the channel id
      */
     public String getChannelId() {
-        return this.socket.getChannelId();
+        return this.socket.channelId();
     }
 
     /**
@@ -100,20 +99,18 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
     }
 
     @Override
-    public void onText(CharSequence data) {
+    public void onText(String data) {
         try {
             RawPacket packet = decodeRawPacket(data);
             handleRawPacket(packet);
         } catch (Exception e) {
-            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while reading data from the socket");
-            e.printStackTrace();
+            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while reading data from the socket", e);
         }
     }
 
     @Override
     public void onError(Throwable error) {
-        this.platform.getPlugin().log(Level.INFO, "Socket error: " + error.getClass().getName() + " " + error.getMessage());
-        error.printStackTrace();
+        this.platform.getPlugin().log(Level.INFO, "Socket error: " + error.getClass().getName() + " " + error.getMessage(), error);
     }
 
     @Override
@@ -134,8 +131,7 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
         try {
             sendPacket(wrapper);
         } catch (Exception e) {
-            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while sending data to the socket");
-            e.printStackTrace();
+            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while sending data to the socket", e);
         }
     }
 
@@ -178,8 +174,8 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
      * @param data the encoded data
      * @return the decoded packet
      */
-    private RawPacket decodeRawPacket(CharSequence data) throws IOException {
-        byte[] buf = Base64.getDecoder().decode(data.toString());
+    private RawPacket decodeRawPacket(String data) throws IOException {
+        byte[] buf = Base64.getDecoder().decode(data);
         return RawPacket.parseFrom(buf);
     }
 

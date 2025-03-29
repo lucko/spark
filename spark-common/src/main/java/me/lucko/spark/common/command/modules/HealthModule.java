@@ -21,6 +21,7 @@
 package me.lucko.spark.common.command.modules;
 
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
@@ -35,11 +36,15 @@ import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PingSummary;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.platform.SparkMetadata;
+import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.util.FormatUtil;
+import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.common.util.StatisticFormatter;
-
+import me.lucko.spark.proto.SparkProtos;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
@@ -52,6 +57,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.space;
@@ -85,10 +91,11 @@ public class HealthModule implements CommandModule {
 
         consumer.accept(Command.builder()
                 .aliases("healthreport", "health", "ht")
+                .argumentUsage("upload", null)
                 .argumentUsage("memory", null)
                 .argumentUsage("network", null)
                 .executor(HealthModule::healthReport)
-                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--memory", "--network"))
+                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--upload", "--memory", "--network"))
                 .build()
         );
     }
@@ -186,6 +193,12 @@ public class HealthModule implements CommandModule {
 
     private static void healthReport(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         resp.replyPrefixed(text("Generating server health report..."));
+
+        if (arguments.boolFlag("upload")) {
+            uploadHealthReport(platform, sender, resp, arguments);
+            return;
+        }
+
         List<Component> report = new LinkedList<>();
         report.add(empty());
 
@@ -208,6 +221,37 @@ public class HealthModule implements CommandModule {
         addDiskStats(report);
 
         resp.reply(report);
+    }
+
+    private static void uploadHealthReport(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+        SparkProtos.HealthMetadata.Builder metadata = SparkProtos.HealthMetadata.newBuilder();
+        SparkMetadata.gather(platform, sender.toData(), platform.getStartupGcStatistics()).writeTo(metadata);
+
+        SparkProtos.HealthData.Builder data = SparkProtos.HealthData.newBuilder()
+                .setMetadata(metadata);
+
+        Sampler activeSampler = platform.getSamplerContainer().getActiveSampler();
+        if (activeSampler != null) {
+            data.putAllTimeWindowStatistics(activeSampler.exportWindowStatistics());
+        }
+
+        try {
+            String key = platform.getBytebinClient().postContent(data.build(), MediaTypes.SPARK_HEALTH_MEDIA_TYPE).key();
+            String url = platform.getViewerUrl() + key;
+
+            resp.broadcastPrefixed(text("Health report:", GOLD));
+            resp.broadcast(text()
+                    .content(url)
+                    .color(GRAY)
+                    .clickEvent(ClickEvent.openUrl(url))
+                    .build()
+            );
+
+            platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Health report", url));
+        } catch (Exception e) {
+            resp.broadcastPrefixed(text("An error occurred whilst uploading the data.", RED));
+            platform.getPlugin().log(Level.SEVERE, "An error occurred whilst uploading data", e);
+        }
     }
 
     private static void addTickStats(List<Component> report, TickStatistics tickStatistics) {

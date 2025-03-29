@@ -24,7 +24,6 @@ import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.lucko.spark.bukkit.BukkitSparkPlugin;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.util.SparkPlaceholder;
-
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 

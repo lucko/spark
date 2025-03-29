@@ -21,7 +21,6 @@
 package me.lucko.spark.bungeecord;
 
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-
 import net.md_5.bungee.api.plugin.PluginDescription;
 
 import java.lang.reflect.Field;

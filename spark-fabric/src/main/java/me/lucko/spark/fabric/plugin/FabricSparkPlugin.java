@@ -30,7 +30,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
@@ -39,11 +38,8 @@ import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.fabric.FabricClassSourceLookup;
 import me.lucko.spark.fabric.FabricSparkMod;
-
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.Person;
-import net.minecraft.server.command.CommandOutput;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -80,8 +76,6 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
         this.scheduler.shutdown();
     }
 
-    public abstract boolean hasPermission(CommandOutput sender, String permission);
-
     @Override
     public String getVersion() {
         return this.mod.getVersion();
@@ -99,20 +93,29 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
 
     @Override
     public void log(Level level, String msg) {
-        if (level == Level.INFO) {
-            this.logger.info(msg);
-        } else if (level == Level.WARNING) {
-            this.logger.warn(msg);
-        } else if (level == Level.SEVERE) {
+        if (level.intValue() >= 1000) { // severe
             this.logger.error(msg);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg);
         } else {
-            throw new IllegalArgumentException(level.getName());
+            this.logger.info(msg);
+        }
+    }
+
+    @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        if (level.intValue() >= 1000) { // severe
+            this.logger.error(msg, throwable);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg, throwable);
+        } else {
+            this.logger.info(msg, throwable);
         }
     }
 
     @Override
     public ClassSourceLookup createClassSourceLookup() {
-        return new FabricClassSourceLookup();
+        return new FabricClassSourceLookup(createClassFinder());
     }
 
     @Override
@@ -123,7 +126,8 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
                 mod -> mod.getMetadata().getVersion().getFriendlyString(),
                 mod -> mod.getMetadata().getAuthors().stream()
                         .map(Person::getName)
-                        .collect(Collectors.joining(", "))
+                        .collect(Collectors.joining(", ")),
+                mod -> mod.getMetadata().getDescription()
         );
     }
 

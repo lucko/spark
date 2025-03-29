@@ -33,10 +33,10 @@ public class AsyncDataAggregator extends AbstractDataAggregator {
 
     /** A describer for async-profiler stack trace elements. */
     private static final StackTraceNode.Describer<AsyncStackTraceElement> STACK_TRACE_DESCRIBER = (element, parent) ->
-            new StackTraceNode.Description(element.getClassName(), element.getMethodName(), element.getMethodDescription());
+            new StackTraceNode.AsyncDescription(element.getClassName(), element.getMethodName(), element.getMethodDescription());
 
-    protected AsyncDataAggregator(ThreadGrouper threadGrouper) {
-        super(threadGrouper);
+    protected AsyncDataAggregator(ThreadGrouper threadGrouper, boolean ignoreSleeping) {
+        super(threadGrouper, ignoreSleeping);
     }
 
     @Override
@@ -48,12 +48,35 @@ public class AsyncDataAggregator extends AbstractDataAggregator {
     }
 
     public void insertData(ProfileSegment element, int window) {
+        if (this.ignoreSleeping && isSleeping(element)) {
+            return;
+        }
         try {
             ThreadNode node = getNode(this.threadGrouper.getGroup(element.getNativeThreadId(), element.getThreadName()));
             node.log(STACK_TRACE_DESCRIBER, element.getStackTrace(), element.getValue(), window);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static boolean isSleeping(ProfileSegment element) {
+        // thread states written by async-profiler:
+        // https://github.com/async-profiler/async-profiler/blob/116504c9f75721911b2f561e29eda065c224caf6/src/flightRecorder.cpp#L1017-L1023
+        String threadState = element.getThreadState();
+        if (threadState.equals("STATE_SLEEPING")) {
+            return true;
+        }
+
+        // async-profiler includes native frames - let's check more than just the top frame
+        AsyncStackTraceElement[] stackTrace = element.getStackTrace();
+        for (int i = 0; i < Math.min(3, stackTrace.length); i++) {
+            String clazz = stackTrace[i].getClassName();
+            String method = stackTrace[i].getMethodName();
+            if (isSleeping(clazz, method)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

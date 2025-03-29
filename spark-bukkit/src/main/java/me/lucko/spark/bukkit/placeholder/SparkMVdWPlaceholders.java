@@ -20,13 +20,12 @@
 
 package me.lucko.spark.bukkit.placeholder;
 
-import me.lucko.spark.bukkit.BukkitSparkPlugin;
-import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.util.SparkPlaceholder;
-
 import be.maximvdw.placeholderapi.PlaceholderAPI;
 import be.maximvdw.placeholderapi.PlaceholderReplaceEvent;
 import be.maximvdw.placeholderapi.PlaceholderReplacer;
+import me.lucko.spark.bukkit.BukkitSparkPlugin;
+import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.util.SparkPlaceholder;
 
 public class SparkMVdWPlaceholders implements PlaceholderReplacer {
     private final SparkPlatform platform;

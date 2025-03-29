@@ -34,9 +34,7 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
-
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -156,6 +154,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        getLogger().log(level, msg, throwable);
+    }
+
+    @Override
     public ThreadDumper getDefaultThreadDumper() {
         return this.gameThreadDumper;
     }
@@ -190,7 +193,8 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
                 Arrays.asList(getServer().getPluginManager().getPlugins()),
                 Plugin::getName,
                 plugin -> plugin.getDescription().getVersion(),
-                plugin -> String.join(", ", plugin.getDescription().getAuthors())
+                plugin -> String.join(", ", plugin.getDescription().getAuthors()),
+                plugin -> plugin.getDescription().getDescription()
         );
     }
 

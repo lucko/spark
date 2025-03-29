@@ -1,10 +1,10 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.gradleup.shadow' version '8.3.0'
 }
 
 dependencies {
     implementation project(':spark-common')
-    implementation 'net.kyori:adventure-platform-bungeecord:4.2.0'
+    implementation 'net.kyori:adventure-platform-bungeecord:4.3.3'
     compileOnly 'net.md-5:bungeecord-api:1.16-R0.4'
 }
 
@@ -19,19 +19,19 @@ processResources {
 }
 
 shadowJar {
-    archiveName = "spark-${project.pluginVersion}-bungeecord.jar"
+    archiveFileName = "spark-${project.pluginVersion}-bungeecord.jar"
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
+    relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
-    exclude 'module-info.class'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
+    project.applyExcludes(delegate)
 }
 
 artifacts {
