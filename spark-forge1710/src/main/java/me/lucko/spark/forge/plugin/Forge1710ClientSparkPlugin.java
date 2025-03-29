@@ -46,7 +46,7 @@ public class Forge1710ClientSparkPlugin extends Forge1710SparkPlugin {
         MinecraftForge.EVENT_BUS.register(plugin);
 
         // register commands
-        ClientCommandHandler.instance.registerCommand(plugin);
+        ClientCommandHandler.instance.registerCommand(plugin.new VanillaCommand());
     }
 
     private final Minecraft minecraft;

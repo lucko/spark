@@ -1,3 +1,6 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar
+
 plugins {
     id 'com.gradleup.shadow' version '8.3.0'
     id 'com.gtnewhorizons.retrofuturagradle' version '1.4.5'
@@ -49,7 +52,7 @@ jar {
 }
 
 shadowJar {
-    archiveFileName = 'spark-${project.pluginVersion}-forge1710.jar'
+    archiveClassifier = "fat-dev"
     configurations = [project.configurations.shade]
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
@@ -67,4 +70,9 @@ shadowJar {
     exclude 'module-info.class'
     exclude 'META-INF/maven/**'
     exclude 'META-INF/proguard/**'
+}
+
+tasks.named("reobfJar", ReobfuscatedJar) {
+    archiveFileName = "spark-${project.pluginVersion}-forge-1.7.10.jar"
+    inputJar.set(tasks.named("shadowJar", ShadowJar).map { it.archiveFile }.get())
 }

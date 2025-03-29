@@ -39,7 +39,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 
-public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
+public abstract class Forge1710SparkPlugin implements SparkPlugin {
 
     private final Forge1710SparkMod mod;
     private final Logger logger;
@@ -103,48 +103,49 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
 
     // implement ICommand
 
-    @Override
-    public String getCommandName() {
-        return getCommandName();
-    }
-
-    @Override
-    public String getCommandUsage(ICommandSender iCommandSender) {
-        return "/" + getCommandName();
-    }
-
-    @Override
-    public List<String> getCommandAliases() {
-        return Collections.singletonList(getCommandName());
-    }
-
-    @Override
-    public void processCommand(ICommandSender sender, String[] args) {
-        this.platform.executeCommand(new Forge1710CommandSender(sender, this), args);
-    }
-
-    @Override
-    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
-        return this.platform.tabCompleteCommand(new Forge1710CommandSender(sender, this), args);
-    }
-
-    @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return this.platform.hasPermissionForAnyCommand(new Forge1710CommandSender(sender, this));
-    }
-
-    @Override
-    public boolean isUsernameIndex(String[] strings, int i) {
-        return false;
-    }
-
-    @Override
-    public int compareTo(Object o) {
-        return getCommandName().compareTo(((ICommand)o).getCommandName());
-    }
-    
     protected boolean isOp(EntityPlayer player) {
-       return FMLCommonHandler.instance().getMinecraftServerInstance().getConfigurationManager().func_152596_g(player.getGameProfile());
+        return FMLCommonHandler.instance().getMinecraftServerInstance().getConfigurationManager().func_152596_g(player.getGameProfile());
     }
 
+    public class VanillaCommand implements ICommand {
+        @Override
+        public String getCommandName() {
+            return Forge1710SparkPlugin.this.getCommandName();
+        }
+
+        @Override
+        public String getCommandUsage(ICommandSender iCommandSender) {
+            return "/" + getCommandName();
+        }
+
+        @Override
+        public List<String> getCommandAliases() {
+            return Collections.singletonList(getCommandName());
+        }
+
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            Forge1710SparkPlugin.this.platform.executeCommand(new Forge1710CommandSender(sender, Forge1710SparkPlugin.this), args);
+        }
+
+        @Override
+        public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
+            return Forge1710SparkPlugin.this.platform.tabCompleteCommand(new Forge1710CommandSender(sender, Forge1710SparkPlugin.this), args);
+        }
+
+        @Override
+        public boolean canCommandSenderUseCommand(ICommandSender sender) {
+            return Forge1710SparkPlugin.this.platform.hasPermissionForAnyCommand(new Forge1710CommandSender(sender, Forge1710SparkPlugin.this));
+        }
+
+        @Override
+        public boolean isUsernameIndex(String[] strings, int i) {
+            return false;
+        }
+
+        @Override
+        public int compareTo(Object o) {
+            return getCommandName().compareTo(((ICommand)o).getCommandName());
+        }
+    }
 }
