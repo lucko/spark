@@ -39,6 +39,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
     @Override
@@ -56,6 +57,16 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
                 result.put(rule, worldName, value);
             }
         }
+
+    }
+
+    protected void setDefaultGameRules(GameRulesResult result) {
+        GameRules vanillaRules = new GameRules();
+
+        result.getRules().entrySet().stream().filter(entry -> entry.getValue().getDefaultValue() == null).map(Map.Entry::getKey).collect(Collectors.toList()).forEach(rule -> {
+            String def = vanillaRules.getGameRuleStringValue(rule);
+            result.putDefault(rule, def != null ? def : "");
+        });
     }
 
     public static final class Server extends Forge1710WorldInfoProvider {
@@ -101,6 +112,9 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
             for (WorldServer world : server.worldServers) {
                 encodeGameRules(data, world.getGameRules(), world.provider.getDimensionName());
             }
+
+            setDefaultGameRules(data);
+
             return data;
         }
     }
@@ -153,6 +167,8 @@ public abstract class Forge1710WorldInfoProvider implements WorldInfoProvider {
             GameRulesResult data = new GameRulesResult();
 
             encodeGameRules(data, world.getGameRules(), world.provider.getDimensionName());
+
+            setDefaultGameRules(data);
 
             return data;
         }
