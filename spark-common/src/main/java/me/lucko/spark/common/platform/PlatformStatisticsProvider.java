@@ -219,7 +219,7 @@ public class PlatformStatisticsProvider {
         List<CommandSender> senders = this.platform.getPlugin().getCommandSenders().collect(Collectors.toList());
 
         PlatformInfo.Type platformType = this.platform.getPlugin().getPlatformInfo().getType();
-        if (platformType != PlatformInfo.Type.CLIENT) {
+        if (platformType == PlatformInfo.Type.SERVER || platformType == PlatformInfo.Type.PROXY) {
             long playerCount = senders.size() - 1; // includes console
             builder.setPlayerCount(playerCount);
         }

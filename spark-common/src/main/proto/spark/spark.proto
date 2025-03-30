@@ -21,6 +21,7 @@ message PlatformMetadata {
     SERVER = 0;
     CLIENT = 1;
     PROXY = 2;
+    APPLICATION = 3;
   }
 }
 

@@ -2,9 +2,15 @@ plugins {
     id 'com.gradleup.shadow' version '8.3.0'
 }
 
+tasks.withType(JavaCompile) {
+    // override, compile targeting J21
+    options.release = 21
+}
+
 dependencies {
     implementation project(':spark-common')
-    compileOnly "org.spongepowered:spongeapi:8.0.0-SNAPSHOT"
+    compileOnly "org.spongepowered:spongeapi:12.0.0"
+    compileOnly "com.google.guava:guava:33.3.1-jre"
 }
 
 repositories {
@@ -36,11 +42,7 @@ shadowJar {
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
     relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
-    exclude 'module-info.class'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
-    exclude '**/*.proto'
-    exclude '**/*.proto.bin'
+    project.applyExcludes(delegate)
 }
 
 artifacts {

@@ -31,5 +31,6 @@ include (
         'spark-neoforge',
         'spark-paper',
         'spark-sponge',
+        'spark-standalone-agent',
         'spark-velocity',
 )

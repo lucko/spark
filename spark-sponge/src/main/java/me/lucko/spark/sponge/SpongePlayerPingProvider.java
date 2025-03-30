@@ -24,6 +24,9 @@ import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.entity.living.player.server.ServerPlayer;
+import org.spongepowered.api.network.EngineConnectionState;
+import org.spongepowered.api.network.ServerConnectionState;
+import org.spongepowered.api.network.ServerSideConnection;
 
 import java.util.Map;
 
@@ -38,7 +41,12 @@ public class SpongePlayerPingProvider implements PlayerPingProvider {
     public Map<String, Integer> poll() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
         for (ServerPlayer player : this.server.onlinePlayers()) {
-            builder.put(player.name(), player.connection().latency());
+            ServerSideConnection connection = player.connection();
+            EngineConnectionState connectionState = connection.state().orElse(null);
+            if (connectionState instanceof ServerConnectionState.Game) {
+                int latency = ((ServerConnectionState.Game) connectionState).latency();
+                builder.put(player.name(), latency);
+            }
         }
         return builder.build();
     }

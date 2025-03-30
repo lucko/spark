@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@v4
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -38,7 +38,7 @@ jobs:
           java-version: '21'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Run build and tests with Gradle wrapper
         run: ./gradlew test build
