@@ -31,7 +31,7 @@ public class TickedAsyncDataAggregator extends AsyncDataAggregator {
     /** The callback called when this aggregator is closed, to clean up resources */
     private final Runnable closeCallback;
 
-    /** Tick durations under this threshold will not be inserted, measured in microseconds */
+    /** Tick durations under this threshold will not be inserted, measured in milliseconds */
     private final long tickLengthThreshold;
 
     private final ExceedingTicksFilter filter;
@@ -39,7 +39,7 @@ public class TickedAsyncDataAggregator extends AsyncDataAggregator {
     protected TickedAsyncDataAggregator(ThreadGrouper threadGrouper, boolean ignoreSleeping, TickReporter tickReporter, int tickLengthThreshold) {
         super(threadGrouper, ignoreSleeping);
         this.tickLengthThreshold = TimeUnit.MILLISECONDS.toMicros(tickLengthThreshold);
-        this.filter = new ExceedingTicksFilter(tickLengthThreshold, System::nanoTime);
+        this.filter = new ExceedingTicksFilter(tickLengthThreshold);
         tickReporter.addCallback(this.filter);
         this.closeCallback = () -> tickReporter.removeCallback(this.filter);
     }

@@ -112,11 +112,13 @@ public class SamplerBuilder {
             throw new IllegalArgumentException("samplingInterval = " + this.samplingInterval);
         }
 
+        AsyncProfilerAccess asyncProfiler = AsyncProfilerAccess.getInstance(platform);
+
         boolean onlyTicksOverMode = this.ticksOver != -1 && this.tickHook != null;
-        boolean canUseAsyncProfiler = AsyncProfilerAccess.getInstance(platform).checkSupported(platform) && (!onlyTicksOverMode || platform.getTickReporter() != null);
+        boolean canUseAsyncProfiler = asyncProfiler.checkSupported(platform) && (!onlyTicksOverMode || platform.getTickReporter() != null);
 
         if (this.mode == SamplerMode.ALLOCATION) {
-            if (!canUseAsyncProfiler || !AsyncProfilerAccess.getInstance(platform).checkAllocationProfilingSupported(platform)) {
+            if (!canUseAsyncProfiler || !asyncProfiler.checkAllocationProfilingSupported(platform)) {
                 throw new UnsupportedOperationException("Allocation profiling is not supported on your system. Check the console for more info.");
             }
             if (this.ignoreSleeping) {
@@ -137,23 +139,16 @@ public class SamplerBuilder {
 
         Sampler sampler;
         if (canUseAsyncProfiler) {
-            SampleCollector<?> collector;
-            if (this.mode == SamplerMode.ALLOCATION) {
-                collector = new SampleCollector.Allocation(interval, this.allocLiveOnly);
-            } else {
-                collector = new SampleCollector.Execution(interval);
-            }
-            if (onlyTicksOverMode) {
-                sampler = new AsyncSampler(platform, settings, collector, this.ticksOver);
-            } else {
-                sampler = new AsyncSampler(platform, settings, collector);
-            }
+            SampleCollector<?> collector = this.mode == SamplerMode.ALLOCATION
+                    ? new SampleCollector.Allocation(interval, this.allocLiveOnly)
+                    : new SampleCollector.Execution(interval);
+            sampler = onlyTicksOverMode
+                    ? new AsyncSampler(platform, settings, collector, this.ticksOver)
+                    : new AsyncSampler(platform, settings, collector);
         } else {
-            if (onlyTicksOverMode) {
-                sampler = new JavaSampler(platform, settings, this.tickHook, this.ticksOver);
-            } else {
-                sampler = new JavaSampler(platform, settings);
-            }
+            sampler = onlyTicksOverMode
+                    ? new JavaSampler(platform, settings, this.tickHook, this.ticksOver)
+                    : new JavaSampler(platform, settings);
         }
 
         sampler.start();
