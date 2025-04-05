@@ -21,18 +21,12 @@
 package me.lucko.spark.common.sampler.async;
 
 import me.lucko.spark.common.sampler.ThreadGrouper;
-import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 public class TickedAsyncDataAggregator extends AsyncDataAggregator {
-
-    /** The ticks that exceeded the threshold, cleared one-by-one when inserting data */
-    private final Queue<ExceededTick> ticksOver = new ConcurrentLinkedQueue<>();
 
     /** The callback called when this aggregator is closed, to clean up resources */
     private final Runnable closeCallback;
@@ -40,22 +34,14 @@ public class TickedAsyncDataAggregator extends AsyncDataAggregator {
     /** Tick durations under this threshold will not be inserted, measured in microseconds */
     private final long tickLengthThreshold;
 
-    /** Counts the number of ticks aggregated */
-    private WindowStatisticsCollector.ExplicitTickCounter tickCounter;
+    private final ExceedingTicksFilter filter;
 
     protected TickedAsyncDataAggregator(ThreadGrouper threadGrouper, boolean ignoreSleeping, TickReporter tickReporter, int tickLengthThreshold) {
         super(threadGrouper, ignoreSleeping);
         this.tickLengthThreshold = TimeUnit.MILLISECONDS.toMicros(tickLengthThreshold);
-        TickReporter.Callback tickReporterCallback = duration -> {
-            if (duration > tickLengthThreshold) {
-                long end = System.nanoTime();
-                long start = (long) (end - (duration * 1_000_000)); // ms to ns
-                this.ticksOver.add(new ExceededTick(start, end));
-                this.tickCounter.increment();
-            }
-        };
-        tickReporter.addCallback(tickReporterCallback);
-        this.closeCallback = () -> tickReporter.removeCallback(tickReporterCallback);
+        this.filter = new ExceedingTicksFilter(tickLengthThreshold, System::nanoTime);
+        tickReporter.addCallback(this.filter);
+        this.closeCallback = () -> tickReporter.removeCallback(this.filter);
     }
 
     @Override
@@ -63,22 +49,8 @@ public class TickedAsyncDataAggregator extends AsyncDataAggregator {
         // with async-profiler clock=monotonic, the event time uses the same clock
         // as System.nanoTime(), so we can compare it directly
         long time = element.getTime();
-        while (true) {
-            ExceededTick earliestExceeding = ticksOver.peek();
-            if (earliestExceeding == null) {
-                // no tick over threshold anymore
-                return;
-            } else if (time - earliestExceeding.start < 0) {
-                // segment happened before current exceeding
-                return;
-            } else if (earliestExceeding.end - time < 0) {
-                // segment happened after current exceeding,
-                // but it might fall into the next one
-                ticksOver.remove();
-            } else {
-                // segment falls exactly into exceeding, record it
-                break;
-            }
+        if (!this.filter.duringExceedingTick(time)) {
+            return;
         }
         super.insertData(element, window);
     }
@@ -89,7 +61,7 @@ public class TickedAsyncDataAggregator extends AsyncDataAggregator {
                 .setType(SparkSamplerProtos.SamplerMetadata.DataAggregator.Type.TICKED)
                 .setThreadGrouper(this.threadGrouper.asProto())
                 .setTickLengthThreshold(this.tickLengthThreshold)
-                .setNumberOfIncludedTicks(this.tickCounter.getTotalCountedTicks())
+                .setNumberOfIncludedTicks(this.filter.exceedingTicksCount())
                 .build();
 
     }
@@ -99,17 +71,4 @@ public class TickedAsyncDataAggregator extends AsyncDataAggregator {
         this.closeCallback.run();
     }
 
-    public void setTickCounter(WindowStatisticsCollector.ExplicitTickCounter counter) {
-        this.tickCounter = counter;
-    }
-
-    private static final class ExceededTick {
-        private final long start;
-        private final long end;
-
-        ExceededTick(long start, long end) {
-            this.start = start;
-            this.end = end;
-        }
-    }
 }

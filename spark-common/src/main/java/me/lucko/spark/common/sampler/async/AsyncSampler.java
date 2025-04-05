@@ -96,12 +96,7 @@ public class AsyncSampler extends AbstractSampler {
 
         TickHook tickHook = this.platform.getTickHook();
         if (tickHook != null) {
-            if (this.dataAggregator instanceof TickedAsyncDataAggregator) {
-                WindowStatisticsCollector.ExplicitTickCounter counter = this.windowStatisticsCollector.startCountingTicksExplicit(tickHook);
-                ((TickedAsyncDataAggregator) this.dataAggregator).setTickCounter(counter);
-            } else {
-                this.windowStatisticsCollector.startCountingTicks(tickHook);
-            };
+            this.windowStatisticsCollector.startCountingTicks(tickHook);
         }
 
         int window = ProfilingWindowUtils.windowNow();
@@ -218,6 +213,7 @@ public class AsyncSampler extends AbstractSampler {
             this.scheduler.shutdown();
             this.scheduler = null;
         }
+        this.dataAggregator.close();
     }
 
     @Override
