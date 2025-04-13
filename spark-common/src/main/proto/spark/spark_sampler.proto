@@ -35,6 +35,7 @@ message SamplerMetadata {
   map<string, string> extra_platform_metadata = 14;
   SamplerMode sampler_mode = 15;
   SamplerEngine sampler_engine = 16;
+  string sampler_engine_version = 17;
 
   message ThreadDumper {
     Type type = 1;

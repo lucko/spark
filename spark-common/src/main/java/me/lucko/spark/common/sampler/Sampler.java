@@ -92,6 +92,13 @@ public interface Sampler {
     SamplerType getType();
 
     /**
+     * Gets the version of the sampler.
+     *
+     * @return the library version if known, else null
+     */
+    String getLibraryVersion();
+
+    /**
      * Gets the sampler mode.
      *
      * @return the sampler mode

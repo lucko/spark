@@ -235,6 +235,11 @@ public class AsyncSampler extends AbstractSampler {
     }
 
     @Override
+    public String getLibraryVersion() {
+        return this.profilerAccess.getVersion();
+    }
+
+    @Override
     public SamplerMode getMode() {
         return this.sampleCollector.getMode();
     }
