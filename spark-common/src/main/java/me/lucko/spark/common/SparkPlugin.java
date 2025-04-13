@@ -150,7 +150,7 @@ public interface SparkPlugin extends Logger {
      * @return the class finder
      */
     default ClassFinder createClassFinder() {
-        if (Boolean.getBoolean("disableInstrumentation")) {
+        if (Boolean.getBoolean("spark.disableInstrumentation")) {
             return FallbackClassFinder.INSTANCE;
         }
         return ClassFinder.combining(
