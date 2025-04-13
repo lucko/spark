@@ -112,22 +112,21 @@ public class SamplerBuilder {
             throw new IllegalArgumentException("samplingInterval = " + this.samplingInterval);
         }
 
-        boolean canUseAsyncProfiler = AsyncProfilerAccess.getInstance(platform).checkSupported(platform);
+        AsyncProfilerAccess asyncProfiler = AsyncProfilerAccess.getInstance(platform);
+
         boolean onlyTicksOverMode = this.ticksOver != -1 && this.tickHook != null;
+        boolean canUseAsyncProfiler = asyncProfiler.checkSupported(platform) && (!onlyTicksOverMode || platform.getTickReporter() != null);
 
         if (this.mode == SamplerMode.ALLOCATION) {
-            if (!canUseAsyncProfiler || !AsyncProfilerAccess.getInstance(platform).checkAllocationProfilingSupported(platform)) {
+            if (!canUseAsyncProfiler || !asyncProfiler.checkAllocationProfilingSupported(platform)) {
                 throw new UnsupportedOperationException("Allocation profiling is not supported on your system. Check the console for more info.");
             }
             if (this.ignoreSleeping) {
                 platform.getPlugin().log(Level.WARNING, "Ignoring sleeping threads is not supported in allocation profiling mode. Sleeping threads will be included in the results.");
             }
-            if (onlyTicksOverMode) {
-                platform.getPlugin().log(Level.WARNING, "'Only-ticks-over' is not supported in allocation profiling mode.");
-            }
         }
 
-        if (onlyTicksOverMode || this.forceJavaSampler) {
+        if (this.forceJavaSampler) {
             canUseAsyncProfiler = false;
         }
 
@@ -139,14 +138,17 @@ public class SamplerBuilder {
         SamplerSettings settings = new SamplerSettings(interval, this.threadDumper, this.threadGrouper.get(), this.autoEndTime, this.background, this.ignoreSleeping);
 
         Sampler sampler;
-        if (this.mode == SamplerMode.ALLOCATION) {
-            sampler = new AsyncSampler(platform, settings, new SampleCollector.Allocation(interval, this.allocLiveOnly));
-        } else if (canUseAsyncProfiler) {
-            sampler = new AsyncSampler(platform, settings, new SampleCollector.Execution(interval));
-        } else if (onlyTicksOverMode) {
-            sampler = new JavaSampler(platform, settings, this.tickHook, this.ticksOver);
+        if (canUseAsyncProfiler) {
+            SampleCollector<?> collector = this.mode == SamplerMode.ALLOCATION
+                    ? new SampleCollector.Allocation(interval, this.allocLiveOnly)
+                    : new SampleCollector.Execution(interval);
+            sampler = onlyTicksOverMode
+                    ? new AsyncSampler(platform, settings, collector, this.ticksOver)
+                    : new AsyncSampler(platform, settings, collector);
         } else {
-            sampler = new JavaSampler(platform, settings);
+            sampler = onlyTicksOverMode
+                    ? new JavaSampler(platform, settings, this.tickHook, this.ticksOver)
+                    : new JavaSampler(platform, settings);
         }
 
         sampler.start();
