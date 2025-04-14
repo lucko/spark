@@ -60,6 +60,15 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void onEnable() {
+        boolean detectedSparkMod = classExists("me.lucko.spark.forge.ForgeSparkMod")
+                || classExists("me.lucko.spark.fabric.FabricSparkMod")
+                || classExists("me.lucko.spark.neoforge.NeoForgeSparkMod");
+        if (detectedSparkMod) {
+            getLogger().warning("The spark Bukkit plugin should not be installed when running hybrid Bukkit/modded servers if the spark mod is also installed. Disabling.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
         this.audienceFactory = BukkitAudiences.create(this);
         this.gameThreadDumper = new ThreadDumper.Specific(Thread.currentThread());
 
@@ -98,7 +107,9 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void onDisable() {
-        this.platform.disable();
+        if (this.platform != null) {
+            this.platform.disable();
+        }
         if (this.tpsCommand != null) {
             CommandMapUtil.unregisterCommand(this.tpsCommand);
         }
@@ -176,7 +187,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public TickReporter createTickReporter() {
-        if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
+        if (classExists("com.destroystokyo.paper.event.server.ServerTickEndEvent")) {
             return new PaperTickReporter(this);
         }
         return null;

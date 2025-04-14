@@ -209,6 +209,11 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     }
 
     @Override
+    public String getLibraryVersion() {
+        return null;
+    }
+
+    @Override
     public SamplerMode getMode() {
         return SamplerMode.EXECUTION;
     }
