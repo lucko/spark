@@ -25,6 +25,7 @@ import me.lucko.spark.common.platform.world.AbstractChunkInfo;
 import me.lucko.spark.common.platform.world.CountMap;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Chunk;
 import org.bukkit.GameRule;
 import org.bukkit.Server;
@@ -35,13 +36,16 @@ import org.bukkit.entity.EntityType;
 import io.papermc.paper.threadedregions.scheduler.RegionScheduler;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 public class FoliaWorldInfoProvider implements WorldInfoProvider {
     private final BukkitSparkPlugin plugin;
@@ -113,6 +117,18 @@ public class FoliaWorldInfoProvider implements WorldInfoProvider {
         }
 
         return data;
+    }
+
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        this.server.getDatapackManager().refreshPacks();
+        return this.server.getDatapackManager().getPacks().stream()
+                .map(pack -> new DataPackInfo(
+                        PlainTextComponentSerializer.plainText().serialize(pack.getTitle()),
+                        PlainTextComponentSerializer.plainText().serialize(pack.getDescription()),
+                        pack.getSource().toString().toLowerCase(Locale.ROOT).replace("_", "")
+                ))
+                .collect(Collectors.toList());
     }
 
     static final class FoliaChunkInfo extends AbstractChunkInfo<EntityType> {
