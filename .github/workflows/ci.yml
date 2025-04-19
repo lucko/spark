@@ -3,12 +3,12 @@ name: Build Gradle
 on:
   push:
     branches:
-      - 'master'
+      - 'folia-updated'
     tags:
       - 'v*'
   pull_request:
     branches:
-      - 'master'
+      - 'folia-updated'
 
 env:
   REGISTRY: ghcr.io
