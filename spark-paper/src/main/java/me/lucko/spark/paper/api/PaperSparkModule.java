@@ -24,6 +24,7 @@ import me.lucko.spark.paper.PaperSparkPlugin;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -93,6 +94,21 @@ public interface PaperSparkModule {
      * @return a list of completions
      */
     List<String> tabComplete(CommandSender sender, String[] args);
+
+    /**
+     * Gets if the sender has permission to execute any spark commands.
+     *
+     * @param sender the sender
+     * @return if the sender has permission
+     */
+    boolean hasPermission(CommandSender sender);
+
+    /**
+     * Gets a collection of all known spark permissions.
+     *
+     * @return a set of permissions
+     */
+    Collection<String> getPermissions();
 
     /**
      * Called by Paper at the start of each server tick.

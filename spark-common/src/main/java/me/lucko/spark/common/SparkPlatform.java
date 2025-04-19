@@ -53,12 +53,12 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
-import me.lucko.spark.common.util.SparkStaticLogger;
 import me.lucko.spark.common.util.TemporaryFiles;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.util.config.Configuration;
 import me.lucko.spark.common.util.config.FileConfiguration;
 import me.lucko.spark.common.util.config.RuntimeConfiguration;
+import me.lucko.spark.common.util.log.SparkStaticLogger;
 import me.lucko.spark.common.ws.TrustedKeyStore;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -74,12 +74,14 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
@@ -122,7 +124,7 @@ public class SparkPlatform {
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
-        SparkStaticLogger.setLogger(plugin::log);
+        SparkStaticLogger.setLogger(plugin);
 
         this.temporaryFiles = new TemporaryFiles(this.plugin.getPlatformInfo().getType() == PlatformInfo.Type.CLIENT
                 ? this.plugin.getPluginDirectory().resolve("tmp")
@@ -341,6 +343,15 @@ public class SparkPlatform {
                 .collect(Collectors.toList());
     }
 
+    public Set<String> getAllSparkPermissions() {
+        return Stream.concat(
+                Stream.of("spark"),
+                this.commands.stream()
+                        .map(Command::primaryAlias)
+                        .map(alias -> "spark." + alias)
+        ).collect(Collectors.toSet());
+    }
+
     public boolean hasPermissionForAnyCommand(CommandSender sender) {
         return !getAvailableCommands(sender).isEmpty();
     }
@@ -358,9 +369,8 @@ public class SparkPlatform {
             try {
                 executeCommand0(sender, args);
                 future.complete(null);
-            } catch (Exception e) {
-                this.plugin.log(Level.SEVERE, "Exception occurred whilst executing a spark command");
-                e.printStackTrace();
+            } catch (Throwable e) {
+                this.plugin.log(Level.SEVERE, "Exception occurred whilst executing a spark command", e);
                 future.completeExceptionally(e);
             } finally {
                 this.commandExecuteLock.unlock();

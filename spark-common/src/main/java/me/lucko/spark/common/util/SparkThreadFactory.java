@@ -20,6 +20,8 @@
 
 package me.lucko.spark.common.util;
 
+import me.lucko.spark.common.util.log.SparkStaticLogger;
+
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -27,8 +29,7 @@ import java.util.logging.Level;
 public class SparkThreadFactory implements ThreadFactory {
 
     public static final Thread.UncaughtExceptionHandler EXCEPTION_HANDLER = (t, e) -> {
-        SparkStaticLogger.log(Level.SEVERE, "Uncaught exception thrown by thread " + t.getName());
-        e.printStackTrace();
+        SparkStaticLogger.log(Level.SEVERE, "Uncaught exception thrown by thread " + t.getName(), e);
     };
 
     private static final AtomicInteger poolNumber = new AtomicInteger(1);

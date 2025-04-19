@@ -23,18 +23,14 @@ plugins {
 rootProject.name = 'spark'
 include (
         'spark-api',
-        'spark-common',
         'spark-bukkit',
-        'spark-paper',
         'spark-bungeecord',
-        'spark-velocity',
-        'spark-velocity4',
-        'spark-sponge7',
-        'spark-sponge8',
+        'spark-common',
+        'spark-fabric',
         'spark-forge',
         'spark-neoforge',
-        'spark-fabric',
-        'spark-nukkit',
-        'spark-waterdog',
-        //'spark-minestom', // disabled until minestom publish their maven artifacts to a proper repo
+        'spark-paper',
+        'spark-sponge',
+        'spark-standalone-agent',
+        'spark-velocity',
 )

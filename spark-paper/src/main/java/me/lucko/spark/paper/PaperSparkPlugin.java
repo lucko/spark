@@ -91,6 +91,16 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
     }
 
     @Override
+    public boolean hasPermission(CommandSender sender) {
+        return this.platform.hasPermissionForAnyCommand(new PaperCommandSender(sender));
+    }
+
+    @Override
+    public Collection<String> getPermissions() {
+        return this.platform.getAllSparkPermissions();
+    }
+
+    @Override
     public void onServerTickStart() {
         this.tickHook.onTick();
     }
@@ -139,6 +149,11 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
     }
 
     @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        this.logger.log(level, msg, throwable);
+    }
+
+    @Override
     public ThreadDumper getDefaultThreadDumper() {
         return this.gameThreadDumper;
     }
@@ -175,7 +190,8 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
                 Arrays.asList(this.server.getPluginManager().getPlugins()),
                 Plugin::getName,
                 plugin -> plugin.getPluginMeta().getVersion(),
-                plugin -> String.join(", ", plugin.getPluginMeta().getAuthors())
+                plugin -> String.join(", ", plugin.getPluginMeta().getAuthors()),
+                plugin -> plugin.getPluginMeta().getDescription()
         );
     }
 
@@ -199,7 +215,6 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
         return PaperPlatformInfo.INSTANCE;
     }
 
-    // @SuppressWarnings("DataFlowIssue") // null plugin
     @Override
     public void registerApi(Spark api) {
         // this.server.getServicesManager().register(Spark.class, api, null, ServicePriority.Normal);

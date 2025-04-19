@@ -88,6 +88,11 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
     }
 
     @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        getLogger().log(level, msg, throwable);
+    }
+
+    @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new BungeeCordClassSourceLookup();
     }
@@ -98,7 +103,8 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
                 getProxy().getPluginManager().getPlugins(),
                 plugin -> plugin.getDescription().getName(),
                 plugin -> plugin.getDescription().getVersion(),
-                plugin -> plugin.getDescription().getAuthor()
+                plugin -> plugin.getDescription().getAuthor(),
+                plugin -> plugin.getDescription().getDescription()
         );
     }
 

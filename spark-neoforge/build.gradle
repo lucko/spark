@@ -1,6 +1,6 @@
 plugins {
     id 'com.gradleup.shadow' version '8.3.0'
-    id 'net.neoforged.moddev' version '1.0.19'
+    id 'net.neoforged.moddev' version '2.0.78'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -15,7 +15,7 @@ java {
 }
 
 neoForge {
-    version = "21.1.22"
+    version = "21.5.2-beta"
     validateAccessTransformers = true
 
     runs {
@@ -71,11 +71,9 @@ shadowJar {
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
     relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
-    exclude 'module-info.class'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
-    exclude '**/*.proto'
-    exclude '**/*.proto.bin'
+    project.applyExcludes(delegate)
+
+    mergeServiceFiles()
 }
 
 artifacts {

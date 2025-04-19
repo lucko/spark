@@ -89,7 +89,7 @@ public class BackgroundSamplerManager {
             }
 
         } catch (Throwable e) {
-            e.printStackTrace();
+            this.platform.getPlugin().log(Level.WARNING, "Failed to start background profiler.");
         }
     }
 

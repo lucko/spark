@@ -43,6 +43,7 @@ import java.util.Objects;
 import java.util.Queue;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -92,7 +93,7 @@ public interface ClassSourceLookup {
         try {
             return platform.createClassSourceLookup();
         } catch (Exception e) {
-            e.printStackTrace();
+            platform.getPlugin().log(Level.WARNING, "Failed to create ClassSourceLookup", e);
             return NO_OP;
         }
     }
@@ -289,7 +290,7 @@ public interface ClassSourceLookup {
             if (node.getMethodDescription() != null) {
                 MethodCall methodCall = new MethodCall(node.getClassName(), node.getMethodName(), node.getMethodDescription());
                 this.methodSources.computeIfAbsent(methodCall, this.lookup::identify);
-            } else {
+            } else if (node.getLineNumber() != StackTraceNode.NULL_LINE_NUMBER) {
                 MethodCallByLine methodCall = new MethodCallByLine(node.getClassName(), node.getMethodName(), node.getLineNumber());
                 this.lineSources.computeIfAbsent(methodCall, this.lookup::identify);
             }

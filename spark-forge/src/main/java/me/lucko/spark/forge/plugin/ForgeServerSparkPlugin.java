@@ -29,23 +29,20 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.forge.ForgeCommandSender;
-import me.lucko.spark.forge.ForgeExtraMetadataProvider;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgePlayerPingProvider;
+import me.lucko.spark.forge.ForgeServerCommandSender;
 import me.lucko.spark.forge.ForgeServerConfigProvider;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import me.lucko.spark.forge.ForgeWorldInfoProvider;
-import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -175,8 +172,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             return 0;
         }
 
-        CommandSource source = context.getSource().getEntity() != null ? context.getSource().getEntity() : context.getSource().getServer();
-        this.platform.executeCommand(new ForgeCommandSender(source, this), args);
+        this.platform.executeCommand(new ForgeServerCommandSender(context.getSource(), this), args);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -187,12 +183,12 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new ForgeCommandSender(context.getSource().getPlayerOrException(), this), args, builder);
+        return generateSuggestions(new ForgeServerCommandSender(context.getSource(), this), args, builder);
     }
 
-    @Override
-    public boolean hasPermission(CommandSource sender, String permission) {
-        if (sender instanceof ServerPlayer) {
+    public boolean hasPermission(CommandSourceStack stack, String permission) {
+        ServerPlayer player = stack.getPlayer();
+        if (player != null) {
             if (permission.equals("spark")) {
                 permission = "spark.all";
             }
@@ -201,18 +197,18 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             if (permissionNode == null) {
                 throw new IllegalStateException("spark permission not registered: " + permission);
             }
-            return PermissionAPI.getPermission((ServerPlayer) sender, permissionNode);
+            return PermissionAPI.getPermission(player, permissionNode);
         } else {
             return true;
         }
     }
 
     @Override
-    public Stream<ForgeCommandSender> getCommandSenders() {
+    public Stream<ForgeServerCommandSender> getCommandSenders() {
         return Stream.concat(
-            this.server.getPlayerList().getPlayers().stream(),
-            Stream.of(this.server)
-        ).map(sender -> new ForgeCommandSender(sender, this));
+            this.server.getPlayerList().getPlayers().stream().map(ServerPlayer::createCommandSourceStack),
+            Stream.of(this.server.createCommandSourceStack())
+        ).map(stack -> new ForgeServerCommandSender(stack, this));
     }
 
     @Override
@@ -243,11 +239,6 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public ServerConfigProvider createServerConfigProvider() {
         return new ForgeServerConfigProvider();
-    }
-
-    @Override
-    public MetadataProvider createExtraMetadataProvider() {
-        return new ForgeExtraMetadataProvider(this.server.getPackRepository());
     }
 
     @Override

@@ -57,6 +57,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.space;
@@ -249,7 +250,7 @@ public class HealthModule implements CommandModule {
             platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Health report", url));
         } catch (Exception e) {
             resp.broadcastPrefixed(text("An error occurred whilst uploading the data.", RED));
-            e.printStackTrace();
+            platform.getPlugin().log(Level.SEVERE, "An error occurred whilst uploading data", e);
         }
     }
 

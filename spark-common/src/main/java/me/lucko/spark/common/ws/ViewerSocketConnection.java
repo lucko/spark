@@ -104,15 +104,13 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
             RawPacket packet = decodeRawPacket(data);
             handleRawPacket(packet);
         } catch (Exception e) {
-            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while reading data from the socket");
-            e.printStackTrace();
+            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while reading data from the socket", e);
         }
     }
 
     @Override
     public void onError(Throwable error) {
-        this.platform.getPlugin().log(Level.INFO, "Socket error: " + error.getClass().getName() + " " + error.getMessage());
-        error.printStackTrace();
+        this.platform.getPlugin().log(Level.INFO, "Socket error: " + error.getClass().getName() + " " + error.getMessage(), error);
     }
 
     @Override
@@ -133,8 +131,7 @@ public class ViewerSocketConnection implements BytesocksClient.Listener, AutoClo
         try {
             sendPacket(wrapper);
         } catch (Exception e) {
-            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while sending data to the socket");
-            e.printStackTrace();
+            this.platform.getPlugin().log(Level.WARNING, "Exception occurred while sending data to the socket", e);
         }
     }
 

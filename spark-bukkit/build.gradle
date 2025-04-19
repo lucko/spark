@@ -7,10 +7,14 @@ tasks.withType(JavaCompile) {
     options.release = 21
 }
 
+java {
+    disableAutoTargetJvm()
+}
+
 dependencies {
     implementation project(':spark-common')
     implementation 'net.kyori:adventure-platform-bukkit:4.3.3'
-    paperweight.foliaDevBundle("1.20.6-R0.1-SNAPSHOT")
+    paperweight.foliaDevBundle("1.21.1-R0.1-SNAPSHOT")
     
     // placeholders
     compileOnly 'me.clip:placeholderapi:2.10.3'
@@ -52,11 +56,7 @@ shadowJar {
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
     relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
-    exclude 'module-info.class'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
-    exclude '**/*.proto'
-    exclude '**/*.proto.bin'
+    project.applyExcludes(delegate)
 }
 
 artifacts {

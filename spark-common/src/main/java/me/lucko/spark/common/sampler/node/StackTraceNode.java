@@ -20,9 +20,6 @@
 
 package me.lucko.spark.common.sampler.node;
 
-import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
-import me.lucko.spark.common.util.MethodDisambiguator;
-import me.lucko.spark.proto.SparkSamplerProtos;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Objects;
@@ -45,58 +42,33 @@ public final class StackTraceNode extends AbstractNode {
     }
 
     public String getClassName() {
-        return this.description.className;
+        return this.description.className();
     }
 
     public String getMethodName() {
-        return this.description.methodName;
+        return this.description.methodName();
     }
 
     public String getMethodDescription() {
-        return this.description.methodDescription;
+        return this.description instanceof AsyncDescription
+                ? ((AsyncDescription) this.description).methodDescription()
+                : null;
     }
 
     public int getLineNumber() {
-        return this.description.lineNumber;
+        return this.description instanceof JavaDescription
+                ? ((JavaDescription) this.description).lineNumber()
+                : NULL_LINE_NUMBER;
     }
 
     public int getParentLineNumber() {
-        return this.description.parentLineNumber;
-    }
-
-    public SparkSamplerProtos.StackTraceNode toProto(MergeMode mergeMode, ProtoTimeEncoder timeEncoder, Iterable<Integer> childrenRefs) {
-        SparkSamplerProtos.StackTraceNode.Builder proto = SparkSamplerProtos.StackTraceNode.newBuilder()
-                .setClassName(this.description.className)
-                .setMethodName(this.description.methodName);
-
-        double[] times = encodeTimesForProto(timeEncoder);
-        for (double time : times) {
-            proto.addTimes(time);
-        }
-
-        if (this.description.lineNumber >= 0) {
-            proto.setLineNumber(this.description.lineNumber);
-        }
-
-        if (mergeMode.separateParentCalls() && this.description.parentLineNumber >= 0) {
-            proto.setParentLineNumber(this.description.parentLineNumber);
-        }
-
-        if (this.description.methodDescription != null) {
-            proto.setMethodDesc(this.description.methodDescription);
-        } else {
-            mergeMode.getMethodDisambiguator().disambiguate(this)
-                    .map(MethodDisambiguator.MethodDescription::getDesc)
-                    .ifPresent(proto::setMethodDesc);
-        }
-
-        proto.addAllChildrenRefs(childrenRefs);
-
-        return proto.build();
+        return this.description instanceof JavaDescription
+                ? ((JavaDescription) this.description).parentLineNumber()
+                : NULL_LINE_NUMBER;
     }
 
     /**
-     * Function to construct a {@link StackTraceNode.Description} from a stack trace element
+     * Function to construct a {@link Description} from a stack trace element
      * of type {@code T}.
      *
      * @param <T> the stack trace element type, e.g. {@link java.lang.StackTraceElement}
@@ -114,53 +86,101 @@ public final class StackTraceNode extends AbstractNode {
         Description describe(T element, @Nullable T parent);
     }
 
-    /**
-     * Encapsulates the attributes of a {@link StackTraceNode}.
-     */
-    public static final class Description {
+    public interface Description {
+        String className();
+
+        String methodName();
+    }
+
+    public static final class AsyncDescription implements Description {
         private final String className;
         private final String methodName;
-
-        // async-profiler
         private final String methodDescription;
-
-        // Java
-        private final int lineNumber;
-        private final int parentLineNumber;
 
         private final int hash;
 
-        // Constructor used by the Java sampler
-        public Description(String className, String methodName, int lineNumber, int parentLineNumber) {
-            this.className = className;
-            this.methodName = methodName;
-            this.methodDescription = null;
-            this.lineNumber = lineNumber;
-            this.parentLineNumber = parentLineNumber;
-            this.hash = Objects.hash(this.className, this.methodName, this.lineNumber, this.parentLineNumber);
-        }
-
-        // Constructor used by the async-profiler sampler
-        public Description(String className, String methodName, String methodDescription) {
+        public AsyncDescription(String className, String methodName, String methodDescription) {
             this.className = className;
             this.methodName = methodName;
             this.methodDescription = methodDescription;
-            this.lineNumber = StackTraceNode.NULL_LINE_NUMBER;
-            this.parentLineNumber = StackTraceNode.NULL_LINE_NUMBER;
             this.hash = Objects.hash(this.className, this.methodName, this.methodDescription);
+        }
+
+        @Override
+        public String className() {
+            return this.className;
+        }
+
+        @Override
+        public String methodName() {
+            return this.methodName;
+        }
+
+        public String methodDescription() {
+            return this.methodDescription;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            Description description = (Description) o;
+            AsyncDescription description = (AsyncDescription) o;
+            return this.hash == description.hash &&
+                    this.className.equals(description.className) &&
+                    this.methodName.equals(description.methodName) &&
+                    Objects.equals(this.methodDescription, description.methodDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return this.hash;
+        }
+    }
+
+    public static final class JavaDescription implements Description {
+        private final String className;
+        private final String methodName;
+        private final int lineNumber;
+        private final int parentLineNumber;
+
+        private final int hash;
+
+        public JavaDescription(String className, String methodName, int lineNumber, int parentLineNumber) {
+            this.className = className;
+            this.methodName = methodName;
+            this.lineNumber = lineNumber;
+            this.parentLineNumber = parentLineNumber;
+            this.hash = Objects.hash(this.className, this.methodName, this.lineNumber, this.parentLineNumber);
+        }
+
+        @Override
+        public String className() {
+            return this.className;
+        }
+
+        @Override
+        public String methodName() {
+            return this.methodName;
+        }
+
+        public int lineNumber() {
+            return this.lineNumber;
+        }
+
+        public int parentLineNumber() {
+            return this.parentLineNumber;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            JavaDescription description = (JavaDescription) o;
             return this.hash == description.hash &&
                     this.lineNumber == description.lineNumber &&
                     this.parentLineNumber == description.parentLineNumber &&
                     this.className.equals(description.className) &&
-                    this.methodName.equals(description.methodName) &&
-                    Objects.equals(this.methodDescription, description.methodDescription);
+                    this.methodName.equals(description.methodName);
         }
 
         @Override

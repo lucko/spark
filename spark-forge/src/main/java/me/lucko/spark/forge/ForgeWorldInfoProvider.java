@@ -28,6 +28,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
@@ -36,10 +38,39 @@ import net.minecraft.world.level.entity.EntityLookup;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import net.minecraft.world.level.entity.TransientEntitySectionManager;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
+
+    protected abstract PackRepository getPackRepository();
+
+    @Override
+    public Collection<DataPackInfo> pollDataPacks() {
+        return getPackRepository().getSelectedPacks().stream()
+            .map(pack -> new DataPackInfo(
+                    pack.getId(),
+                    pack.getDescription().getString(),
+                    resourcePackSource(pack.getPackSource())
+            ))
+            .collect(Collectors.toList());
+    }
+
+    private static String resourcePackSource(PackSource source) {
+        if (source == PackSource.DEFAULT) {
+            return "none";
+        } else if (source == PackSource.BUILT_IN) {
+            return "builtin";
+        } else if (source == PackSource.WORLD) {
+            return "world";
+        } else if (source == PackSource.SERVER) {
+            return "server";
+        } else {
+            return "unknown";
+        }
+    }
 
     public static final class Server extends ForgeWorldInfoProvider {
         private final MinecraftServer server;
@@ -89,22 +120,27 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
             GameRulesResult data = new GameRulesResult();
             Iterable<ServerLevel> levels = this.server.getAllLevels();
 
-            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
-                @Override
-                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                    String defaultValue = type.createRule().serialize();
-                    data.putDefault(key.getId(), defaultValue);
+            for (ServerLevel level : levels) {
+                String levelName = level.dimension().location().getPath();
 
-                    for (ServerLevel level : levels) {
-                        String levelName = level.dimension().location().getPath();
+                level.getGameRules().visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
+                    @Override
+                    public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
+                        String defaultValue = type.createRule().serialize();
+                        data.putDefault(key.getId(), defaultValue);
 
                         String value = level.getGameRules().getRule(key).serialize();
                         data.put(key.getId(), levelName, value);
                     }
-                }
-            });
+                });
+            }
 
             return data;
+        }
+
+        @Override
+        protected PackRepository getPackRepository() {
+            return this.server.getPackRepository();
         }
     }
 
@@ -154,28 +190,13 @@ public abstract class ForgeWorldInfoProvider implements WorldInfoProvider {
 
         @Override
         public GameRulesResult pollGameRules() {
-            ClientLevel level = this.client.level;
-            if (level == null) {
-                return null;
-            }
+            // Not available on client since 24w39a
+            return null;
+        }
 
-            GameRulesResult data = new GameRulesResult();
-
-            String levelName = level.dimension().location().getPath();
-            GameRules levelRules = level.getGameRules();
-
-            GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
-                @Override
-                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                    String defaultValue = type.createRule().serialize();
-                    data.putDefault(key.getId(), defaultValue);
-
-                    String value = levelRules.getRule(key).serialize();
-                    data.put(key.getId(), levelName, value);
-                }
-            });
-
-            return data;
+        @Override
+        protected PackRepository getPackRepository() {
+            return this.client.getResourcePackRepository();
         }
     }
 

@@ -20,12 +20,20 @@
 
 package me.lucko.spark.common;
 
+import com.google.common.collect.ImmutableSet;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.test.plugin.TestSparkPlugin;
+import net.kyori.adventure.text.Component;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SparkPlatformTest {
@@ -34,6 +42,65 @@ public class SparkPlatformTest {
     public void testEnableDisable(@TempDir Path directory) {
         try (TestSparkPlugin plugin = new TestSparkPlugin(directory)) {
             assertTrue(plugin.platform().hasEnabled());
+        }
+    }
+
+    @Test
+    public void testPermissions(@TempDir Path directory) {
+        try (TestSparkPlugin plugin = new TestSparkPlugin(directory)) {
+            SparkPlatform platform = plugin.platform();
+
+            Set<String> permissions = platform.getAllSparkPermissions();
+            assertEquals(
+                    ImmutableSet.of(
+                            "spark",
+                            "spark.profiler",
+                            "spark.tps",
+                            "spark.ping",
+                            "spark.healthreport",
+                            "spark.tickmonitor",
+                            "spark.gc",
+                            "spark.gcmonitor",
+                            "spark.heapsummary",
+                            "spark.heapdump",
+                            "spark.activity"
+                    ),
+                    permissions
+            );
+
+            TestCommandSender testSender = new TestCommandSender();
+            assertFalse(platform.hasPermissionForAnyCommand(testSender));
+
+            testSender.permissions.add("spark.tps");
+            assertTrue(platform.hasPermissionForAnyCommand(testSender));
+
+            testSender.permissions.clear();
+            testSender.permissions.add("spark");
+            assertTrue(platform.hasPermissionForAnyCommand(testSender));
+        }
+    }
+
+    private static final class TestCommandSender implements CommandSender {
+        private final Set<String> permissions = new HashSet<>();
+
+        @Override
+        public String getName() {
+            return "Test";
+        }
+
+        @Override
+        public UUID getUniqueId() {
+            return new UUID(0, 0);
+        }
+
+        @Override
+        public void sendMessage(Component message) {
+
+        }
+
+        @Override
+        public boolean hasPermission(String permission) {
+            return this.permissions.contains(permission);
         }
     }
 

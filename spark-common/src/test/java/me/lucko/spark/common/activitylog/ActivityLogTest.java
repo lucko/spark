@@ -36,9 +36,11 @@ public class ActivityLogTest {
 
     @Test
     public void testSaveLoad(@TempDir Path tempDir) {
+        long time = System.currentTimeMillis();
+
         ActivityLog log = new ActivityLog(tempDir.resolve("activity-log.json"));
-        log.addToLog(Activity.fileActivity(USER, 1721937782184L, "Profiler", "path/to/profile.sparkprofile"));
-        log.addToLog(Activity.urlActivity(USER, 1721937782184L, "Profiler", "https://spark.lucko.me/abcd"));
+        log.addToLog(Activity.fileActivity(USER, time, "Profiler", "path/to/profile.sparkprofile"));
+        log.addToLog(Activity.urlActivity(USER, time, "Profiler", "https://spark.lucko.me/abcd"));
         log.save();
 
         ActivityLog log2 = new ActivityLog(tempDir.resolve("activity-log.json"));

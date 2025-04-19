@@ -37,12 +37,11 @@ import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
-import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
-import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import net.kyori.adventure.text.Component;
@@ -60,6 +59,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 
 import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.space;
@@ -190,7 +190,6 @@ public class SamplerModule implements CommandModule {
         }
 
         boolean ignoreSleeping = arguments.boolFlag("ignore-sleeping");
-        boolean ignoreNative = arguments.boolFlag("ignore-native");
         boolean forceJavaSampler = arguments.boolFlag("force-java-sampler");
 
         Set<String> threads = arguments.stringFlag("thread");
@@ -239,7 +238,6 @@ public class SamplerModule implements CommandModule {
         }
         builder.samplingInterval(interval);
         builder.ignoreSleeping(ignoreSleeping);
-        builder.ignoreNative(ignoreNative);
         builder.forceJavaSampler(forceJavaSampler);
         builder.allocLiveOnly(allocLiveOnly);
         if (ticksOver != -1) {
@@ -278,8 +276,8 @@ public class SamplerModule implements CommandModule {
         // send message if profiling fails
         future.whenCompleteAsync((s, throwable) -> {
             if (throwable != null) {
-                resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable.toString(), RED));
-                throwable.printStackTrace();
+                resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable, RED));
+                platform.getPlugin().log(Level.SEVERE, "Profiler operation failed unexpectedly", throwable);
             }
         });
 
@@ -440,7 +438,7 @@ public class SamplerModule implements CommandModule {
                 platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Profiler", url));
             } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the results. Attempting to save to disk instead.", RED));
-                e.printStackTrace();
+                platform.getPlugin().log(Level.WARNING, "Error whilst uploading profiler results", e);
                 saveToFile = true;
             }
         }
@@ -457,7 +455,7 @@ public class SamplerModule implements CommandModule {
                 platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Profiler", file.toString()));
             } catch (IOException e) {
                 resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
-                e.printStackTrace();
+                platform.getPlugin().log(Level.WARNING, "Error whilst saving profiler results", e);
             }
         }
     }
@@ -499,7 +497,7 @@ public class SamplerModule implements CommandModule {
             platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Profiler (live)", url));
         } catch (Exception e) {
             resp.replyPrefixed(text("An error occurred whilst opening the live profiler.", RED));
-            e.printStackTrace();
+            platform.getPlugin().log(Level.WARNING, "Error whilst opening live profiler", e);
         }
     }
 
@@ -507,12 +505,7 @@ public class SamplerModule implements CommandModule {
         return new Sampler.ExportProps()
                 .creator(resp.senderData())
                 .comment(Iterables.getFirst(arguments.stringFlag("comment"), null))
-                .mergeMode(() -> {
-                    MethodDisambiguator methodDisambiguator = new MethodDisambiguator(platform.createClassFinder());
-                    return arguments.boolFlag("separate-parent-calls")
-                            ? MergeMode.separateParentCalls(methodDisambiguator)
-                            : MergeMode.sameMethod(methodDisambiguator);
-                })
+                .mergeStrategy(arguments.boolFlag("separate-parent-calls") ? MergeStrategy.SEPARATE_PARENT_CALLS : MergeStrategy.SAME_METHOD)
                 .classSourceLookup(() -> ClassSourceLookup.create(platform));
     }
 

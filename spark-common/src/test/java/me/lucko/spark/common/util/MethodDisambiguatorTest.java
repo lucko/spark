@@ -20,9 +20,9 @@
 
 package me.lucko.spark.common.util;
 
-import me.lucko.spark.test.TestClass;
 import me.lucko.spark.common.util.MethodDisambiguator.MethodDescription;
 import me.lucko.spark.common.util.classfinder.FallbackClassFinder;
+import me.lucko.spark.test.TestClass;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;

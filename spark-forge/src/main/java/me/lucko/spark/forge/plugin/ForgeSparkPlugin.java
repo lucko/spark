@@ -38,7 +38,6 @@ import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
 import me.lucko.spark.forge.ForgeSparkMod;
-import net.minecraft.commands.CommandSource;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
 import org.apache.logging.log4j.LogManager;
@@ -76,8 +75,6 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
         this.scheduler.shutdown();
     }
 
-    public abstract boolean hasPermission(CommandSource sender, String permission);
-
     @Override
     public String getVersion() {
         return this.mod.getVersion();
@@ -95,14 +92,23 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
 
     @Override
     public void log(Level level, String msg) {
-        if (level == Level.INFO) {
-            this.logger.info(msg);
-        } else if (level == Level.WARNING) {
-            this.logger.warn(msg);
-        } else if (level == Level.SEVERE) {
+        if (level.intValue() >= 1000) { // severe
             this.logger.error(msg);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg);
         } else {
-            throw new IllegalArgumentException(level.getName());
+            this.logger.info(msg);
+        }
+    }
+
+    @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        if (level.intValue() >= 1000) { // severe
+            this.logger.error(msg, throwable);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg, throwable);
+        } else {
+            this.logger.info(msg, throwable);
         }
     }
 
@@ -117,7 +123,8 @@ public abstract class ForgeSparkPlugin implements SparkPlugin {
                 ModList.get().getMods(),
                 IModInfo::getModId,
                 mod -> mod.getVersion().toString(),
-                mod -> null // ?
+                mod -> null, // ?
+                IModInfo::getDescription
         );
     }
 

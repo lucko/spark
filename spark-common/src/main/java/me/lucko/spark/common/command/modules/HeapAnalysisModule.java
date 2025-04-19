@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
+import java.util.logging.Level;
 
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.GOLD;
@@ -85,7 +86,7 @@ public class HeapAnalysisModule implements CommandModule {
             heapDump = HeapDumpSummary.createNew();
         } catch (Exception e) {
             resp.broadcastPrefixed(text("An error occurred whilst inspecting the heap.", RED));
-            e.printStackTrace();
+            platform.getPlugin().log(Level.SEVERE, "An error occurred whilst inspecting the heap.", e);
             return;
         }
 
@@ -110,7 +111,7 @@ public class HeapAnalysisModule implements CommandModule {
                 platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Heap dump summary", url));
             } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the data. Attempting to save to disk instead.", RED));
-                e.printStackTrace();
+                platform.getPlugin().log(Level.SEVERE, "An error occurred whilst uploading the data.", e);
                 saveToFile = true;
             }
         }
@@ -131,7 +132,7 @@ public class HeapAnalysisModule implements CommandModule {
                 platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Heap dump summary", file.toString()));
             } catch (IOException e) {
                 resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
-                e.printStackTrace();
+                platform.getPlugin().log(Level.SEVERE, "An error occurred whilst saving the data.", e);
             }
         }
 
@@ -153,7 +154,7 @@ public class HeapAnalysisModule implements CommandModule {
             HeapDump.dumpHeap(file, liveOnly);
         } catch (Exception e) {
             resp.broadcastPrefixed(text("An error occurred whilst creating a heap dump.", RED));
-            e.printStackTrace();
+            platform.getPlugin().log(Level.SEVERE, "An error occurred whilst creating a heap dump.", e);
             return;
         }
 
@@ -180,7 +181,7 @@ public class HeapAnalysisModule implements CommandModule {
             try {
                 heapDumpCompress(platform, resp, file, compressionMethod);
             } catch (IOException e) {
-                e.printStackTrace();
+                platform.getPlugin().log(Level.SEVERE, "An error occurred whilst compressing the heap dump.", e);
             }
         }
     }

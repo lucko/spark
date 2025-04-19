@@ -1,0 +1,51 @@
+plugins {
+    id 'com.gradleup.shadow' version '8.3.0'
+}
+
+tasks.withType(JavaCompile) {
+    // override, compile targeting J21
+    options.release = 21
+}
+
+dependencies {
+    implementation project(':spark-common')
+    compileOnly "org.spongepowered:spongeapi:12.0.0"
+    compileOnly "com.google.guava:guava:33.3.1-jre"
+}
+
+repositories {
+    maven { url 'https://repo.spongepowered.org/repository/maven-public/' }
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        include 'META-INF/sponge_plugins.json'
+        expand (
+                version: project.pluginVersion,
+                description: project.pluginDescription
+        )
+    }
+}
+
+shadowJar {
+    archiveFileName = "spark-${project.pluginVersion}-sponge.jar"
+
+    dependencies {
+        exclude(dependency('net.kyori:^(?!adventure-text-feature-pagination).+$'))
+    }
+
+    relocate 'net.kyori.adventure.text.feature.pagination', 'me.lucko.spark.lib.adventure.pagination'
+    relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
+    relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
+    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
+    relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
+    relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
+    relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
+
+    project.applyExcludes(delegate)
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
+}

@@ -22,7 +22,7 @@ package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkProtos;
@@ -85,6 +85,20 @@ public interface Sampler {
     boolean isRunningInBackground();
 
     /**
+     * Gets the sampler type.
+     *
+     * @return the sampler type
+     */
+    SamplerType getType();
+
+    /**
+     * Gets the version of the sampler.
+     *
+     * @return the library version if known, else null
+     */
+    String getLibraryVersion();
+
+    /**
      * Gets the sampler mode.
      *
      * @return the sampler mode
@@ -111,7 +125,7 @@ public interface Sampler {
     final class ExportProps {
         private CommandSender.Data creator;
         private String comment;
-        private Supplier<MergeMode> mergeMode;
+        private MergeStrategy mergeStrategy;
         private Supplier<ClassSourceLookup> classSourceLookup;
         private SocketChannelInfo channelInfo;
 
@@ -126,8 +140,8 @@ public interface Sampler {
             return this.comment;
         }
 
-        public Supplier<MergeMode> mergeMode() {
-            return this.mergeMode;
+        public MergeStrategy mergeStrategy() {
+            return this.mergeStrategy;
         }
 
         public Supplier<ClassSourceLookup> classSourceLookup() {
@@ -148,8 +162,8 @@ public interface Sampler {
             return this;
         }
 
-        public ExportProps mergeMode(Supplier<MergeMode> mergeMode) {
-            this.mergeMode = mergeMode;
+        public ExportProps mergeStrategy(MergeStrategy mergeStrategy) {
+            this.mergeStrategy = mergeStrategy;
             return this;
         }
 

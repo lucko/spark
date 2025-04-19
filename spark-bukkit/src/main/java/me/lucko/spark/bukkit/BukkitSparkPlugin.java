@@ -71,6 +71,15 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
         this.scheduler = FoliaSupport.IS_ACTIVE
                 ? new FoliaScheduler(this)
                 : new BukkitSparkScheduler.Basic(this);
+        boolean detectedSparkMod = classExists("me.lucko.spark.forge.ForgeSparkMod")
+                || classExists("me.lucko.spark.fabric.FabricSparkMod")
+                || classExists("me.lucko.spark.neoforge.NeoForgeSparkMod");
+        if (detectedSparkMod) {
+            getLogger().warning("The spark Bukkit plugin should not be installed when running hybrid Bukkit/modded servers if the spark mod is also installed. Disabling.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+      
         this.audienceFactory = BukkitAudiences.create(this);
         this.gameThreadDumper = FoliaSupport.IS_ACTIVE
                 ? new ThreadDumper.Regex(ImmutableSet.of("Region Scheduler Thread #\\d+"))
@@ -111,7 +120,9 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
 
     @Override
     public void onDisable() {
-        this.platform.disable();
+        if (this.platform != null) {
+            this.platform.disable();
+        }
         if (this.tpsCommand != null) {
             CommandMapUtil.unregisterCommand(this.tpsCommand);
         }
@@ -167,6 +178,11 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     }
 
     @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        getLogger().log(level, msg, throwable);
+    }
+
+    @Override
     public ThreadDumper getDefaultThreadDumper() {
         return this.gameThreadDumper;
     }
@@ -188,7 +204,7 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
     public TickReporter createTickReporter() {
         if (FoliaSupport.IS_ACTIVE) {
             return null;
-        } else if (classExists("com.destroystokyo.paper.event.server.ServerTickStartEvent")) {
+        } else if (classExists("com.destroystokyo.paper.event.server.ServerTickEndEvent")) {
             return new PaperTickReporter(this);
         } else {
             return null;
@@ -216,7 +232,8 @@ public class BukkitSparkPlugin extends JavaPlugin implements SparkPlugin {
                 Arrays.asList(getServer().getPluginManager().getPlugins()),
                 Plugin::getName,
                 plugin -> plugin.getDescription().getVersion(),
-                plugin -> String.join(", ", plugin.getDescription().getAuthors())
+                plugin -> String.join(", ", plugin.getDescription().getAuthors()),
+                plugin -> plugin.getDescription().getDescription()
         );
     }
 

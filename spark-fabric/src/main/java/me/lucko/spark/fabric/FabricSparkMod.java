@@ -60,7 +60,7 @@ public class FabricSparkMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register(this::onServerCommandRegister);
     }
 
-    // client (called be entrypoint defined in fabric.mod.json)
+    // client (called by entrypoint defined in fabric.mod.json)
     public static void initializeClient() {
         Objects.requireNonNull(FabricSparkMod.mod, "mod");
         FabricClientSparkPlugin.register(FabricSparkMod.mod, MinecraftClient.getInstance());

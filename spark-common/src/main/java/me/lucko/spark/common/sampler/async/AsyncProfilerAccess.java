@@ -27,9 +27,7 @@ import me.lucko.spark.common.SparkPlatform;
 import one.profiler.AsyncProfiler;
 import one.profiler.Events;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -37,7 +35,6 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  * Provides a bridge between spark and async-profiler.
@@ -138,24 +135,18 @@ public class AsyncProfilerAccess {
         return supported;
     }
 
+    public String getVersion() {
+        return this.profiler.getVersion();
+    }
+
     private static AsyncProfiler load(SparkPlatform platform) throws Exception {
         // check compatibility
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
         String arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
         String jvm = System.getProperty("java.vm.name");
 
-        // openj9 not supported by async-profiler at the moment
-        if (jvm.contains("OpenJ9")) {
-            throw new UnsupportedJvmException(jvm);
-        }
-
-        if (os.equals("linux") && arch.equals("amd64") && isLinuxMusl()) {
-            arch = "amd64-musl";
-        }
-
         Table<String, String, String> supported = ImmutableTable.<String, String, String>builder()
                 .put("linux", "amd64", "linux/amd64")
-                .put("linux", "amd64-musl", "linux/amd64-musl")
                 .put("linux", "aarch64", "linux/aarch64")
                 .put("macosx", "amd64", "macos")
                 .put("macosx", "aarch64", "macos")
@@ -240,22 +231,6 @@ public class AsyncProfilerAccess {
     private static final class NativeLoadingException extends RuntimeException {
         public NativeLoadingException(Throwable cause) {
             super("A runtime error occurred whilst loading the native library", cause);
-        }
-    }
-
-    // Checks if the system is using musl instead of glibc
-    private static boolean isLinuxMusl() {
-        try {
-            InputStream stream = new ProcessBuilder("sh", "-c", "ldd `which ls`")
-                    .start()
-                    .getInputStream();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-            String output = reader.lines().collect(Collectors.joining());
-            return output.contains("musl"); // shrug
-        } catch (Throwable e) {
-            // ignore
-            return false;
         }
     }
 }
