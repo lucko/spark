@@ -127,8 +127,8 @@ public class SparkPlatform {
         SparkStaticLogger.setLogger(plugin);
 
         this.temporaryFiles = new TemporaryFiles(this.plugin.getPlatformInfo().getType() == PlatformInfo.Type.CLIENT
-                ? this.plugin.getPluginDirectory().resolve("tmp")
-                : this.plugin.getPluginDirectory().resolve("tmp-client")
+                ? this.plugin.getPluginDirectory().resolve("tmp-client")
+                : this.plugin.getPluginDirectory().resolve("tmp")
         );
         this.configuration = Configuration.combining(
                 RuntimeConfiguration.SYSTEM_PROPERTIES,
