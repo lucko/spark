@@ -21,13 +21,16 @@
 package me.lucko.spark.common.platform.world;
 
 import me.lucko.spark.proto.SparkProtos.WorldStatistics;
+import org.jetbrains.annotations.VisibleForTesting;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -122,37 +125,57 @@ public class WorldStatisticsProvider {
         return builder.build();
     }
 
-    private static List<Region> groupIntoRegions(List<? extends ChunkInfo<?>> chunks) {
+    @VisibleForTesting
+    static List<Region> groupIntoRegions(List<? extends ChunkInfo<?>> chunks) {
         List<Region> regions = new ArrayList<>();
+
+        LinkedHashMap<ChunkCoordinate, ChunkInfo<?>> chunkMap = new LinkedHashMap<>(chunks.size());
 
         for (ChunkInfo<?> chunk : chunks) {
             CountMap<?> counts = chunk.getEntityCounts();
             if (counts.total().get() == 0) {
                 continue;
             }
+            chunkMap.put(new ChunkCoordinate(chunk.getX(), chunk.getZ()), chunk);
+        }
 
-            boolean found = false;
+        ArrayDeque<ChunkInfo<?>> queue = new ArrayDeque<>();
+        ChunkCoordinate index = new ChunkCoordinate(); // avoid allocating per check
 
-            for (Region region : regions) {
-                if (region.isAdjacent(chunk)) {
-                    found = true;
-                    region.add(chunk);
+        while (!chunkMap.isEmpty()) {
+            Map.Entry<ChunkCoordinate, ChunkInfo<?>> first = chunkMap.entrySet().iterator().next();
+            ChunkInfo<?> firstValue = first.getValue();
 
-                    // if the chunk is adjacent to more than one region, merge the regions together
-                    for (Iterator<Region> iterator = regions.iterator(); iterator.hasNext(); ) {
-                        Region otherRegion = iterator.next();
-                        if (region != otherRegion && otherRegion.isAdjacent(chunk)) {
-                            iterator.remove();
-                            region.merge(otherRegion);
+            chunkMap.remove(first.getKey());
+
+            Region region = new Region(firstValue);
+            regions.add(region);
+
+            queue.add(firstValue);
+
+            ChunkInfo<?> queued;
+            while ((queued = queue.pollFirst()) != null) {
+                int queuedX = queued.getX();
+                int queuedZ = queued.getZ();
+
+                // merge adjacent chunks
+                for (int dz = -1; dz <= 1; ++dz) {
+                    for (int dx = -1; dx <= 1; ++dx) {
+                        if ((dx | dz) == 0) {
+                            continue;
                         }
+
+                        index.setCoordinate(queuedX + dx, queuedZ + dz);
+                        ChunkInfo<?> adjacent = chunkMap.remove(index);
+
+                        if (adjacent == null) {
+                            continue;
+                        }
+
+                        region.add(adjacent);
+                        queue.add(adjacent);
                     }
-
-                    break;
                 }
-            }
-
-            if (!found) {
-                regions.add(new Region(chunk));
             }
         }
 
@@ -162,8 +185,7 @@ public class WorldStatisticsProvider {
     /**
      * A map of nearby chunks grouped together by Euclidean distance.
      */
-    private static final class Region {
-        private static final int DISTANCE_THRESHOLD = 2;
+    static final class Region {
         private final Set<ChunkInfo<?>> chunks;
         private final AtomicInteger totalEntities;
 
@@ -181,30 +203,53 @@ public class WorldStatisticsProvider {
             return this.totalEntities;
         }
 
-        public boolean isAdjacent(ChunkInfo<?> chunk) {
-            for (ChunkInfo<?> el : this.chunks) {
-                if (squaredEuclideanDistance(el, chunk) <= DISTANCE_THRESHOLD) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public void add(ChunkInfo<?> chunk) {
             this.chunks.add(chunk);
             this.totalEntities.addAndGet(chunk.getEntityCounts().total().get());
         }
-
-        public void merge(Region group) {
-            this.chunks.addAll(group.getChunks());
-            this.totalEntities.addAndGet(group.getTotalEntities().get());
-        }
-
-        private static long squaredEuclideanDistance(ChunkInfo<?> a, ChunkInfo<?> b) {
-            long dx = a.getX() - b.getX();
-            long dz = a.getZ() - b.getZ();
-            return (dx * dx) + (dz * dz);
-        }
     }
 
+    static final class ChunkCoordinate implements Comparable<ChunkCoordinate> {
+        long key;
+
+        ChunkCoordinate() {}
+
+        ChunkCoordinate(int chunkX, int chunkZ) {
+            this.setCoordinate(chunkX, chunkZ);
+        }
+
+        ChunkCoordinate(long key) {
+            this.setKey(key);
+        }
+
+        public void setCoordinate(int chunkX, int chunkZ) {
+            this.setKey(((long) chunkZ << 32) | (chunkX & 0xFFFFFFFFL));
+        }
+
+        public void setKey(long key) {
+            this.key = key;
+        }
+
+        @Override
+        public int hashCode() {
+            // fastutil hash without the last step, as it is done by HashMap
+            // doing the last step twice (h ^= (h >>> 16)) is both more expensive and destroys the hash
+            long h = this.key * 0x9E3779B97F4A7C15L;
+            h ^= h >>> 32;
+            return (int) h;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof ChunkCoordinate)) {
+                return false;
+            }
+            return this.key == ((ChunkCoordinate) obj).key;
+        }
+
+        @Override
+        public int compareTo(ChunkCoordinate other) {
+            return Long.compare(this.key, other.key);
+        }
+    }
 }
