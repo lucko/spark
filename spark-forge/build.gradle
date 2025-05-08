@@ -20,7 +20,7 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.21.5-55.0.0'
+    minecraft 'net.minecraftforge:forge:1.21.5-55.0.12'
     shade project(':spark-common')
 }
 
