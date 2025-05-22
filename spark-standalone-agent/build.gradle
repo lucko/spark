@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     implementation project(':spark-common')
-    implementation('net.kyori:adventure-text-serializer-ansi:4.17.0') {
+    implementation('net.kyori:adventure-text-serializer-ansi:4.21.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
         exclude(module: 'annotations')

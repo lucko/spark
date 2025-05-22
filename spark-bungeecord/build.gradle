@@ -4,7 +4,7 @@ plugins {
 
 dependencies {
     implementation project(':spark-common')
-    implementation 'net.kyori:adventure-platform-bungeecord:4.3.3'
+    implementation 'net.kyori:adventure-platform-bungeecord:4.4.0'
     compileOnly 'net.md-5:bungeecord-api:1.16-R0.4'
 }
 

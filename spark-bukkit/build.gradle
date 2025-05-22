@@ -8,7 +8,7 @@ java {
 
 dependencies {
     implementation project(':spark-common')
-    implementation 'net.kyori:adventure-platform-bukkit:4.3.3'
+    implementation 'net.kyori:adventure-platform-bukkit:4.4.0'
     compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
     
     // placeholders
