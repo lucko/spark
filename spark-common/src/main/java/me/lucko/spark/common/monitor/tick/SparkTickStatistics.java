@@ -81,6 +81,11 @@ public class SparkTickStatistics implements TickHook.Callback, TickReporter.Call
         }
 
         long diff = now - this.last;
+        if (diff <= 0) {
+            // avoid division by zero
+            return;
+        }
+
         BigDecimal currentTps = TPS_BASE.divide(new BigDecimal(diff), 30, RoundingMode.HALF_UP);
         BigDecimal total = currentTps.multiply(new BigDecimal(diff));
 
