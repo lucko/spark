@@ -279,10 +279,18 @@ public class PlatformStatisticsProvider {
         private static final Pattern MACOS_USERNAME = Pattern.compile("/Users/\\w+");
         private static final Pattern LINUX_USERNAME = Pattern.compile("/home/\\w+");
 
+        // Hide Yourkit broker url and broker token
+        private static final Pattern BROKER_URL = Pattern.compile("(broker_url=)[^,\\s]+");
+        private static final Pattern BROKER_TOKEN = Pattern.compile("(broker_token=)[^,\\s]+");
+
         static String replace(String input) {
             input = WINDOWS_USERNAME.matcher(input).replaceAll("C:\\\\Users\\\\<redacted>");
             input = MACOS_USERNAME.matcher(input).replaceAll("/Users/<redacted>");
             input = LINUX_USERNAME.matcher(input).replaceAll("/home/<redacted>");
+
+            input = BROKER_URL.matcher(input).replaceAll("$1<redacted>");
+            input = BROKER_TOKEN.matcher(input).replaceAll("$1<redacted>");
+
             return input;
         }
     }
