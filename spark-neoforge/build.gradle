@@ -15,7 +15,7 @@ java {
 }
 
 neoForge {
-    version = "21.5.63-beta"
+    version = "21.6.5-beta"
     validateAccessTransformers = true
 
     runs {
