@@ -17,7 +17,7 @@ dependencies {
     implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
     implementation 'com.google.protobuf:protobuf-javalite:4.28.2'
 
-    implementation('me.lucko:bytesocks-java-client:1.0-20230828.145440-5') {
+    implementation('me.lucko:bytesocks-java-client:1.0-SNAPSHOT') {
         exclude(module: 'slf4j-api')
     }
 
