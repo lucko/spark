@@ -1,8 +1,8 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '1.10-SNAPSHOT'
-    id 'com.gradleup.shadow' version '8.3.0'
+    id 'fabric-loom' version '1.11-SNAPSHOT'
+    id 'com.gradleup.shadow' version '8.3.8'
 }
 
 tasks.withType(JavaCompile) {
@@ -28,8 +28,8 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.21.7'
-    mappings 'net.fabricmc:yarn:1.21.7+build.1:v2'
+    minecraft 'com.mojang:minecraft:1.21.8'
+    mappings 'net.fabricmc:yarn:1.21.8+build.1:v2'
     modImplementation 'net.fabricmc:fabric-loader:0.16.14'
 
     Set<String> apiModules = [
@@ -40,7 +40,7 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.128.1+1.21.7'))
+        modImplementation(fabricApi.module(it, '0.129.0+1.21.8'))
     }
 
     include(modImplementation('me.lucko:fabric-permissions-api:0.4.1'))

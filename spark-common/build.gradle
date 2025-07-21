@@ -1,5 +1,5 @@
 plugins {
-    id 'com.google.protobuf' version '0.9.4'
+    id 'com.google.protobuf' version '0.9.5'
     id 'maven-publish'
 }
 
@@ -15,7 +15,7 @@ dependencies {
     implementation 'tools.profiler:async-profiler:4.0' // spark native version: 87b7b42 (v4.0)
     implementation 'org.ow2.asm:asm:9.7'
     implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
-    implementation 'com.google.protobuf:protobuf-javalite:4.28.2'
+    implementation 'com.google.protobuf:protobuf-javalite:4.31.1'
 
     implementation('me.lucko:bytesocks-java-client:1.0-SNAPSHOT') {
         exclude(module: 'slf4j-api')
@@ -61,7 +61,7 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:4.28.2'
+        artifact = 'com.google.protobuf:protoc:4.31.1'
     }
     generateProtoTasks {
         all().each { task ->
