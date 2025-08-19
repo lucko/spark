@@ -1,0 +1,75 @@
+plugins {
+    id 'net.kyori.blossom' version '1.3.1'
+    id 'com.gradleup.shadow' version '8.3.8'
+    id 'maven-publish'
+}
+
+tasks.withType(JavaCompile) {
+    // override, compile targeting J21
+    options.release = 21
+}
+
+tasks.jar {
+    archiveClassifier = 'original'
+}
+
+dependencies {
+    implementation project(':spark-common')
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+}
+
+repositories {
+    maven { url "https://repo.papermc.io/repository/maven-public/" }
+}
+
+blossom {
+    replaceTokenIn('src/main/java/me/lucko/spark/paper/PaperSparkPlugin.java')
+    replaceToken '@version@', project.pluginVersion
+}
+
+shadowJar {
+    archiveFileName = "spark-${project.pluginVersion}-paper.jar"
+    archiveClassifier = ''
+
+    dependencies {
+        exclude(dependency('net.kyori:^(?!adventure-text-feature-pagination).+$'))
+        exclude(dependency('net.bytebuddy:byte-buddy-agent'))
+    }
+
+    relocate 'net.kyori.adventure.text.feature.pagination', 'me.lucko.spark.paper.lib.adventure.pagination'
+    relocate 'com.google.protobuf', 'me.lucko.spark.paper.lib.protobuf'
+    relocate 'org.objectweb.asm', 'me.lucko.spark.paper.lib.asm'
+    relocate 'one.profiler', 'me.lucko.spark.paper.lib.asyncprofiler'
+    relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.paper.lib.bytesocks'
+    relocate 'org.java_websocket', 'me.lucko.spark.paper.lib.bytesocks.ws'
+
+    // nest common classes beneath the paper package to avoid conflicts with spark-bukkit
+    relocate 'me.lucko.spark.common', 'me.lucko.spark.paper.common'
+    relocate 'me.lucko.spark.proto', 'me.lucko.spark.paper.proto'
+    relocate 'spark-native', 'spark-paper-native'
+
+    project.applyExcludes(delegate)
+}
+
+artifacts {
+    archives shadowJar
+    shadow shadowJar
+}
+
+publishing {
+    //repositories {
+    //    maven {
+    //        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    //        credentials {
+    //            username = sonatypeUsername
+    //            password = sonatypePassword
+    //        }
+    //    }
+    //}
+    publications {
+        shadow(MavenPublication) { publication ->
+            project.shadow.component(publication)
+            version = "${project.pluginVersion}-SNAPSHOT"
+        }
+    }
+}

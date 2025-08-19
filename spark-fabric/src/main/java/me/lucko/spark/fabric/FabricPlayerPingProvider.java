@@ -21,9 +21,7 @@
 package me.lucko.spark.fabric;
 
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
-
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -40,7 +38,7 @@ public class FabricPlayerPingProvider implements PlayerPingProvider {
     public Map<String, Integer> poll() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
         for (ServerPlayerEntity player : this.server.getPlayerManager().getPlayerList()) {
-            builder.put(player.getGameProfile().getName(), player.pingMilliseconds);
+            builder.put(player.getGameProfile().getName(), player.networkHandler.getLatency());
         }
         return builder.build();
     }

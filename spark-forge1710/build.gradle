@@ -1,44 +1,34 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        maven { url = "https://maven.minecraftforge.net" }
-    }
-    dependencies {
-        classpath ('com.anatawa12.forge:ForgeGradle:1.2-1.0.+') {
-            changing = true
-        }
-    }
-}
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.gtnewhorizons.retrofuturagradle.mcp.ReobfuscatedJar
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.gradleup.shadow' version '8.3.8'
+    id 'com.gtnewhorizons.retrofuturagradle' version '1.4.5'
 }
 
-apply plugin: 'forge'
-
-// These settings allow you to choose what version of Java you want to be compatible with. Forge 1.7.10 runs on Java 6 to 8.
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
 
 minecraft {
-    version = "1.7.10-10.13.4.1614-1.7.10"
-    runDir = "run"
-    mappings = 'stable_12'
-    
-    replaceIn 'src/main/java/me/lucko/spark/forge/Forge1710SparkMod.java'
-    replace "@version@", project.pluginVersion
+    mcVersion = "1.7.10"
+
+    injectedTags.put("VERSION", project.pluginVersion)
+}
+
+tasks.injectTags.configure {
+    outputClassName.set("me.lucko.spark.forge.Tags")
+}
+
+mcpTasks {
+    deobfuscationATs.from(file("src/main/resources/META-INF/spark_at.cfg"))
 }
 
 configurations {
     shade
     implementation.extendsFrom shade
-}
-
-// https://github.com/MinecraftForge/ForgeGradle/issues/627#issuecomment-533927535
-configurations.all {
-    resolutionStrategy {
-        force 'org.lwjgl.lwjgl:lwjgl-platform:2.9.4-nightly-20150209'
-    }
 }
 
 dependencies {
@@ -62,7 +52,7 @@ jar {
 }
 
 shadowJar {
-    archiveName = 'spark-forge1710.jar'
+    archiveClassifier = "fat-dev"
     configurations = [project.configurations.shade]
 
     relocate 'okio', 'me.lucko.spark.lib.okio'
@@ -82,13 +72,7 @@ shadowJar {
     exclude 'META-INF/proguard/**'
 }
 
-reobf.reobf(shadowJar) { spec ->
-    spec.classpath = sourceSets.main.compileClasspath;
+tasks.named("reobfJar", ReobfuscatedJar) {
+    archiveFileName = "spark-${project.pluginVersion}-forge-1.7.10.jar"
+    inputJar.set(tasks.named("shadowJar", ShadowJar).map { it.archiveFile }.get())
 }
-
-artifacts {
-    archives shadowJar
-    shadow shadowJar
-}
-
-build.dependsOn(shadowJar)

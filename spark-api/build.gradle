@@ -5,21 +5,26 @@ plugins {
 version = '0.1-SNAPSHOT'
 
 dependencies {
-    compileOnly 'org.checkerframework:checker-qual:3.8.0'
-    compileOnly 'org.jetbrains:annotations:20.1.0'
+    compileOnly 'org.checkerframework:checker-qual:3.44.0'
+    compileOnly 'org.jetbrains:annotations:24.1.0'
 }
 
 license {
     header = project.file('HEADER.txt')
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 publishing {
     //repositories {
     //    maven {
-    //        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    //        url = 'https://nexus.lucko.me/repository/maven-snapshots/'
     //        credentials {
-    //            username = sonatypeUsername
-    //            password = sonatypePassword
+    //            username = luckoNexusUsername
+    //            password = luckoNexusPassword
     //        }
     //    }
     //}

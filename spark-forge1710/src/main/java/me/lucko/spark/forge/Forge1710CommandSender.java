@@ -24,15 +24,14 @@ import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import me.lucko.spark.forge.plugin.Forge1710SparkPlugin;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.rcon.RConConsoleSource;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
-import net.minecraftforge.common.ForgeHooks;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Forge1710CommandSender extends AbstractCommandSender<ICommandSender> {
@@ -64,23 +63,40 @@ public class Forge1710CommandSender extends AbstractCommandSender<ICommandSender
         return null;
     }
 
+    private static List<Component> splitOnNewline(Component root) {
+        List<Component> lines = new ArrayList<>();
+        List<Component> current = new ArrayList<>();
+
+        splitRecursive(root, current, lines);
+
+        if (!current.isEmpty()) {
+            lines.add(Component.empty().children(current));
+        }
+
+        return lines;
+    }
+
+    private static void splitRecursive(Component comp, List<Component> current, List<Component> lines) {
+        if (comp.equals(Component.newline())) {
+            // flush current line
+            lines.add(Component.empty().children(current));
+            current.clear();
+            return;
+        }
+
+        // copy the component but recurse into its children
+        List<Component> newChildren = new ArrayList<>();
+        for (Component child : comp.children()) {
+            splitRecursive(child, newChildren, lines);
+        }
+
+        current.add(comp.children(newChildren));
+    }
+
     @Override
     public void sendMessage(Component message) {
-        /*
-         * Due to limitations in 1.7.10, messages with \n render incorrectly on the client.
-         * To work around this, we convert the message to a string first, split it by newline,
-         * and send each line individually.
-         * 
-         * This adds a performance penalty, but avoids any weirdness with this old client.
-         */
-        LegacyComponentSerializer serializer = LegacyComponentSerializer.builder()
-                .character(LegacyComponentSerializer.SECTION_CHAR)
-                .extractUrls()
-                .build();
-        String output = serializer.serialize(message);
-        for(String line : output.split("\n")) {
-            Component deserialized = serializer.deserialize(line);
-            IChatComponent mcComponent = IChatComponent.Serializer.jsonToComponent(GsonComponentSerializer.gson().serialize(deserialized));
+        for (Component line : splitOnNewline(message)) {
+            IChatComponent mcComponent = IChatComponent.Serializer.func_150699_a(GsonComponentSerializer.colorDownsamplingGson().serialize(line));
             super.delegate.addChatMessage(mcComponent);
         }
     }

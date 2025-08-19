@@ -1,11 +1,15 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'com.gradleup.shadow' version '8.3.8'
+}
+
+java {
+    disableAutoTargetJvm()
 }
 
 dependencies {
     implementation project(':spark-common')
-    implementation 'net.kyori:adventure-platform-bukkit:4.2.0'
-    compileOnly 'com.destroystokyo.paper:paper-api:1.16.4-R0.1-SNAPSHOT'
+    implementation 'net.kyori:adventure-platform-bukkit:4.4.0'
+    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
     
     // placeholders
     compileOnly 'me.clip:placeholderapi:2.10.3'
@@ -29,19 +33,19 @@ processResources {
 }
 
 shadowJar {
-    archiveName = "spark-${project.pluginVersion}-bukkit.jar"
+    archiveFileName = "spark-${project.pluginVersion}-bukkit.jar"
 
     relocate 'net.kyori.adventure', 'me.lucko.spark.lib.adventure'
     relocate 'net.kyori.examination', 'me.lucko.spark.lib.adventure.examination'
+    relocate 'net.kyori.option', 'me.lucko.spark.lib.adventure.option'
     relocate 'net.bytebuddy', 'me.lucko.spark.lib.bytebuddy'
     relocate 'com.google.protobuf', 'me.lucko.spark.lib.protobuf'
     relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
+    relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
-    exclude 'module-info.class'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/proguard/**'
+    project.applyExcludes(delegate)
 }
 
 artifacts {

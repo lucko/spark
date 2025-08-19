@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -64,7 +65,7 @@ public interface ThreadGrouper {
      * @param setting the config setting
      * @return the thread grouper
      */
-    static ThreadGrouper parseConfigSetting(String setting) {
+    static Supplier<ThreadGrouper> parseConfigSetting(String setting) {
         switch (setting) {
             case "as-one":
                 return AS_ONE;
@@ -76,9 +77,14 @@ public interface ThreadGrouper {
     }
 
     /**
+     * Supplier for {@link ByName} thread groupers.
+     */
+    Supplier<ThreadGrouper> BY_NAME = ByName::new;
+
+    /**
      * Implementation of {@link ThreadGrouper} that just groups by thread name.
      */
-    ThreadGrouper BY_NAME = new ThreadGrouper() {
+    class ByName implements ThreadGrouper {
         @Override
         public String getGroup(long threadId, String threadName) {
             return threadName;
@@ -93,7 +99,12 @@ public interface ThreadGrouper {
         public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
             return SamplerMetadata.DataAggregator.ThreadGrouper.BY_NAME;
         }
-    };
+    }
+
+    /**
+     * Supplier for {@link ByPool} thread groupers.
+     */
+    Supplier<ThreadGrouper> BY_POOL = ByPool::new;
 
     /**
      * Implementation of {@link ThreadGrouper} that attempts to group by the name of the pool
@@ -102,8 +113,8 @@ public interface ThreadGrouper {
      * <p>The regex pattern used to match pools expects a digit at the end of the thread name,
      * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
      */
-    ThreadGrouper BY_POOL = new ThreadGrouper() {
-        private /* static */ final Pattern pattern = Pattern.compile("^(.*?)[-# ]+\\d+$");
+    class ByPool implements ThreadGrouper {
+        private static final Pattern PATTERN = Pattern.compile("^(.*?)[-# ]+\\d+$");
 
         // thread id -> group
         private final Map<Long, String> cache = new ConcurrentHashMap<>();
@@ -117,7 +128,7 @@ public interface ThreadGrouper {
                 return cached;
             }
 
-            Matcher matcher = this.pattern.matcher(threadName);
+            Matcher matcher = PATTERN.matcher(threadName);
             if (!matcher.matches()) {
                 return threadName;
             }
@@ -141,13 +152,18 @@ public interface ThreadGrouper {
         public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
             return SamplerMetadata.DataAggregator.ThreadGrouper.BY_POOL;
         }
-    };
+    }
+
+    /**
+     * Supplier for {@link AsOne} thread groupers.
+     */
+    Supplier<ThreadGrouper> AS_ONE = AsOne::new;
 
     /**
      * Implementation of {@link ThreadGrouper} which groups all threads as one, under
      * the name "All".
      */
-    ThreadGrouper AS_ONE = new ThreadGrouper() {
+    class AsOne implements ThreadGrouper {
         private final Set<Long> seen = ConcurrentHashMap.newKeySet();
 
         @Override
@@ -165,6 +181,6 @@ public interface ThreadGrouper {
         public SamplerMetadata.DataAggregator.ThreadGrouper asProto() {
             return SamplerMetadata.DataAggregator.ThreadGrouper.AS_ONE;
         }
-    };
+    }
 
 }

@@ -22,11 +22,11 @@ package me.lucko.spark.common.command;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.JoinConfiguration;
 import net.kyori.adventure.text.TextComponent;
 
+import java.lang.ref.WeakReference;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -49,20 +49,22 @@ public class CommandResponseHandler {
             .build();
 
     private final SparkPlatform platform;
-    private final CommandSender sender;
+    private final CommandSender.Data senderData;
+    private final WeakReference<CommandSender> sender;
     private String commandPrimaryAlias;
 
     public CommandResponseHandler(SparkPlatform platform, CommandSender sender) {
         this.platform = platform;
-        this.sender = sender;
+        this.senderData = sender.toData();
+        this.sender = new WeakReference<>(sender);
     }
 
     public void setCommandPrimaryAlias(String commandPrimaryAlias) {
         this.commandPrimaryAlias = commandPrimaryAlias;
     }
 
-    public CommandSender sender() {
-        return this.sender;
+    public CommandSender.Data senderData() {
+        return this.senderData;
     }
 
     public void allSenders(Consumer<? super CommandSender> action) {
@@ -74,17 +76,24 @@ public class CommandResponseHandler {
                 .filter(s -> s.hasPermission("spark") || s.hasPermission("spark." + this.commandPrimaryAlias))
                 .collect(Collectors.toSet());
 
-        senders.add(this.sender);
+        CommandSender sender = this.sender.get();
+        if (sender != null) {
+            senders.add(sender);
+        }
+
         senders.forEach(action);
     }
 
     public void reply(Component message) {
-        this.sender.sendMessage(message);
+        CommandSender sender = this.sender.get();
+        if (sender != null) {
+            sender.sendMessage(message);
+        }
     }
 
     public void reply(Iterable<Component> message) {
         Component joinedMsg = Component.join(JoinConfiguration.separator(Component.newline()), message);
-        this.sender.sendMessage(joinedMsg);
+        reply(joinedMsg);
     }
 
     public void broadcast(Component message) {

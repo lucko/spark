@@ -41,6 +41,11 @@ public class Forge1710PlatformInfo implements PlatformInfo {
     }
 
     @Override
+    public String getBrand() {
+        return "Forge";
+    }
+
+    @Override
     public String getVersion() {
         return ForgeVersion.getVersion();
     }
