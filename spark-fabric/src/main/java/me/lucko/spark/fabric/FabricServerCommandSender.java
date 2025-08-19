@@ -20,6 +20,8 @@
 
 package me.lucko.spark.fabric;
 
+import com.google.gson.JsonParseException;
+import com.mojang.serialization.JsonOps;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.kyori.adventure.text.Component;
@@ -30,6 +32,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 
 import java.util.UUID;
 
@@ -55,7 +58,10 @@ public class FabricServerCommandSender extends AbstractCommandSender<ServerComma
 
     @Override
     public void sendMessage(Component message) {
-        Text component = Text.Serialization.fromJsonTree(GsonComponentSerializer.gson().serializeToTree(message), DynamicRegistryManager.EMPTY);
+        Text component = TextCodecs.CODEC.decode(
+                DynamicRegistryManager.EMPTY.getOps(JsonOps.INSTANCE),
+                GsonComponentSerializer.gson().serializeToTree(message)
+        ).getOrThrow(JsonParseException::new).getFirst();
         this.delegate.sendMessage(component);
     }
 

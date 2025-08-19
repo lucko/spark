@@ -94,7 +94,12 @@ public class LegacyBytesocksClient implements BytesocksClient {
 
         @Override
         public void close(int statusCode, String reason) {
-            this.ws.sendClose(statusCode, reason);
+            this.ws.disconnect(statusCode, reason, 0);
+        }
+
+        @Override
+        public void closeGracefully(int statusCode, String reason) {
+            this.ws.disconnect(statusCode, reason);
         }
     }
 
@@ -112,7 +117,11 @@ public class LegacyBytesocksClient implements BytesocksClient {
 
         @Override
         public void onDisconnected(WebSocket websocket, WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame, boolean closedByServer) throws Exception {
-            this.listener.onClose(serverCloseFrame.getCloseCode(), serverCloseFrame.getCloseReason());
+            if (serverCloseFrame != null) {
+                this.listener.onClose(serverCloseFrame.getCloseCode(), serverCloseFrame.getCloseReason());
+            } else {
+                this.listener.onClose(WebSocketCloseCode.ABNORMAL, "connection reset");
+            }
         }
 
         @Override

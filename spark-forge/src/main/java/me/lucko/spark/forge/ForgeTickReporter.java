@@ -22,38 +22,58 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.listener.EventListener;
+
+import java.util.Objects;
 
 public class ForgeTickReporter extends SimpleTickReporter implements TickReporter {
-    private final TickEvent.Type type;
+    private final EventBus<? extends TickEvent> preBus;
+    private final EventBus<? extends TickEvent> postBus;
+
+    private EventListener preListener;
+    private EventListener postListener;
 
     public ForgeTickReporter(TickEvent.Type type) {
-        this.type = type;
+        this.preBus = switch (type) {
+            case CLIENT -> TickEvent.ClientTickEvent.Pre.BUS;
+            case SERVER -> TickEvent.ServerTickEvent.Pre.BUS;
+            default -> null;
+        };
+        this.postBus = switch (type) {
+            case CLIENT -> TickEvent.ClientTickEvent.Post.BUS;
+            case SERVER -> TickEvent.ServerTickEvent.Post.BUS;
+            default -> null;
+        };
+        Objects.requireNonNull(this.preBus, "preBus");
+        Objects.requireNonNull(this.postBus, "postBus");
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent e) {
-        if (e.type != this.type) {
-            return;
-        }
+    public void onStart(TickEvent e) {
+        onStart();
+    }
 
-        switch (e.phase) {
-            case START -> onStart();
-            case END -> onEnd();
-            default -> throw new AssertionError(e.phase);
-        }
+    public void onEnd(TickEvent e) {
+        onEnd();
     }
 
     @Override
     public void start() {
-        MinecraftForge.EVENT_BUS.register(this);
+        this.preListener = this.preBus.addListener(this::onStart);
+        this.postListener = this.postBus.addListener(this::onEnd);
     }
 
     @Override
     public void close() {
-        MinecraftForge.EVENT_BUS.unregister(this);
+        if (this.preListener != null) {
+            this.preBus.removeListener(this.preListener);
+            this.preListener = null;
+        }
+        if (this.postListener != null) {
+            this.postBus.removeListener(this.postListener);
+            this.postListener = null;
+        }
         super.close();
     }
 

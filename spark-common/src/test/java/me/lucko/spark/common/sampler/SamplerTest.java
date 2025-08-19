@@ -39,6 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -63,6 +64,13 @@ public class SamplerTest {
                     .forceJavaSampler(samplerType == SamplerType.JAVA)
                     .completeAfter(2, TimeUnit.SECONDS)
                     .start(plugin.platform());
+
+            String libraryVersion = sampler.getLibraryVersion();
+            if (samplerType == SamplerType.ASYNC) {
+                assertNotNull(libraryVersion);
+            } else {
+                assertNull(libraryVersion);
+            }
 
             assertInstanceOf(samplerType.implClass(), sampler);
             assertEquals(samplerType, sampler.getType());

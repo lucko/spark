@@ -20,17 +20,17 @@
 
 package me.lucko.spark.neoforge;
 
+import com.google.gson.JsonParseException;
+import com.mojang.serialization.JsonOps;
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.Component.Serializer;
-import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.world.entity.Entity;
 
-import java.util.Objects;
 import java.util.UUID;
 
 public class NeoForgeClientCommandSender extends AbstractCommandSender<CommandSourceStack> {
@@ -54,8 +54,10 @@ public class NeoForgeClientCommandSender extends AbstractCommandSender<CommandSo
 
     @Override
     public void sendMessage(Component message) {
-        MutableComponent component = Serializer.fromJson(GsonComponentSerializer.gson().serializeToTree(message), RegistryAccess.EMPTY);
-        Objects.requireNonNull(component, "component");
+        net.minecraft.network.chat.Component component = ComponentSerialization.CODEC.decode(
+                RegistryAccess.EMPTY.createSerializationContext(JsonOps.INSTANCE),
+                GsonComponentSerializer.gson().serializeToTree(message)
+        ).getOrThrow(JsonParseException::new).getFirst();
         super.delegate.sendSystemMessage(component);
     }
 

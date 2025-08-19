@@ -53,6 +53,9 @@ public class AsyncSampler extends AbstractSampler {
     /** Responsible for aggregating and then outputting collected sampling data */
     private final AsyncDataAggregator dataAggregator;
 
+    /** Whether to force the sampler to use monotonic/nano time */
+    private final boolean forceNanoTime;
+
     /** Mutex for the current profiler job */
     private final Object[] currentJobMutex = new Object[0];
 
@@ -66,10 +69,19 @@ public class AsyncSampler extends AbstractSampler {
     private ScheduledFuture<?> socketStatisticsTask;
 
     public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector) {
+        this(platform, settings, collector, new AsyncDataAggregator(settings.threadGrouper(), settings.ignoreSleeping()), false);
+    }
+
+    public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector, int tickLengthThreshold) {
+        this(platform, settings, collector, new TickedAsyncDataAggregator(settings.threadGrouper(), settings.ignoreSleeping(), platform.getTickReporter(), tickLengthThreshold), true);
+    }
+
+    private AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector, AsyncDataAggregator dataAggregator, boolean forceNanoTime) {
         super(platform, settings);
         this.sampleCollector = collector;
+        this.dataAggregator = dataAggregator;
+        this.forceNanoTime = forceNanoTime;
         this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
-        this.dataAggregator = new AsyncDataAggregator(settings.threadGrouper(), settings.ignoreSleeping());
         this.scheduler = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactoryBuilder()
                         .setNameFormat("spark-async-sampler-worker-thread")
@@ -93,7 +105,7 @@ public class AsyncSampler extends AbstractSampler {
         int window = ProfilingWindowUtils.windowNow();
 
         AsyncProfilerJob job = this.profilerAccess.startNewProfilerJob();
-        job.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background);
+        job.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background, this.forceNanoTime);
         job.start();
         this.windowStatisticsCollector.recordWindowStartTime(window);
         this.currentJob = job;
@@ -131,7 +143,7 @@ public class AsyncSampler extends AbstractSampler {
                 // start a new job
                 int window = previousJob.getWindow() + 1;
                 AsyncProfilerJob newJob = this.profilerAccess.startNewProfilerJob();
-                newJob.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background);
+                newJob.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background, this.forceNanoTime);
                 newJob.start();
                 this.windowStatisticsCollector.recordWindowStartTime(window);
                 this.currentJob = newJob;
@@ -204,6 +216,7 @@ public class AsyncSampler extends AbstractSampler {
             this.scheduler.shutdown();
             this.scheduler = null;
         }
+        this.dataAggregator.close();
     }
 
     @Override
@@ -218,6 +231,11 @@ public class AsyncSampler extends AbstractSampler {
     @Override
     public SamplerType getType() {
         return SamplerType.ASYNC;
+    }
+
+    @Override
+    public String getLibraryVersion() {
+        return this.profilerAccess.getVersion();
     }
 
     @Override

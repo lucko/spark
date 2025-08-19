@@ -193,6 +193,11 @@ public abstract class AbstractSampler implements Sampler {
             metadata.setComment(comment);
         }
 
+        String libraryVersion = getLibraryVersion();
+        if (libraryVersion != null) {
+            metadata.setSamplerEngineVersion(libraryVersion);
+        }
+
         int totalTicks = this.windowStatisticsCollector.getTotalTicks();
         if (totalTicks != -1) {
             metadata.setNumberOfTicks(totalTicks);

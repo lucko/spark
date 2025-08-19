@@ -36,6 +36,8 @@ public class JavaVersionTest {
         assertEquals(9, JavaVersion.parseJavaVersion("9.0.1"));
         assertEquals(11, JavaVersion.parseJavaVersion("11.0.1"));
         assertEquals(17, JavaVersion.parseJavaVersion("17.0.1"));
+        assertEquals(17, JavaVersion.parseJavaVersion("17-ea"));
+        assertEquals(17, JavaVersion.parseJavaVersion("17.0.1-ea"));
     }
 
 }

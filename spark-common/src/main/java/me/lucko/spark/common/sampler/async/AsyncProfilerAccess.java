@@ -27,9 +27,7 @@ import me.lucko.spark.common.SparkPlatform;
 import one.profiler.AsyncProfiler;
 import one.profiler.Events;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
@@ -37,7 +35,6 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  * Provides a bridge between spark and async-profiler.
@@ -136,6 +133,10 @@ public class AsyncProfilerAccess {
             platform.getPlugin().log(Level.WARNING, "To resolve, try installing the 'openjdk-11-dbg' or 'openjdk-8-dbg' package using your OS package manager.");
         }
         return supported;
+    }
+
+    public String getVersion() {
+        return this.profiler.getVersion();
     }
 
     private static AsyncProfiler load(SparkPlatform platform) throws Exception {

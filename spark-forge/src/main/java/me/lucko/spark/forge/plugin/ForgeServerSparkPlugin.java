@@ -46,18 +46,21 @@ import me.lucko.spark.forge.ForgeWorldInfoProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
+import net.minecraftforge.eventbus.api.listener.EventListener;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.server.permission.PermissionAPI;
 import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
 import net.minecraftforge.server.permission.nodes.PermissionNode.PermissionResolver;
 import net.minecraftforge.server.permission.nodes.PermissionTypes;
 
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +92,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
     private final MinecraftServer server;
     private final ThreadDumper gameThreadDumper;
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
+    private Collection<EventListener> listeners = Collections.emptyList();
 
     public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod);
@@ -104,7 +108,7 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         registerCommands(this.server.getCommands().getDispatcher());
 
         // register listeners
-        MinecraftForge.EVENT_BUS.register(this);
+        this.listeners = BusGroup.DEFAULT.register(MethodHandles.lookup(), this);
     }
 
     @Override
@@ -112,7 +116,10 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
         super.disable();
 
         // unregister listeners
-        MinecraftForge.EVENT_BUS.unregister(this);
+        if (!this.listeners.isEmpty()) {
+            BusGroup.DEFAULT.unregister(this.listeners);
+        }
+        this.listeners = Collections.emptyList();
     }
 
     @SubscribeEvent
