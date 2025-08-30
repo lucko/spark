@@ -26,6 +26,7 @@ import java.util.Map;
 /**
  * Parses JFR output produced by async-profiler.
  */
+@SuppressWarnings("UnqualifiedFieldAccess")
 public class JfrReader implements Closeable {
     private static final int BUFFER_SIZE = 2 * 1024 * 1024;
     private static final int CHUNK_HEADER_SIZE = 68;
@@ -53,7 +54,7 @@ public class JfrReader implements Closeable {
 
     public final Dictionary<JfrClass> types = new Dictionary<>();
     public final Map<String, JfrClass> typesByName = new HashMap<>();
-    public final Map<Long, String> threads = new HashMap<>(); // spark - convert to map
+    public final Dictionary<String> threads = new Dictionary<>();
     public final Dictionary<ClassRef> classes = new Dictionary<>();
     public final Dictionary<String> strings = new Dictionary<>();
     public final Dictionary<byte[]> symbols = new Dictionary<>();
@@ -75,6 +76,8 @@ public class JfrReader implements Closeable {
     private int monitorEnter;
     private int threadPark;
     private int activeSetting;
+    private int malloc;
+    private int free;
 
     public JfrReader(Path path) throws IOException { // spark - Path instead of String
         this.ch = FileChannel.open(path, StandardOpenOption.READ); // spark - Path instead of String
@@ -116,6 +119,10 @@ public class JfrReader implements Closeable {
 
     public long durationNanos() {
         return endNanos - startNanos;
+    }
+
+    public long chunkDurationNanos() {
+        return chunkEndNanos - chunkStartNanos;
     }
 
     public <E extends Event> void registerEvent(String name, Class<E> eventClass) {
@@ -176,6 +183,10 @@ public class JfrReader implements Closeable {
                 if (cls == null || cls == AllocationSample.class) return (E) readAllocationSample(true);
             } else if (type == allocationOutsideTLAB || type == allocationSample) {
                 if (cls == null || cls == AllocationSample.class) return (E) readAllocationSample(false);
+            } else if (type == malloc) {
+                if (cls == null || cls == MallocEvent.class) return (E) readMallocEvent(true);
+            } else if (type == free) {
+                if (cls == null || cls == MallocEvent.class) return (E) readMallocEvent(false);
             } else if (type == liveObject) {
                 if (cls == null || cls == LiveObject.class) return (E) readLiveObject();
             } else if (type == monitorEnter) {
@@ -221,6 +232,15 @@ public class JfrReader implements Closeable {
         long allocationSize = getVarlong();
         long tlabSize = tlab ? getVarlong() : 0;
         return new AllocationSample(time, tid, stackTraceId, classId, allocationSize, tlabSize);
+    }
+
+    private MallocEvent readMallocEvent(boolean hasSize) {
+        long time = getVarlong();
+        int tid = getVarint();
+        int stackTraceId = getVarint();
+        long address = getVarlong();
+        long size = hasSize ? getVarlong() : 0;
+        return new MallocEvent(time, tid, stackTraceId, address, size);
     }
 
     private LiveObject readLiveObject() {
@@ -409,7 +429,7 @@ public class JfrReader implements Closeable {
     }
 
     private void readThreads(int fieldCount) {
-        int count = getVarint(); // spark - don't preallocate
+        int count = threads.preallocate(getVarint());
         for (int i = 0; i < count; i++) {
             long id = getVarlong();
             String osName = getString();
@@ -543,6 +563,8 @@ public class JfrReader implements Closeable {
         monitorEnter = getTypeId("jdk.JavaMonitorEnter");
         threadPark = getTypeId("jdk.ThreadPark");
         activeSetting = getTypeId("jdk.ActiveSetting");
+        malloc = getTypeId("profiler.Malloc");
+        free = getTypeId("profiler.Free");
 
         registerEvent("jdk.CPULoad", CPULoad.class);
         registerEvent("jdk.GCHeapSummary", GCHeapSummary.class);
@@ -963,6 +985,22 @@ public class JfrReader implements Closeable {
         @Override
         public long value() {
             return allocationSize;
+        }
+    }
+
+    static class MallocEvent extends Event {
+        public final long address;
+        public final long size;
+
+        public MallocEvent(long time, int tid, int stackTraceId, long address, long size) {
+            super(time, tid, stackTraceId);
+            this.address = address;
+            this.size = size;
+        }
+
+        @Override
+        public long value() {
+            return size;
         }
     }
 
