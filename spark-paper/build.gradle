@@ -59,17 +59,17 @@ artifacts {
 publishing {
     //repositories {
     //    maven {
-    //        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    //        url = 'https://artifactory.papermc.io/artifactory/releases'
     //        credentials {
-    //            username = sonatypeUsername
-    //            password = sonatypePassword
+    //            username = paperArtifactoryUsername
+    //            password = paperArtifactoryPassword
     //        }
     //    }
     //}
     publications {
         shadow(MavenPublication) { publication ->
             project.shadow.component(publication)
-            version = "${project.pluginVersion}-SNAPSHOT"
+            version = "${project.pluginVersion}"
         }
     }
 }
