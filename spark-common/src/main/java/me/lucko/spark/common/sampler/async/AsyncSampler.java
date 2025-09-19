@@ -27,7 +27,6 @@ import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
-import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.ws.ViewerSocket;

@@ -22,38 +22,40 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.common.tick.AbstractTickHook;
 import me.lucko.spark.common.tick.TickHook;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.listener.EventListener;
+
+import java.util.Objects;
 
 public class ForgeTickHook extends AbstractTickHook implements TickHook {
-    private final TickEvent.Type type;
+    private final EventBus<? extends TickEvent> bus;
+    private EventListener listener;
 
     public ForgeTickHook(TickEvent.Type type) {
-        this.type = type;
+        this.bus = switch (type) {
+            case CLIENT -> TickEvent.ClientTickEvent.Pre.BUS;
+            case SERVER -> TickEvent.ServerTickEvent.Pre.BUS;
+            default -> null;
+        };
+        Objects.requireNonNull(this.bus, "bus");
     }
 
-    @SubscribeEvent
     public void onTick(TickEvent e) {
-        if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
-        if (e.type != this.type) {
-            return;
-        }
-
         onTick();
     }
 
     @Override
     public void start() {
-        MinecraftForge.EVENT_BUS.register(this);
+        this.listener = this.bus.addListener(this::onTick);
     }
 
     @Override
     public void close() {
-        MinecraftForge.EVENT_BUS.unregister(this);
+        if (this.listener != null) {
+            this.bus.removeListener(this.listener);
+            this.listener = null;
+        }
     }
 
 }

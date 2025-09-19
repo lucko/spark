@@ -20,6 +20,8 @@
 
 package me.lucko.spark.fabric.placeholder;
 
+import com.google.gson.JsonParseException;
+import com.mojang.serialization.JsonOps;
 import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.PlaceholderHandler;
 import eu.pb4.placeholders.api.PlaceholderResult;
@@ -30,6 +32,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +61,10 @@ public enum SparkFabricPlaceholderApi {
         }
 
         private static Text toText(Component component) {
-            return Text.Serialization.fromJsonTree(GsonComponentSerializer.gson().serializeToTree(component), DynamicRegistryManager.EMPTY);
+            return TextCodecs.CODEC.decode(
+                    DynamicRegistryManager.EMPTY.getOps(JsonOps.INSTANCE),
+                    GsonComponentSerializer.gson().serializeToTree(component)
+            ).getOrThrow(JsonParseException::new).getFirst();
         }
     }
 

@@ -30,8 +30,6 @@ import org.spongepowered.api.util.Identifiable;
 
 import java.util.UUID;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 public class SpongeCommandSender extends AbstractCommandSender<Subject> {
     private final CommandCause cause;
     private final Audience audience;
