@@ -76,8 +76,8 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
             return false;
         }
 
-        MinecraftServer server = player.getServer();
-        if (server != null && server.isSingleplayerOwner(player.getGameProfile())) {
+        MinecraftServer server = player.level().getServer();
+        if (server != null && server.isSingleplayerOwner(player.nameAndId())) {
             return true;
         }
 

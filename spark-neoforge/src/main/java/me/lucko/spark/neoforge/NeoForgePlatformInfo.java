@@ -53,11 +53,11 @@ public class NeoForgePlatformInfo implements PlatformInfo {
 
     @Override
     public String getVersion() {
-        return FMLLoader.versionInfo().neoForgeVersion();
+        return FMLLoader.getCurrent().getVersionInfo().neoForgeVersion();
     }
 
     @Override
     public String getMinecraftVersion() {
-        return FMLLoader.versionInfo().mcVersion();
+        return FMLLoader.getCurrent().getVersionInfo().mcVersion();
     }
 }

@@ -44,7 +44,7 @@ public class FabricClientCommandSender extends AbstractCommandSender<FabricClien
 
     @Override
     public String getName() {
-        return this.delegate.getPlayer().getGameProfile().getName();
+        return this.delegate.getPlayer().getGameProfile().name();
     }
 
     @Override
