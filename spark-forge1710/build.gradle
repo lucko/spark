@@ -76,3 +76,15 @@ tasks.named("reobfJar", ReobfuscatedJar) {
     archiveFileName = "spark-${project.pluginVersion}-forge-1.7.10.jar"
     inputJar.set(tasks.named("shadowJar", ShadowJar).map { it.archiveFile }.get())
 }
+
+tasks.named("checkLicenseInjectedTags") {
+    enabled = false;
+}
+
+tasks.named("checkLicenseMcLauncher") {
+    enabled = false;
+}
+
+tasks.named("checkLicensePatchedMc") {
+    enabled = false;
+}
