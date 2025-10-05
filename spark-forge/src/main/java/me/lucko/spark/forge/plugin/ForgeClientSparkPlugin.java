@@ -132,12 +132,12 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public TickHook createTickHook() {
-        return new ForgeTickHook(TickEvent.Type.CLIENT);
+        return new ForgeTickHook.Client();
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new ForgeTickReporter(TickEvent.Type.CLIENT);
+        return new ForgeTickReporter.Client();
     }
 
     @Override

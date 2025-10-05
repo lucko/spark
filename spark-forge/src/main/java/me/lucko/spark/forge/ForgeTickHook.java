@@ -25,20 +25,14 @@ import me.lucko.spark.common.tick.TickHook;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.bus.EventBus;
 import net.minecraftforge.eventbus.api.listener.EventListener;
+import org.jspecify.annotations.NonNull;
 
-import java.util.Objects;
-
-public class ForgeTickHook extends AbstractTickHook implements TickHook {
-    private final EventBus<? extends TickEvent> bus;
+public abstract class ForgeTickHook extends AbstractTickHook implements TickHook {
+    private final EventBus<? extends @NonNull TickEvent> bus;
     private EventListener listener;
 
-    public ForgeTickHook(TickEvent.Type type) {
-        this.bus = switch (type) {
-            case CLIENT -> TickEvent.ClientTickEvent.Pre.BUS;
-            case SERVER -> TickEvent.ServerTickEvent.Pre.BUS;
-            default -> null;
-        };
-        Objects.requireNonNull(this.bus, "bus");
+    protected ForgeTickHook(EventBus<? extends @NonNull TickEvent> bus) {
+        this.bus = bus;
     }
 
     public void onTick(TickEvent e) {
@@ -55,6 +49,18 @@ public class ForgeTickHook extends AbstractTickHook implements TickHook {
         if (this.listener != null) {
             this.bus.removeListener(this.listener);
             this.listener = null;
+        }
+    }
+
+    public static final class Server extends ForgeTickHook {
+        public Server() {
+            super(TickEvent.ServerTickEvent.Pre.BUS);
+        }
+    }
+
+    public static final class Client extends ForgeTickHook {
+        public Client() {
+            super(TickEvent.ClientTickEvent.Pre.BUS);
         }
     }
 
