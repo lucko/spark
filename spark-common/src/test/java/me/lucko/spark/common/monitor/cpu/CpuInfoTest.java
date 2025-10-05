@@ -22,7 +22,6 @@ package me.lucko.spark.common.monitor.cpu;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class CpuInfoTest {
