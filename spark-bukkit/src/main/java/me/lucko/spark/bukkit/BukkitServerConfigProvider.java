@@ -143,6 +143,8 @@ public class BukkitServerConfigProvider extends ServerConfigProvider {
                 .add("settings.bungeecord-addresses")
                 .add("settings.velocity-support.secret")
                 .add("proxies.velocity.secret")
+                .add("web-services.token")
+                .add("sentry-dsn")
                 .add("server-ip")
                 .add("motd")
                 .add("resource-pack")
