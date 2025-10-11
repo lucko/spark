@@ -136,16 +136,11 @@ public class PaperServerConfigProvider extends ServerConfigProvider {
         }
 
         ImmutableSet.Builder<String> hiddenPaths = ImmutableSet.<String>builder()
+                .addAll(BASE_HIDDEN_PATHS)
                 .add("database")
                 .add("settings.bungeecord-addresses")
                 .add("settings.velocity-support.secret")
                 .add("proxies.velocity.secret")
-                .add("server-ip")
-                .add("motd")
-                .add("resource-pack")
-                .add("rcon<dot>password")
-                .add("rcon<dot>ip")
-                .add("level-seed")
                 .add("world-settings.*.feature-seeds")
                 .add("world-settings.*.seed-*")
                 .add("feature-seeds")

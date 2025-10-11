@@ -42,11 +42,7 @@ public class FabricServerConfigProvider extends ServerConfigProvider {
 
     static {
         ImmutableSet.Builder<String> hiddenPaths = ImmutableSet.<String>builder()
-                .add("server-ip")
-                .add("motd")
-                .add("resource-pack")
-                .add("rcon<dot>password")
-                .add("level-seed")
+                .addAll(BASE_HIDDEN_PATHS)
                 .addAll(getSystemPropertyList("spark.serverconfigs.hiddenpaths"));
 
         FILES = ImmutableMap.of("server.properties", PropertiesConfigParser.INSTANCE);
