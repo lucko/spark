@@ -28,9 +28,9 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:1.21.8'
-    mappings 'net.fabricmc:yarn:1.21.8+build.1:v2'
-    modImplementation 'net.fabricmc:fabric-loader:0.16.14'
+    minecraft 'com.mojang:minecraft:1.21.10'
+    mappings 'net.fabricmc:yarn:1.21.10+build.2:v2'
+    modImplementation 'net.fabricmc:fabric-loader:0.17.3'
 
     Set<String> apiModules = [
             "fabric-api-base",
@@ -40,12 +40,12 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        modImplementation(fabricApi.module(it, '0.129.0+1.21.8'))
+        modImplementation(fabricApi.module(it, '0.135.0+1.21.10'))
     }
 
-    include(modImplementation('me.lucko:fabric-permissions-api:0.4.1'))
+    include(modImplementation('me.lucko:fabric-permissions-api:0.5.0'))
 
-    modImplementation('eu.pb4:placeholder-api:2.7.0+1.21.6')
+    modImplementation('eu.pb4:placeholder-api:2.8.0+1.21.9')
 
     shade project(':spark-common')
 }

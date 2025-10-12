@@ -25,29 +25,18 @@ import me.lucko.spark.common.tick.TickReporter;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.bus.EventBus;
 import net.minecraftforge.eventbus.api.listener.EventListener;
+import org.jspecify.annotations.NonNull;
 
-import java.util.Objects;
-
-public class ForgeTickReporter extends SimpleTickReporter implements TickReporter {
-    private final EventBus<? extends TickEvent> preBus;
-    private final EventBus<? extends TickEvent> postBus;
+public abstract class ForgeTickReporter extends SimpleTickReporter implements TickReporter {
+    private final EventBus<? extends @NonNull TickEvent> preBus;
+    private final EventBus<? extends @NonNull TickEvent> postBus;
 
     private EventListener preListener;
     private EventListener postListener;
 
-    public ForgeTickReporter(TickEvent.Type type) {
-        this.preBus = switch (type) {
-            case CLIENT -> TickEvent.ClientTickEvent.Pre.BUS;
-            case SERVER -> TickEvent.ServerTickEvent.Pre.BUS;
-            default -> null;
-        };
-        this.postBus = switch (type) {
-            case CLIENT -> TickEvent.ClientTickEvent.Post.BUS;
-            case SERVER -> TickEvent.ServerTickEvent.Post.BUS;
-            default -> null;
-        };
-        Objects.requireNonNull(this.preBus, "preBus");
-        Objects.requireNonNull(this.postBus, "postBus");
+    protected ForgeTickReporter(EventBus<? extends @NonNull TickEvent> preBus, EventBus<? extends @NonNull TickEvent> postBus) {
+        this.preBus = preBus;
+        this.postBus = postBus;
     }
 
     public void onStart(TickEvent e) {
@@ -75,6 +64,18 @@ public class ForgeTickReporter extends SimpleTickReporter implements TickReporte
             this.postListener = null;
         }
         super.close();
+    }
+
+    public static final class Server extends ForgeTickReporter {
+        public Server() {
+            super(TickEvent.ServerTickEvent.Pre.BUS, TickEvent.ServerTickEvent.Post.BUS);
+        }
+    }
+
+    public static final class Client extends ForgeTickReporter {
+        public Client() {
+            super(TickEvent.ClientTickEvent.Pre.BUS, TickEvent.ClientTickEvent.Post.BUS);
+        }
     }
 
 }

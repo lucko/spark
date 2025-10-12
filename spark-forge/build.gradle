@@ -1,6 +1,6 @@
 plugins {
     id 'com.gradleup.shadow' version '8.3.8'
-    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
+    id 'net.minecraftforge.gradle' version '[6.0.36,6.2)'
 }
 
 tasks.withType(JavaCompile) {
@@ -9,7 +9,7 @@ tasks.withType(JavaCompile) {
 }
 
 minecraft {
-    mappings channel: 'official', version: '1.21.8'
+    mappings channel: 'official', version: '1.21.10'
     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     reobf = false
 }
@@ -20,8 +20,8 @@ configurations {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.21.8-58.0.0'
-    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0-beta.7'
+    minecraft 'net.minecraftforge:forge:1.21.10-60.0.3'
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0-beta.12'
     shade project(':spark-common')
 }
 

@@ -41,7 +41,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
-import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.eventbus.api.bus.BusGroup;
 import net.minecraftforge.eventbus.api.listener.EventListener;
 import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
@@ -90,8 +90,14 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     }
 
     @SubscribeEvent
-    public void onCommandRegister(RegisterClientCommandsEvent e) {
+    public void onRegisterClientCommands(RegisterClientCommandsEvent e) {
         registerCommands(e.getDispatcher(), this, this, "sparkc", "sparkclient");
+    }
+
+    // not used - workaround for the idiotic Forge limitation that requires listeners using the @SubscribeEvent annotation to have at least two listener methods
+    @SubscribeEvent
+    public void onRegisterClientReloadListeners(RegisterClientReloadListenersEvent event) {
+
     }
 
     @Override
@@ -132,12 +138,12 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public TickHook createTickHook() {
-        return new ForgeTickHook(TickEvent.Type.CLIENT);
+        return new ForgeTickHook.Client();
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new ForgeTickReporter(TickEvent.Type.CLIENT);
+        return new ForgeTickReporter.Client();
     }
 
     @Override

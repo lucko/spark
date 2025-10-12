@@ -47,7 +47,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.bus.BusGroup;
@@ -81,8 +80,8 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
             return false;
         }
 
-        MinecraftServer server = player.getServer();
-        if (server != null && server.isSingleplayerOwner(player.getGameProfile())) {
+        MinecraftServer server = player.level().getServer();
+        if (server != null && server.isSingleplayerOwner(player.nameAndId())) {
             return true;
         }
 
@@ -230,12 +229,12 @@ public class ForgeServerSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public TickHook createTickHook() {
-        return new ForgeTickHook(TickEvent.Type.SERVER);
+        return new ForgeTickHook.Server();
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new ForgeTickReporter(TickEvent.Type.SERVER);
+        return new ForgeTickReporter.Server();
     }
 
     @Override

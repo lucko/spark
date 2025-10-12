@@ -21,6 +21,7 @@
 package me.lucko.spark.common.platform.serverconfig;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonElement;
 import me.lucko.spark.common.platform.MetadataProvider;
 
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstract implementation of {@link MetadataProvider} which
@@ -38,6 +40,18 @@ import java.util.Map;
  * the configurations before they are sent to the viewer.</p>
  */
 public abstract class ServerConfigProvider implements MetadataProvider {
+
+    protected static final Set<String> BASE_HIDDEN_PATHS = ImmutableSet.of(
+            "server-ip",
+            "motd",
+            "resource-pack",
+            "rcon<dot>password",
+            "rcon<dot>ip",
+            "level-seed",
+            "management-server-secret",
+            "management-server-tls-keystore-password"
+    );
+
     private final Map<String, ConfigParser> files;
     private final ExcludedConfigFilter hiddenPathFilters;
 

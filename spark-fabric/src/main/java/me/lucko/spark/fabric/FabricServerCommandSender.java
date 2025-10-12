@@ -71,7 +71,7 @@ public class FabricServerCommandSender extends AbstractCommandSender<ServerComma
             ServerPlayerEntity player = this.delegate.getPlayer();
             MinecraftServer server = this.delegate.getServer();
             if (player != null) {
-                if (server != null && server.isHost(player.getGameProfile())) {
+                if (server != null && server.isHost(player.getPlayerConfigEntry())) {
                     return true;
                 }
                 return player.hasPermissionLevel(4);

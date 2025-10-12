@@ -38,7 +38,7 @@ public class FabricPlayerPingProvider implements PlayerPingProvider {
     public Map<String, Integer> poll() {
         ImmutableMap.Builder<String, Integer> builder = ImmutableMap.builder();
         for (ServerPlayerEntity player : this.server.getPlayerManager().getPlayerList()) {
-            builder.put(player.getGameProfile().getName(), player.networkHandler.getLatency());
+            builder.put(player.getGameProfile().name(), player.networkHandler.getLatency());
         }
         return builder.build();
     }

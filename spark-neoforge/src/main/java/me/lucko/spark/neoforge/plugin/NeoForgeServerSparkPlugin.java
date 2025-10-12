@@ -54,6 +54,7 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.server.permission.PermissionAPI;
 import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
+import net.neoforged.neoforge.server.permission.nodes.PermissionNode.PermissionResolver;
 import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
 
 import java.util.Collections;
@@ -71,13 +72,13 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
         plugin.enable();
     }
 
-    private static final PermissionNode.PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
+    private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
         if (player == null) {
             return false;
         }
 
-        MinecraftServer server = player.getServer();
-        if (server != null && server.isSingleplayerOwner(player.getGameProfile())) {
+        MinecraftServer server = player.level().getServer();
+        if (server != null && server.isSingleplayerOwner(player.nameAndId())) {
             return true;
         }
 
