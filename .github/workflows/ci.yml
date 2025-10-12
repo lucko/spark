@@ -16,6 +16,12 @@ env:
 
 jobs:
   build-gradle:
+    env:
+      VERSION: ${{ github.ref_name }}
+      RELEASE_VERSION: ${{ github.ref_name }}
+      SNAPSHOT: ${{ endsWith(github.ref_name, '-snapshot') || contains(github.event.head_commit.message, '[snapshot]') }}
+      PRERELEASE: ${{ endsWith(github.ref_name, '-pre') }}
+
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
