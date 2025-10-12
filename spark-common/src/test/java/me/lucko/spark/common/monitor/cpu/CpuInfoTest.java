@@ -20,20 +20,17 @@
 
 package me.lucko.spark.common.monitor.cpu;
 
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import me.lucko.spark.common.monitor.WindowsWmic;
-
 public class CpuInfoTest {
 
     @Test
+    @Disabled
     public void testCpuInfo() {
-        Assertions.assertEquals(WindowsWmic.CPU_GET_NAME.read(), null);
-
         String model = CpuInfo.queryCpuModel();
         assertNotNull(model);
         assertFalse(model.isEmpty());

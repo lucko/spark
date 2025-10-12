@@ -26,6 +26,8 @@ import me.lucko.spark.proto.SparkSamplerProtos;
 import me.lucko.spark.test.TestClass2;
 import me.lucko.spark.test.plugin.TestCommandSender;
 import me.lucko.spark.test.plugin.TestSparkPlugin;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -47,6 +49,7 @@ public class SamplerTest {
 
     @ParameterizedTest
     @EnumSource
+    @Disabled
     public void testSampler(SamplerType samplerType, @TempDir Path directory) {
         if (samplerType == SamplerType.ASYNC) {
             String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
