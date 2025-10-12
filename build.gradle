@@ -93,5 +93,7 @@ def determinePatchVersion() {
     }
     tagInfo = tagInfo.toString()
 
-    return tagInfo.contains('-') ? tagInfo.split("-")[1] : 0
+    def suffix = tagInfo.contains('-') ? tagInfo.split("-")[1] : "0";
+
+    return suffix.strip();
 }

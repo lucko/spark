@@ -73,8 +73,6 @@ shadowJar {
 }
 
 tasks.named("reobfJar", ReobfuscatedJar) {
-    System.out.println("pluginVersion: " + project.pluginVersion);
-
     archiveFileName = "spark-${project.pluginVersion}-forge-1.7.10.jar"
     inputJar.set(tasks.named("shadowJar", ShadowJar).map { it.archiveFile }.get())
 }
