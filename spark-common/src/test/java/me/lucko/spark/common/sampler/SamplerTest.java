@@ -60,9 +60,9 @@ public class SamplerTest {
             Sampler sampler = new SamplerBuilder()
                     .threadDumper(new ThreadDumper.Specific(thread))
                     .threadGrouper(ThreadGrouper.BY_POOL)
-                    .samplingInterval(10)
+                    .samplingInterval(5)
                     .forceJavaSampler(samplerType == SamplerType.JAVA)
-                    .completeAfter(2, TimeUnit.SECONDS)
+                    .completeAfter(5, TimeUnit.SECONDS)
                     .start(plugin.platform());
 
             String libraryVersion = sampler.getLibraryVersion();

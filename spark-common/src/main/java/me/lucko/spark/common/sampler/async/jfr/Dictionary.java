@@ -5,6 +5,8 @@
 
 package me.lucko.spark.common.sampler.async.jfr;
 
+import java.util.Arrays;
+
 /**
  * Fast and compact long->Object map.
  */
@@ -16,26 +18,35 @@ public class Dictionary<T> {
     private int size;
 
     public Dictionary() {
-        this.keys = new long[INITIAL_CAPACITY];
-        this.values = new Object[INITIAL_CAPACITY];
+        this(INITIAL_CAPACITY);
+    }
+
+    public Dictionary(int initialCapacity) {
+        this.keys = new long[initialCapacity];
+        this.values = new Object[initialCapacity];
     }
 
     public void clear() {
-        keys = new long[INITIAL_CAPACITY];
-        values = new Object[INITIAL_CAPACITY];
+        Arrays.fill(keys, 0);
+        Arrays.fill(values, null);
         size = 0;
     }
 
-    // spark start
     public int size() {
-        return this.size;
+        return size;
     }
-    // spark end
+
+    // key[i]==0 is used to signal that the i-th position is unset.
+    // Thus, we map key=key+1, so the user can still use key=0.
+    private static long remapKey(long key) {
+        if (key < 0) {
+            throw new IllegalArgumentException("Negative keys not allowed");
+        }
+        return key + 1;
+    }
 
     public void put(long key, T value) {
-        if (key == 0) {
-            throw new IllegalArgumentException("Zero key not allowed");
-        }
+        key = remapKey(key);
 
         int mask = keys.length - 1;
         int i = hashCode(key) & mask;
@@ -56,6 +67,8 @@ public class Dictionary<T> {
 
     @SuppressWarnings("unchecked")
     public T get(long key) {
+        key = remapKey(key);
+
         int mask = keys.length - 1;
         int i = hashCode(key) & mask;
         while (keys[i] != key && keys[i] != 0) {
@@ -68,7 +81,8 @@ public class Dictionary<T> {
     public void forEach(Visitor<T> visitor) {
         for (int i = 0; i < keys.length; i++) {
             if (keys[i] != 0) {
-                visitor.visit(keys[i], (T) values[i]);
+                // Map key back, see remapKey
+                visitor.visit(keys[i] - 1, (T) values[i]);
             }
         }
     }

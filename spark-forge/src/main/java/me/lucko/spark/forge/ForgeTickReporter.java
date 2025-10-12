@@ -22,39 +22,60 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.listener.EventListener;
+import org.jspecify.annotations.NonNull;
 
-public class ForgeTickReporter extends SimpleTickReporter implements TickReporter {
-    private final TickEvent.Type type;
+public abstract class ForgeTickReporter extends SimpleTickReporter implements TickReporter {
+    private final EventBus<? extends @NonNull TickEvent> preBus;
+    private final EventBus<? extends @NonNull TickEvent> postBus;
 
-    public ForgeTickReporter(TickEvent.Type type) {
-        this.type = type;
+    private EventListener preListener;
+    private EventListener postListener;
+
+    protected ForgeTickReporter(EventBus<? extends @NonNull TickEvent> preBus, EventBus<? extends @NonNull TickEvent> postBus) {
+        this.preBus = preBus;
+        this.postBus = postBus;
     }
 
-    @SubscribeEvent
-    public void onTick(TickEvent e) {
-        if (e.type != this.type) {
-            return;
-        }
+    public void onStart(TickEvent e) {
+        onStart();
+    }
 
-        switch (e.phase) {
-            case START -> onStart();
-            case END -> onEnd();
-            default -> throw new AssertionError(e.phase);
-        }
+    public void onEnd(TickEvent e) {
+        onEnd();
     }
 
     @Override
     public void start() {
-        MinecraftForge.EVENT_BUS.register(this);
+        this.preListener = this.preBus.addListener(this::onStart);
+        this.postListener = this.postBus.addListener(this::onEnd);
     }
 
     @Override
     public void close() {
-        MinecraftForge.EVENT_BUS.unregister(this);
+        if (this.preListener != null) {
+            this.preBus.removeListener(this.preListener);
+            this.preListener = null;
+        }
+        if (this.postListener != null) {
+            this.postBus.removeListener(this.postListener);
+            this.postListener = null;
+        }
         super.close();
+    }
+
+    public static final class Server extends ForgeTickReporter {
+        public Server() {
+            super(TickEvent.ServerTickEvent.Pre.BUS, TickEvent.ServerTickEvent.Post.BUS);
+        }
+    }
+
+    public static final class Client extends ForgeTickReporter {
+        public Client() {
+            super(TickEvent.ClientTickEvent.Pre.BUS, TickEvent.ClientTickEvent.Post.BUS);
+        }
     }
 
 }

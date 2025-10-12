@@ -22,9 +22,7 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.common.Mod;
@@ -44,10 +42,10 @@ public class ForgeSparkMod {
         this.container = ctx.getContainer();
         this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
 
-        ctx.getModEventBus().addListener(this::clientInit);
+        FMLClientSetupEvent.getBus(ctx.getModBusGroup()).addListener(this::clientInit);
         ctx.registerDisplayTest(IExtensionPoint.DisplayTest.IGNORE_ALL_VERSION);
 
-        MinecraftForge.EVENT_BUS.register(this);
+        ServerAboutToStartEvent.BUS.addListener(this::serverInit);
     }
 
     public String getVersion() {
@@ -58,7 +56,6 @@ public class ForgeSparkMod {
         ForgeClientSparkPlugin.register(this, e);
     }
 
-    @SubscribeEvent
     public void serverInit(ServerAboutToStartEvent e) {
         ForgeServerSparkPlugin.register(this, e);
     }

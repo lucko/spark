@@ -37,7 +37,7 @@ public enum JavaVersion {
             return Integer.parseInt(version.substring(2, 3));
         } else {
             // Java 9 and above
-            return Integer.parseInt(version.split("\\.")[0]);
+            return Integer.parseInt(version.split("\\.|\\-")[0]);
         }
     }
 

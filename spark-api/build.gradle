@@ -13,13 +13,18 @@ license {
     header = project.file('HEADER.txt')
 }
 
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
 publishing {
     //repositories {
     //    maven {
-    //        url = 'https://oss.sonatype.org/content/repositories/snapshots'
+    //        url = 'https://nexus.lucko.me/repository/maven-snapshots/'
     //        credentials {
-    //            username = sonatypeUsername
-    //            password = sonatypePassword
+    //            username = luckoNexusUsername
+    //            password = luckoNexusPassword
     //        }
     //    }
     //}

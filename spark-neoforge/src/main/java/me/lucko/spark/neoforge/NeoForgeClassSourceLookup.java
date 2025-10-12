@@ -20,14 +20,13 @@
 
 package me.lucko.spark.neoforge;
 
-import cpw.mods.modlauncher.TransformingClassLoader;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 
 public class NeoForgeClassSourceLookup implements ClassSourceLookup {
 
     @Override
     public String identify(Class<?> clazz) {
-        if (clazz.getClassLoader() instanceof TransformingClassLoader) {
+        if (clazz.getClassLoader().getClass().getName().equals("cpw.mods.modlauncher.TransformingClassLoader")) {
             String name = clazz.getModule().getName();
             return name.equals("forge") || name.equals("minecraft") ? null : name;
         }

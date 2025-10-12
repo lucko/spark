@@ -1,5 +1,5 @@
 plugins {
-    id 'com.google.protobuf' version '0.9.4'
+    id 'com.google.protobuf' version '0.9.5'
     id 'maven-publish'
 }
 
@@ -12,26 +12,26 @@ license {
 
 dependencies {
     api project(':spark-api')
-    implementation 'tools.profiler:async-profiler:4.0' // spark native version: 87b7b42 (v4.0)
+    implementation 'tools.profiler:async-profiler:4.1' // spark native version: 5930966 (v4.1)
     implementation 'org.ow2.asm:asm:9.7'
     implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
-    implementation 'com.google.protobuf:protobuf-javalite:4.28.2'
+    implementation 'com.google.protobuf:protobuf-javalite:4.31.1'
 
-    implementation('me.lucko:bytesocks-java-client:1.0-20230828.145440-5') {
+    implementation('me.lucko:bytesocks-java-client:1.0-SNAPSHOT') {
         exclude(module: 'slf4j-api')
     }
 
-    api('net.kyori:adventure-api:4.17.0') {
+    api('net.kyori:adventure-api:4.21.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')
     }
-    api('net.kyori:adventure-text-serializer-gson:4.17.0') {
+    api('net.kyori:adventure-text-serializer-gson:4.21.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
         exclude(module: 'gson')
     }
-    api('net.kyori:adventure-text-serializer-legacy:4.17.0') {
+    api('net.kyori:adventure-text-serializer-legacy:4.21.0') {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
     }
@@ -61,7 +61,7 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:4.28.2'
+        artifact = 'com.google.protobuf:protoc:4.31.1'
     }
     generateProtoTasks {
         all().each { task ->

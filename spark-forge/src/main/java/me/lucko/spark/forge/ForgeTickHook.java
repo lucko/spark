@@ -22,38 +22,46 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.common.tick.AbstractTickHook;
 import me.lucko.spark.common.tick.TickHook;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.bus.EventBus;
+import net.minecraftforge.eventbus.api.listener.EventListener;
+import org.jspecify.annotations.NonNull;
 
-public class ForgeTickHook extends AbstractTickHook implements TickHook {
-    private final TickEvent.Type type;
+public abstract class ForgeTickHook extends AbstractTickHook implements TickHook {
+    private final EventBus<? extends @NonNull TickEvent> bus;
+    private EventListener listener;
 
-    public ForgeTickHook(TickEvent.Type type) {
-        this.type = type;
+    protected ForgeTickHook(EventBus<? extends @NonNull TickEvent> bus) {
+        this.bus = bus;
     }
 
-    @SubscribeEvent
     public void onTick(TickEvent e) {
-        if (e.phase != TickEvent.Phase.START) {
-            return;
-        }
-
-        if (e.type != this.type) {
-            return;
-        }
-
         onTick();
     }
 
     @Override
     public void start() {
-        MinecraftForge.EVENT_BUS.register(this);
+        this.listener = this.bus.addListener(this::onTick);
     }
 
     @Override
     public void close() {
-        MinecraftForge.EVENT_BUS.unregister(this);
+        if (this.listener != null) {
+            this.bus.removeListener(this.listener);
+            this.listener = null;
+        }
+    }
+
+    public static final class Server extends ForgeTickHook {
+        public Server() {
+            super(TickEvent.ServerTickEvent.Pre.BUS);
+        }
+    }
+
+    public static final class Client extends ForgeTickHook {
+        public Client() {
+            super(TickEvent.ClientTickEvent.Pre.BUS);
+        }
     }
 
 }

@@ -41,11 +41,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
+import net.minecraftforge.eventbus.api.listener.EventListener;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -58,6 +62,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
 
     private final Minecraft minecraft;
     private final ThreadDumper gameThreadDumper;
+    private Collection<EventListener> listeners = Collections.emptyList();
 
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
@@ -70,12 +75,29 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
         super.enable();
 
         // register listeners
-        MinecraftForge.EVENT_BUS.register(this);
+        this.listeners = BusGroup.DEFAULT.register(MethodHandles.lookup(), this);
+    }
+
+    @Override
+    public void disable() {
+        super.disable();
+
+        // unregister listeners
+        if (!this.listeners.isEmpty()) {
+            BusGroup.DEFAULT.unregister(this.listeners);
+        }
+        this.listeners = Collections.emptyList();
     }
 
     @SubscribeEvent
-    public void onCommandRegister(RegisterClientCommandsEvent e) {
+    public void onRegisterClientCommands(RegisterClientCommandsEvent e) {
         registerCommands(e.getDispatcher(), this, this, "sparkc", "sparkclient");
+    }
+
+    // not used - workaround for the idiotic Forge limitation that requires listeners using the @SubscribeEvent annotation to have at least two listener methods
+    @SubscribeEvent
+    public void onRegisterClientReloadListeners(RegisterClientReloadListenersEvent event) {
+
     }
 
     @Override
@@ -116,12 +138,12 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
 
     @Override
     public TickHook createTickHook() {
-        return new ForgeTickHook(TickEvent.Type.CLIENT);
+        return new ForgeTickHook.Client();
     }
 
     @Override
     public TickReporter createTickReporter() {
-        return new ForgeTickReporter(TickEvent.Type.CLIENT);
+        return new ForgeTickReporter.Client();
     }
 
     @Override
