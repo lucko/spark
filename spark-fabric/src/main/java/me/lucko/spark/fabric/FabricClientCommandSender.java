@@ -26,10 +26,9 @@ import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.client.network.ClientCommandSource;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
+import net.minecraft.client.multiplayer.ClientSuggestionProvider;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.chat.ComponentSerialization;
 
 import java.util.UUID;
 
@@ -38,7 +37,7 @@ public class FabricClientCommandSender extends AbstractCommandSender<FabricClien
         super(commandSource);
     }
 
-    public FabricClientCommandSender(ClientCommandSource commandSource) {
+    public FabricClientCommandSender(ClientSuggestionProvider commandSource) {
         this((FabricClientCommandSource) commandSource);
     }
 
@@ -49,13 +48,13 @@ public class FabricClientCommandSender extends AbstractCommandSender<FabricClien
 
     @Override
     public UUID getUniqueId() {
-        return this.delegate.getPlayer().getUuid();
+        return this.delegate.getPlayer().getUUID();
     }
 
     @Override
     public void sendMessage(Component message) {
-        Text component = TextCodecs.CODEC.decode(
-                DynamicRegistryManager.EMPTY.getOps(JsonOps.INSTANCE),
+        net.minecraft.network.chat.Component component = ComponentSerialization.CODEC.decode(
+                RegistryAccess.EMPTY.createSerializationContext(JsonOps.INSTANCE),
                 GsonComponentSerializer.gson().serializeToTree(message)
         ).getOrThrow(JsonParseException::new).getFirst();
         this.delegate.sendFeedback(component);

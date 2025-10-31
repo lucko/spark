@@ -23,21 +23,22 @@ package me.lucko.spark.fabric;
 import com.mojang.brigadier.CommandDispatcher;
 import me.lucko.spark.fabric.plugin.FabricClientSparkPlugin;
 import me.lucko.spark.fabric.plugin.FabricServerSparkPlugin;
+import me.lucko.spark.minecraft.SparkMinecraftMod;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands.CommandSelection;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandManager.RegistrationEnvironment;
-import net.minecraft.server.command.ServerCommandSource;
 
 import java.nio.file.Path;
 import java.util.Objects;
 
-public class FabricSparkMod implements ModInitializer {
+public class FabricSparkMod implements ModInitializer, SparkMinecraftMod {
     private static FabricSparkMod mod;
 
     private ModContainer container;
@@ -63,12 +64,12 @@ public class FabricSparkMod implements ModInitializer {
     // client (called by entrypoint defined in fabric.mod.json)
     public static void initializeClient() {
         Objects.requireNonNull(FabricSparkMod.mod, "mod");
-        FabricClientSparkPlugin.register(FabricSparkMod.mod, MinecraftClient.getInstance());
+        FabricClientSparkPlugin.init(FabricSparkMod.mod, Minecraft.getInstance());
     }
 
     // server
     public void initializeServer(MinecraftServer server) {
-        this.activeServerPlugin = FabricServerSparkPlugin.register(this, server);
+        this.activeServerPlugin = FabricServerSparkPlugin.init(this, server);
     }
 
     public void onServerStopping(MinecraftServer stoppingServer) {
@@ -78,16 +79,18 @@ public class FabricSparkMod implements ModInitializer {
         }
     }
 
-    public void onServerCommandRegister(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess access, RegistrationEnvironment env) {
+    public void onServerCommandRegister(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx, CommandSelection env) {
         if (this.activeServerPlugin != null) {
             this.activeServerPlugin.registerCommands(dispatcher);
         }
     }
 
+    @Override
     public String getVersion() {
         return this.container.getMetadata().getVersion().getFriendlyString();
     }
 
+    @Override
     public Path getConfigDirectory() {
         if (this.configDirectory == null) {
             throw new IllegalStateException("Config directory not set");

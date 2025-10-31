@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.neoforge;
+package me.lucko.spark.minecraft;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -29,14 +29,14 @@ import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import java.util.Collection;
 import java.util.Map;
 
-public class NeoForgeServerConfigProvider extends ServerConfigProvider {
+public class MinecraftServerConfigProvider extends ServerConfigProvider {
 
     /** A map of provided files and their type */
     private static final Map<String, ConfigParser> FILES;
     /** A collection of paths to be excluded from the files */
     private static final Collection<String> HIDDEN_PATHS;
 
-    public NeoForgeServerConfigProvider() {
+    public MinecraftServerConfigProvider() {
         super(FILES, HIDDEN_PATHS);
     }
 

@@ -18,38 +18,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.forge;
+package me.lucko.spark.minecraft.sender;
 
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
 import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.world.entity.Entity;
 
-import java.util.UUID;
-
-public class ForgeClientCommandSender extends AbstractCommandSender<CommandSourceStack> {
-    public ForgeClientCommandSender(CommandSourceStack source) {
+public abstract class MinecraftCommandSender extends AbstractCommandSender<CommandSourceStack> {
+    public MinecraftCommandSender(CommandSourceStack source) {
         super(source);
-    }
-
-    @Override
-    public String getName() {
-        return this.delegate.getTextName();
-    }
-
-    @Override
-    public UUID getUniqueId() {
-        Entity entity = this.delegate.getEntity();
-        if (entity instanceof LocalPlayer player) {
-            return player.getUUID();
-        }
-        return null;
     }
 
     @Override
@@ -58,16 +40,6 @@ public class ForgeClientCommandSender extends AbstractCommandSender<CommandSourc
                 RegistryAccess.EMPTY.createSerializationContext(JsonOps.INSTANCE),
                 GsonComponentSerializer.gson().serializeToTree(message)
         ).getOrThrow(JsonParseException::new).getFirst();
-        super.delegate.sendSystemMessage(component);
-    }
-
-    @Override
-    public boolean hasPermission(String permission) {
-        return true;
-    }
-
-    @Override
-    protected Object getObjectForComparison() {
-        return this.delegate.getEntity();
+        this.delegate.sendSystemMessage(component);
     }
 }

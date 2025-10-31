@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.fabric.plugin;
+package me.lucko.spark.minecraft.plugin;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
@@ -33,34 +33,27 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.util.SparkThreadFactory;
-import me.lucko.spark.fabric.FabricClassSourceLookup;
-import me.lucko.spark.fabric.FabricSparkMod;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.metadata.Person;
+import me.lucko.spark.minecraft.SparkMinecraftMod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
-public abstract class FabricSparkPlugin implements SparkPlugin {
+public abstract class MinecraftSparkPlugin<M extends SparkMinecraftMod> implements SparkPlugin {
 
-    private final FabricSparkMod mod;
-    private final Logger logger;
+    protected final M mod;
+    protected final Logger logger;
     protected final ScheduledExecutorService scheduler;
 
     protected SparkPlatform platform;
 
-    protected FabricSparkPlugin(FabricSparkMod mod) {
+    protected MinecraftSparkPlugin(M mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
         this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
@@ -111,24 +104,6 @@ public abstract class FabricSparkPlugin implements SparkPlugin {
         } else {
             this.logger.info(msg, throwable);
         }
-    }
-
-    @Override
-    public ClassSourceLookup createClassSourceLookup() {
-        return new FabricClassSourceLookup(createClassFinder());
-    }
-
-    @Override
-    public Collection<SourceMetadata> getKnownSources() {
-        return SourceMetadata.gather(
-                FabricLoader.getInstance().getAllMods(),
-                mod -> mod.getMetadata().getId(),
-                mod -> mod.getMetadata().getVersion().getFriendlyString(),
-                mod -> mod.getMetadata().getAuthors().stream()
-                        .map(Person::getName)
-                        .collect(Collectors.joining(", ")),
-                mod -> mod.getMetadata().getDescription()
-        );
     }
 
     protected CompletableFuture<Suggestions> generateSuggestions(CommandSender sender, String[] args, SuggestionsBuilder builder) {

@@ -20,20 +20,16 @@
 
 package me.lucko.spark.fabric.mixin;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.server.world.ServerEntityManager;
-import net.minecraft.world.entity.EntityIndex;
-import net.minecraft.world.entity.SectionedEntityCache;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ServerEntityManager.class)
-public interface ServerEntityManagerAccessor {
+@Mixin(ServerLevel.class)
+public interface ServerLevelAccessor {
 
     @Accessor
-    SectionedEntityCache<Entity> getCache();
-
-    @Accessor
-    EntityIndex<?> getIndex();
+    PersistentEntitySectionManager<Entity> getEntityManager();
 
 }

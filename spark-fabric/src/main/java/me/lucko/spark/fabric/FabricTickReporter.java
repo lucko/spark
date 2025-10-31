@@ -24,19 +24,19 @@ import me.lucko.spark.common.tick.SimpleTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.server.MinecraftServer;
 
 public abstract class FabricTickReporter extends SimpleTickReporter implements TickReporter {
 
     public static final class Server extends FabricTickReporter implements ServerTickEvents.StartTick, ServerTickEvents.EndTick {
         @Override
-        public void onStartTick(MinecraftServer minecraftServer) {
+        public void onStartTick(MinecraftServer server) {
             onStart();
         }
 
         @Override
-        public void onEndTick(MinecraftServer minecraftServer) {
+        public void onEndTick(MinecraftServer server) {
             onEnd();
         }
 
@@ -49,12 +49,12 @@ public abstract class FabricTickReporter extends SimpleTickReporter implements T
 
     public static final class Client extends FabricTickReporter implements ClientTickEvents.StartTick, ClientTickEvents.EndTick {
         @Override
-        public void onStartTick(MinecraftClient minecraftClient) {
+        public void onStartTick(Minecraft client) {
             onStart();
         }
 
         @Override
-        public void onEndTick(MinecraftClient minecraftClient) {
+        public void onEndTick(Minecraft client) {
             onEnd();
         }
 

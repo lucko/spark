@@ -18,18 +18,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.fabric.mixin;
+package me.lucko.spark.minecraft;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.world.World;
-import net.minecraft.world.entity.EntityLookup;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Invoker;
+import java.nio.file.Path;
 
-@Mixin(World.class)
-public interface WorldAccessor {
+public interface SparkMinecraftMod {
 
-    @Invoker(value = "getEntityLookup")
-    EntityLookup<Entity> spark$getEntityLookup();
+    String getVersion();
+
+    Path getConfigDirectory();
 
 }

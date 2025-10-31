@@ -18,23 +18,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.neoforge;
+package me.lucko.spark.minecraft.sender;
 
-import com.google.gson.JsonParseException;
-import com.mojang.serialization.JsonOps;
-import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.world.entity.Entity;
 
 import java.util.UUID;
 
-public class NeoForgeClientCommandSender extends AbstractCommandSender<CommandSourceStack> {
-    public NeoForgeClientCommandSender(CommandSourceStack source) {
+public class MinecraftClientCommandSender extends MinecraftCommandSender {
+    public MinecraftClientCommandSender(CommandSourceStack source) {
         super(source);
     }
 
@@ -50,15 +43,6 @@ public class NeoForgeClientCommandSender extends AbstractCommandSender<CommandSo
             return player.getUUID();
         }
         return null;
-    }
-
-    @Override
-    public void sendMessage(Component message) {
-        net.minecraft.network.chat.Component component = ComponentSerialization.CODEC.decode(
-                RegistryAccess.EMPTY.createSerializationContext(JsonOps.INSTANCE),
-                GsonComponentSerializer.gson().serializeToTree(message)
-        ).getOrThrow(JsonParseException::new).getFirst();
-        super.delegate.sendSystemMessage(component);
     }
 
     @Override

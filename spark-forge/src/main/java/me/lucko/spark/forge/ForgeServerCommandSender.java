@@ -20,20 +20,13 @@
 
 package me.lucko.spark.forge;
 
-import com.google.gson.JsonParseException;
-import com.mojang.serialization.JsonOps;
-import me.lucko.spark.common.command.sender.AbstractCommandSender;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import me.lucko.spark.minecraft.sender.MinecraftServerCommandSender;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.server.permission.PermissionAPI;
 
-import java.util.UUID;
-
-public class ForgeServerCommandSender extends AbstractCommandSender<CommandSourceStack> {
+public class ForgeServerCommandSender extends MinecraftServerCommandSender {
     private final ForgeServerSparkPlugin plugin;
 
     public ForgeServerCommandSender(CommandSourceStack commandSource, ForgeServerSparkPlugin plugin) {
@@ -42,44 +35,12 @@ public class ForgeServerCommandSender extends AbstractCommandSender<CommandSourc
     }
 
     @Override
-    public String getName() {
-        String name = this.delegate.getTextName();
-        if (this.delegate.getEntity() != null && name.equals("Server")) {
-            return "Console";
-        }
-        return name;
-    }
-
-    @Override
-    public UUID getUniqueId() {
-        Entity entity = this.delegate.getEntity();
-        return entity != null ? entity.getUUID() : null;
-    }
-
-    @Override
-    public void sendMessage(Component message) {
-        net.minecraft.network.chat.Component component = ComponentSerialization.CODEC.decode(
-                RegistryAccess.EMPTY.createSerializationContext(JsonOps.INSTANCE),
-                GsonComponentSerializer.gson().serializeToTree(message)
-        ).getOrThrow(JsonParseException::new).getFirst();
-        super.delegate.sendSystemMessage(component);
-    }
-
-    @Override
     public boolean hasPermission(String permission) {
-        return this.plugin.hasPermission(this.delegate, permission);
-    }
-
-    @Override
-    protected Object getObjectForComparison() {
-        UUID uniqueId = getUniqueId();
-        if (uniqueId != null) {
-            return uniqueId;
+        ServerPlayer player = this.delegate.getPlayer();
+        if (player != null) {
+            return PermissionAPI.getPermission(player, this.plugin.getPermissionNode(permission));
+        } else {
+            return true;
         }
-        Entity entity = this.delegate.getEntity();
-        if (entity != null) {
-            return entity;
-        }
-        return getName();
     }
 }

@@ -1,8 +1,8 @@
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version '1.11-SNAPSHOT'
-    id 'com.gradleup.shadow' version '8.3.8'
+    id 'fabric-loom'
+    id 'com.gradleup.shadow'
 }
 
 tasks.withType(JavaCompile) {
@@ -29,7 +29,7 @@ configurations {
 dependencies {
     // https://modmuss50.me/fabric.html
     minecraft 'com.mojang:minecraft:1.21.10'
-    mappings 'net.fabricmc:yarn:1.21.10+build.2:v2'
+    mappings loom.officialMojangMappings()
     modImplementation 'net.fabricmc:fabric-loader:0.17.3'
 
     Set<String> apiModules = [
@@ -48,6 +48,7 @@ dependencies {
     modImplementation('eu.pb4:placeholder-api:2.8.0+1.21.9')
 
     shade project(':spark-common')
+    shade project(':spark-minecraft')
 }
 
 processResources {

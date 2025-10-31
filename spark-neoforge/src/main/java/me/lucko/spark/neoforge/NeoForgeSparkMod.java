@@ -20,6 +20,7 @@
 
 package me.lucko.spark.neoforge;
 
+import me.lucko.spark.minecraft.SparkMinecraftMod;
 import me.lucko.spark.neoforge.plugin.NeoForgeClientSparkPlugin;
 import me.lucko.spark.neoforge.plugin.NeoForgeServerSparkPlugin;
 import net.neoforged.bus.api.IEventBus;
@@ -34,7 +35,7 @@ import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import java.nio.file.Path;
 
 @Mod("spark")
-public class NeoForgeSparkMod {
+public class NeoForgeSparkMod implements SparkMinecraftMod {
 
     private final ModContainer container;
     private final Path configDirectory;
@@ -48,19 +49,21 @@ public class NeoForgeSparkMod {
         NeoForge.EVENT_BUS.register(this);
     }
 
-    public String getVersion() {
-        return this.container.getModInfo().getVersion().toString();
-    }
-
     public void clientInit(FMLClientSetupEvent e) {
-        NeoForgeClientSparkPlugin.register(this, e);
+        NeoForgeClientSparkPlugin.init(this, e);
     }
 
     @SubscribeEvent
     public void serverInit(ServerAboutToStartEvent e) {
-        NeoForgeServerSparkPlugin.register(this, e);
+        NeoForgeServerSparkPlugin.init(this, e);
     }
 
+    @Override
+    public String getVersion() {
+        return this.container.getModInfo().getVersion().toString();
+    }
+
+    @Override
     public Path getConfigDirectory() {
         return this.configDirectory;
     }

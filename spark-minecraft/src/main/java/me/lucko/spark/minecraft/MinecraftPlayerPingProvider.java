@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.neoforge;
+package me.lucko.spark.minecraft;
 
 import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
@@ -27,10 +27,10 @@ import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 
-public class NeoForgePlayerPingProvider implements PlayerPingProvider {
+public class MinecraftPlayerPingProvider implements PlayerPingProvider {
     private final MinecraftServer server;
 
-    public NeoForgePlayerPingProvider(MinecraftServer server) {
+    public MinecraftPlayerPingProvider(MinecraftServer server) {
         this.server = server;
     }
 
