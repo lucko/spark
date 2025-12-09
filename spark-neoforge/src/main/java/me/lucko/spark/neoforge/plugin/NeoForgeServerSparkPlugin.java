@@ -38,6 +38,8 @@ import me.lucko.spark.neoforge.NeoForgeTickReporter;
 import me.lucko.spark.neoforge.NeoForgeWorldInfoProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
@@ -64,6 +66,7 @@ public class NeoForgeServerSparkPlugin extends MinecraftServerSparkPlugin<NeoFor
         plugin.enable();
     }
 
+    private static final Permission PERMISSION_LEVEL_OWNERS = new Permission.HasCommandLevel(PermissionLevel.OWNERS);
     private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
         if (player == null) {
             return false;
@@ -74,7 +77,7 @@ public class NeoForgeServerSparkPlugin extends MinecraftServerSparkPlugin<NeoFor
             return true;
         }
 
-        return player.hasPermissions(4);
+        return player.permissions().hasPermission(PERMISSION_LEVEL_OWNERS);
     };
 
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();

@@ -25,8 +25,12 @@ import me.lucko.spark.minecraft.sender.MinecraftServerCommandSender;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 
 public class FabricServerCommandSender extends MinecraftServerCommandSender {
+    private static final Permission PERMISSION_LEVEL_OWNERS = new Permission.HasCommandLevel(PermissionLevel.OWNERS);
+
     public FabricServerCommandSender(CommandSourceStack commandSource) {
         super(commandSource);
     }
@@ -40,7 +44,7 @@ public class FabricServerCommandSender extends MinecraftServerCommandSender {
                 if (server != null && server.isSingleplayerOwner(player.nameAndId())) {
                     return true;
                 }
-                return player.hasPermissions(4);
+                return player.permissions().hasPermission(PERMISSION_LEVEL_OWNERS);
             }
             return true;
         });

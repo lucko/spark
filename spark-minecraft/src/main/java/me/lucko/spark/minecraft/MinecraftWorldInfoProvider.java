@@ -33,7 +33,7 @@ import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRule;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -104,7 +104,7 @@ public abstract class MinecraftWorldInfoProvider implements WorldInfoProvider {
                     info.entityCounts.increment(entity.getType());
                 }
 
-                data.put(level.dimension().location().getPath(), List.copyOf(worldInfos.values()));
+                data.put(level.dimension().identifier().getPath(), List.copyOf(worldInfos.values()));
             }
 
             return data;
@@ -116,20 +116,21 @@ public abstract class MinecraftWorldInfoProvider implements WorldInfoProvider {
             Iterable<ServerLevel> worlds = this.server.getAllLevels();
 
             for (ServerLevel level : worlds) {
-                String levelName = level.dimension().location().getPath();
+                String levelName = level.dimension().identifier().getPath();
 
-                level.getGameRules().visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
-                    @Override
-                    public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                        String defaultValue = type.createRule().serialize();
-                        data.putDefault(key.getId(), defaultValue);
+                level.getGameRules().availableRules().forEach(rule -> {
+                    String defaultValue = gameRuleDefaultValue(rule);
+                    data.putDefault(rule.id(), defaultValue);
 
-                        String value = level.getGameRules().getRule(key).serialize();
-                        data.put(key.getId(), levelName, value);
-                    }
+                    String value = level.getGameRules().getAsString(rule);
+                    data.put(rule.id(), levelName, value);
                 });
             }
             return data;
+        }
+
+        private static <T> String gameRuleDefaultValue(GameRule<T> rule) {
+            return rule.serialize(rule.defaultValue());
         }
 
         @Override
@@ -177,7 +178,7 @@ public abstract class MinecraftWorldInfoProvider implements WorldInfoProvider {
                 info.entityCounts.increment(entity.getType());
             }
 
-            data.put(level.dimension().location().getPath(), List.copyOf(worldInfos.values()));
+            data.put(level.dimension().identifier().getPath(), List.copyOf(worldInfos.values()));
             return data;
         }
 

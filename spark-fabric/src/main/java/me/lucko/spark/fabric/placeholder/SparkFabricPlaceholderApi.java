@@ -32,7 +32,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.ComponentSerialization;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 public enum SparkFabricPlaceholderApi {
@@ -41,7 +41,7 @@ public enum SparkFabricPlaceholderApi {
     public static void register(SparkPlatform platform) {
         for (SparkPlaceholder placeholder : SparkPlaceholder.values()) {
             Placeholders.register(
-                    ResourceLocation.fromNamespaceAndPath("spark", placeholder.getName()),
+                    Identifier.fromNamespaceAndPath("spark", placeholder.getName()),
                     new Handler(platform, placeholder)
             );
         }
