@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'com.mojang:minecraft:1.21.10'
+    minecraft 'com.mojang:minecraft:1.21.11'
     mappings loom.officialMojangMappings()
 
     implementation project(':spark-common')

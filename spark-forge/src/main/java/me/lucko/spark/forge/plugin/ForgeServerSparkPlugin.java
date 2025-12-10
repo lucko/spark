@@ -38,6 +38,8 @@ import me.lucko.spark.minecraft.plugin.MinecraftServerSparkPlugin;
 import me.lucko.spark.minecraft.sender.MinecraftServerCommandSender;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -65,7 +67,7 @@ public class ForgeServerSparkPlugin extends MinecraftServerSparkPlugin<ForgeSpar
         ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
     }
-
+    private static final Permission PERMISSION_LEVEL_OWNERS = new Permission.HasCommandLevel(PermissionLevel.OWNERS);
     private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
         if (player == null) {
             return false;
@@ -76,7 +78,7 @@ public class ForgeServerSparkPlugin extends MinecraftServerSparkPlugin<ForgeSpar
             return true;
         }
 
-        return player.hasPermissions(4);
+        return player.permissions().hasPermission(PERMISSION_LEVEL_OWNERS);
     };
 
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();

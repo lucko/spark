@@ -1,7 +1,7 @@
 <h1 align="center">
 	<img
 		alt="spark"
-		src="https://i.imgur.com/ykHn9vx.png">
+		src="https://spark.lucko.me/assets/banner.png">
 </h1>
 
 <h3 align="center">
