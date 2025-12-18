@@ -1,0 +1,24 @@
+plugins {
+    id 'fabric-loom'
+}
+
+tasks.withType(JavaCompile) {
+    // override, compile targeting J21
+    options.release = 21
+}
+
+repositories {
+    maven { url 'https://maven.fabricmc.net/' }
+    mavenLocal()
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:1.21.11'
+    mappings loom.officialMojangMappings()
+
+    implementation project(':spark-common')
+}
+
+remapJar {
+    targetNamespace = 'named'
+}

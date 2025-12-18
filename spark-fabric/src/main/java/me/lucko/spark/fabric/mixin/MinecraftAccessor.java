@@ -20,16 +20,14 @@
 
 package me.lucko.spark.fabric.mixin;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.server.world.ServerEntityManager;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ServerWorld.class)
-public interface ServerWorldAccessor {
+@Mixin(Minecraft.class)
+public interface MinecraftAccessor {
 
     @Accessor
-    ServerEntityManager<Entity> getEntityManager();
+    Thread getGameThread();
 
 }

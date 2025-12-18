@@ -21,57 +21,52 @@
 package me.lucko.spark.neoforge.plugin;
 
 import com.google.common.collect.ImmutableMap;
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
-import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
+import me.lucko.spark.minecraft.plugin.MinecraftServerSparkPlugin;
+import me.lucko.spark.minecraft.sender.MinecraftServerCommandSender;
+import me.lucko.spark.neoforge.NeoForgeClassSourceLookup;
 import me.lucko.spark.neoforge.NeoForgePlatformInfo;
-import me.lucko.spark.neoforge.NeoForgePlayerPingProvider;
 import me.lucko.spark.neoforge.NeoForgeServerCommandSender;
-import me.lucko.spark.neoforge.NeoForgeServerConfigProvider;
 import me.lucko.spark.neoforge.NeoForgeSparkMod;
 import me.lucko.spark.neoforge.NeoForgeTickHook;
 import me.lucko.spark.neoforge.NeoForgeTickReporter;
 import me.lucko.spark.neoforge.NeoForgeWorldInfoProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
-import net.neoforged.neoforge.server.permission.PermissionAPI;
 import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode.PermissionResolver;
 import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
+import net.neoforged.neoforgespi.language.IModInfo;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
+public class NeoForgeServerSparkPlugin extends MinecraftServerSparkPlugin<NeoForgeSparkMod> {
 
-    public static void register(NeoForgeSparkMod mod, ServerAboutToStartEvent event) {
+    public static void init(NeoForgeSparkMod mod, ServerAboutToStartEvent event) {
         NeoForgeServerSparkPlugin plugin = new NeoForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
     }
 
+    private static final Permission PERMISSION_LEVEL_OWNERS = new Permission.HasCommandLevel(PermissionLevel.OWNERS);
     private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
         if (player == null) {
             return false;
@@ -82,25 +77,18 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
             return true;
         }
 
-        return player.hasPermissions(4);
+        return player.permissions().hasPermission(PERMISSION_LEVEL_OWNERS);
     };
 
-    private final MinecraftServer server;
-    private final ThreadDumper gameThreadDumper;
     private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
 
     public NeoForgeServerSparkPlugin(NeoForgeSparkMod mod, MinecraftServer server) {
-        super(mod);
-        this.server = server;
-        this.gameThreadDumper = new ThreadDumper.Specific(server.getRunningThread());
+        super(mod, server);
     }
 
     @Override
     public void enable() {
         super.enable();
-
-        // register commands
-        registerCommands(this.server.getCommands().getDispatcher());
 
         // register listeners
         NeoForge.EVENT_BUS.register(this);
@@ -160,64 +148,21 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
         registerCommands(e.getDispatcher());
     }
 
-    private void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerCommands(dispatcher, this, this, "spark");
-    }
-
-    @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        String[] args = processArgs(context, false, "/spark", "spark");
-        if (args == null) {
-            return 0;
+    public PermissionNode<Boolean> getPermissionNode(String permission) {
+        if (permission.equals("spark")) {
+            permission = "spark.all";
         }
 
-        this.platform.executeCommand(new NeoForgeServerCommandSender(context.getSource(), this), args);
-        return Command.SINGLE_SUCCESS;
-    }
-
-    @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context, true, "/spark", "spark");
-        if (args == null) {
-            return Suggestions.empty();
+        PermissionNode<Boolean> permissionNode = this.registeredPermissions.get(permission);
+        if (permissionNode == null) {
+            throw new IllegalStateException("spark permission not registered: " + permission);
         }
-
-        return generateSuggestions(new NeoForgeServerCommandSender(context.getSource(), this), args, builder);
-    }
-
-    public boolean hasPermission(CommandSourceStack source, String permission) {
-        ServerPlayer player = source.getPlayer();
-        if (player != null) {
-            if (permission.equals("spark")) {
-                permission = "spark.all";
-            }
-
-            PermissionNode<Boolean> permissionNode = this.registeredPermissions.get(permission);
-            if (permissionNode == null) {
-                throw new IllegalStateException("spark permission not registered: " + permission);
-            }
-            return PermissionAPI.getPermission(player, permissionNode);
-        } else {
-            return true;
-        }
+        return permissionNode;
     }
 
     @Override
-    public Stream<NeoForgeServerCommandSender> getCommandSenders() {
-        return Stream.concat(
-            this.server.getPlayerList().getPlayers().stream().map(ServerPlayer::createCommandSourceStack),
-            Stream.of(this.server.createCommandSourceStack())
-        ).map(stack -> new NeoForgeServerCommandSender(stack, this));
-    }
-
-    @Override
-    public void executeSync(Runnable task) {
-        this.server.executeIfPossible(task);
-    }
-
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return this.gameThreadDumper;
+    protected MinecraftServerCommandSender createCommandSender(CommandSourceStack source) {
+        return new NeoForgeServerCommandSender(source, this);
     }
 
     @Override
@@ -231,13 +176,19 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
     }
 
     @Override
-    public PlayerPingProvider createPlayerPingProvider() {
-        return new NeoForgePlayerPingProvider(this.server);
+    public ClassSourceLookup createClassSourceLookup() {
+        return new NeoForgeClassSourceLookup();
     }
 
     @Override
-    public ServerConfigProvider createServerConfigProvider() {
-        return new NeoForgeServerConfigProvider();
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                ModList.get().getMods(),
+                IModInfo::getModId,
+                mod -> mod.getVersion().toString(),
+                mod -> null, // ?
+                IModInfo::getDescription
+        );
     }
 
     @Override
@@ -248,10 +199,5 @@ public class NeoForgeServerSparkPlugin extends NeoForgeSparkPlugin implements Co
     @Override
     public PlatformInfo getPlatformInfo() {
         return new NeoForgePlatformInfo(PlatformInfo.Type.SERVER);
-    }
-
-    @Override
-    public String getCommandName() {
-        return "spark";
     }
 }

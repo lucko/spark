@@ -20,49 +20,45 @@
 
 package me.lucko.spark.fabric.plugin;
 
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
-import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
+import me.lucko.spark.fabric.FabricClassSourceLookup;
 import me.lucko.spark.fabric.FabricClientCommandSender;
 import me.lucko.spark.fabric.FabricPlatformInfo;
 import me.lucko.spark.fabric.FabricSparkMod;
 import me.lucko.spark.fabric.FabricTickHook;
 import me.lucko.spark.fabric.FabricTickReporter;
 import me.lucko.spark.fabric.FabricWorldInfoProvider;
-import me.lucko.spark.fabric.mixin.MinecraftClientAccessor;
+import me.lucko.spark.fabric.mixin.MinecraftAccessor;
+import me.lucko.spark.minecraft.plugin.MinecraftClientSparkPlugin;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.command.CommandRegistryAccess;
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.metadata.Person;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.commands.CommandBuildContext;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Collection;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FabricClientSparkPlugin extends FabricSparkPlugin implements Command<FabricClientCommandSource>, SuggestionProvider<FabricClientCommandSource> {
+public class FabricClientSparkPlugin extends MinecraftClientSparkPlugin<FabricSparkMod, FabricClientCommandSource> {
 
-    public static void register(FabricSparkMod mod, MinecraftClient client) {
+    public static void init(FabricSparkMod mod, Minecraft client) {
         FabricClientSparkPlugin plugin = new FabricClientSparkPlugin(mod, client);
         plugin.enable();
     }
 
-    private final MinecraftClient minecraft;
-    private final ThreadDumper.GameThread gameThreadDumper;
-
-    public FabricClientSparkPlugin(FabricSparkMod mod, MinecraftClient minecraft) {
-        super(mod);
-        this.minecraft = minecraft;
-        this.gameThreadDumper = new ThreadDumper.GameThread(() -> ((MinecraftClientAccessor) minecraft).getThread());
+    public FabricClientSparkPlugin(FabricSparkMod mod, Minecraft minecraft) {
+        super(mod, minecraft, ((MinecraftAccessor) minecraft).getGameThread());
     }
 
     @Override
@@ -74,54 +70,28 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
         ClientCommandRegistrationCallback.EVENT.register(this::onCommandRegister);
     }
 
-    private void onDisable(MinecraftClient stoppingClient) {
+    private void onDisable(Minecraft stoppingClient) {
         if (stoppingClient == this.minecraft) {
             disable();
         }
     }
 
-    public void onCommandRegister(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
+    private void onCommandRegister(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext ctx) {
         registerCommands(dispatcher, this, this, "sparkc", "sparkclient");
     }
 
     @Override
-    public int run(CommandContext<FabricClientCommandSource> context) throws CommandSyntaxException {
-        String[] args = processArgs(context, false, "sparkc", "sparkclient");
-        if (args == null) {
-            return 0;
-        }
-
-        this.platform.executeCommand(new FabricClientCommandSender(context.getSource()), args);
-        return Command.SINGLE_SUCCESS;
+    protected CommandSender createCommandSender(FabricClientCommandSource source) {
+        return new FabricClientCommandSender(source);
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<FabricClientCommandSource> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context, true, "/sparkc", "/sparkclient");
-        if (args == null) {
-            return Suggestions.empty();
-        }
-
-        return generateSuggestions(new FabricClientCommandSender(context.getSource()), args, builder);
-    }
-
-    @Override
-    public Stream<FabricClientCommandSender> getCommandSenders() {
-        ClientPlayNetworkHandler networkHandler = this.minecraft.getNetworkHandler();
-        if (networkHandler == null) {
+    public Stream<CommandSender> getCommandSenders() {
+        ClientPacketListener listener = this.minecraft.getConnection();
+        if (listener == null) {
             return Stream.empty();
         }
-        return Stream.of(new FabricClientCommandSender(networkHandler.getCommandSource()));
-    }
-
-    @Override
-    public void executeSync(Runnable task) {
-        this.minecraft.executeSync(task);
-    }
-
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return this.gameThreadDumper.get();
+        return Stream.of(new FabricClientCommandSender(listener.getSuggestionsProvider()));
     }
 
     @Override
@@ -135,6 +105,24 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     }
 
     @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new FabricClassSourceLookup(createClassFinder());
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                FabricLoader.getInstance().getAllMods(),
+                mod -> mod.getMetadata().getId(),
+                mod -> mod.getMetadata().getVersion().getFriendlyString(),
+                mod -> mod.getMetadata().getAuthors().stream()
+                        .map(Person::getName)
+                        .collect(Collectors.joining(", ")),
+                mod -> mod.getMetadata().getDescription()
+        );
+    }
+
+    @Override
     public WorldInfoProvider createWorldInfoProvider() {
         return new FabricWorldInfoProvider.Client(this.minecraft);
     }
@@ -142,11 +130,6 @@ public class FabricClientSparkPlugin extends FabricSparkPlugin implements Comman
     @Override
     public PlatformInfo getPlatformInfo() {
         return new FabricPlatformInfo(PlatformInfo.Type.CLIENT);
-    }
-
-    @Override
-    public String getCommandName() {
-        return "sparkc";
     }
 
 }

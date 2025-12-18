@@ -24,7 +24,7 @@ import me.lucko.spark.common.tick.AbstractTickHook;
 import me.lucko.spark.common.tick.TickHook;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.server.MinecraftServer;
 
 public abstract class FabricTickHook extends AbstractTickHook implements TickHook {
@@ -56,7 +56,7 @@ public abstract class FabricTickHook extends AbstractTickHook implements TickHoo
 
     public static final class Client extends FabricTickHook implements ClientTickEvents.StartTick {
         @Override
-        public void onStartTick(MinecraftClient minecraftClient) {
+        public void onStartTick(Minecraft minecraftClient) {
             onTick();
         }
 

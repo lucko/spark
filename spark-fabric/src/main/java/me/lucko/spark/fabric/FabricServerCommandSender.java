@@ -20,76 +20,33 @@
 
 package me.lucko.spark.fabric;
 
-import com.google.gson.JsonParseException;
-import com.mojang.serialization.JsonOps;
 import me.lucko.fabric.api.permissions.v0.Permissions;
-import me.lucko.spark.common.command.sender.AbstractCommandSender;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.minecraft.entity.Entity;
-import net.minecraft.registry.DynamicRegistryManager;
+import me.lucko.spark.minecraft.sender.MinecraftServerCommandSender;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.Permission;
+import net.minecraft.server.permissions.PermissionLevel;
 
-import java.util.UUID;
+public class FabricServerCommandSender extends MinecraftServerCommandSender {
+    private static final Permission PERMISSION_LEVEL_OWNERS = new Permission.HasCommandLevel(PermissionLevel.OWNERS);
 
-public class FabricServerCommandSender extends AbstractCommandSender<ServerCommandSource> {
-    public FabricServerCommandSender(ServerCommandSource commandSource) {
+    public FabricServerCommandSender(CommandSourceStack commandSource) {
         super(commandSource);
-    }
-
-    @Override
-    public String getName() {
-        String name = this.delegate.getName();
-        if (this.delegate.getEntity() != null && name.equals("Server")) {
-            return "Console";
-        }
-        return name;
-    }
-
-    @Override
-    public UUID getUniqueId() {
-        Entity entity = this.delegate.getEntity();
-        return entity != null ? entity.getUuid() : null;
-    }
-
-    @Override
-    public void sendMessage(Component message) {
-        Text component = TextCodecs.CODEC.decode(
-                DynamicRegistryManager.EMPTY.getOps(JsonOps.INSTANCE),
-                GsonComponentSerializer.gson().serializeToTree(message)
-        ).getOrThrow(JsonParseException::new).getFirst();
-        this.delegate.sendMessage(component);
     }
 
     @Override
     public boolean hasPermission(String permission) {
         return Permissions.getPermissionValue(this.delegate, permission).orElseGet(() -> {
-            ServerPlayerEntity player = this.delegate.getPlayer();
+            ServerPlayer player = this.delegate.getPlayer();
             MinecraftServer server = this.delegate.getServer();
             if (player != null) {
-                if (server != null && server.isHost(player.getPlayerConfigEntry())) {
+                if (server != null && server.isSingleplayerOwner(player.nameAndId())) {
                     return true;
                 }
-                return player.hasPermissionLevel(4);
+                return player.permissions().hasPermission(PERMISSION_LEVEL_OWNERS);
             }
             return true;
         });
-    }
-
-    @Override
-    protected Object getObjectForComparison() {
-        UUID uniqueId = getUniqueId();
-        if (uniqueId != null) {
-            return uniqueId;
-        }
-        Entity entity = this.delegate.getEntity();
-        if (entity != null) {
-            return entity;
-        }
-        return getName();
     }
 }

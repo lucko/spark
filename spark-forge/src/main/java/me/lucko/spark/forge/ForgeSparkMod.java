@@ -22,6 +22,7 @@ package me.lucko.spark.forge;
 
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
+import me.lucko.spark.minecraft.SparkMinecraftMod;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
@@ -33,7 +34,7 @@ import net.minecraftforge.fml.loading.FMLPaths;
 import java.nio.file.Path;
 
 @Mod("spark")
-public class ForgeSparkMod {
+public class ForgeSparkMod implements SparkMinecraftMod {
 
     private final ModContainer container;
     private final Path configDirectory;
@@ -48,18 +49,20 @@ public class ForgeSparkMod {
         ServerAboutToStartEvent.BUS.addListener(this::serverInit);
     }
 
+    public void clientInit(FMLClientSetupEvent e) {
+        ForgeClientSparkPlugin.init(this, e);
+    }
+
+    public void serverInit(ServerAboutToStartEvent e) {
+        ForgeServerSparkPlugin.init(this, e);
+    }
+
+    @Override
     public String getVersion() {
         return this.container.getModInfo().getVersion().toString();
     }
 
-    public void clientInit(FMLClientSetupEvent e) {
-        ForgeClientSparkPlugin.register(this, e);
-    }
-
-    public void serverInit(ServerAboutToStartEvent e) {
-        ForgeServerSparkPlugin.register(this, e);
-    }
-
+    @Override
     public Path getConfigDirectory() {
         return this.configDirectory;
     }

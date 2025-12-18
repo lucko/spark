@@ -68,6 +68,7 @@ public class SamplerTest {
             String libraryVersion = sampler.getLibraryVersion();
             if (samplerType == SamplerType.ASYNC) {
                 assertNotNull(libraryVersion);
+                System.out.println("Using async profiler version: " + libraryVersion);
             } else {
                 assertNull(libraryVersion);
             }

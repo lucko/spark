@@ -1,5 +1,5 @@
 plugins {
-    id 'com.gradleup.shadow' version '8.3.8'
+    id 'com.gradleup.shadow'
     id 'net.neoforged.moddev' version '2.0.110'
 }
 
@@ -15,7 +15,7 @@ java {
 }
 
 neoForge {
-    version = "21.10.10-beta"
+    version = "21.11.0-beta"
     validateAccessTransformers = true
 
     runs {
@@ -41,6 +41,7 @@ configurations {
 
 dependencies {
     shade project(':spark-common')
+    shade project(':spark-minecraft')
 }
 
 processResources {

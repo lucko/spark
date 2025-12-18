@@ -1,5 +1,7 @@
 plugins {
     id 'org.cadixdev.licenser' version '0.6.1' apply false
+    id 'com.gradleup.shadow' version '8.3.8' apply false
+    id 'fabric-loom' version '1.13-SNAPSHOT' apply false
 }
 
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat

@@ -20,228 +20,70 @@
 
 package me.lucko.spark.fabric;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import me.lucko.spark.common.platform.world.AbstractChunkInfo;
-import me.lucko.spark.common.platform.world.CountMap;
-import me.lucko.spark.common.platform.world.WorldInfoProvider;
-import me.lucko.spark.fabric.mixin.ClientEntityManagerAccessor;
-import me.lucko.spark.fabric.mixin.ClientWorldAccessor;
-import me.lucko.spark.fabric.mixin.ServerEntityManagerAccessor;
-import me.lucko.spark.fabric.mixin.ServerWorldAccessor;
-import me.lucko.spark.fabric.mixin.WorldAccessor;
+import me.lucko.spark.fabric.mixin.ClientLevelAccessor;
+import me.lucko.spark.fabric.mixin.LevelAccessor;
+import me.lucko.spark.fabric.mixin.PersistentEntitySectionManagerAccessor;
+import me.lucko.spark.fabric.mixin.ServerLevelAccessor;
+import me.lucko.spark.fabric.mixin.TransientEntitySectionManagerAccessor;
+import me.lucko.spark.minecraft.MinecraftWorldInfoProvider;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.resource.ResourcePackManager;
-import net.minecraft.resource.ResourcePackSource;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerEntityManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.entity.ClientEntityManager;
-import net.minecraft.world.entity.EntityIndex;
-import net.minecraft.world.entity.EntityLookup;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.entity.EntityLookup;
+import net.minecraft.world.level.entity.LevelEntityGetter;
+import net.minecraft.world.level.entity.PersistentEntitySectionManager;
+import net.minecraft.world.level.entity.TransientEntitySectionManager;
 
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.stream.Collectors;
 
-public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
+public class FabricWorldInfoProvider {
 
-    protected abstract ResourcePackManager getResourcePackManager();
-
-    @Override
-    public Collection<DataPackInfo> pollDataPacks() {
-        return getResourcePackManager().getEnabledProfiles().stream()
-                .map(pack -> new DataPackInfo(
-                        pack.getId(),
-                        pack.getDescription().getString(),
-                        resourcePackSource(pack.getSource())
-                ))
-                .collect(Collectors.toList());
-    }
-
-    private static String resourcePackSource(ResourcePackSource source) {
-        if (source == ResourcePackSource.NONE) {
-            return "none";
-        } else if (source == ResourcePackSource.BUILTIN) {
-            return "builtin";
-        } else if (source == ResourcePackSource.WORLD) {
-            return "world";
-        } else if (source == ResourcePackSource.SERVER) {
-            return "server";
-        } else {
-            return "unknown";
-        }
-    }
-
-    public static final class Server extends FabricWorldInfoProvider {
-        private final MinecraftServer server;
-
+    public static final class Server extends MinecraftWorldInfoProvider.Server {
         public Server(MinecraftServer server) {
-            this.server = server;
+            super(server);
         }
 
         @Override
-        public CountsResult pollCounts() {
-            int players = this.server.getCurrentPlayerCount();
-            int entities = 0;
-            int chunks = 0;
-
-            for (ServerWorld world : this.server.getWorlds()) {
-
-                if (FabricLoader.getInstance().isModLoaded("moonrise")) {
-                    entities += MoonriseMethods.getEntityCount(((WorldAccessor) world).spark$getEntityLookup());
-                } else {
-                    ServerEntityManager<Entity> entityManager = ((ServerWorldAccessor) world).getEntityManager();
-                    EntityIndex<?> entityIndex = ((ServerEntityManagerAccessor) entityManager).getIndex();
-                    entities += entityIndex.size();
-                }
-
-                chunks += world.getChunkManager().getLoadedChunkCount();
-            }
-
-            return new CountsResult(players, entities, -1, chunks);
-        }
-
-        @Override
-        public ChunksResult<FabricChunkInfo> pollChunks() {
-            ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
-
-            for (ServerWorld world : this.server.getWorlds()) {
-                Long2ObjectOpenHashMap<FabricChunkInfo> worldInfos = new Long2ObjectOpenHashMap<>();
-
-                for (Entity entity : ((WorldAccessor) world).spark$getEntityLookup().iterate()) {
-                    FabricChunkInfo info = worldInfos.computeIfAbsent(
-                        entity.getChunkPos().toLong(), FabricChunkInfo::new);
-                    info.entityCounts.increment(entity.getType());
-                }
-
-                data.put(world.getRegistryKey().getValue().getPath(), List.copyOf(worldInfos.values()));
-            }
-
-            return data;
-        }
-
-        @Override
-        public GameRulesResult pollGameRules() {
-            GameRulesResult data = new GameRulesResult();
-            Iterable<ServerWorld> worlds = this.server.getWorlds();
-
-            for (ServerWorld world : worlds) {
-                String worldName = world.getRegistryKey().getValue().getPath();
-
-                world.getGameRules().accept(new GameRules.Visitor() {
-                    @Override
-                    public <T extends GameRules.Rule<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
-                        String defaultValue = type.createRule().serialize();
-                        data.putDefault(key.getName(), defaultValue);
-
-                        String value = world.getGameRules().get(key).serialize();
-                        data.put(key.getName(), worldName, value);
-                    }
-                });
-            }
-            return data;
-        }
-
-        @Override
-        protected ResourcePackManager getResourcePackManager() {
-            return this.server.getDataPackManager();
-        }
-    }
-
-    public static final class Client extends FabricWorldInfoProvider {
-        private final MinecraftClient client;
-
-        public Client(MinecraftClient client) {
-            this.client = client;
-        }
-
-        @Override
-        public CountsResult pollCounts() {
-            ClientWorld world = this.client.world;
-            if (world == null) {
-                return null;
-            }
-
-            int entities;
-
+        protected int countEntities(ServerLevel level) {
             if (FabricLoader.getInstance().isModLoaded("moonrise")) {
-                entities = MoonriseMethods.getEntityCount(((WorldAccessor) world).spark$getEntityLookup());
+                return MoonriseMethods.getEntityCount(((LevelAccessor) level).spark$getEntities());
             } else {
-                ClientEntityManager<Entity> entityManager = ((ClientWorldAccessor) world).getEntityManager();
-                EntityIndex<?> entityIndex = ((ClientEntityManagerAccessor) entityManager).getIndex();
-                entities = entityIndex.size();
+                PersistentEntitySectionManager<Entity> entityManager = ((ServerLevelAccessor) level).getEntityManager();
+                EntityLookup<?> entityIndex = ((PersistentEntitySectionManagerAccessor) entityManager).getVisibleEntityStorage();
+                return entityIndex.count();
             }
-
-            int chunks = world.getChunkManager().getLoadedChunkCount();
-
-            return new CountsResult(-1, entities, -1, chunks);
-        }
-
-        @Override
-        public ChunksResult<FabricChunkInfo> pollChunks() {
-            ClientWorld world = this.client.world;
-            if (world == null) {
-                return null;
-            }
-
-            ChunksResult<FabricChunkInfo> data = new ChunksResult<>();
-
-            Long2ObjectOpenHashMap<FabricChunkInfo> worldInfos = new Long2ObjectOpenHashMap<>();
-
-            for (Entity entity : ((WorldAccessor) world).spark$getEntityLookup().iterate()) {
-                FabricChunkInfo info = worldInfos.computeIfAbsent(entity.getChunkPos().toLong(), FabricChunkInfo::new);
-                info.entityCounts.increment(entity.getType());
-            }
-
-            data.put(world.getRegistryKey().getValue().getPath(), List.copyOf(worldInfos.values()));
-
-            return data;
-        }
-
-        @Override
-        public GameRulesResult pollGameRules() {
-            // Not available on client since 24w39a
-            return null;
-        }
-
-        @Override
-        protected ResourcePackManager getResourcePackManager() {
-            return this.client.getResourcePackManager();
         }
     }
 
-    static final class FabricChunkInfo extends AbstractChunkInfo<EntityType<?>> {
-        private final CountMap<EntityType<?>> entityCounts;
-
-        FabricChunkInfo(long chunkPos) {
-            super(ChunkPos.getPackedX(chunkPos), ChunkPos.getPackedZ(chunkPos));
-
-            this.entityCounts = new CountMap.Simple<>(new HashMap<>());
+    public static final class Client extends MinecraftWorldInfoProvider.Client {
+        public Client(Minecraft client) {
+            super(client);
         }
 
         @Override
-        public CountMap<EntityType<?>> getEntityCounts() {
-            return this.entityCounts;
+        protected int countEntities(ClientLevel level) {
+            if (FabricLoader.getInstance().isModLoaded("moonrise")) {
+                return MoonriseMethods.getEntityCount(((LevelAccessor) level).spark$getEntities());
+            } else {
+                TransientEntitySectionManager<Entity> entityManager = ((ClientLevelAccessor) level).getEntityStorage();
+                EntityLookup<?> entityIndex = ((TransientEntitySectionManagerAccessor) entityManager).getEntityStorage();
+                return entityIndex.count();
+            }
         }
 
         @Override
-        public String entityTypeName(EntityType<?> type) {
-            return EntityType.getId(type).toString();
+        protected Iterable<Entity> getAllEntities(ClientLevel level) {
+            return ((LevelAccessor) level).spark$getEntities().getAll();
         }
     }
 
     private static final class MoonriseMethods {
         private static Method getEntityCount;
 
-        private static Method getEntityCountMethod(EntityLookup<Entity> getter) {
+        private static Method getEntityCountMethod(LevelEntityGetter<Entity> getter) {
             if (getEntityCount == null) {
                 try {
                     getEntityCount = getter.getClass().getMethod("getEntityCount");
@@ -252,7 +94,7 @@ public abstract class FabricWorldInfoProvider implements WorldInfoProvider {
             return getEntityCount;
         }
 
-        private static int getEntityCount(EntityLookup<Entity> getter) {
+        private static int getEntityCount(LevelEntityGetter<Entity> getter) {
             try {
                 return (int) getEntityCountMethod(getter).invoke(getter);
             } catch (final ReflectiveOperationException e) {

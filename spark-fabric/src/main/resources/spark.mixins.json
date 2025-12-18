@@ -2,14 +2,14 @@
   "required": true,
   "package": "me.lucko.spark.fabric.mixin",
   "client": [
-    "ClientEntityManagerAccessor",
-    "ClientWorldAccessor",
-    "MinecraftClientAccessor"
+    "ClientLevelAccessor",
+    "MinecraftAccessor",
+    "TransientEntitySectionManagerAccessor"
   ],
   "mixins": [
-    "ServerEntityManagerAccessor",
-    "ServerWorldAccessor",
-    "WorldAccessor"
+    "LevelAccessor",
+    "PersistentEntitySectionManagerAccessor",
+    "ServerLevelAccessor"
   ],
   "plugin": "me.lucko.spark.fabric.plugin.FabricSparkMixinPlugin"
 }

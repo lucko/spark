@@ -20,18 +20,16 @@
 
 package me.lucko.spark.neoforge.plugin;
 
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
-import me.lucko.spark.common.sampler.ThreadDumper;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.neoforge.NeoForgeClientCommandSender;
+import me.lucko.spark.minecraft.plugin.MinecraftClientSparkPlugin;
+import me.lucko.spark.minecraft.sender.MinecraftClientCommandSender;
+import me.lucko.spark.neoforge.NeoForgeClassSourceLookup;
 import me.lucko.spark.neoforge.NeoForgePlatformInfo;
 import me.lucko.spark.neoforge.NeoForgeSparkMod;
 import me.lucko.spark.neoforge.NeoForgeTickHook;
@@ -40,28 +38,25 @@ import me.lucko.spark.neoforge.NeoForgeWorldInfoProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.ClientCommandHandler;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforgespi.language.IModInfo;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Collection;
 import java.util.stream.Stream;
 
-public class NeoForgeClientSparkPlugin extends NeoForgeSparkPlugin implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
+public class NeoForgeClientSparkPlugin extends MinecraftClientSparkPlugin<NeoForgeSparkMod, CommandSourceStack> {
 
-    public static void register(NeoForgeSparkMod mod, FMLClientSetupEvent event) {
+    public static void init(NeoForgeSparkMod mod, FMLClientSetupEvent event) {
         NeoForgeClientSparkPlugin plugin = new NeoForgeClientSparkPlugin(mod, Minecraft.getInstance());
         plugin.enable();
     }
 
-    private final Minecraft minecraft;
-    private final ThreadDumper gameThreadDumper;
-
     public NeoForgeClientSparkPlugin(NeoForgeSparkMod mod, Minecraft minecraft) {
-        super(mod);
-        this.minecraft = minecraft;
-        this.gameThreadDumper = new ThreadDumper.Specific(minecraft.gameThread);
+        super(mod, minecraft, minecraft.gameThread);
     }
 
     @Override
@@ -78,39 +73,13 @@ public class NeoForgeClientSparkPlugin extends NeoForgeSparkPlugin implements Co
     }
 
     @Override
-    public int run(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        String[] args = processArgs(context, false, "sparkc", "sparkclient");
-        if (args == null) {
-            return 0;
-        }
-
-        this.platform.executeCommand(new NeoForgeClientCommandSender(context.getSource()), args);
-        return Command.SINGLE_SUCCESS;
+    protected CommandSender createCommandSender(CommandSourceStack source) {
+        return new MinecraftClientCommandSender(source);
     }
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
-        String[] args = processArgs(context, true, "/sparkc", "/sparkclient");
-        if (args == null) {
-            return Suggestions.empty();
-        }
-
-        return generateSuggestions(new NeoForgeClientCommandSender(context.getSource()), args, builder);
-    }
-
-    @Override
-    public Stream<NeoForgeClientCommandSender> getCommandSenders() {
-        return Stream.of(new NeoForgeClientCommandSender(ClientCommandHandler.getSource()));
-    }
-
-    @Override
-    public void executeSync(Runnable task) {
-        this.minecraft.executeIfPossible(task);
-    }
-
-    @Override
-    public ThreadDumper getDefaultThreadDumper() {
-        return this.gameThreadDumper;
+    public Stream<MinecraftClientCommandSender> getCommandSenders() {
+        return Stream.of(new MinecraftClientCommandSender(ClientCommandHandler.getSource()));
     }
 
     @Override
@@ -124,6 +93,22 @@ public class NeoForgeClientSparkPlugin extends NeoForgeSparkPlugin implements Co
     }
 
     @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return new NeoForgeClassSourceLookup();
+    }
+
+    @Override
+    public Collection<SourceMetadata> getKnownSources() {
+        return SourceMetadata.gather(
+                ModList.get().getMods(),
+                IModInfo::getModId,
+                mod -> mod.getVersion().toString(),
+                mod -> null, // ?
+                IModInfo::getDescription
+        );
+    }
+
+    @Override
     public WorldInfoProvider createWorldInfoProvider() {
         return new NeoForgeWorldInfoProvider.Client(this.minecraft);
     }
@@ -131,10 +116,5 @@ public class NeoForgeClientSparkPlugin extends NeoForgeSparkPlugin implements Co
     @Override
     public PlatformInfo getPlatformInfo() {
         return new NeoForgePlatformInfo(PlatformInfo.Type.CLIENT);
-    }
-
-    @Override
-    public String getCommandName() {
-        return "sparkc";
     }
 }
