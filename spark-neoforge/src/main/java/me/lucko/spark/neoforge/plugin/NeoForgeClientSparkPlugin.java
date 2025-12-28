@@ -56,7 +56,7 @@ public class NeoForgeClientSparkPlugin extends MinecraftClientSparkPlugin<NeoFor
     }
 
     public NeoForgeClientSparkPlugin(NeoForgeSparkMod mod, Minecraft minecraft) {
-        super(mod, minecraft, minecraft.gameThread);
+        super(mod, minecraft, () -> minecraft.gameThread);
     }
 
     @Override
