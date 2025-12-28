@@ -62,7 +62,7 @@ public class ForgeClientSparkPlugin extends MinecraftClientSparkPlugin<ForgeSpar
     private Collection<EventListener> listeners = Collections.emptyList();
 
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
-        super(mod, minecraft, minecraft.gameThread);
+        super(mod, minecraft, () -> minecraft.gameThread);
     }
 
     @Override
