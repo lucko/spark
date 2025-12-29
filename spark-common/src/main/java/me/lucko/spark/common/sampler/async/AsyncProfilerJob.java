@@ -25,6 +25,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
 import one.profiler.AsyncProfiler;
+import org.checkerframework.checker.lock.qual.GuardedBy;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -56,16 +57,15 @@ public class AsyncProfilerJob {
      * @return the job
      */
     static AsyncProfilerJob createNew(AsyncProfilerAccess access, AsyncProfiler profiler) {
-        synchronized (ACTIVE) {
-            AsyncProfilerJob existing = ACTIVE.get();
-            if (existing != null) {
-                throw new IllegalStateException("Another profiler is already active: " + existing);
-            }
-
-            AsyncProfilerJob job = new AsyncProfilerJob(access, profiler);
-            ACTIVE.set(job);
-            return job;
+        AsyncProfilerJob job = new AsyncProfilerJob(access, profiler);
+        if (!ACTIVE.compareAndSet(null, job)) {
+            throw new IllegalStateException("Another profiler is already active: " + ACTIVE.get());
         }
+        return job;
+    }
+
+    public static AsyncProfilerJob getActiveJob() {
+        return ACTIVE.get();
     }
 
     /** The async-profiler access object */
@@ -126,6 +126,10 @@ public class AsyncProfilerJob {
         this.window = window;
         this.quiet = quiet;
         this.forceNanoTime = forceNanoTime;
+    }
+
+    public SparkPlatform getPlatform() {
+        return this.platform;
     }
 
     /**
