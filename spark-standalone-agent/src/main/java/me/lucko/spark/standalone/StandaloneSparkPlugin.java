@@ -28,7 +28,6 @@ import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.util.classfinder.FallbackClassFinder;
 import me.lucko.spark.common.util.classfinder.InstrumentationClassFinder;
-import me.lucko.spark.standalone.remote.RemoteInterface;
 import me.lucko.spark.standalone.remote.SshRemoteInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -53,8 +52,7 @@ public class StandaloneSparkPlugin implements SparkPlugin {
     private final Set<StandaloneCommandSender> senders;
     private final ScheduledExecutorService scheduler;
     private final SparkPlatform platform;
-
-    private final RemoteInterface remoteInterface;
+    private final SshRemoteInterface remoteInterface;
 
     public StandaloneSparkPlugin(Instrumentation instrumentation, Map<String, String> arguments) {
         this.instrumentation = instrumentation;
@@ -156,5 +154,9 @@ public class StandaloneSparkPlugin implements SparkPlugin {
                 new InstrumentationClassFinder(this.instrumentation),
                 FallbackClassFinder.INSTANCE
         );
+    }
+
+    public SshRemoteInterface getRemoteInterface() {
+        return this.remoteInterface;
     }
 }

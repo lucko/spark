@@ -22,6 +22,7 @@ package me.lucko.spark.standalone;
 
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
+import me.lucko.spark.standalone.remote.SshRemoteInterface;
 
 import java.lang.instrument.Instrumentation;
 import java.net.URI;
@@ -30,8 +31,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public class StandaloneSparkAgent {
+
+    private static final String AGENT_PORT_PROPERTY = "spark.agent.port";
+    private static final String AGENT_PASSWORD_PROPERTY = "spark.agent.password";
 
     // Entry point when the agent is run as a normal jar
     public static void main(String[] args) {
@@ -56,7 +61,12 @@ public class StandaloneSparkAgent {
             URI agentPath = StandaloneSparkAgent.class.getProtectionDomain().getCodeSource().getLocation().toURI();
             String arguments = String.join(",", Arrays.copyOfRange(args, 1, args.length));
             vm.loadAgent(Paths.get(agentPath).toAbsolutePath().toString(), arguments);
-            System.out.println("[spark] Agent loaded successfully.");
+
+            System.out.println("[spark] Successfully attached to the JVM (pid=" + args[0] + ") and loaded the spark agent.");
+
+            Properties properties = vm.getSystemProperties();
+            printMetadataFromSystemProperties(properties);
+
             vm.detach();
         } catch (Throwable e) {
             System.err.println("Failed to attach agent to process " + args[0]);
@@ -67,16 +77,16 @@ public class StandaloneSparkAgent {
     // Entry point when the agent is loaded via -javaagent
     public static void premain(String agentArgs, Instrumentation instrumentation) {
         System.out.println("[spark] Loading standalone agent... (premain)");
-        init(agentArgs, instrumentation);
+        init(agentArgs, instrumentation, false);
     }
 
     // Entry point when the agent is loaded via VirtualMachine#loadAgent
     public static void agentmain(String agentArgs, Instrumentation instrumentation) {
         System.out.println("[spark] Loading standalone agent... (agentmain)");
-        init(agentArgs, instrumentation);
+        init(agentArgs, instrumentation, true);
     }
 
-    private static void init(String agentArgs, Instrumentation instrumentation) {
+    private static void init(String agentArgs, Instrumentation instrumentation, boolean writeMetadata) {
         try {
             Map<String, String> arguments = new HashMap<>();
             if (agentArgs == null) {
@@ -90,10 +100,33 @@ public class StandaloneSparkAgent {
                     arguments.put(arg, "true");
                 }
             }
-            new StandaloneSparkPlugin(instrumentation, arguments);
+
+            StandaloneSparkPlugin plugin = new StandaloneSparkPlugin(instrumentation, arguments);
+            if (writeMetadata) {
+                writeMetadataToSystemProperties(plugin);
+            }
+
         } catch (Throwable e) {
             System.err.println("[spark] Loading failed :(");
             e.printStackTrace(System.err);
+        }
+    }
+
+    private static void writeMetadataToSystemProperties(StandaloneSparkPlugin plugin) {
+        SshRemoteInterface ssh = plugin.getRemoteInterface();
+        System.setProperty(AGENT_PORT_PROPERTY, String.valueOf(ssh.getPort()));
+        System.setProperty(AGENT_PASSWORD_PROPERTY, ssh.getPassword());
+    }
+
+    private static void printMetadataFromSystemProperties(Properties properties) {
+        String port = properties.getProperty(AGENT_PORT_PROPERTY);
+        String password = properties.getProperty(AGENT_PASSWORD_PROPERTY);
+
+        if (port != null && password != null) {
+            System.out.println();
+            System.out.println("[spark] SSH Server running on port " + port);
+            System.out.println("[spark] Connect using: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p " + port + " spark@localhost");
+            System.out.println("[spark] When prompted, enter the password: " + password);
         }
     }
 
