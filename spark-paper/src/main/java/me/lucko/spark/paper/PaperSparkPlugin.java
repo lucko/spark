@@ -97,7 +97,7 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
 
     @Override
     public Collection<String> getPermissions() {
-        return this.platform.getAllSparkPermissions();
+        return this.platform.getCommandManager().getAllSparkPermissions();
     }
 
     @Override

@@ -110,7 +110,7 @@ public class CommandResponseHandler {
     }
 
     public void broadcast(Component message) {
-        if (this.platform.shouldBroadcastResponse()) {
+        if (this.platform.getCommandManager().shouldBroadcastResponse()) {
             allSenders(sender -> sendMessage(sender, message));
         } else {
             reply(message);
@@ -118,7 +118,7 @@ public class CommandResponseHandler {
     }
 
     public void broadcast(Iterable<Component> message) {
-        if (this.platform.shouldBroadcastResponse()) {
+        if (this.platform.getCommandManager().shouldBroadcastResponse()) {
             Component joinedMsg = Component.join(JoinConfiguration.separator(Component.newline()), message);
             allSenders(sender -> sendMessage(sender, joinedMsg));
         } else {

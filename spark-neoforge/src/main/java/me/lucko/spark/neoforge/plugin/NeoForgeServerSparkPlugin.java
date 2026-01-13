@@ -112,7 +112,7 @@ public class NeoForgeServerSparkPlugin extends MinecraftServerSparkPlugin<NeoFor
     @SubscribeEvent
     public void onPermissionGather(PermissionGatherEvent.Nodes e) {
         // collect all possible permissions
-        List<String> permissions = this.platform.getCommands().stream()
+        List<String> permissions = this.platform.getCommandManager().getCommands().stream()
                 .map(me.lucko.spark.common.command.Command::primaryAlias)
                 .collect(Collectors.toList());
 
