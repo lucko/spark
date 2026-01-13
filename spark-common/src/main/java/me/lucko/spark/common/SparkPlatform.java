@@ -74,7 +74,6 @@ public class SparkPlatform {
     private final BytebinClient bytebinClient;
     private final BytesocksClient bytesocksClient;
     private final TrustedKeyStore trustedKeyStore;
-    private final CommandManager commandManager;
     private final ActivityLog activityLog;
     private final SamplerContainer samplerContainer;
     private final BackgroundSamplerManager backgroundSamplerManager;
@@ -83,9 +82,10 @@ public class SparkPlatform {
     private final TickStatistics tickStatistics;
     private final PingStatistics pingStatistics;
     private final PlatformStatisticsProvider statisticsProvider;
+    private final CommandManager commandManager;
+    private final AtomicBoolean enabled = new AtomicBoolean(false);
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
     private long serverNormalOperationStartTime;
-    private final AtomicBoolean enabled = new AtomicBoolean(false);
 
     public SparkPlatform(SparkPlugin plugin) {
         this.plugin = plugin;
@@ -112,8 +112,6 @@ public class SparkPlatform {
         this.activityLog = new ActivityLog(plugin.getPluginDirectory().resolve("activity.json"));
         this.activityLog.load();
 
-        this.commandManager = new CommandManager(this, this.configuration);
-
         this.samplerContainer = new SamplerContainer();
         this.backgroundSamplerManager = new BackgroundSamplerManager(this, this.configuration);
 
@@ -129,6 +127,8 @@ public class SparkPlatform {
         this.pingStatistics = pingProvider != null ? new PingStatistics(pingProvider) : null;
 
         this.statisticsProvider = new PlatformStatisticsProvider(this);
+
+        this.commandManager = new CommandManager(this, this.configuration);
     }
 
     public void enable() {
@@ -164,6 +164,8 @@ public class SparkPlatform {
     }
 
     public void disable() {
+        this.commandManager.close();
+
         if (this.tickHook != null) {
             this.tickHook.close();
         }
@@ -173,8 +175,6 @@ public class SparkPlatform {
         if (this.pingStatistics != null) {
             this.pingStatistics.close();
         }
-
-        this.commandManager.close();
 
         this.samplerContainer.close();
 
@@ -279,15 +279,15 @@ public class SparkPlatform {
     }
 
     public boolean hasPermissionForAnyCommand(CommandSender sender) {
-        return commandManager.hasPermissionForAnyCommand(sender);
+        return this.commandManager.hasPermissionForAnyCommand(sender);
     }
 
     public CompletableFuture<Void> executeCommand(CommandSender sender, String[] args) {
-        return commandManager.executeCommand(sender, args);
+        return this.commandManager.executeCommand(sender, args);
     }
 
     public List<String> tabCompleteCommand(CommandSender sender, String[] args) {
-        return commandManager.tabCompleteCommand(sender, args);
+        return this.commandManager.tabCompleteCommand(sender, args);
     }
 
 }

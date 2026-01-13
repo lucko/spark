@@ -72,14 +72,15 @@ public class CommandManager implements AutoCloseable {
 
         this.disableResponseBroadcast = configuration.getBoolean("disableResponseBroadcast", false);
 
-        this.modules = ImmutableList.of(
-                new SamplerModule(),
-                new HealthModule(),
-                new TickMonitoringModule(),
-                new GcMonitoringModule(),
-                new HeapAnalysisModule(),
-                new ActivityLogModule()
-        );
+        this.modules = new ArrayList<>();
+        this.modules.add(new SamplerModule());
+        this.modules.add(new HealthModule());
+        if (platform.getTickHook() != null) {
+            this.modules.add(new TickMonitoringModule());
+        }
+        this.modules.add(new GcMonitoringModule());
+        this.modules.add(new HeapAnalysisModule());
+        this.modules.add(new ActivityLogModule());
 
         ImmutableList.Builder<Command> commandsBuilder = ImmutableList.builder();
         for (CommandModule module : this.modules) {
