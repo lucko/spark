@@ -58,7 +58,6 @@ public class SparkPlatformTest {
                             "spark.tps",
                             "spark.ping",
                             "spark.healthreport",
-                            "spark.tickmonitor",
                             "spark.gc",
                             "spark.gcmonitor",
                             "spark.heapsummary",
