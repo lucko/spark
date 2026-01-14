@@ -191,6 +191,7 @@ message WorldStatistics {
     string name = 1;
     string description = 2;
     string source = 3;
+    bool builtin = 4;
   }
 }
 
@@ -238,6 +239,7 @@ message PluginOrModMetadata {
   string version = 2;
   string author = 3;
   string description = 4;
+  bool builtin = 5;
 }
 
 message HealthData {

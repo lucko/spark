@@ -163,11 +163,17 @@ public interface WorldInfoProvider {
         private final String name;
         private final String description;
         private final String source;
+        private final boolean builtIn;
 
-        public DataPackInfo(String name, String description, String source) {
+        public DataPackInfo(String name, String description, String source, boolean builtIn) {
             this.name = name;
             this.description = description;
             this.source = source;
+            this.builtIn = builtIn;
+        }
+
+        public DataPackInfo(String name, String description, String source) {
+            this(name, description, source, false);
         }
 
         public String name() {
@@ -180,6 +186,10 @@ public interface WorldInfoProvider {
 
         public String source() {
             return this.source;
+        }
+
+        public boolean builtIn() {
+            return this.builtIn;
         }
     }
 
