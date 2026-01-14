@@ -197,12 +197,14 @@ public class PlatformStatisticsProvider {
                     .setLast1M(tickStatistics.tps1Min())
                     .setLast5M(tickStatistics.tps5Min())
                     .setLast15M(tickStatistics.tps15Min())
+                    .setGameTargetTps(tickStatistics.gameTargetTps())
                     .build()
             );
             if (tickStatistics.isDurationSupported()) {
                 builder.setMspt(PlatformStatistics.Mspt.newBuilder()
                         .setLast1M(rollingAvgProto(tickStatistics.duration1Min()))
                         .setLast5M(rollingAvgProto(tickStatistics.duration5Min()))
+                        .setGameMaxIdealMspt(tickStatistics.gameMaxIdealDuration())
                         .build()
                 );
             }

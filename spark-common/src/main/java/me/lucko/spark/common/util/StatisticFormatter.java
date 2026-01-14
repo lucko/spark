@@ -42,36 +42,37 @@ public enum StatisticFormatter {
     private static final String BAR_TRUE_CHARACTER = "┃";
     private static final String BAR_FALSE_CHARACTER = "╻";
 
-    public static TextComponent formatTps(double tps) {
+    public static TextComponent formatTps(double tps, int gameTargetTps) {
         TextColor color;
-        if (tps > 18.0) {
+
+        if (tps > (gameTargetTps * 0.9d)) {
             color = GREEN;
-        } else if (tps > 16.0) {
+        } else if (tps > (gameTargetTps * 0.8d)) {
             color = YELLOW;
         } else {
             color = RED;
         }
 
-        return text((tps > 20.0 ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, 20.0), color);
+        return text((tps > gameTargetTps ? "*" : "") + Math.min(Math.round(tps * 100.0) / 100.0, gameTargetTps), color);
     }
 
-    public static TextComponent formatTickDurations(DoubleAverageInfo average) {
+    public static TextComponent formatTickDurations(DoubleAverageInfo average, int gameMaxIdealDuration) {
         return text()
-                .append(formatTickDuration(average.min()))
+                .append(formatTickDuration(average.min(), gameMaxIdealDuration))
                 .append(text('/', GRAY))
-                .append(formatTickDuration(average.median()))
+                .append(formatTickDuration(average.median(), gameMaxIdealDuration))
                 .append(text('/', GRAY))
-                .append(formatTickDuration(average.percentile95th()))
+                .append(formatTickDuration(average.percentile95th(), gameMaxIdealDuration))
                 .append(text('/', GRAY))
-                .append(formatTickDuration(average.max()))
+                .append(formatTickDuration(average.max(), gameMaxIdealDuration))
                 .build();
     }
 
-    public static TextComponent formatTickDuration(double duration) {
+    public static TextComponent formatTickDuration(double duration, int gameMaxIdealDuration) {
         TextColor color;
-        if (duration >= 50d) {
+        if (duration >= gameMaxIdealDuration) {
             color = RED;
-        } else if (duration >= 40d) {
+        } else if (duration >= (gameMaxIdealDuration * 0.8d)) {
             color = YELLOW;
         } else {
             color = GREEN;

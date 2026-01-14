@@ -106,6 +106,11 @@ public class SparkTickStatistics implements TickHook.Callback, TickReporter.Call
     }
 
     @Override
+    public int gameTargetTps() {
+        return TPS;
+    }
+
+    @Override
     public double tps5Sec() {
         return this.tps5Sec.getAverage();
     }

@@ -41,25 +41,25 @@ public enum SparkPlaceholder {
 
         if (arg == null) {
             return Component.text()
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec())).append(Component.text(", "))
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec())).append(Component.text(", "))
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps1Min())).append(Component.text(", "))
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Min())).append(Component.text(", "))
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps15Min()))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec(), tickStatistics.gameTargetTps())).append(Component.text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec(), tickStatistics.gameTargetTps())).append(Component.text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps1Min(), tickStatistics.gameTargetTps())).append(Component.text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Min(), tickStatistics.gameTargetTps())).append(Component.text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps15Min(), tickStatistics.gameTargetTps()))
                     .build();
         }
 
         switch (arg) {
             case "5s":
-                return StatisticFormatter.formatTps(tickStatistics.tps5Sec());
+                return StatisticFormatter.formatTps(tickStatistics.tps5Sec(), tickStatistics.gameTargetTps());
             case "10s":
-                return StatisticFormatter.formatTps(tickStatistics.tps10Sec());
+                return StatisticFormatter.formatTps(tickStatistics.tps10Sec(), tickStatistics.gameTargetTps());
             case "1m":
-                return StatisticFormatter.formatTps(tickStatistics.tps1Min());
+                return StatisticFormatter.formatTps(tickStatistics.tps1Min(), tickStatistics.gameTargetTps());
             case "5m":
-                return StatisticFormatter.formatTps(tickStatistics.tps5Min());
+                return StatisticFormatter.formatTps(tickStatistics.tps5Min(), tickStatistics.gameTargetTps());
             case "15m":
-                return StatisticFormatter.formatTps(tickStatistics.tps15Min());
+                return StatisticFormatter.formatTps(tickStatistics.tps15Min(), tickStatistics.gameTargetTps());
         }
 
         return null;
@@ -73,16 +73,16 @@ public enum SparkPlaceholder {
 
         if (arg == null) {
             return Component.text()
-                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec())).append(Component.text(";  "))
-                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min()))
+                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec(), tickStatistics.gameMaxIdealDuration())).append(Component.text(";  "))
+                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min(), tickStatistics.gameMaxIdealDuration()))
                     .build();
         }
 
         switch (arg) {
             case "10s":
-                return StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec());
+                return StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec(), tickStatistics.gameMaxIdealDuration());
             case "1m":
-                return StatisticFormatter.formatTickDurations(tickStatistics.duration1Min());
+                return StatisticFormatter.formatTickDurations(tickStatistics.duration1Min(), tickStatistics.gameMaxIdealDuration());
         }
 
         return null;

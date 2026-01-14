@@ -22,10 +22,14 @@ package me.lucko.spark.common.monitor.tick;
 
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Provides the server TPS (ticks per second) and MSPT (milliseconds per tick) rates.
  */
 public interface TickStatistics {
+
+    int gameTargetTps();
 
     double tps5Sec();
     double tps10Sec();
@@ -34,6 +38,11 @@ public interface TickStatistics {
     double tps15Min();
 
     boolean isDurationSupported();
+
+    default int gameMaxIdealDuration() {
+        int millisInSeconds = (int) TimeUnit.SECONDS.toMillis(1);
+        return millisInSeconds / gameTargetTps();
+    }
 
     DoubleAverageInfo duration10Sec();
     DoubleAverageInfo duration1Min();

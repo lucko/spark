@@ -106,11 +106,11 @@ public class HealthModule implements CommandModule {
             resp.replyPrefixed(text("TPS from last 5s, 10s, 1m, 5m, 15m:"));
             resp.replyPrefixed(text()
                     .content(" ")
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec())).append(text(", "))
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec())).append(text(", "))
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps1Min())).append(text(", "))
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Min())).append(text(", "))
-                    .append(StatisticFormatter.formatTps(tickStatistics.tps15Min()))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec(), tickStatistics.gameTargetTps())).append(text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec(), tickStatistics.gameTargetTps())).append(text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps1Min(), tickStatistics.gameTargetTps())).append(text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps5Min(), tickStatistics.gameTargetTps())).append(text(", "))
+                    .append(StatisticFormatter.formatTps(tickStatistics.tps15Min(), tickStatistics.gameTargetTps()))
                     .build()
             );
             resp.replyPrefixed(empty());
@@ -119,8 +119,8 @@ public class HealthModule implements CommandModule {
                 resp.replyPrefixed(text("Tick durations (min/med/95%ile/max ms) from last 10s, 1m:"));
                 resp.replyPrefixed(text()
                         .content(" ")
-                        .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec())).append(text(";  "))
-                        .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min()))
+                        .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec(), tickStatistics.gameMaxIdealDuration())).append(text(";  "))
+                        .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min(), tickStatistics.gameMaxIdealDuration()))
                         .build()
                 );
                 resp.replyPrefixed(empty());
@@ -263,11 +263,11 @@ public class HealthModule implements CommandModule {
         );
         report.add(text()
                 .content("    ")
-                .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec())).append(text(", "))
-                .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec())).append(text(", "))
-                .append(StatisticFormatter.formatTps(tickStatistics.tps1Min())).append(text(", "))
-                .append(StatisticFormatter.formatTps(tickStatistics.tps5Min())).append(text(", "))
-                .append(StatisticFormatter.formatTps(tickStatistics.tps15Min()))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps5Sec(), tickStatistics.gameTargetTps())).append(text(", "))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps10Sec(), tickStatistics.gameTargetTps())).append(text(", "))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps1Min(), tickStatistics.gameTargetTps())).append(text(", "))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps5Min(), tickStatistics.gameTargetTps())).append(text(", "))
+                .append(StatisticFormatter.formatTps(tickStatistics.tps15Min(), tickStatistics.gameTargetTps()))
                 .build()
         );
         report.add(empty());
@@ -281,8 +281,8 @@ public class HealthModule implements CommandModule {
             );
             report.add(text()
                     .content("    ")
-                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec())).append(text("; "))
-                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min()))
+                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration10Sec(), tickStatistics.gameMaxIdealDuration())).append(text("; "))
+                    .append(StatisticFormatter.formatTickDurations(tickStatistics.duration1Min(), tickStatistics.gameMaxIdealDuration()))
                     .build()
             );
             report.add(empty());
