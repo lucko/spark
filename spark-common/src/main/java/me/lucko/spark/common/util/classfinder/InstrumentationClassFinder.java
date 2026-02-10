@@ -26,6 +26,7 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -39,11 +40,18 @@ public class InstrumentationClassFinder implements ClassFinder {
 
     private static boolean warned = false;
 
+    /**
+     * This is the JVM flag the warning tells you to use.  
+     *
+     * <p>If this is set, Java will never give an admonition, so we shouldn't give a counter-admonition.
+     */
+    private static final boolean NO_WARNING_NEEDED = ManagementFactory.getRuntimeMXBean().getInputArguments().contains("-XX:+EnableDynamicAgentLoading");
+
     private static Instrumentation loadInstrumentation(SparkPlugin plugin) {
         Instrumentation instrumentation = null;
         try {
             instrumentation = ByteBuddyAgent.install();
-            if (!warned && JavaVersion.getJavaVersion() >= 21) {
+            if (!NO_WARNING_NEEDED && !warned && JavaVersion.getJavaVersion() >= 21) {
                 warned = true;
                 plugin.log(Level.INFO, "If you see a warning above that says \"WARNING: A Java agent has been loaded dynamically\", it can be safely ignored.");
                 plugin.log(Level.INFO, "See here for more information: https://spark.lucko.me/docs/misc/Java-agent-warning");
