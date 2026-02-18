@@ -23,7 +23,6 @@ package me.lucko.spark.fabric.placeholder;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
 import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
 import eu.pb4.placeholders.api.PlaceholderResult;
 import eu.pb4.placeholders.api.Placeholders;
 import me.lucko.spark.common.SparkPlatform;

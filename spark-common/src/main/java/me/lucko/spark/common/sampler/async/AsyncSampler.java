@@ -20,7 +20,6 @@
 
 package me.lucko.spark.common.sampler.async;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.AbstractSampler;
@@ -29,12 +28,12 @@ import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.util.Locale;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -84,12 +83,7 @@ public class AsyncSampler extends AbstractSampler {
         this.dataAggregator = dataAggregator;
         this.forceNanoTime = forceNanoTime;
         this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder()
-                        .setNameFormat("spark-async-sampler-worker-thread")
-                        .setUncaughtExceptionHandler(SparkThreadFactory.EXCEPTION_HANDLER)
-                        .build()
-        );
+        this.scheduler = new SparkScheduledThreadPoolExecutor(1, new SparkThreadFactory("spark-async-sampler-worker", false));
     }
 
     /**

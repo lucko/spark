@@ -33,7 +33,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.util.SparkThreadFactory;
+import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.minecraft.SparkMinecraftMod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,7 +41,6 @@ import org.apache.logging.log4j.Logger;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 
@@ -56,7 +55,7 @@ public abstract class MinecraftSparkPlugin<M extends SparkMinecraftMod> implemen
     protected MinecraftSparkPlugin(M mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
-        this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
+        this.scheduler = new SparkScheduledThreadPoolExecutor(4);
     }
 
     public void enable() {

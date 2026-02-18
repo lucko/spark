@@ -25,7 +25,6 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.async.jfr.JfrReader;
 import one.profiler.AsyncProfiler;
-import org.checkerframework.checker.lock.qual.GuardedBy;
 
 import java.io.IOException;
 import java.nio.file.Files;
