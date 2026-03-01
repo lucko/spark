@@ -213,6 +213,8 @@ message WindowStatistics {
   int64 start_time = 11;
   int64 end_time = 12;
   int32 duration = 13;
+
+  bool is_provisional = 14;
 }
 
 message RollingAverageValues {

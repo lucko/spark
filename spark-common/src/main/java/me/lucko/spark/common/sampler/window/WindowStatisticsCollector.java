@@ -30,10 +30,12 @@ import me.lucko.spark.common.sampler.java.TickedJavaDataAggregator;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.proto.SparkProtos;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.IntPredicate;
 import java.util.logging.Level;
 
@@ -43,6 +45,7 @@ import java.util.logging.Level;
 public class WindowStatisticsCollector {
     private static final SparkProtos.WindowStatistics ZERO = SparkProtos.WindowStatistics.newBuilder()
             .setDuration(ProfilingWindowUtils.WINDOW_SIZE_SECONDS * 1000)
+            .setIsProvisional(true)
             .build();
 
     /** The platform */
@@ -121,7 +124,14 @@ public class WindowStatisticsCollector {
      * @param window the window
      */
     public void measureNow(int window) {
-        this.stats.computeIfAbsent(window, this::measure);
+        this.stats.compute(window, (w, existing) -> {
+            if (existing == null || existing.getIsProvisional()) {
+                // if existing is null or is provisional, replace it
+                return measure(w, false);
+            } else {
+                return existing;
+            }
+        });
     }
 
     /**
@@ -130,8 +140,21 @@ public class WindowStatisticsCollector {
      * @param windows the expected windows
      */
     public void ensureHasStatisticsForAllWindows(int[] windows) {
+        int lastWindow = Arrays.stream(windows).max().orElse(-1);
         for (int window : windows) {
-            this.stats.computeIfAbsent(window, w -> ZERO);
+            this.stats.compute(window, (w, existing) -> {
+                if (existing != null && !existing.getIsProvisional()) {
+                    return existing;
+                }
+
+                // if this is the last window, record provisional stats
+                // (which will be replaced by real stats when the window ends)
+                if (lastWindow == w) {
+                    return measure(w, true);
+                }
+
+                return ZERO;
+            });
         }
     }
 
@@ -148,7 +171,7 @@ public class WindowStatisticsCollector {
      *
      * @return the current statistics
      */
-    private SparkProtos.WindowStatistics measure(int window) {
+    private SparkProtos.WindowStatistics measure(int window, boolean provisional) {
         SparkProtos.WindowStatistics.Builder builder = SparkProtos.WindowStatistics.newBuilder();
 
         long endTime = System.currentTimeMillis();
@@ -193,6 +216,8 @@ public class WindowStatisticsCollector {
         } catch (Exception e) {
             this.platform.getPlugin().log(Level.WARNING, "Exception occurred while getting world info", e);
         }
+
+        builder.setIsProvisional(provisional);
 
         return builder.build();
     }
