@@ -55,7 +55,7 @@ jobs:
         with:
           name: jars
           path: |
-            **/build/libs/spark-1.*-*.jar
+            **/build/libs/spark-*.jar
 
       - name: Delete old release if it already exists
         run: gh release delete --yes "${RELEASE_VERSION}"
@@ -78,8 +78,8 @@ jobs:
             -f tag_name="${RELEASE_VERSION}" \
             --jq ".body" > "${CHANGELOG_FILE}"
 
-          echo "Running release for: gh release create \"${RELEASE_VERSION}\" -F \"${CHANGELOG_FILE}\" $PRERELEASE **/build/libs/spark-1.*-*.jar"
-          gh release create "${RELEASE_VERSION}" -F "${CHANGELOG_FILE}" $PRERELEASE **/build/libs/spark-1.*-*.jar
+          echo "Running release for: gh release create \"${RELEASE_VERSION}\" -F \"${CHANGELOG_FILE}\" $PRERELEASE **/build/libs/spark-*.jar"
+          gh release create "${RELEASE_VERSION}" -F "${CHANGELOG_FILE}" $PRERELEASE **/build/libs/spark-*.jar
         shell: bash
         continue-on-error: true
         env:
