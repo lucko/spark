@@ -32,9 +32,13 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 /**
  * Provides a bridge between spark and async-profiler.
@@ -70,12 +74,20 @@ public class AsyncProfilerAccess {
 
         try {
             profiler = load(platform);
-            if (isEventSupported(profiler, ProfilingEvent.ALLOC, false)) {
+            Set<ProfilingEvent> supportedEvents = getSupportedEvents(profiler);
+
+            // allocation profiler
+            if (supportedEvents.contains(ProfilingEvent.ALLOC)) {
                 allocationProfilingEvent = ProfilingEvent.ALLOC;
             }
-            if (isEventSupported(profiler, ProfilingEvent.WALL, true)) {
+
+            // normal profiler
+            if (supportedEvents.contains(ProfilingEvent.WALL)) {
                 profilingEvent = ProfilingEvent.WALL;
+            } else {
+                throw new IllegalStateException("'wall' event is not supported");
             }
+
         } catch (Exception e) {
             profiler = null;
             setupException = e;
@@ -179,25 +191,27 @@ public class AsyncProfilerAccess {
     }
 
     /**
-     * Checks the {@code profiler} to ensure the CPU event is supported.
+     * Gets the set of supported events from the profiler.
      *
      * @param profiler the profiler instance
-     * @return if the event is supported
+     * @return the set of supported events
      */
-    private static boolean isEventSupported(AsyncProfiler profiler, ProfilingEvent event, boolean throwException) {
+    private static Set<ProfilingEvent> getSupportedEvents(AsyncProfiler profiler) {
+        String resp;
         try {
-            String resp = profiler.execute("check,event=" + event).trim();
-            if (resp.equalsIgnoreCase("ok")) {
-                return true;
-            } else if (throwException) {
-                throw new IllegalArgumentException(resp);
-            }
+            resp = profiler.execute("list");
         } catch (Exception e) {
-            if (throwException) {
-                throw new RuntimeException("Event " + event + " is not supported", e);
-            }
+            throw new RuntimeException("Unable to list supported events", e);
         }
-        return false;
+
+        List<String> respLines = Arrays.stream(resp.split("\\r?\\n"))
+                .filter(line -> line.startsWith("  "))
+                .map(String::trim)
+                .collect(Collectors.toList());
+
+        return Arrays.stream(ProfilingEvent.values())
+                .filter(event -> respLines.contains(event.getId()))
+                .collect(Collectors.toSet());
     }
 
     public enum ProfilingEvent {
@@ -208,6 +222,10 @@ public class AsyncProfilerAccess {
 
         ProfilingEvent(String id) {
             this.id = id;
+        }
+
+        public String getId() {
+            return this.id;
         }
 
         @Override
