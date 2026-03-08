@@ -20,6 +20,7 @@
 
 package me.lucko.spark.standalone;
 
+import me.lucko.spark.common.SparkBuildInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.CommandResponseHandler;
@@ -99,7 +100,7 @@ public class StandaloneSparkPlugin implements SparkPlugin {
 
     @Override
     public String getVersion() {
-        return "@version@";
+        return SparkBuildInfo.VERSION;
     }
 
     @Override

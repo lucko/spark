@@ -33,8 +33,8 @@ import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.SparkPlaceholder;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -145,7 +145,7 @@ public class SparkApi implements Spark {
                 "Milliseconds Per Tick", DoubleAverageInfo.class, MillisPerTick.class
         ) {
             @Override
-            public DoubleAverageInfo poll(@NonNull MillisPerTick window) {
+            public @org.jspecify.annotations.NonNull DoubleAverageInfo poll(@NonNull MillisPerTick window) {
                 switch (window) {
                     case SECONDS_10:
                         return stats.duration10Sec();

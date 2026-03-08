@@ -1,5 +1,4 @@
 plugins {
-    id 'net.kyori.blossom' version '1.3.1'
     id 'com.gradleup.shadow'
 }
 
@@ -11,12 +10,6 @@ dependencies {
 
 repositories {
     maven { url "https://repo.papermc.io/repository/maven-public/" }
-}
-
-blossom {
-    replaceTokenIn('src/main/java/me/lucko/spark/velocity/VelocitySparkPlugin.java')
-    replaceToken '@version@', project.pluginVersion
-    replaceToken '@desc@', project.pluginDescription
 }
 
 shadowJar {
@@ -35,9 +28,4 @@ shadowJar {
     relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
     project.applyExcludes(delegate)
-}
-
-artifacts {
-    archives shadowJar
-    shadow shadowJar
 }

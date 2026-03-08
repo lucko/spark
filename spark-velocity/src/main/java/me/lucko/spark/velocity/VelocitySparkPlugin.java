@@ -29,6 +29,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import me.lucko.spark.common.SparkBuildInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
@@ -46,8 +47,8 @@ import java.util.stream.Stream;
 @Plugin(
         id = "spark",
         name = "spark",
-        version = "@version@",
-        description = "@desc@",
+        version = SparkBuildInfo.VERSION,
+        description = SparkBuildInfo.DESCRIPTION,
         authors = {"Luck"}
 )
 public class VelocitySparkPlugin implements SparkPlugin, SimpleCommand {

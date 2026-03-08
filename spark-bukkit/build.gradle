@@ -47,8 +47,3 @@ shadowJar {
 
     project.applyExcludes(delegate)
 }
-
-artifacts {
-    archives shadowJar
-    shadow shadowJar
-}

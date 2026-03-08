@@ -34,7 +34,7 @@ import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import net.kyori.adventure.text.Component;
 import org.apache.logging.log4j.Logger;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 import org.spongepowered.api.Game;
 import org.spongepowered.api.Server;
 import org.spongepowered.api.command.Command;

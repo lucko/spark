@@ -1,6 +1,6 @@
 plugins {
     id 'com.gradleup.shadow'
-    id 'net.minecraftforge.gradle' version '[6.0.36,6.2)'
+    id 'net.minecraftforge.gradle' version '[7.0.13,8.0)'
 }
 
 tasks.withType(JavaCompile) {
@@ -10,8 +10,7 @@ tasks.withType(JavaCompile) {
 
 minecraft {
     mappings channel: 'official', version: '1.21.11'
-    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-    reobf = false
+    accessTransformer = true
 }
 
 configurations {
@@ -19,9 +18,15 @@ configurations {
     implementation.extendsFrom shade
 }
 
+repositories {
+    minecraft.mavenizer(it)
+    maven fg.forgeMaven
+    maven fg.minecraftLibsMaven
+}
+
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.21.11-61.0.0'
-    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0-beta.12'
+    implementation minecraft.dependency('net.minecraftforge:forge:1.21.11-61.1.3')
+    annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
     shade project(':spark-common')
     shade project(':spark-minecraft')
 }
@@ -55,9 +60,4 @@ shadowJar {
     relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
     project.applyExcludes(delegate)
-}
-
-artifacts {
-    archives shadowJar
-    shadow shadowJar
 }

@@ -23,7 +23,7 @@ package me.lucko.spark.common.util.classfinder;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.util.JavaVersion;
 import net.bytebuddy.agent.ByteBuddyAgent;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.instrument.Instrumentation;
 import java.util.HashMap;

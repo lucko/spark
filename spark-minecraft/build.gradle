@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom'
+    id 'net.fabricmc.fabric-loom-remap'
 }
 
 tasks.withType(JavaCompile) {

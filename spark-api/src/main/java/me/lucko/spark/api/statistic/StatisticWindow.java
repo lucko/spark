@@ -25,8 +25,7 @@
 
 package me.lucko.spark.api.statistic;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import java.time.Duration;
 
@@ -58,7 +57,7 @@ public interface StatisticWindow {
         }
 
         @Override
-        public @NotNull Duration length() {
+        public @NonNull Duration length() {
             return this.value;
         }
     }
@@ -81,7 +80,7 @@ public interface StatisticWindow {
         }
 
         @Override
-        public @NotNull Duration length() {
+        public @NonNull Duration length() {
             return this.value;
         }
     }
@@ -102,7 +101,7 @@ public interface StatisticWindow {
         }
 
         @Override
-        public @NotNull Duration length() {
+        public @NonNull Duration length() {
             return this.value;
         }
     }

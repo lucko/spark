@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.monitor;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

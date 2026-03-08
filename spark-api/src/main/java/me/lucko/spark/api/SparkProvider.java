@@ -25,7 +25,7 @@
 
 package me.lucko.spark.api;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Singleton provider for {@link Spark}.

@@ -25,7 +25,7 @@
 
 package me.lucko.spark.api.gc;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Statistics about a garbage collector.

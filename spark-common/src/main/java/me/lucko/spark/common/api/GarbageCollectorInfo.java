@@ -22,7 +22,7 @@ package me.lucko.spark.common.api;
 
 import me.lucko.spark.api.gc.GarbageCollector;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 public class GarbageCollectorInfo implements GarbageCollector {
     private final String name;

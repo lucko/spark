@@ -24,7 +24,7 @@ import me.lucko.spark.api.statistic.Statistic;
 import me.lucko.spark.api.statistic.StatisticWindow;
 import me.lucko.spark.api.statistic.types.DoubleStatistic;
 import me.lucko.spark.api.statistic.types.GenericStatistic;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
@@ -73,7 +73,7 @@ public abstract class AbstractStatistic<W extends Enum<W> & StatisticWindow> imp
 
         @SuppressWarnings("unchecked")
         @Override
-        public T[] poll() {
+        public @NonNull T[] poll() {
             T[] values = (T[]) Array.newInstance(this.typeClass, this.windows.length);
             for (int i = 0; i < values.length; i++) {
                 values[i] = poll(this.windows[i]);

@@ -25,7 +25,7 @@
 
 package me.lucko.spark.api.statistic;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * A statistic for which a rolling average in various windows is recorded.

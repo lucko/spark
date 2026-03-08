@@ -1,6 +1,6 @@
 plugins {
     id 'com.gradleup.shadow'
-    id 'net.neoforged.moddev' version '2.0.110'
+    id 'net.neoforged.moddev' version '2.0.140'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -15,7 +15,7 @@ java {
 }
 
 neoForge {
-    version = "21.11.0-beta"
+    version = "21.11.38-beta"
     validateAccessTransformers = true
 
     runs {
@@ -75,9 +75,4 @@ shadowJar {
     project.applyExcludes(delegate)
 
     mergeServiceFiles()
-}
-
-artifacts {
-    archives shadowJar
-    shadow shadowJar
 }
