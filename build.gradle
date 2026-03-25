@@ -1,7 +1,7 @@
 plugins {
     id 'dev.yumi.gradle.licenser' version '2.2.2' apply false
     id 'com.gradleup.shadow' version '8.3.8' apply false
-    id 'net.fabricmc.fabric-loom-remap' version '1.15-SNAPSHOT' apply false
+    id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT' apply false
 }
 
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat

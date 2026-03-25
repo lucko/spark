@@ -4,12 +4,11 @@ plugins {
 }
 
 tasks.withType(JavaCompile) {
-    // override, compile targeting J21
-    options.release = 21
+    // override, compile targeting J25
+    options.release = 25
 }
 
 minecraft {
-    mappings channel: 'official', version: '1.21.11'
     accessTransformer = true
 }
 
@@ -25,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    implementation minecraft.dependency('net.minecraftforge:forge:1.21.11-61.1.3')
+    implementation minecraft.dependency('net.minecraftforge:forge:26.1-62.0.1')
     annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
     shade project(':spark-common')
     shade project(':spark-minecraft')

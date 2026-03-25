@@ -123,7 +123,7 @@ public class ForgeClientSparkPlugin extends MinecraftClientSparkPlugin<ForgeSpar
     @Override
     public Collection<SourceMetadata> getKnownSources() {
         return SourceMetadata.gather(
-                ModList.get().getMods(),
+                ModList.getMods(),
                 IModInfo::getModId,
                 mod -> mod.getVersion().toString(),
                 mod -> null, // ?

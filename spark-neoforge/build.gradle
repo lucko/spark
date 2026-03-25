@@ -1,21 +1,21 @@
 plugins {
     id 'com.gradleup.shadow'
-    id 'net.neoforged.moddev' version '2.0.140'
+    id 'net.neoforged.moddev' version '2.0.141'
 }
 
 tasks.withType(JavaCompile).configureEach {
-    // override, compile targeting J21
-    options.release = 21
+    // override, compile targeting J25
+    options.release = 25
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
 neoForge {
-    version = "21.11.38-beta"
+    version = "26.1.0.1-beta"
     validateAccessTransformers = true
 
     runs {

@@ -22,8 +22,8 @@ package me.lucko.spark.fabric.placeholder;
 
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
+import eu.pb4.placeholders.api.Placeholder;
 import eu.pb4.placeholders.api.PlaceholderContext;
-import eu.pb4.placeholders.api.PlaceholderHandler;
 import eu.pb4.placeholders.api.PlaceholderResult;
 import eu.pb4.placeholders.api.Placeholders;
 import me.lucko.spark.common.SparkPlatform;
@@ -40,14 +40,14 @@ public enum SparkFabricPlaceholderApi {
 
     public static void register(SparkPlatform platform) {
         for (SparkPlaceholder placeholder : SparkPlaceholder.values()) {
-            Placeholders.register(
+            Placeholders.registerCommon(
                     Identifier.fromNamespaceAndPath("spark", placeholder.getName()),
                     new Handler(platform, placeholder)
             );
         }
     }
 
-    private record Handler(SparkPlatform platform, SparkPlaceholder placeholder) implements PlaceholderHandler {
+    private record Handler(SparkPlatform platform, SparkPlaceholder placeholder) implements Placeholder.Handler<PlaceholderContext, String> {
         @Override
         public PlaceholderResult onPlaceholderRequest(PlaceholderContext context, @Nullable String argument) {
             return toResult(this.placeholder.resolve(this.platform, argument));

@@ -1,10 +1,10 @@
 plugins {
-    id 'net.fabricmc.fabric-loom-remap'
+    id 'net.fabricmc.fabric-loom'
 }
 
 tasks.withType(JavaCompile) {
-    // override, compile targeting J21
-    options.release = 21
+    // override, compile targeting J25
+    options.release = 25
 }
 
 repositories {
@@ -13,12 +13,8 @@ repositories {
 }
 
 dependencies {
-    minecraft 'com.mojang:minecraft:1.21.11'
-    mappings loom.officialMojangMappings()
+    minecraft 'com.mojang:minecraft:26.1'
 
     implementation project(':spark-common')
 }
 
-remapJar {
-    targetNamespace = 'named'
-}
