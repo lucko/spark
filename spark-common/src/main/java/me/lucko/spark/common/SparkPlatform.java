@@ -360,7 +360,7 @@ public class SparkPlatform {
                 int elapsed = 0;
                 for (int delay : delays) {
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(delay * 1000L);
                     } catch (InterruptedException e) {
                         // ignore
                     }
