@@ -356,7 +356,9 @@ public class SparkPlatform {
         this.plugin.executeAsync(() -> {
             timeoutThread.set(Thread.currentThread());
             try {
-                for (int i = 1; i <= 3; i++) {
+                int[] delays = {30, 10, 10};
+                int elapsed = 0;
+                for (int delay : delays) {
                     try {
                         Thread.sleep(5000);
                     } catch (InterruptedException e) {
@@ -367,10 +369,11 @@ public class SparkPlatform {
                         return;
                     }
 
+                    elapsed += delay;
                     Thread executor = executorThread.get();
                     if (executor == null) {
                         getPlugin().log(Level.WARNING, "A command execution has not completed after " +
-                                (i * 5) + " seconds but there is no executor present. Perhaps the executor shutdown?");
+                                elapsed + " seconds but there is no executor present. Perhaps the executor shutdown?");
 
                     } else {
                         String stackTrace = Arrays.stream(executor.getStackTrace())
@@ -378,7 +381,7 @@ public class SparkPlatform {
                                 .collect(Collectors.joining("\n"));
 
                         getPlugin().log(Level.WARNING, "A command execution has not completed after " +
-                                (i * 5) + " seconds, it might be stuck. Trace: \n" + stackTrace);
+                                elapsed + " seconds, it might be stuck. Trace: \n" + stackTrace);
                     }
                 }
             } finally {
