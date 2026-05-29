@@ -21,10 +21,8 @@
 package me.lucko.spark.bukkit;
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent;
-
 import me.lucko.spark.common.tick.AbstractTickReporter;
 import me.lucko.spark.common.tick.TickReporter;
-
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;

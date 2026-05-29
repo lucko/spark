@@ -21,7 +21,6 @@
 package me.lucko.spark.common.ws;
 
 import com.google.protobuf.ByteString;
-
 import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
@@ -118,8 +117,7 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
             String key = this.platform.getBytebinClient().postContent(samplerData, MediaTypes.SPARK_SAMPLER_MEDIA_TYPE, "live").key();
             sendUpdatedSamplerData(key);
         } catch (Exception e) {
-            this.platform.getPlugin().log(Level.WARNING, "Error whilst sending updated sampler data to the socket");
-            e.printStackTrace();
+            this.platform.getPlugin().log(Level.WARNING, "Error whilst sending updated sampler data to the socket", e);
         }
     }
 

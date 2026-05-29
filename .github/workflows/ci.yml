@@ -1,0 +1,86 @@
+name: Build Gradle
+
+on:
+  push:
+    branches:
+      - 'master'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - 'master'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-gradle:
+    env:
+      VERSION: ${{ github.ref_name }}
+      RELEASE_VERSION: ${{ github.ref_name }}
+      SNAPSHOT: ${{ endsWith(github.ref_name, '-snapshot') || contains(github.event.head_commit.message, '[snapshot]') }}
+      PRERELEASE: ${{ endsWith(github.ref_name, '-pre') }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run build and tests with Gradle wrapper
+        run: ./gradlew test build
+
+      - name: Upload all artifacts
+        uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: jars
+          path: |
+            **/build/libs/spark-*.jar
+
+      - name: Delete old release if it already exists
+        run: gh release delete --yes "${RELEASE_VERSION}"
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release under current tag
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          PRERELEASE=""
+          if [[ "$SNAPSHOT" == "true" ]]; then
+            PRERELEASE="--prerelease"
+          fi
+          export "CHANGELOG_FILE=$(mktemp --suffix=.md)"
+          echo "CHANGELOG_FILE=${CHANGELOG_FILE}" >> $GITHUB_ENV
+          gh api --method POST -H "Accept: application/vnd.github+json" \
+            "/repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="${RELEASE_VERSION}" \
+            --jq ".body" > "${CHANGELOG_FILE}"
+
+          echo "Running release for: gh release create \"${RELEASE_VERSION}\" -F \"${CHANGELOG_FILE}\" $PRERELEASE **/build/libs/spark-*.jar"
+          gh release create "${RELEASE_VERSION}" -F "${CHANGELOG_FILE}" $PRERELEASE **/build/libs/spark-*.jar
+        shell: bash
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

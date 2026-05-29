@@ -26,30 +26,30 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
-import me.lucko.spark.common.platform.MetadataProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
-import me.lucko.spark.forge.ForgeCommandSender;
-import me.lucko.spark.forge.ForgeExtraMetadataProvider;
+import me.lucko.spark.forge.ForgeClientCommandSender;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgeSparkMod;
 import me.lucko.spark.forge.ForgeTickHook;
 import me.lucko.spark.forge.ForgeTickReporter;
 import me.lucko.spark.forge.ForgeWorldInfoProvider;
-
 import net.minecraft.client.Minecraft;
-import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
+import net.minecraftforge.eventbus.api.listener.EventListener;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
+import java.lang.invoke.MethodHandles;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -62,6 +62,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
 
     private final Minecraft minecraft;
     private final ThreadDumper gameThreadDumper;
+    private Collection<EventListener> listeners = Collections.emptyList();
 
     public ForgeClientSparkPlugin(ForgeSparkMod mod, Minecraft minecraft) {
         super(mod);
@@ -74,7 +75,18 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
         super.enable();
 
         // register listeners
-        MinecraftForge.EVENT_BUS.register(this);
+        this.listeners = BusGroup.DEFAULT.register(MethodHandles.lookup(), this);
+    }
+
+    @Override
+    public void disable() {
+        super.disable();
+
+        // unregister listeners
+        if (!this.listeners.isEmpty()) {
+            BusGroup.DEFAULT.unregister(this.listeners);
+        }
+        this.listeners = Collections.emptyList();
     }
 
     @SubscribeEvent
@@ -89,7 +101,7 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
             return 0;
         }
 
-        this.platform.executeCommand(new ForgeCommandSender(context.getSource().getEntity(), this), args);
+        this.platform.executeCommand(new ForgeClientCommandSender(context.getSource()), args);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -100,17 +112,12 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
             return Suggestions.empty();
         }
 
-        return generateSuggestions(new ForgeCommandSender(context.getSource().getEntity(), this), args, builder);
+        return generateSuggestions(new ForgeClientCommandSender(context.getSource()), args, builder);
     }
 
     @Override
-    public boolean hasPermission(CommandSource sender, String permission) {
-        return true;
-    }
-
-    @Override
-    public Stream<ForgeCommandSender> getCommandSenders() {
-        return Stream.of(new ForgeCommandSender(this.minecraft.player, this));
+    public Stream<ForgeClientCommandSender> getCommandSenders() {
+        return Stream.of(new ForgeClientCommandSender(ClientCommandHandler.getSource()));
     }
 
     @Override
@@ -136,11 +143,6 @@ public class ForgeClientSparkPlugin extends ForgeSparkPlugin implements Command<
     @Override
     public WorldInfoProvider createWorldInfoProvider() {
         return new ForgeWorldInfoProvider.Client(this.minecraft);
-    }
-
-    @Override
-    public MetadataProvider createExtraMetadataProvider() {
-        return new ForgeExtraMetadataProvider(this.minecraft.getResourcePackRepository());
     }
 
     @Override

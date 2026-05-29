@@ -52,7 +52,7 @@ public class Forge1710ServerSparkPlugin extends Forge1710SparkPlugin {
         FMLCommonHandler.instance().bus().register(plugin);
 
         // register commands & permissions
-        event.registerServerCommand(plugin);
+        event.registerServerCommand(plugin.new VanillaCommand());
 
         return plugin;
     }

@@ -21,7 +21,9 @@
 package me.lucko.spark.forge;
 
 import me.lucko.spark.common.platform.PlatformInfo;
-
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import net.minecraftforge.versions.mcp.MCPVersion;
 
@@ -40,6 +42,14 @@ public class ForgePlatformInfo implements PlatformInfo {
     @Override
     public String getName() {
         return "Forge";
+    }
+
+    @Override
+    public String getBrand() {
+        return ModList.get().getModContainerById(ForgeVersion.MOD_ID)
+                .map(ModContainer::getModInfo)
+                .map(IModInfo::getDisplayName)
+                .orElse("Forge");
     }
 
     @Override

@@ -1,0 +1,20 @@
+modLoader="javafml"
+loaderVersion="[2,)"
+authors="Luck"
+license="GPLv3"
+
+[[mods]]
+modId="spark"
+displayName="spark"
+version="${pluginVersion}"
+description="${pluginDescription}"
+
+[[accessTransformers]]
+file="META-INF/accesstransformer.cfg"
+
+[[dependencies.spark]]
+modId = "neoforge"
+mandatory=true
+versionRange = "[20,)"
+ordering = "NONE"
+side = "BOTH"

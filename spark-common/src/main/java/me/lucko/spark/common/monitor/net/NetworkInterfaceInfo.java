@@ -21,10 +21,9 @@
 package me.lucko.spark.common.monitor.net;
 
 import com.google.common.collect.ImmutableMap;
-
 import me.lucko.spark.common.monitor.LinuxProc;
-
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -202,7 +201,8 @@ public final class NetworkInterfaceInfo {
 
     private static final Pattern PROC_NET_DEV_PATTERN = Pattern.compile("^\\s*(\\w+):([\\d\\s]+)$");
 
-    private static @NonNull Map<String, NetworkInterfaceInfo> read(List<String> output) {
+    @VisibleForTesting
+    static @NonNull Map<String, NetworkInterfaceInfo> read(List<String> output) {
         // Inter-|   Receive                                                |  Transmit
         //  face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
         //     lo: 2776770   11307    0    0    0     0          0         0  2776770   11307    0    0    0     0       0          0

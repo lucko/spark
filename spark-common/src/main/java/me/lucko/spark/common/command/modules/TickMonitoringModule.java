@@ -28,7 +28,6 @@ import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.tick.ReportPredicate;
 import me.lucko.spark.common.monitor.tick.TickMonitor;
 import me.lucko.spark.common.tick.TickHook;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 

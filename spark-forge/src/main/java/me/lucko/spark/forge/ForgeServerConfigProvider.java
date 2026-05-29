@@ -22,7 +22,6 @@ package me.lucko.spark.forge;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import me.lucko.spark.common.platform.serverconfig.ConfigParser;
 import me.lucko.spark.common.platform.serverconfig.PropertiesConfigParser;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;

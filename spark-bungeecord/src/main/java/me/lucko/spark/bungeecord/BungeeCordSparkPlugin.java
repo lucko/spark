@@ -26,7 +26,6 @@ import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
-
 import net.kyori.adventure.platform.bungeecord.BungeeAudiences;
 import net.md_5.bungee.api.CommandSender;
 import net.md_5.bungee.api.plugin.Command;
@@ -89,6 +88,11 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
     }
 
     @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        getLogger().log(level, msg, throwable);
+    }
+
+    @Override
     public ClassSourceLookup createClassSourceLookup() {
         return new BungeeCordClassSourceLookup();
     }
@@ -99,7 +103,8 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
                 getProxy().getPluginManager().getPlugins(),
                 plugin -> plugin.getDescription().getName(),
                 plugin -> plugin.getDescription().getVersion(),
-                plugin -> plugin.getDescription().getAuthor()
+                plugin -> plugin.getDescription().getAuthor(),
+                plugin -> plugin.getDescription().getDescription()
         );
     }
 
@@ -129,6 +134,11 @@ public class BungeeCordSparkPlugin extends Plugin implements SparkPlugin {
         @Override
         public Iterable<String> onTabComplete(CommandSender sender, String[] args) {
             return this.plugin.platform.tabCompleteCommand(new BungeeCordCommandSender(sender, this.plugin.audienceFactory), args);
+        }
+
+        @Override
+        public boolean hasPermission(CommandSender sender) {
+            return this.plugin.platform.hasPermissionForAnyCommand(new BungeeCordCommandSender(sender, this.plugin.audienceFactory));
         }
     }
 }

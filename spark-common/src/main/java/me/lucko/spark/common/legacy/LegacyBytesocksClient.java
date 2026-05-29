@@ -1,20 +1,33 @@
+/*
+ * This file is part of spark.
+ *
+ *  Copyright (c) lucko (Luck) <luck@lucko.me>
+ *  Copyright (c) contributors
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package me.lucko.spark.common.legacy;
 
-import com.google.common.collect.ImmutableList;
 import com.neovisionaries.ws.client.*;
 import me.lucko.bytesocks.client.BytesocksClient;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Implementation of BytesocksClient that works on Java 8.
@@ -78,52 +91,14 @@ public class LegacyBytesocksClient implements BytesocksClient {
     private static final class SocketImpl implements BytesocksClient.Socket {
         private final String id;
         private final WebSocket ws;
-        private final WeakHashMap<WebSocketFrame, CompletableFuture<?>> frameFutures = new WeakHashMap<>();
-
-        /* ugly hacks to track sending of websocket */
-        private static final MethodHandle SPLIT_METHOD;
-
-        static {
-            try {
-                Method m = WebSocket.class.getDeclaredMethod("splitIfNecessary", WebSocketFrame.class);
-                m.setAccessible(true);
-                SPLIT_METHOD = MethodHandles.lookup().unreflect(m);
-            } catch(ReflectiveOperationException e) {
-                throw new RuntimeException(e);
-            }
-        }
 
         private SocketImpl(String id, WebSocket ws) {
             this.id = id;
             this.ws = ws;
-            this.ws.addListener(new WebSocketAdapter() {
-                @Override
-                public void onFrameSent(WebSocket websocket, WebSocketFrame frame) throws Exception {
-                    synchronized (frameFutures) {
-                        CompletableFuture<?> future = frameFutures.remove(frame);
-                        if(future != null)
-                            future.complete(null);
-                        else {
-                            System.err.println("Sent frame without associated CompletableFuture");
-                        }
-                    }
-                }
-
-                @Override
-                public void onFrameUnsent(WebSocket websocket, WebSocketFrame frame) throws Exception {
-                    synchronized (frameFutures) {
-                        CompletableFuture<?> future = frameFutures.remove(frame);
-                        if(future != null)
-                            future.completeExceptionally(new Exception("Failed to send frame"));
-                        else
-                            System.err.println("Received error without associated CompletableFuture");
-                    }
-                }
-            });
         }
 
         @Override
-        public String getChannelId() {
+        public String channelId() {
             return this.id;
         }
 
@@ -133,35 +108,18 @@ public class LegacyBytesocksClient implements BytesocksClient {
         }
 
         @Override
-        public CompletableFuture<?> send(CharSequence msg) {
-            WebSocketFrame targetFrame = WebSocketFrame.createTextFrame(msg.toString());
-            // split ourselves so we know what the last frame was
-            List<WebSocketFrame> splitFrames;
-            try {
-                splitFrames = (List<WebSocketFrame>)SPLIT_METHOD.invokeExact(this.ws, targetFrame);
-            } catch(Throwable e) {
-                throw new RuntimeException(e);
-            }
-            if(splitFrames == null)
-                splitFrames = ImmutableList.of(targetFrame);
-            // FIXME this code is not really that efficient (allocating a whole new CompletableFuture for every frame), but
-            // it's the simplest solution for now and seems to be good enough. We have to track all frames to correctly
-            // report errors/success
-            List<CompletableFuture<?>> futures = new ArrayList<>();
-            for(WebSocketFrame frame : splitFrames) {
-                CompletableFuture<?> future = new CompletableFuture<>();
-                synchronized (frameFutures) {
-                    frameFutures.put(frame, future);
-                }
-                futures.add(future);
-                this.ws.sendFrame(frame);
-            }
-            return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        public void send(String msg) {
+            this.ws.sendText(msg);
         }
 
         @Override
         public void close(int statusCode, String reason) {
-            this.ws.sendClose(statusCode, reason);
+            this.ws.disconnect(statusCode, reason, 0);
+        }
+
+        @Override
+        public void closeGracefully(int statusCode, String reason) {
+            this.ws.disconnect(statusCode, reason);
         }
     }
 
@@ -179,7 +137,11 @@ public class LegacyBytesocksClient implements BytesocksClient {
 
         @Override
         public void onDisconnected(WebSocket websocket, WebSocketFrame serverCloseFrame, WebSocketFrame clientCloseFrame, boolean closedByServer) throws Exception {
-            this.listener.onClose(serverCloseFrame.getCloseCode(), serverCloseFrame.getCloseReason());
+            if (serverCloseFrame != null) {
+                this.listener.onClose(serverCloseFrame.getCloseCode(), serverCloseFrame.getCloseReason());
+            } else {
+                this.listener.onClose(WebSocketCloseCode.ABNORMAL, "connection reset");
+            }
         }
 
         @Override

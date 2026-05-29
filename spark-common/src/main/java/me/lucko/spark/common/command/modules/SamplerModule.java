@@ -21,7 +21,6 @@
 package me.lucko.spark.common.command.modules;
 
 import com.google.common.collect.Iterables;
-
 import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
@@ -38,15 +37,13 @@ import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.common.sampler.ThreadGrouper;
 import me.lucko.spark.common.sampler.async.AsyncSampler;
-import me.lucko.spark.common.sampler.node.MergeMode;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
-import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
-
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 
@@ -61,7 +58,10 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+import java.util.logging.Level;
 
+import static net.kyori.adventure.text.Component.empty;
 import static net.kyori.adventure.text.Component.space;
 import static net.kyori.adventure.text.Component.text;
 import static net.kyori.adventure.text.format.NamedTextColor.DARK_GRAY;
@@ -190,7 +190,6 @@ public class SamplerModule implements CommandModule {
         }
 
         boolean ignoreSleeping = arguments.boolFlag("ignore-sleeping");
-        boolean ignoreNative = arguments.boolFlag("ignore-native");
         boolean forceJavaSampler = arguments.boolFlag("force-java-sampler");
 
         Set<String> threads = arguments.stringFlag("thread");
@@ -209,7 +208,7 @@ public class SamplerModule implements CommandModule {
             }
         }
 
-        ThreadGrouper threadGrouper;
+        Supplier<ThreadGrouper> threadGrouper;
         if (arguments.boolFlag("combine-all")) {
             threadGrouper = ThreadGrouper.AS_ONE;
         } else if (arguments.boolFlag("not-combined")) {
@@ -239,7 +238,6 @@ public class SamplerModule implements CommandModule {
         }
         builder.samplingInterval(interval);
         builder.ignoreSleeping(ignoreSleeping);
-        builder.ignoreNative(ignoreNative);
         builder.forceJavaSampler(forceJavaSampler);
         builder.allocLiveOnly(allocLiveOnly);
         if (ticksOver != -1) {
@@ -278,8 +276,8 @@ public class SamplerModule implements CommandModule {
         // send message if profiling fails
         future.whenCompleteAsync((s, throwable) -> {
             if (throwable != null) {
-                resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable.toString(), RED));
-                throwable.printStackTrace();
+                resp.broadcastPrefixed(text("Profiler operation failed unexpectedly. Error: " + throwable, RED));
+                platform.getPlugin().log(Level.SEVERE, "Profiler operation failed unexpectedly", throwable);
             }
         });
 
@@ -339,7 +337,7 @@ public class SamplerModule implements CommandModule {
     private void profilerOpen(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         BytesocksClient bytesocksClient = platform.getBytesocksClient();
         if (bytesocksClient == null) {
-            resp.replyPrefixed(text("The live viewer is only supported on Java 11 or newer.", RED));
+            resp.replyPrefixed(text("The live viewer is not supported.", RED));
             return;
         }
 
@@ -437,10 +435,10 @@ public class SamplerModule implements CommandModule {
                         .build()
                 );
 
-                platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler", url));
+                platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Profiler", url));
             } catch (Exception e) {
                 resp.broadcastPrefixed(text("An error occurred whilst uploading the results. Attempting to save to disk instead.", RED));
-                e.printStackTrace();
+                platform.getPlugin().log(Level.WARNING, "Error whilst uploading profiler results", e);
                 saveToFile = true;
             }
         }
@@ -454,10 +452,10 @@ public class SamplerModule implements CommandModule {
                 resp.broadcastPrefixed(text("Data has been written to: " + file));
                 resp.broadcastPrefixed(text("You can view the profile file using the web app @ " + platform.getViewerUrl(), GRAY));
 
-                platform.getActivityLog().addToLog(Activity.fileActivity(resp.sender(), System.currentTimeMillis(), "Profiler", file.toString()));
+                platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Profiler", file.toString()));
             } catch (IOException e) {
                 resp.broadcastPrefixed(text("An error occurred whilst saving the data.", RED));
-                e.printStackTrace();
+                platform.getPlugin().log(Level.WARNING, "Error whilst saving profiler results", e);
             }
         }
     }
@@ -481,23 +479,33 @@ public class SamplerModule implements CommandModule {
                     .build()
             );
 
-            platform.getActivityLog().addToLog(Activity.urlActivity(resp.sender(), System.currentTimeMillis(), "Profiler (live)", url));
+            String cmd = "/" + platform.getPlugin().getCommandName() + " profiler stop";
+            resp.broadcast(empty());
+            resp.broadcast(text()
+                    .append(text("(NOTE: this link is temporary and will expire after a short period of time. " +
+                            "If you need a link to share with other people (e.g. in a bug report), please use ", GRAY))
+                    .append(text()
+                            .content(cmd)
+                            .color(WHITE)
+                            .clickEvent(ClickEvent.runCommand(cmd))
+                            .build()
+                    )
+                    .append(text(" instead.)", GRAY))
+                    .build()
+            );
+
+            platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Profiler (live)", url));
         } catch (Exception e) {
             resp.replyPrefixed(text("An error occurred whilst opening the live profiler.", RED));
-            e.printStackTrace();
+            platform.getPlugin().log(Level.WARNING, "Error whilst opening live profiler", e);
         }
     }
 
     private Sampler.ExportProps getExportProps(SparkPlatform platform, CommandResponseHandler resp, Arguments arguments) {
         return new Sampler.ExportProps()
-                .creator(resp.sender().toData())
+                .creator(resp.senderData())
                 .comment(Iterables.getFirst(arguments.stringFlag("comment"), null))
-                .mergeMode(() -> {
-                    MethodDisambiguator methodDisambiguator = new MethodDisambiguator();
-                    return arguments.boolFlag("separate-parent-calls")
-                            ? MergeMode.separateParentCalls(methodDisambiguator)
-                            : MergeMode.sameMethod(methodDisambiguator);
-                })
+                .mergeStrategy(arguments.boolFlag("separate-parent-calls") ? MergeStrategy.SEPARATE_PARENT_CALLS : MergeStrategy.SAME_METHOD)
                 .classSourceLookup(() -> ClassSourceLookup.create(platform));
     }
 

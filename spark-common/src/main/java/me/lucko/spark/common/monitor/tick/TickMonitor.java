@@ -21,11 +21,9 @@
 package me.lucko.spark.common.monitor.tick;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
-
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.tick.TickHook;
-
 import net.kyori.adventure.text.Component;
 
 import java.text.DecimalFormat;

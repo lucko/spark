@@ -33,17 +33,20 @@ import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
+import me.lucko.spark.common.util.classfinder.ClassFinder;
+import me.lucko.spark.common.util.classfinder.FallbackClassFinder;
+import me.lucko.spark.common.util.classfinder.InstrumentationClassFinder;
+import me.lucko.spark.common.util.log.Logger;
 
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
 /**
  * Spark plugin interface
  */
-public interface SparkPlugin {
+public interface SparkPlugin extends Logger {
 
     /**
      * Gets the version of the plugin.
@@ -88,14 +91,6 @@ public interface SparkPlugin {
     default void executeSync(Runnable task) {
         throw new UnsupportedOperationException();
     }
-
-    /**
-     * Print to the plugin logger.
-     *
-     * @param level the log level
-     * @param msg the message
-     */
-    void log(Level level, String msg);
 
     /**
      * Gets the default {@link ThreadDumper} to be used by the plugin.
@@ -147,6 +142,18 @@ public interface SparkPlugin {
      */
     default ClassSourceLookup createClassSourceLookup() {
         return ClassSourceLookup.NO_OP;
+    }
+
+    /**
+     * Creates a class finder for the platform.
+     *
+     * @return the class finder
+     */
+    default ClassFinder createClassFinder() {
+        return ClassFinder.combining(
+                new InstrumentationClassFinder(this),
+                FallbackClassFinder.INSTANCE
+        );
     }
 
     /**

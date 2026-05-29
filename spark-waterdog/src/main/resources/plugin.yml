@@ -1,6 +1,0 @@
-name: spark
-version: ${pluginVersion}
-description: ${pluginDescription}
-author: Luck
-website: https://spark.lucko.me/
-main: me.lucko.spark.waterdog.WaterdogSparkPlugin

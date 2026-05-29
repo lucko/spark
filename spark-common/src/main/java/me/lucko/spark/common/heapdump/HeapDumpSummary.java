@@ -22,12 +22,16 @@ package me.lucko.spark.common.heapdump;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.platform.SparkMetadata;
 import me.lucko.spark.proto.SparkHeapProtos.HeapData;
 import me.lucko.spark.proto.SparkHeapProtos.HeapEntry;
 import me.lucko.spark.proto.SparkHeapProtos.HeapMetadata;
-
+import org.jetbrains.annotations.VisibleForTesting;
 import org.objectweb.asm.Type;
 
+import javax.management.JMX;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
@@ -35,10 +39,6 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import javax.management.JMX;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 /**
  * Represents a "heap dump summary" from the VM.
@@ -125,21 +125,14 @@ public final class HeapDumpSummary {
         this.entries = entries;
     }
 
-    public HeapData toProto(SparkPlatform platform, CommandSender creator) {
-        HeapMetadata.Builder metadata = HeapMetadata.newBuilder()
-                .setPlatformMetadata(platform.getPlugin().getPlatformInfo().toData().toProto())
-                .setCreator(creator.toData().toProto());
-        try {
-            metadata.setPlatformStatistics(platform.getStatisticsProvider().getPlatformStatistics(null, true));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    @VisibleForTesting
+    List<Entry> getEntries() {
+        return this.entries;
+    }
 
-        try {
-            metadata.setSystemStatistics(platform.getStatisticsProvider().getSystemStatistics());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public HeapData toProto(SparkPlatform platform, CommandSender.Data creator) {
+        HeapMetadata.Builder metadata = HeapMetadata.newBuilder();
+        SparkMetadata.gather(platform, creator, platform.getStartupGcStatistics()).writeTo(metadata);
 
         HeapData.Builder proto = HeapData.newBuilder();
         proto.setMetadata(metadata);
@@ -187,6 +180,16 @@ public final class HeapDumpSummary {
                     .setSize(this.bytes)
                     .setType(this.type)
                     .build();
+        }
+
+        @Override
+        public String toString() {
+            return "Entry{" +
+                    "order=" + this.order +
+                    ", instances=" + this.instances +
+                    ", bytes=" + this.bytes +
+                    ", type='" + this.type + '\'' +
+                    '}';
         }
     }
 

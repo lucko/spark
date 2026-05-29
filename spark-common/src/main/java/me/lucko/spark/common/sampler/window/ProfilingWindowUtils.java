@@ -61,7 +61,7 @@ public enum ProfilingWindowUtils {
     /**
      * Gets a prune predicate that can be passed to {@link DataAggregator#pruneData(IntPredicate)}.
      *
-     * @return the prune predicate
+     * @return the prune predicate - returns true for windows that should be pruned
      */
     public static IntPredicate keepHistoryBefore(int currentWindow) {
         // windows that were earlier than (currentWindow minus history size) should be pruned

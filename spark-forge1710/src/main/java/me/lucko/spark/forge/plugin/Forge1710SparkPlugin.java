@@ -23,6 +23,7 @@ package me.lucko.spark.forge.plugin;
 import cpw.mods.fml.common.FMLCommonHandler;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
+import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.forge.Forge1710CommandSender;
 import me.lucko.spark.forge.Forge1710SparkMod;
 import net.minecraft.command.ICommand;
@@ -38,26 +39,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 
-public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
+public abstract class Forge1710SparkPlugin implements SparkPlugin {
 
     private final Forge1710SparkMod mod;
     private final Logger logger;
     protected final ScheduledExecutorService scheduler;
-    protected final SparkPlatform platform;
+    protected SparkPlatform platform;
 
     protected Forge1710SparkPlugin(Forge1710SparkMod mod) {
         this.mod = mod;
         this.logger = LogManager.getLogger("spark");
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = Executors.defaultThreadFactory().newThread(r);
-            thread.setName("spark-forge-async-worker");
-            thread.setDaemon(true);
-            return thread;
-        });
-        this.platform = new SparkPlatform(this);
+        this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
     }
 
     public void enable() {
+        this.platform = new SparkPlatform(this);
         this.platform.enable();
     }
 
@@ -85,61 +81,71 @@ public abstract class Forge1710SparkPlugin implements SparkPlugin, ICommand {
 
     @Override
     public void log(Level level, String msg) {
-        if (level == Level.INFO) {
-            this.logger.info(msg);
-        } else if (level == Level.WARNING) {
-            this.logger.warn(msg);
-        } else if (level == Level.SEVERE) {
+        if (level.intValue() >= 1000) { // severe
             this.logger.error(msg);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg);
         } else {
-            throw new IllegalArgumentException(level.getName());
+            this.logger.info(msg);
+        }
+    }
+
+    @Override
+    public void log(Level level, String msg, Throwable throwable) {
+        if (level.intValue() >= 1000) { // severe
+            this.logger.error(msg, throwable);
+        } else if (level.intValue() >= 900) { // warning
+            this.logger.warn(msg, throwable);
+        } else {
+            this.logger.info(msg, throwable);
         }
     }
 
     // implement ICommand
 
-    @Override
-    public String getCommandName() {
-        return getCommandName();
-    }
-
-    @Override
-    public String getCommandUsage(ICommandSender iCommandSender) {
-        return "/" + getCommandName();
-    }
-
-    @Override
-    public List<String> getCommandAliases() {
-        return Collections.singletonList(getCommandName());
-    }
-
-    @Override
-    public void processCommand(ICommandSender sender, String[] args) {
-        this.platform.executeCommand(new Forge1710CommandSender(sender, this), args);
-    }
-
-    @Override
-    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
-        return this.platform.tabCompleteCommand(new Forge1710CommandSender(sender, this), args);
-    }
-
-    @Override
-    public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return this.platform.hasPermissionForAnyCommand(new Forge1710CommandSender(sender, this));
-    }
-
-    @Override
-    public boolean isUsernameIndex(String[] strings, int i) {
-        return false;
-    }
-
-    @Override
-    public int compareTo(Object o) {
-        return getCommandName().compareTo(((ICommand)o).getCommandName());
-    }
-    
     protected boolean isOp(EntityPlayer player) {
-       return FMLCommonHandler.instance().getMinecraftServerInstance().getConfigurationManager().canSendCommands(player.getGameProfile());
+        return FMLCommonHandler.instance().getMinecraftServerInstance().getConfigurationManager().func_152596_g(player.getGameProfile());
     }
 
+    public class VanillaCommand implements ICommand {
+        @Override
+        public String getCommandName() {
+            return Forge1710SparkPlugin.this.getCommandName();
+        }
+
+        @Override
+        public String getCommandUsage(ICommandSender iCommandSender) {
+            return "/" + getCommandName();
+        }
+
+        @Override
+        public List<String> getCommandAliases() {
+            return Collections.singletonList(getCommandName());
+        }
+
+        @Override
+        public void processCommand(ICommandSender sender, String[] args) {
+            Forge1710SparkPlugin.this.platform.executeCommand(new Forge1710CommandSender(sender, Forge1710SparkPlugin.this), args);
+        }
+
+        @Override
+        public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
+            return Forge1710SparkPlugin.this.platform.tabCompleteCommand(new Forge1710CommandSender(sender, Forge1710SparkPlugin.this), args);
+        }
+
+        @Override
+        public boolean canCommandSenderUseCommand(ICommandSender sender) {
+            return Forge1710SparkPlugin.this.platform.hasPermissionForAnyCommand(new Forge1710CommandSender(sender, Forge1710SparkPlugin.this));
+        }
+
+        @Override
+        public boolean isUsernameIndex(String[] strings, int i) {
+            return false;
+        }
+
+        @Override
+        public int compareTo(Object o) {
+            return getCommandName().compareTo(((ICommand)o).getCommandName());
+        }
+    }
 }
