@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'com.mojang:minecraft:26.1'
+    minecraft 'com.mojang:minecraft:26.2'
 
     implementation project(':spark-common')
 }

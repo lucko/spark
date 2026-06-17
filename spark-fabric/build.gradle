@@ -29,7 +29,7 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:26.1'
+    minecraft 'com.mojang:minecraft:26.2'
     implementation 'net.fabricmc:fabric-loader:0.18.4'
 
     Set<String> apiModules = [
@@ -40,7 +40,7 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        implementation(fabricApi.module(it, '0.144.0+26.1'))
+        implementation(fabricApi.module(it, '0.152.1+26.2'))
     }
 
     jarInJar 'me.lucko:fabric-permissions-api:0.7.0'
