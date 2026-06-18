@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    implementation minecraft.dependency('net.minecraftforge:forge:26.1-62.0.1')
+    implementation minecraft.dependency('net.minecraftforge:forge:26.2-65.0.0')
     annotationProcessor 'net.minecraftforge:eventbus-validator:7.0.1'
     shade project(':spark-common')
     shade project(':spark-minecraft')
