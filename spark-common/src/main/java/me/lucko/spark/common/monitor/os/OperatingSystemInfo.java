@@ -21,7 +21,7 @@
 package me.lucko.spark.common.monitor.os;
 
 import me.lucko.spark.common.monitor.LinuxProc;
-import me.lucko.spark.common.monitor.WindowsWmic;
+import me.lucko.spark.common.monitor.WindowsReg;
 
 /**
  * Small utility to query the operating system name & version.
@@ -59,15 +59,35 @@ public final class OperatingSystemInfo {
             }
         }
 
-        for (String line : WindowsWmic.OS_GET_CAPTION_AND_VERSION.read()) {
-            if (line.startsWith("Caption") && line.length() > 18) {
-                // Caption=Microsoft Windows something
-                // \----------------/ = 18 chars
-                name = line.substring(18).trim();
-            } else if (line.startsWith("Version")) {
-                // Version=10.0.something
-                // \------/ = 8 chars
-                version = line.substring(8).trim();
+        String winName = null;
+        String winBuild = null;
+
+        for (String line : WindowsReg.OS_GET_INFO.read()) {
+            String trimmed = line.trim();
+
+            if (trimmed.startsWith("ProductName")) {
+                int index = trimmed.indexOf("REG_SZ");
+                if (index != -1) {
+                    winName = trimmed.substring(index + 6).trim();
+                }
+            }
+            else if (trimmed.startsWith("CurrentBuild")) {
+                int index = trimmed.indexOf("REG_SZ");
+                if (index != -1) {
+                    winBuild = trimmed.substring(index + 6).trim();
+                }
+            }
+
+            if (winName != null && winBuild != null) {
+                break;
+            }
+        }
+
+        if (winName != null) {
+            if (winBuild != null && !winBuild.isEmpty()) {
+                name = winName + " (Build " + winBuild + ")";
+            } else {
+                name = winName;
             }
         }
 
