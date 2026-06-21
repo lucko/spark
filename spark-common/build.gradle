@@ -4,6 +4,12 @@ plugins {
     id 'maven-publish'
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 license {
     exclude '**/sampler/async/jfr/**'
     exclude {
@@ -22,20 +28,15 @@ dependencies {
         exclude(module: 'slf4j-api')
     }
 
-    api('net.kyori:adventure-api:4.21.0') {
-        exclude(module: 'adventure-bom')
+    api(platform('net.kyori:adventure-bom:5.1.1'))
+    api('net.kyori:adventure-api') {
         exclude(module: 'checker-qual')
         exclude(module: 'annotations')
     }
-    api('net.kyori:adventure-text-serializer-gson:4.21.0') {
-        exclude(module: 'adventure-bom')
-        exclude(module: 'adventure-api')
+    api('net.kyori:adventure-text-serializer-gson') {
         exclude(module: 'gson')
     }
-    api('net.kyori:adventure-text-serializer-legacy:4.21.0') {
-        exclude(module: 'adventure-bom')
-        exclude(module: 'adventure-api')
-    }
+    api('net.kyori:adventure-text-serializer-legacy')
     implementation('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
         exclude(module: 'adventure-api')
     }
@@ -52,10 +53,7 @@ dependencies {
     testImplementation 'com.google.guava:guava:19.0'
     testImplementation 'org.jspecify:jspecify:1.0.0'
 
-    testImplementation('net.kyori:adventure-text-serializer-ansi:4.17.0') {
-        exclude(module: 'adventure-bom')
-        exclude(module: 'adventure-api')
-    }
+    testImplementation('net.kyori:adventure-text-serializer-ansi')
 }
 
 protobuf {
@@ -82,6 +80,10 @@ sourceSets {
             }
         }
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
 }
 
 test {
