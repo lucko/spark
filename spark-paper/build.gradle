@@ -3,9 +3,14 @@ plugins {
     id 'maven-publish'
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
 tasks.withType(JavaCompile) {
-    // override, compile targeting J21
-    options.release = 21
+    options.release = 25
 }
 
 tasks.jar {
@@ -14,7 +19,7 @@ tasks.jar {
 
 dependencies {
     implementation project(':spark-common')
-    compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
+    compileOnly 'io.papermc.paper:paper-api:26.2.build.29-alpha'
 }
 
 repositories {
