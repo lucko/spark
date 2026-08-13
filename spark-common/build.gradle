@@ -36,7 +36,7 @@ dependencies {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
     }
-    implementation('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
+    implementation('net.kyori:adventure-text-feature-pagination:4.0.0-lucko-SNAPSHOT') {
         exclude(module: 'adventure-api')
     }
     compileOnly 'com.google.code.gson:gson:2.7'
