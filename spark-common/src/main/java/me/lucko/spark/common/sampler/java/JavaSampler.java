@@ -31,6 +31,7 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
@@ -90,7 +91,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             }
         }
 
-        this.windowStatisticsCollector.recordWindowStartTime(ProfilingWindowUtils.unixMillisToWindow(this.startTime));
+        this.windowStatisticsCollector.recordWindowStartTime(ProfilingWindowUtils.monotonicTimeToWindow(this.startTime));
         this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
     }
 
@@ -117,7 +118,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         // this is effectively synchronized, the worker pool will not allow this task
         // to concurrently execute.
         try {
-            long time = System.currentTimeMillis();
+            long time = TimeUtil.monotonicCurrentTimeMillis();
 
             if (this.autoEndTime != -1 && this.autoEndTime <= time) {
                 stop(false);
@@ -125,7 +126,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
                 return;
             }
 
-            int window = ProfilingWindowUtils.unixMillisToWindow(time);
+            int window = ProfilingWindowUtils.monotonicTimeToWindow(time);
             ThreadInfo[] threadDumps = this.threadDumper.dumpThreads(this.threadBean);
             this.workerPool.execute(new InsertDataTask(threadDumps, window));
         } catch (Throwable t) {

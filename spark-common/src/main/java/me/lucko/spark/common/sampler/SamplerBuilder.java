@@ -26,6 +26,7 @@ import me.lucko.spark.common.sampler.async.AsyncSampler;
 import me.lucko.spark.common.sampler.async.SampleCollector;
 import me.lucko.spark.common.sampler.java.JavaSampler;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.TimeUtil;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -67,7 +68,7 @@ public class SamplerBuilder {
         if (timeout <= 0) {
             throw new IllegalArgumentException("timeout > 0");
         }
-        this.autoEndTime = System.currentTimeMillis() + unit.toMillis(timeout);
+        this.autoEndTime = TimeUtil.monotonicCurrentTimeMillis() + unit.toMillis(timeout);
         return this;
     }
 

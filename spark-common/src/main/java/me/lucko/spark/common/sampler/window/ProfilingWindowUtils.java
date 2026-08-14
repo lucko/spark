@@ -21,7 +21,9 @@
 package me.lucko.spark.common.sampler.window;
 
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
+import me.lucko.spark.common.util.TimeUtil;
 
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntPredicate;
 
 public enum ProfilingWindowUtils {
@@ -32,6 +34,7 @@ public enum ProfilingWindowUtils {
      * (1 window = 1 minute)
      */
     public static final int WINDOW_SIZE_SECONDS = 60;
+    public static final int WINDOW_SIZE_MILLIS = WINDOW_SIZE_SECONDS * 1000;
 
     /**
      * The number of windows to record in continuous profiling before data is dropped.
@@ -40,13 +43,23 @@ public enum ProfilingWindowUtils {
     public static final int HISTORY_SIZE = Integer.getInteger("spark.continuousProfilingHistorySize", 60);
 
     /**
-     * Gets the profiling window for the given time in unix-millis.
+     * The number of milliseconds to offset the profiling window by.
+     * This is used to ensure that multiple servers don't all start their profiling windows at the same time.
+     */
+    public static final int WINDOW_ADJUSTMENT_MILLIS = ThreadLocalRandom.current().nextInt(WINDOW_SIZE_MILLIS) - (WINDOW_SIZE_MILLIS / 2);
+
+    /**
+     * Gets the profiling window for the given monotonic time in unix-millis
+     *
+     * <p>Window boundaries are not aligned to the minute, but are instead offset by a random amount
+     * to avoid multiple servers all starting their profiling windows at the same time.</p>
      *
      * @param time the time in milliseconds
      * @return the window
+     * @see TimeUtil#monotonicCurrentTimeMillis() for getting the current monotonic time
      */
-    public static int unixMillisToWindow(long time) {
-        return (int) (time / (WINDOW_SIZE_SECONDS * 1000L));
+    public static int monotonicTimeToWindow(long time) {
+        return (int) ((time + WINDOW_ADJUSTMENT_MILLIS) / WINDOW_SIZE_MILLIS);
     }
 
     /**
@@ -55,7 +68,7 @@ public enum ProfilingWindowUtils {
      * @return the window
      */
     public static int windowNow() {
-        return unixMillisToWindow(System.currentTimeMillis());
+        return monotonicTimeToWindow(TimeUtil.monotonicCurrentTimeMillis());
     }
 
     /**

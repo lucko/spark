@@ -33,6 +33,7 @@ import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.util.SparkPlaceholder;
+import me.lucko.spark.common.util.TimeUtil;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -162,7 +163,7 @@ public class SparkApi implements Spark {
 
     @Override
     public @NonNull Map<String, GarbageCollector> gc() {
-        long serverUptime = System.currentTimeMillis() - this.platform.getServerNormalOperationStartTime();
+        long serverUptime = TimeUtil.monotonicCurrentTimeMillis() - this.platform.getServerNormalOperationStartTime();
         Map<String, GarbageCollectorStatistics> stats = GarbageCollectorStatistics.pollStatsSubtractInitial(
                 this.platform.getStartupGcStatistics()
         );

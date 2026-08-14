@@ -42,6 +42,7 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.BytebinClient;
 import me.lucko.spark.common.util.TemporaryFiles;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.util.config.Configuration;
 import me.lucko.spark.common.util.config.FileConfiguration;
@@ -153,7 +154,7 @@ public class SparkPlatform {
         // poll startup GC statistics after plugins & the world have loaded
         this.plugin.executeAsync(() -> {
             this.startupGcStatistics = GarbageCollectorStatistics.pollStats();
-            this.serverNormalOperationStartTime = System.currentTimeMillis();
+            this.serverNormalOperationStartTime = TimeUtil.monotonicCurrentTimeMillis();
         });
 
         SparkApi api = new SparkApi(this);

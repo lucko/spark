@@ -190,12 +190,13 @@ public class HeapAnalysisModule implements CommandModule {
         resp.broadcastPrefixed(text("Compressing heap dump, please wait..."));
 
         long size = Files.size(file);
-        AtomicLong lastReport = new AtomicLong(System.currentTimeMillis());
+        AtomicLong lastReport = new AtomicLong(System.nanoTime());
 
         LongConsumer progressHandler = progress -> {
-            long timeSinceLastReport = System.currentTimeMillis() - lastReport.get();
-            if (timeSinceLastReport > TimeUnit.SECONDS.toMillis(5)) {
-                lastReport.set(System.currentTimeMillis());
+            long timeNow = System.nanoTime();
+            long timeSinceLastReport = timeNow - lastReport.get();
+            if (timeSinceLastReport > TimeUnit.SECONDS.toNanos(5)) {
+                lastReport.set(timeNow);
 
                 platform.getPlugin().executeAsync(() -> {
                     resp.broadcastPrefixed(text()

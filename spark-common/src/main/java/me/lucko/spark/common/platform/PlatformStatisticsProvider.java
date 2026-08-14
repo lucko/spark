@@ -35,6 +35,7 @@ import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldStatisticsProvider;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.PlatformStatistics;
 import me.lucko.spark.proto.SparkProtos.SystemStatistics;
@@ -176,7 +177,7 @@ public class PlatformStatisticsProvider {
 
         builder.setMemory(memory.build());
 
-        long uptime = System.currentTimeMillis() - this.platform.getServerNormalOperationStartTime();
+        long uptime = TimeUtil.monotonicCurrentTimeMillis() - this.platform.getServerNormalOperationStartTime();
         builder.setUptime(uptime);
 
         if (startingGcStatistics != null) {

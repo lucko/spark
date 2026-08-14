@@ -28,6 +28,7 @@ import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.monitor.memory.GarbageCollectionMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.util.FormatUtil;
+import me.lucko.spark.common.util.TimeUtil;
 import net.kyori.adventure.text.Component;
 
 import java.lang.management.MemoryUsage;
@@ -77,7 +78,7 @@ public class GcMonitoringModule implements CommandModule {
                             .build()
                     );
 
-                    long serverUptime = System.currentTimeMillis() - platform.getServerNormalOperationStartTime();
+                    long serverUptime = TimeUtil.monotonicCurrentTimeMillis() - platform.getServerNormalOperationStartTime();
                     Map<String, GarbageCollectorStatistics> collectorStats = GarbageCollectorStatistics.pollStatsSubtractInitial(platform.getStartupGcStatistics());
 
                     for (Map.Entry<String, GarbageCollectorStatistics> collector : collectorStats.entrySet()) {

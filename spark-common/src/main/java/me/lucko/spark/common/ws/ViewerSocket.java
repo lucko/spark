@@ -27,6 +27,7 @@ import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.util.MediaTypes;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import me.lucko.spark.proto.SparkWebSocketProtos.ClientConnect;
@@ -60,7 +61,7 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
     private final ViewerSocketConnection socket;
 
     private boolean closed = false;
-    private final long socketOpenTime = System.currentTimeMillis();
+    private final long socketOpenTime = TimeUtil.monotonicCurrentTimeMillis();
     private long lastPing = 0;
     private String lastPayloadId = null;
 
@@ -100,7 +101,7 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
             return;
         }
 
-        long time = System.currentTimeMillis();
+        long time = TimeUtil.monotonicCurrentTimeMillis();
         if ((time - this.socketOpenTime) > SOCKET_INITIAL_TIMEOUT && (time - this.lastPing) > SOCKET_ESTABLISHED_TIMEOUT) {
             log("No clients have pinged for 30s, closing socket");
             close();
@@ -204,7 +205,7 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
     }
 
     private void onClientPing(ClientPing packet, PublicKey publicKey) {
-        this.lastPing = System.currentTimeMillis();
+        this.lastPing = TimeUtil.monotonicCurrentTimeMillis();
         this.socket.sendPacket(builder -> builder.setServerPong(ServerPong.newBuilder()
                 .setOk(!this.closed)
                 .setData(packet.getData())
@@ -217,7 +218,7 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
             throw new IllegalStateException("Missing public key");
         }
 
-        this.lastPing = System.currentTimeMillis();
+        this.lastPing = TimeUtil.monotonicCurrentTimeMillis();
 
         String clientId = packet.getClientId();
         log("Client connected: clientId=" + clientId + ", keyhash=" + hashPublicKey(publicKey) + ", desc=" + packet.getDescription());

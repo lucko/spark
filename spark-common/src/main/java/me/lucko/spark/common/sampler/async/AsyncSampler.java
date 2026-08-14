@@ -30,6 +30,7 @@ import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
@@ -99,7 +100,7 @@ public class AsyncSampler extends AbstractSampler {
             this.windowStatisticsCollector.startCountingTicks(tickHook);
         }
 
-        int window = ProfilingWindowUtils.windowNow();
+        int window = ProfilingWindowUtils.monotonicTimeToWindow(this.startTime);
 
         AsyncProfilerJob job = this.profilerAccess.startNewProfilerJob();
         job.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background, this.forceNanoTime);
@@ -172,7 +173,7 @@ public class AsyncSampler extends AbstractSampler {
             return;
         }
 
-        long delay = this.autoEndTime - System.currentTimeMillis();
+        long delay = this.autoEndTime - TimeUtil.monotonicCurrentTimeMillis();
         if (delay <= 0) {
             return;
         }
