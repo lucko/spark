@@ -32,7 +32,7 @@ import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.util.TimeUtil;
-import me.lucko.spark.common.ws.ViewerSocket;
+import me.lucko.spark.common.ws.SamplerViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.lang.management.ManagementFactory;
@@ -136,7 +136,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
     }
 
     @Override
-    public void attachSocket(ViewerSocket socket) {
+    public void attachSocket(SamplerViewerSocket socket) {
         super.attachSocket(socket);
 
         if (this.socketStatisticsTask == null) {

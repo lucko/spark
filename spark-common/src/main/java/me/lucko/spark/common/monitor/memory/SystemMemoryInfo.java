@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 /**
  * Utility to query information about system memory usage.
  */
-public enum MemoryInfo {
+public enum SystemMemoryInfo {
     ;
 
     /** The object name of the com.sun.management.OperatingSystemMXBean */

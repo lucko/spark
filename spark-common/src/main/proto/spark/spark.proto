@@ -111,18 +111,14 @@ message PlatformStatistics {
     MemoryUsage heap = 1;
     MemoryUsage non_heap = 2;
     repeated MemoryPool pools = 3;
+    RollingAverageValues alloc_bps_last1m = 4;
+    RollingAverageValues alloc_bps_last5m = 5;
+    RollingAverageValues alloc_bps_last15m = 6;
 
     message MemoryPool {
       string name = 1;
       MemoryUsage usage = 2;
       MemoryUsage collection_usage = 3;
-    }
-
-    message MemoryUsage {
-      int64 used = 1;
-      int64 committed = 2; // previously called 'total'
-      int64 init = 3; // optional
-      int64 max = 4; // optional
     }
   }
 
@@ -223,6 +219,56 @@ message RollingAverageValues {
   double percentile95 = 5;
 }
 
+message MemoryUsage {
+  int64 used = 1;
+  int64 committed = 2;
+  int64 init = 3;
+  int64 max = 4;
+}
+
+message DoubleMetricSeries {
+  int64 start_timestamp_ms = 1;
+  repeated uint32 timestamp_deltas_ms = 2;
+  repeated double values = 3;
+}
+
+message AveragesMetricSeries {
+  int64 start_timestamp_ms = 1;
+  repeated uint32 timestamp_deltas_ms = 2;
+  repeated RollingAverageValues values = 3;
+}
+
+message MemoryUsageMetricSeries {
+  int64 start_timestamp_ms = 1;
+  repeated uint32 timestamp_deltas_ms = 2;
+  repeated MemoryUsage values = 3;
+}
+
+message WorldInfoMetricSeries {
+  int64 start_timestamp_ms = 1;
+  repeated uint32 timestamp_deltas_ms = 2;
+  repeated Values values = 3;
+
+  message Values {
+    int32 players = 1;
+    int32 entities = 2;
+    int32 tile_entities = 3;
+    int32 chunks = 4;
+  }
+}
+
+message Metrics {
+  DoubleMetricSeries tps = 1;
+  AveragesMetricSeries tick_duration = 2;
+  DoubleMetricSeries cpu_usage_process = 3;
+  DoubleMetricSeries cpu_usage_system = 4;
+  MemoryUsageMetricSeries memory_usage_heap = 5;
+  MemoryUsageMetricSeries memory_usage_non_heap = 6;
+  DoubleMetricSeries memory_allocation = 7;
+  WorldInfoMetricSeries world_info = 8;
+  AveragesMetricSeries player_ping = 9;
+}
+
 message CommandSenderMetadata {
   Type type = 1;
   string name = 2;
@@ -245,6 +291,7 @@ message PluginOrModMetadata {
 message HealthData {
   HealthMetadata metadata = 1;
   map<int32, WindowStatistics> time_window_statistics = 2;
+  SocketChannelInfo channel_info = 3;
 }
 
 message HealthMetadata {
@@ -256,4 +303,10 @@ message HealthMetadata {
   map<string, string> server_configurations = 6;
   map<string, PluginOrModMetadata> sources = 7;
   map<string, string> extra_platform_metadata = 8;
+  Metrics metrics = 9;
+}
+
+message SocketChannelInfo {
+  string channel_id = 1;
+  bytes public_key = 2;
 }

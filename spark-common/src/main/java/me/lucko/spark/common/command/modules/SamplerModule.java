@@ -43,6 +43,7 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.TimeUtil;
+import me.lucko.spark.common.ws.SamplerViewerSocket;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import net.kyori.adventure.text.Component;
@@ -463,7 +464,7 @@ public class SamplerModule implements CommandModule {
 
     private void handleOpen(SparkPlatform platform, BytesocksClient bytesocksClient, CommandResponseHandler resp, Sampler sampler, Sampler.ExportProps exportProps) {
         try {
-            ViewerSocket socket = new ViewerSocket(platform, bytesocksClient, exportProps);
+            SamplerViewerSocket socket = new SamplerViewerSocket(platform, bytesocksClient, exportProps);
             sampler.attachSocket(socket);
             exportProps.channelInfo(socket.getPayload());
 

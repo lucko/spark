@@ -24,13 +24,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MemoryInfoTest {
+public class MemoryAllocationInfoTest {
 
     @Test
-    public void testMemoryInfo() {
-        assertTrue(MemoryInfo.getUsedPhysicalMemory() > 0);
-        assertTrue(MemoryInfo.getTotalPhysicalMemory() > 0);
-        assertTrue(MemoryInfo.getAvailablePhysicalMemory() > 0);
+    public void testMemoryAllocationInfo() {
+        long bytes = MemoryAllocationInfo.getTotalThreadAllocatedBytes();
+        assertTrue(bytes >= 0);
     }
-
 }

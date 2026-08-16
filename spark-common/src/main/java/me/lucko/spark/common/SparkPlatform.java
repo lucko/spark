@@ -28,6 +28,8 @@ import me.lucko.spark.common.command.CommandManager;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
+import me.lucko.spark.common.monitor.memory.MemoryAllocationInfo;
+import me.lucko.spark.common.monitor.memory.MemoryMonitor;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
@@ -35,6 +37,7 @@ import me.lucko.spark.common.monitor.tick.SparkTickStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
+import me.lucko.spark.common.platform.WorldMetricsCollector;
 import me.lucko.spark.common.sampler.BackgroundSamplerManager;
 import me.lucko.spark.common.sampler.SamplerContainer;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
@@ -83,6 +86,7 @@ public class SparkPlatform {
     private final TickStatistics tickStatistics;
     private final PingStatistics pingStatistics;
     private final PlatformStatisticsProvider statisticsProvider;
+    private final WorldMetricsCollector worldMetricsCollector;
     private final CommandManager commandManager;
     private final AtomicBoolean enabled = new AtomicBoolean(false);
     private Map<String, GarbageCollectorStatistics> startupGcStatistics = ImmutableMap.of();
@@ -128,6 +132,7 @@ public class SparkPlatform {
         this.pingStatistics = pingProvider != null ? new PingStatistics(pingProvider) : null;
 
         this.statisticsProvider = new PlatformStatisticsProvider(this);
+        this.worldMetricsCollector = new WorldMetricsCollector(this);
 
         this.commandManager = new CommandManager(this, this.configuration);
     }
@@ -148,7 +153,12 @@ public class SparkPlatform {
         if (this.pingStatistics != null) {
             this.pingStatistics.start();
         }
+
+        this.worldMetricsCollector.start();
+
         CpuMonitor.ensureMonitoring();
+        MemoryMonitor.ensureMonitoring();
+        MemoryAllocationInfo.ensureMonitoring();
         NetworkMonitor.ensureMonitoring();
 
         // poll startup GC statistics after plugins & the world have loaded
@@ -176,6 +186,7 @@ public class SparkPlatform {
         if (this.pingStatistics != null) {
             this.pingStatistics.close();
         }
+        this.worldMetricsCollector.close();
 
         this.samplerContainer.close();
 

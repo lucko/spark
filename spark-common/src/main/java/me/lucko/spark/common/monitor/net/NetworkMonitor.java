@@ -49,13 +49,13 @@ public enum NetworkMonitor {
     private static final Map<String, NetworkInterfaceAverages> SYSTEM_AVERAGES = new ConcurrentHashMap<>();
     
     // poll every minute, keep rolling averages for 15 mins
-    private static final int POLL_INTERVAL = 60;
+    private static final int POLL_INTERVAL_SECONDS = 60;
     private static final int WINDOW_SIZE_SECONDS = (int) TimeUnit.MINUTES.toSeconds(15);
-    private static final int WINDOW_SIZE = WINDOW_SIZE_SECONDS / POLL_INTERVAL; // 15
+    private static final int WINDOW_SIZE = WINDOW_SIZE_SECONDS / POLL_INTERVAL_SECONDS; // 15
 
     static {
         // schedule rolling average calculations.
-        MonitoringExecutor.INSTANCE.scheduleAtFixedRate(new RollingAverageCollectionTask(), 1, POLL_INTERVAL, TimeUnit.SECONDS);
+        MonitoringExecutor.scheduleAtFixedRateMillis(new RollingAverageCollectionTask(), POLL_INTERVAL_SECONDS * 1000L);
     }
 
     /**
@@ -79,7 +79,7 @@ public enum NetworkMonitor {
      * Task to poll network activity and add to the rolling averages in the enclosing class.
      */
     private static final class RollingAverageCollectionTask implements Runnable {
-        private static final BigDecimal POLL_INTERVAL_DECIMAL = BigDecimal.valueOf(POLL_INTERVAL);
+        private static final BigDecimal POLL_INTERVAL_DECIMAL = BigDecimal.valueOf(POLL_INTERVAL_SECONDS);
 
         @Override
         public void run() {
