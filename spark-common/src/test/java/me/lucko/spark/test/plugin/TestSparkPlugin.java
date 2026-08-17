@@ -24,6 +24,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.util.classfinder.FallbackClassFinder;
 
@@ -31,7 +32,6 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,7 +40,7 @@ import java.util.stream.Stream;
 public class TestSparkPlugin implements SparkPlugin, AutoCloseable {
 
     private static final Logger LOGGER = Logger.getLogger("spark-test");
-    private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(16);
+    private static final ScheduledExecutorService EXECUTOR_SERVICE = new SparkScheduledThreadPoolExecutor(16);
 
     private final Path directory;
     private final Map<String, String> props;

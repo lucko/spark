@@ -58,7 +58,7 @@ public class FabricClientSparkPlugin extends MinecraftClientSparkPlugin<FabricSp
     }
 
     public FabricClientSparkPlugin(FabricSparkMod mod, Minecraft minecraft) {
-        super(mod, minecraft, ((MinecraftAccessor) minecraft).getGameThread());
+        super(mod, minecraft, ((MinecraftAccessor) minecraft)::getGameThread);
     }
 
     @Override

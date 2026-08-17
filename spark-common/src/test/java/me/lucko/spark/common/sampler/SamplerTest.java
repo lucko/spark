@@ -33,7 +33,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -47,7 +49,7 @@ public class SamplerTest {
 
     @ParameterizedTest
     @EnumSource
-    public void testSampler(SamplerType samplerType, @TempDir Path directory) {
+    public void testSampler(SamplerType samplerType, @TempDir Path directory) throws ExecutionException, InterruptedException, TimeoutException {
         if (samplerType == SamplerType.ASYNC) {
             String os = System.getProperty("os.name").toLowerCase(Locale.ROOT).replace(" ", "");
             assumeTrue(os.equals("linux") || os.equals("macosx"), "async profiler is only supported on Linux and macOS");
@@ -77,7 +79,7 @@ public class SamplerTest {
             assertEquals(samplerType, sampler.getType());
 
             assertNotEquals(-1, sampler.getAutoEndTime());
-            sampler.getFuture().join();
+            sampler.getFuture().get(30, TimeUnit.SECONDS);
 
             Sampler.ExportProps exportProps = new Sampler.ExportProps()
                     .creator(TestCommandSender.INSTANCE.toData())

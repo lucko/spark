@@ -27,9 +27,7 @@ import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 
 import java.lang.management.ThreadInfo;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Abstract {@link DataAggregator} for the {@link JavaSampler}.
@@ -73,19 +71,6 @@ public abstract class JavaDataAggregator extends AbstractDataAggregator {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public List<ThreadNode> exportData() {
-        // wait for all pending data to be inserted
-        this.workerPool.shutdown();
-        try {
-            this.workerPool.awaitTermination(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        return super.exportData();
     }
 
     static boolean isSleeping(ThreadInfo thread) {

@@ -22,7 +22,7 @@ package me.lucko.spark.common.monitor.cpu;
 
 import me.lucko.spark.common.monitor.LinuxProc;
 import me.lucko.spark.common.monitor.MacosSysctl;
-import me.lucko.spark.common.monitor.WindowsWmic;
+import me.lucko.spark.common.monitor.WindowsWmi;
 
 import java.util.regex.Pattern;
 
@@ -47,10 +47,8 @@ public enum CpuInfo {
             }
         }
 
-        for (String line : WindowsWmic.CPU_GET_NAME.read()) {
-            if (line.startsWith("Name")) {
-                return line.substring(5).trim();
-            }
+        for (String line : WindowsWmi.PROCESSOR_NAME.read()) {
+            return line;
         }
 
         for (String line : MacosSysctl.SYSCTL.read()) {

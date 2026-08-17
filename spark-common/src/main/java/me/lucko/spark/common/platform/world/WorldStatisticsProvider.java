@@ -90,6 +90,7 @@ public class WorldStatisticsProvider {
                     .setName(dataPack.name())
                     .setDescription(dataPack.description())
                     .setSource(dataPack.source())
+                    .setBuiltin(dataPack.builtIn())
                     .build()
             ));
         }

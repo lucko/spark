@@ -18,23 +18,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util.classfinder;
+package me.lucko.spark.common.util;
 
-import org.jspecify.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-/**
- * Uses {@link Class#forName(String)} to find a class reference for given class names.
- */
-public enum FallbackClassFinder implements ClassFinder {
-    INSTANCE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    @Override
-    public @Nullable Class<?> findClass(String className) {
-        try {
-            return Class.forName(className);
-        } catch (Throwable e) {
-            return null;
-        }
+public class TimeUtilTest {
+
+    @Test
+    public void testMonotonicCurrentTimeMillis() {
+        long clockTimeMillis = System.currentTimeMillis();
+        long monotonicTimeNow = TimeUtil.monotonicCurrentTimeMillis();
+
+        // approximate check that the monotonic time is within 1 second of the system clock time
+        assertEquals(clockTimeMillis, monotonicTimeNow, 1000L);
     }
 
 }

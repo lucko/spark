@@ -46,7 +46,7 @@ public class ForgePlatformInfo implements PlatformInfo {
 
     @Override
     public String getBrand() {
-        return ModList.get().getModContainerById(ForgeVersion.MOD_ID)
+        return ModList.getModContainerById(ForgeVersion.MOD_ID)
                 .map(ModContainer::getModInfo)
                 .map(IModInfo::getDisplayName)
                 .orElse("Forge");

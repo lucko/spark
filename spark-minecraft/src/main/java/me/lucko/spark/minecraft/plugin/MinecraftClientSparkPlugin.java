@@ -32,16 +32,17 @@ import me.lucko.spark.minecraft.SparkMinecraftMod;
 import net.minecraft.client.Minecraft;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 public abstract class MinecraftClientSparkPlugin<M extends SparkMinecraftMod, CS> extends MinecraftSparkPlugin<M> implements Command<CS>, SuggestionProvider<CS> {
 
     protected final Minecraft minecraft;
     private final ThreadDumper.GameThread gameThreadDumper;
 
-    public MinecraftClientSparkPlugin(M mod, Minecraft minecraft, Thread gameThread) {
+    public MinecraftClientSparkPlugin(M mod, Minecraft minecraft, Supplier<Thread> gameThreadSupplier) {
         super(mod);
         this.minecraft = minecraft;
-        this.gameThreadDumper = new ThreadDumper.GameThread(() -> gameThread);
+        this.gameThreadDumper = new ThreadDumper.GameThread(gameThreadSupplier);
     }
 
     protected abstract CommandSender createCommandSender(CS source);

@@ -27,7 +27,7 @@ package me.lucko.spark.api.statistic.types;
 
 import me.lucko.spark.api.statistic.Statistic;
 import me.lucko.spark.api.statistic.StatisticWindow;
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 /**
  * A {@link Statistic} with a generic (non-primitive) type.
@@ -43,13 +43,13 @@ public interface GenericStatistic<T, W extends Enum<W> & StatisticWindow> extend
      * @param window the window
      * @return the value
      */
-    T poll(@NonNull W window);
+    @NonNull T poll(@NonNull W window);
 
     /**
      * Polls the current values of the statistic in all windows.
      *
      * @return the values
      */
-    T[] poll();
+    @NonNull T[] poll();
 
 }

@@ -21,7 +21,7 @@
 package me.lucko.spark.common.util.classfinder;
 
 import com.google.common.collect.ImmutableList;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface ClassFinder {
 

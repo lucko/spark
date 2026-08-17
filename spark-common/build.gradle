@@ -1,5 +1,6 @@
 plugins {
     id 'com.google.protobuf' version '0.9.5'
+    id 'net.kyori.blossom' version '2.2.0'
     id 'maven-publish'
 }
 
@@ -12,7 +13,7 @@ license {
 
 dependencies {
     api project(':spark-api')
-    implementation 'tools.profiler:async-profiler:4.2' // spark native version: 7f60b4d (v4.2.1)
+    implementation 'tools.profiler:async-profiler:4.5' // spark native version: 11aaea3 (v4.5)
     implementation 'org.ow2.asm:asm:9.7'
     implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
     implementation 'com.google.protobuf:protobuf-javalite:4.31.1'
@@ -35,23 +36,21 @@ dependencies {
         exclude(module: 'adventure-bom')
         exclude(module: 'adventure-api')
     }
-    implementation('net.kyori:adventure-text-feature-pagination:4.0.0-SNAPSHOT') {
+    implementation('net.kyori:adventure-text-feature-pagination:4.0.0-lucko-SNAPSHOT') {
         exclude(module: 'adventure-api')
     }
     compileOnly 'com.google.code.gson:gson:2.7'
     compileOnly 'com.google.guava:guava:19.0'
-    compileOnly 'org.checkerframework:checker-qual:3.44.0'
+    compileOnly 'org.jspecify:jspecify:1.0.0'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.0-M2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.11.0-M2'
-    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.11.0-M2'
-    // testImplementation "org.testcontainers:junit-jupiter:1.19.8"
-    // testImplementation 'org.mockito:mockito-core:5.12.0'
-    // testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
+    // test
+    testImplementation platform('org.junit:junit-bom:5.11.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     testImplementation 'com.google.code.gson:gson:2.7'
     testImplementation 'com.google.guava:guava:19.0'
-    testImplementation 'org.checkerframework:checker-qual:3.44.0'
+    testImplementation 'org.jspecify:jspecify:1.0.0'
 
     testImplementation('net.kyori:adventure-text-serializer-ansi:4.17.0') {
         exclude(module: 'adventure-bom')
@@ -69,6 +68,17 @@ protobuf {
                 java {
                     option 'lite'
                 }
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        blossom {
+            javaSources {
+                property 'version', project.pluginVersion
+                property 'description', project.pluginDescription
             }
         }
     }

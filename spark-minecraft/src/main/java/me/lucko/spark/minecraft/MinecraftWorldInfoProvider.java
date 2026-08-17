@@ -100,7 +100,7 @@ public abstract class MinecraftWorldInfoProvider implements WorldInfoProvider {
                 Long2ObjectOpenHashMap<MinecraftChunkInfo> worldInfos = new Long2ObjectOpenHashMap<>();
 
                 for (Entity entity : level.getAllEntities()) {
-                    MinecraftChunkInfo info = worldInfos.computeIfAbsent(entity.chunkPosition().toLong(), MinecraftChunkInfo::new);
+                    MinecraftChunkInfo info = worldInfos.computeIfAbsent(entity.chunkPosition().pack(), MinecraftChunkInfo::new);
                     info.entityCounts.increment(entity.getType());
                 }
 
@@ -174,7 +174,7 @@ public abstract class MinecraftWorldInfoProvider implements WorldInfoProvider {
             Long2ObjectOpenHashMap<MinecraftChunkInfo> worldInfos = new Long2ObjectOpenHashMap<>();
 
             for (Entity entity : getAllEntities(level)) {
-                MinecraftChunkInfo info = worldInfos.computeIfAbsent(entity.chunkPosition().toLong(), MinecraftChunkInfo::new);
+                MinecraftChunkInfo info = worldInfos.computeIfAbsent(entity.chunkPosition().pack(), MinecraftChunkInfo::new);
                 info.entityCounts.increment(entity.getType());
             }
 

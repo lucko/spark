@@ -20,19 +20,21 @@
 
 package me.lucko.spark.common.sampler.async;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
+import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.SamplerSettings;
 import me.lucko.spark.common.sampler.SamplerType;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.tick.TickHook;
+import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
-import java.util.concurrent.Executors;
+import java.util.Locale;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -82,12 +84,7 @@ public class AsyncSampler extends AbstractSampler {
         this.dataAggregator = dataAggregator;
         this.forceNanoTime = forceNanoTime;
         this.profilerAccess = AsyncProfilerAccess.getInstance(platform);
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(
-                new ThreadFactoryBuilder()
-                        .setNameFormat("spark-async-sampler-worker-thread")
-                        .setUncaughtExceptionHandler(SparkThreadFactory.EXCEPTION_HANDLER)
-                        .build()
-        );
+        this.scheduler = new SparkScheduledThreadPoolExecutor(1, new SparkThreadFactory("spark-async-sampler-worker", false));
     }
 
     /**
@@ -95,6 +92,7 @@ public class AsyncSampler extends AbstractSampler {
      */
     @Override
     public void start() {
+        checkAlreadyRunning();
         super.start();
 
         TickHook tickHook = this.platform.getTickHook();
@@ -102,7 +100,7 @@ public class AsyncSampler extends AbstractSampler {
             this.windowStatisticsCollector.startCountingTicks(tickHook);
         }
 
-        int window = ProfilingWindowUtils.windowNow();
+        int window = ProfilingWindowUtils.monotonicTimeToWindow(this.startTime);
 
         AsyncProfilerJob job = this.profilerAccess.startNewProfilerJob();
         job.init(this.platform, this.sampleCollector, this.threadDumper, window, this.background, this.forceNanoTime);
@@ -175,7 +173,7 @@ public class AsyncSampler extends AbstractSampler {
             return;
         }
 
-        long delay = this.autoEndTime - System.currentTimeMillis();
+        long delay = this.autoEndTime - TimeUtil.monotonicCurrentTimeMillis();
         if (delay <= 0) {
             return;
         }
@@ -188,6 +186,29 @@ public class AsyncSampler extends AbstractSampler {
                 this.future.completeExceptionally(e);
             }
         }, delay, TimeUnit.MILLISECONDS);
+    }
+
+    private void checkAlreadyRunning() {
+        AsyncProfilerJob activeJob = AsyncProfilerJob.getActiveJob();
+        if (activeJob == null) {
+            return;
+        }
+
+        SparkPlatform activeJobPlatform = activeJob.getPlatform();
+        if (activeJobPlatform != null && activeJobPlatform != this.platform) {
+            PlatformInfo.Type thisPlatformType = this.platform.getPlugin().getPlatformInfo().getType();
+            PlatformInfo.Type activePlatformType = activeJobPlatform.getPlugin().getPlatformInfo().getType();
+
+            if (thisPlatformType != activePlatformType) {
+                throw new UnsupportedOperationException(
+                        "A profiler is already running on the " + activePlatformType.name().toLowerCase(Locale.ROOT) + " side. " +
+                        "You need to stop it (using /" + activeJobPlatform.getPlugin().getCommandName() + " profiler cancel) " +
+                        "before you can start one on the " + thisPlatformType.name().toLowerCase(Locale.ROOT) + " side."
+                );
+            }
+        }
+
+        throw new UnsupportedOperationException("A profiler is already running.");
     }
 
     /**

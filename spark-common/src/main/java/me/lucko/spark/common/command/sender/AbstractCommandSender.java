@@ -34,7 +34,7 @@ public abstract class AbstractCommandSender<S> implements CommandSender {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof AbstractCommandSender)) return false;
         AbstractCommandSender<?> that = (AbstractCommandSender<?>) o;
         return this.getObjectForComparison().equals(that.getObjectForComparison());
     }

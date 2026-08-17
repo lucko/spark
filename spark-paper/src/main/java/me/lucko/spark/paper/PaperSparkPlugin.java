@@ -21,6 +21,7 @@
 package me.lucko.spark.paper;
 
 import me.lucko.spark.api.Spark;
+import me.lucko.spark.common.SparkBuildInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
@@ -97,7 +98,7 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
 
     @Override
     public Collection<String> getPermissions() {
-        return this.platform.getAllSparkPermissions();
+        return this.platform.getCommandManager().getAllSparkPermissions();
     }
 
     @Override
@@ -112,7 +113,7 @@ public class PaperSparkPlugin implements PaperSparkModule, SparkPlugin {
 
     @Override
     public String getVersion() {
-        return "@version@";
+        return SparkBuildInfo.VERSION;
     }
 
     @Override

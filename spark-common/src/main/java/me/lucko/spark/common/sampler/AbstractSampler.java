@@ -30,6 +30,7 @@ import me.lucko.spark.common.sampler.node.exporter.NodeExporter;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkProtos;
@@ -128,7 +129,7 @@ public abstract class AbstractSampler implements Sampler {
 
     @Override
     public void start() {
-        this.startTime = System.currentTimeMillis();
+        this.startTime = TimeUtil.monotonicCurrentTimeMillis();
     }
 
     @Override

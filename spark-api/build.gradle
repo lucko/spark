@@ -5,12 +5,11 @@ plugins {
 version = '0.1-SNAPSHOT'
 
 dependencies {
-    compileOnly 'org.checkerframework:checker-qual:3.44.0'
-    compileOnly 'org.jetbrains:annotations:24.1.0'
+    compileOnly 'org.jspecify:jspecify:1.0.0'
 }
 
 license {
-    header = project.file('HEADER.txt')
+    rule(project.file('HEADER.txt'))
 }
 
 java {

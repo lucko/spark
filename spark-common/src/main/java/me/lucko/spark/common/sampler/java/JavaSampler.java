@@ -20,7 +20,6 @@
 
 package me.lucko.spark.common.sampler.java;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.AbstractSampler;
 import me.lucko.spark.common.sampler.SamplerMode;
@@ -30,14 +29,15 @@ import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.MethodDisambiguator;
+import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.common.ws.ViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -48,15 +48,9 @@ import java.util.function.IntPredicate;
  * A sampler implementation using Java (WarmRoast).
  */
 public class JavaSampler extends AbstractSampler implements Runnable {
-    private static final AtomicInteger THREAD_ID = new AtomicInteger(0);
 
     /** The worker pool for inserting stack nodes */
-    private final ScheduledExecutorService workerPool = Executors.newScheduledThreadPool(
-            6, new ThreadFactoryBuilder()
-                    .setNameFormat("spark-java-sampler-" + THREAD_ID.getAndIncrement() + "-%d")
-                    .setUncaughtExceptionHandler(SparkThreadFactory.EXCEPTION_HANDLER)
-                    .build()
-    );
+    private final ScheduledExecutorService workerPool = new SparkScheduledThreadPoolExecutor(6, new SparkThreadFactory("spark-java-sampler", false));
 
     /** The main sampling task */
     private ScheduledFuture<?> task;
@@ -97,7 +91,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
             }
         }
 
-        this.windowStatisticsCollector.recordWindowStartTime(ProfilingWindowUtils.unixMillisToWindow(this.startTime));
+        this.windowStatisticsCollector.recordWindowStartTime(ProfilingWindowUtils.monotonicTimeToWindow(this.startTime));
         this.task = this.workerPool.scheduleAtFixedRate(this, 0, this.interval, TimeUnit.MICROSECONDS);
     }
 
@@ -124,7 +118,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
         // this is effectively synchronized, the worker pool will not allow this task
         // to concurrently execute.
         try {
-            long time = System.currentTimeMillis();
+            long time = TimeUtil.monotonicCurrentTimeMillis();
 
             if (this.autoEndTime != -1 && this.autoEndTime <= time) {
                 stop(false);
@@ -132,7 +126,7 @@ public class JavaSampler extends AbstractSampler implements Runnable {
                 return;
             }
 
-            int window = ProfilingWindowUtils.unixMillisToWindow(time);
+            int window = ProfilingWindowUtils.monotonicTimeToWindow(time);
             ThreadInfo[] threadDumps = this.threadDumper.dumpThreads(this.threadBean);
             this.workerPool.execute(new InsertDataTask(threadDumps, window));
         } catch (Throwable t) {

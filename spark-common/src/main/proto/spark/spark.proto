@@ -136,11 +136,13 @@ message PlatformStatistics {
     double last1m = 1;
     double last5m = 2;
     double last15m = 3;
+    int32 game_target_tps = 4;
   }
 
   message Mspt {
     RollingAverageValues last1m = 1;
     RollingAverageValues last5m = 2;
+    int32 game_max_ideal_mspt = 3;
   }
 
   message Ping {
@@ -189,6 +191,7 @@ message WorldStatistics {
     string name = 1;
     string description = 2;
     string source = 3;
+    bool builtin = 4;
   }
 }
 
@@ -236,6 +239,7 @@ message PluginOrModMetadata {
   string version = 2;
   string author = 3;
   string description = 4;
+  bool builtin = 5;
 }
 
 message HealthData {

@@ -18,23 +18,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util.classfinder;
+package me.lucko.spark.common;
 
-import org.jspecify.annotations.Nullable;
+public enum SparkBuildInfo {
+    ;
 
-/**
- * Uses {@link Class#forName(String)} to find a class reference for given class names.
- */
-public enum FallbackClassFinder implements ClassFinder {
-    INSTANCE;
-
-    @Override
-    public @Nullable Class<?> findClass(String className) {
-        try {
-            return Class.forName(className);
-        } catch (Throwable e) {
-            return null;
-        }
-    }
+    public static final String VERSION = "{{ version }}";
+    public static final String DESCRIPTION = "{{ description }}";
 
 }

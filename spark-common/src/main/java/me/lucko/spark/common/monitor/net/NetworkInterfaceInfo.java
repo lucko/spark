@@ -22,8 +22,8 @@ package me.lucko.spark.common.monitor.net;
 
 import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.monitor.LinuxProc;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Arrays;
 import java.util.Collections;

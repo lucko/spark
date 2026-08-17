@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.monitor;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jspecify.annotations.NonNull;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -29,31 +29,43 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Utility for reading from wmic (Windows Management Instrumentation Commandline) on Windows systems.
+ * Utility for reading from wmi (Windows Management Instrumentation) service via Powershell on Windows systems.
  */
-public enum WindowsWmic {
+public enum WindowsWmi {
 
     /**
-     * Gets the CPU name
+     * Get the processor name.
      */
-    CPU_GET_NAME("wmic", "cpu", "get", "name", "/FORMAT:list"),
+    PROCESSOR_NAME("(Get-CimInstance Win32_Processor).Name"),
 
     /**
-     * Gets the operating system name (caption) and version.
+     * Get the operating system caption.
      */
-    OS_GET_CAPTION_AND_VERSION("wmic", "os", "get", "caption,version", "/FORMAT:list");
+    OPERATING_SYSTEM_CAPTION("(Get-CimInstance Win32_OperatingSystem).Caption"),
+
+    /**
+     * Get the operating system version.
+     */
+    OPERATING_SYSTEM_VERSION("(Get-CimInstance Win32_OperatingSystem).Version");
 
     private static final boolean SUPPORTED = System.getProperty("os.name").startsWith("Windows");
 
-    private final String[] cmdArgs;
+    private final String command;
 
-    WindowsWmic(String... cmdArgs) {
-        this.cmdArgs = cmdArgs;
+    WindowsWmi(String command) {
+        this.command = command;
     }
 
     public @NonNull List<String> read() {
         if (SUPPORTED) {
-            ProcessBuilder process = new ProcessBuilder(this.cmdArgs).redirectErrorStream(true);
+            ProcessBuilder process = new ProcessBuilder(
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    this.command
+            ).redirectErrorStream(true);
+
             try (BufferedReader buf = new BufferedReader(new InputStreamReader(process.start().getInputStream()))) {
                 List<String> lines = new ArrayList<>();
 

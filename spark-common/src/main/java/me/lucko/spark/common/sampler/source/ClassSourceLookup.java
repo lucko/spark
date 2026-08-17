@@ -24,7 +24,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.sampler.node.StackTraceNode;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;

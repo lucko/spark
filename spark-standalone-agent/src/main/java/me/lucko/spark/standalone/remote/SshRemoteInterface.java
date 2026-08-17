@@ -50,13 +50,11 @@ public class SshRemoteInterface extends AbstractRemoteInterface {
         this.sshd.setPasswordAuthenticator((username, password, session) -> "spark".equals(username) && MessageDigest.isEqual(this.password.getBytes(), password.getBytes()));
         this.sshd.setShellFactory(new ShellFactoryImpl(shellParams -> this.processSession(shellParams.getTerminal(), shellParams.getCloser())));
 
-        new Thread(() -> {
-            try {
-                this.start();
-            } catch (IOException e) {
-                this.spark.log(Level.SEVERE, "Error whilst starting SSH server", e);
-            }
-        }, "spark-ssh-server").start();
+        try {
+            this.start();
+        } catch (IOException e) {
+            this.spark.log(Level.SEVERE, "Error whilst starting SSH server", e);
+        }
     }
 
     private void start() throws IOException {
@@ -64,6 +62,14 @@ public class SshRemoteInterface extends AbstractRemoteInterface {
         this.spark.log(Level.INFO, "SSH Server started on port " + this.sshd.getPort());
         this.spark.log(Level.INFO, "Connect using: ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p " + this.sshd.getPort() + " spark@localhost");
         this.spark.log(Level.INFO, "When prompted, enter the password: " + this.password);
+    }
+
+    public String getPassword() {
+        return this.password;
+    }
+
+    public int getPort() {
+        return this.sshd.getPort();
     }
 
     @Override

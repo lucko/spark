@@ -22,7 +22,7 @@ package me.lucko.spark.common.monitor.ping;
 
 import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.util.RollingAverage;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.util.Map;

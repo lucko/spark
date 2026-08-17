@@ -20,15 +20,15 @@
 
 package me.lucko.spark.standalone;
 
+import me.lucko.spark.common.SparkBuildInfo;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.platform.PlatformInfo;
-import me.lucko.spark.common.util.SparkThreadFactory;
+import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.util.classfinder.FallbackClassFinder;
 import me.lucko.spark.common.util.classfinder.InstrumentationClassFinder;
-import me.lucko.spark.standalone.remote.RemoteInterface;
 import me.lucko.spark.standalone.remote.SshRemoteInterface;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -43,7 +43,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.logging.Level;
 import java.util.stream.Stream;
@@ -53,14 +52,13 @@ public class StandaloneSparkPlugin implements SparkPlugin {
     private final Set<StandaloneCommandSender> senders;
     private final ScheduledExecutorService scheduler;
     private final SparkPlatform platform;
-
-    private final RemoteInterface remoteInterface;
+    private final SshRemoteInterface remoteInterface;
 
     public StandaloneSparkPlugin(Instrumentation instrumentation, Map<String, String> arguments) {
         this.instrumentation = instrumentation;
         this.senders = ConcurrentHashMap.newKeySet();
         this.senders.add(StandaloneCommandSender.SYSTEM_OUT);
-        this.scheduler = Executors.newScheduledThreadPool(4, new SparkThreadFactory());
+        this.scheduler = new SparkScheduledThreadPoolExecutor(4);
         this.platform = new SparkPlatform(this);
         this.platform.enable();
         this.remoteInterface = new SshRemoteInterface(this, Integer.parseInt(arguments.getOrDefault("port", "0")));
@@ -102,7 +100,7 @@ public class StandaloneSparkPlugin implements SparkPlugin {
 
     @Override
     public String getVersion() {
-        return "@version@";
+        return SparkBuildInfo.VERSION;
     }
 
     @Override
@@ -156,5 +154,9 @@ public class StandaloneSparkPlugin implements SparkPlugin {
                 new InstrumentationClassFinder(this.instrumentation),
                 FallbackClassFinder.INSTANCE
         );
+    }
+
+    public SshRemoteInterface getRemoteInterface() {
+        return this.remoteInterface;
     }
 }

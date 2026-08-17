@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.sampler.node;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
 
