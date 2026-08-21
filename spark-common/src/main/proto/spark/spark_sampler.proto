@@ -36,6 +36,7 @@ message SamplerMetadata {
   SamplerMode sampler_mode = 15;
   SamplerEngine sampler_engine = 16;
   string sampler_engine_version = 17;
+  Metrics metrics = 18;
 
   message ThreadDumper {
     Type type = 1;
@@ -102,9 +103,4 @@ message StackTraceNode {
   string method_desc = 7; // optional
   repeated double times = 8;
   repeated int32 children_refs = 9;
-}
-
-message SocketChannelInfo {
-  string channel_id = 1;
-  bytes public_key = 2;
 }

@@ -23,19 +23,14 @@ package me.lucko.spark.common.ws;
 import com.google.protobuf.ByteString;
 import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.sampler.AbstractSampler;
-import me.lucko.spark.common.sampler.Sampler;
 import me.lucko.spark.common.sampler.window.ProfilingWindowUtils;
-import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.proto.SparkProtos;
-import me.lucko.spark.proto.SparkSamplerProtos;
 import me.lucko.spark.proto.SparkWebSocketProtos.ClientConnect;
 import me.lucko.spark.proto.SparkWebSocketProtos.ClientPing;
 import me.lucko.spark.proto.SparkWebSocketProtos.PacketWrapper;
 import me.lucko.spark.proto.SparkWebSocketProtos.ServerConnectResponse;
 import me.lucko.spark.proto.SparkWebSocketProtos.ServerPong;
-import me.lucko.spark.proto.SparkWebSocketProtos.ServerUpdateSamplerData;
 import me.lucko.spark.proto.SparkWebSocketProtos.ServerUpdateStatistics;
 
 import java.security.PublicKey;
@@ -45,7 +40,7 @@ import java.util.logging.Level;
 /**
  * Represents a connection with the spark viewer.
  */
-public class ViewerSocket implements ViewerSocketConnection.Listener, AutoCloseable {
+public abstract class ViewerSocket implements ViewerSocketConnection.Listener, AutoCloseable {
 
     /** Allow 60 seconds for the first client to connect */
     private static final long SOCKET_INITIAL_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
@@ -54,24 +49,21 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
     private static final long SOCKET_ESTABLISHED_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
 
     /** The spark platform */
-    private final SparkPlatform platform;
-    /** The export props to use when exporting the sampler data */
-    private final Sampler.ExportProps exportProps;
+    protected final SparkPlatform platform;
     /** The underlying connection */
-    private final ViewerSocketConnection socket;
+    protected final ViewerSocketConnection socket;
 
     private boolean closed = false;
     private final long socketOpenTime = TimeUtil.monotonicCurrentTimeMillis();
     private long lastPing = 0;
     private String lastPayloadId = null;
 
-    public ViewerSocket(SparkPlatform platform, BytesocksClient client, Sampler.ExportProps exportProps) throws Exception {
+    protected ViewerSocket(SparkPlatform platform, BytesocksClient client) throws Exception {
         this.platform = platform;
-        this.exportProps = exportProps;
         this.socket = new ViewerSocketConnection(platform, client, this);
     }
 
-    private void log(String message) {
+    protected void log(String message) {
         this.platform.getPlugin().log(Level.INFO, "[Viewer - " + this.socket.getChannelId() + "] " + message);
     }
 
@@ -80,8 +72,8 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
      *
      * @return the payload
      */
-    public SparkSamplerProtos.SocketChannelInfo getPayload() {
-        return SparkSamplerProtos.SocketChannelInfo.newBuilder()
+    public SparkProtos.SocketChannelInfo getPayload() {
+        return SparkProtos.SocketChannelInfo.newBuilder()
                 .setChannelId(this.socket.getChannelId())
                 .setPublicKey(ByteString.copyFrom(this.platform.getTrustedKeyStore().getLocalPublicKey().getEncoded()))
                 .build();
@@ -91,48 +83,28 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         return !this.closed && this.socket.isOpen();
     }
 
-    /**
-     * Called each time the sampler rotates to a new window.
-     *
-     * @param sampler the sampler
-     */
-    public void processWindowRotate(AbstractSampler sampler) {
+    protected boolean isClosed() {
+        return this.closed;
+    }
+
+    public boolean checkShouldClose() {
         if (this.closed) {
-            return;
+            return true;
         }
 
         long time = TimeUtil.monotonicCurrentTimeMillis();
         if ((time - this.socketOpenTime) > SOCKET_INITIAL_TIMEOUT && (time - this.lastPing) > SOCKET_ESTABLISHED_TIMEOUT) {
             log("No clients have pinged for 30s, closing socket");
             close();
-            return;
+            return true;
         }
 
         // no clients connected yet!
         if (this.lastPing == 0) {
-            return;
+            return true;
         }
 
-        try {
-            SparkSamplerProtos.SamplerData samplerData = sampler.toProto(this.platform, this.exportProps);
-            String key = this.platform.getBytebinClient().postContent(samplerData, MediaTypes.SPARK_SAMPLER_MEDIA_TYPE, "live").key();
-            sendUpdatedSamplerData(key);
-        } catch (Exception e) {
-            this.platform.getPlugin().log(Level.WARNING, "Error whilst sending updated sampler data to the socket", e);
-        }
-    }
-
-    /**
-     * Called when the sampler stops.
-     *
-     * @param sampler the sampler
-     */
-    public void processSamplerStopped(AbstractSampler sampler) {
-        if (this.closed) {
-            return;
-        }
-
-        close();
+        return false;
     }
 
     @Override
@@ -143,6 +115,14 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
         ));
         this.socket.close();
         this.closed = true;
+    }
+
+    public String getLastPayloadId() {
+        return this.lastPayloadId;
+    }
+
+    public void setLastPayloadId(String lastPayloadId) {
+        this.lastPayloadId = lastPayloadId;
     }
 
     @Override
@@ -164,28 +144,17 @@ public class ViewerSocket implements ViewerSocketConnection.Listener, AutoClosea
     }
 
     /**
-     * Sends a message to the socket to indicate that updated sampler data is available
-     *
-     * @param payloadId the payload id of the updated data
-     */
-    public void sendUpdatedSamplerData(String payloadId) {
-        this.socket.sendPacket(builder -> builder.setServerUpdateSampler(ServerUpdateSamplerData.newBuilder()
-                .setPayloadId(payloadId)
-                .build()
-        ));
-        this.lastPayloadId = payloadId;
-    }
-
-    /**
      * Sends a message to the socket with updated statistics
      *
      * @param platform the platform statistics
      * @param system the system statistics
+     * @param metrics the metrics
      */
-    public void sendUpdatedStatistics(SparkProtos.PlatformStatistics platform, SparkProtos.SystemStatistics system) {
+    public void sendUpdatedStatistics(SparkProtos.PlatformStatistics platform, SparkProtos.SystemStatistics system, SparkProtos.Metrics metrics) {
         this.socket.sendPacket(builder -> builder.setServerUpdateStatistics(ServerUpdateStatistics.newBuilder()
                 .setPlatform(platform)
                 .setSystem(system)
+                .setMetrics(metrics)
                 .build()
         ));
     }

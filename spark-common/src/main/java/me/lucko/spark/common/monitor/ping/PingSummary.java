@@ -20,6 +20,8 @@
 
 package me.lucko.spark.common.monitor.ping;
 
+import me.lucko.spark.common.util.ImmutableDoubleAverageInfo;
+
 import java.util.Arrays;
 
 public final class PingSummary {
@@ -76,6 +78,10 @@ public final class PingSummary {
 
     public double percentile95th() {
         return percentile(0.95d);
+    }
+
+    public ImmutableDoubleAverageInfo toDoubleAverage() {
+        return new ImmutableDoubleAverageInfo(this.mean(), this.max(), this.min(), this.median(), this.percentile95th());
     }
 
 }

@@ -21,6 +21,8 @@
 package me.lucko.spark.common.monitor.tick;
 
 import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
+import me.lucko.spark.common.monitor.Metrics;
+import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.common.util.RollingAverage;
@@ -93,6 +95,10 @@ public class SparkTickStatistics implements TickHook.Callback, TickReporter.Call
             rollingAverage.add(currentTps, diff, total);
         }
 
+        if (Metrics.shouldRecordTps()) {
+            Metrics.TPS.record(this.tps10Sec.getAverage());
+        }
+
         this.last = now;
     }
 
@@ -102,6 +108,11 @@ public class SparkTickStatistics implements TickHook.Callback, TickReporter.Call
         BigDecimal decimal = new BigDecimal(duration);
         for (RollingAverage rollingAverage : this.tickDurationAverages) {
             rollingAverage.add(decimal);
+        }
+
+        if (Metrics.shouldRecordTickDuration() && this.tickDuration1Min.getSamples() > 0) {
+            // mean/max/min/median/95th are expensive to calculate, so do that async to avoid blocking main thread
+            MonitoringExecutor.INSTANCE.execute(() -> Metrics.TICK_DURATION.record(this.tickDuration1Min.toImmutable()));
         }
     }
 

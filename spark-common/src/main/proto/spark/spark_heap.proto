@@ -21,6 +21,7 @@ message HeapMetadata {
   map<string, string> server_configurations = 6;
   map<string, PluginOrModMetadata> sources = 7;
   map<string, string> extra_platform_metadata = 8;
+  Metrics metrics = 9;
 }
 
 message HeapEntry {

@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.monitor.ping;
 
+import me.lucko.spark.common.monitor.Metrics;
 import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.util.RollingAverage;
 import org.jspecify.annotations.Nullable;
@@ -56,7 +57,7 @@ public final class PingStatistics implements Runnable, AutoCloseable {
         if (this.future != null) {
             throw new IllegalStateException();
         }
-        this.future = MonitoringExecutor.INSTANCE.scheduleAtFixedRate(this, QUERY_RATE_SECONDS, QUERY_RATE_SECONDS, TimeUnit.SECONDS);
+        this.future = MonitoringExecutor.scheduleAtFixedRateMillis(this, QUERY_RATE_SECONDS * 1000L);
     }
 
     @Override
@@ -75,6 +76,7 @@ public final class PingStatistics implements Runnable, AutoCloseable {
         }
 
         this.rollingAverage.add(BigDecimal.valueOf(summary.median()));
+        Metrics.PLAYER_PING.record(summary.toDoubleAverage());
     }
 
     /**

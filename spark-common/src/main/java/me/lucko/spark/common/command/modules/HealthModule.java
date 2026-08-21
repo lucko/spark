@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
+import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
@@ -27,6 +28,7 @@ import me.lucko.spark.common.command.Command;
 import me.lucko.spark.common.command.CommandModule;
 import me.lucko.spark.common.command.CommandResponseHandler;
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
 import me.lucko.spark.common.command.tabcomplete.TabCompleter;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.disk.DiskUsage;
@@ -42,6 +44,7 @@ import me.lucko.spark.common.util.FormatUtil;
 import me.lucko.spark.common.util.MediaTypes;
 import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.common.util.StatisticFormatter;
+import me.lucko.spark.common.ws.HealthReportViewerSocket;
 import me.lucko.spark.proto.SparkProtos;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -51,6 +54,9 @@ import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.lang.management.MemoryUsage;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -75,6 +81,31 @@ public class HealthModule implements CommandModule {
     @Override
     public void registerCommands(Consumer<Command> consumer) {
         consumer.accept(Command.builder()
+                .aliases("health", "healthreport")
+                .allowSubCommand(true)
+                .argumentUsage("dashboard", "", null)
+                .argumentUsage("upload", "", null)
+                .argumentUsage("show", "memory", null)
+                .argumentUsage("show", "network", null)
+                .executor(HealthModule::healthReport)
+                .tabCompleter((platform, sender, arguments) -> {
+                    List<String> opts = Collections.emptyList();
+                    if (!arguments.isEmpty()) {
+                        String subCommand = arguments.get(0);
+                        if (subCommand.equals("show")) {
+                            opts = new ArrayList<>(Arrays.asList("--memory", "--network"));
+                            opts.removeAll(arguments);
+                        }
+                    }
+                    return TabCompleter.create()
+                            .at(0, CompletionSupplier.startsWith(Arrays.asList("dashboard", "upload", "show")))
+                            .from(1, CompletionSupplier.startsWith(opts))
+                            .complete(arguments);
+                })
+                .build()
+        );
+
+        consumer.accept(Command.builder()
                 .aliases("tps", "cpu")
                 .executor(HealthModule::tps)
                 .tabCompleter(Command.TabCompleter.empty())
@@ -86,16 +117,6 @@ public class HealthModule implements CommandModule {
                 .argumentUsage("player", "username")
                 .executor(HealthModule::ping)
                 .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--player"))
-                .build()
-        );
-
-        consumer.accept(Command.builder()
-                .aliases("healthreport", "health", "ht")
-                .argumentUsage("upload", null)
-                .argumentUsage("memory", null)
-                .argumentUsage("network", null)
-                .executor(HealthModule::healthReport)
-                .tabCompleter((platform, sender, arguments) -> TabCompleter.completeForOpts(arguments, "--upload", "--memory", "--network"))
                 .build()
         );
     }
@@ -192,12 +213,17 @@ public class HealthModule implements CommandModule {
     }
 
     private static void healthReport(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
-        resp.replyPrefixed(text("Generating server health report..."));
+        String subCommand = arguments.subCommand() == null ? "" : arguments.subCommand();
 
-        if (arguments.boolFlag("upload")) {
-            uploadHealthReport(platform, sender, resp, arguments);
-            return;
+        if (subCommand.equals("show")) {
+            healthReportShow(platform, sender, resp, arguments);
+        } else {
+            healthReportUpload(platform, sender, resp, !subCommand.equals("upload"));
         }
+    }
+
+    private static void healthReportShow(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+        resp.replyPrefixed(text("Generating server health report..."));
 
         List<Component> report = new LinkedList<>();
         report.add(empty());
@@ -223,7 +249,9 @@ public class HealthModule implements CommandModule {
         resp.reply(report);
     }
 
-    private static void uploadHealthReport(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
+    private static void healthReportUpload(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, boolean dashboard) {
+        resp.replyPrefixed(text("Generating server health report..."));
+
         SparkProtos.HealthMetadata.Builder metadata = SparkProtos.HealthMetadata.newBuilder();
         SparkMetadata.gather(platform, sender.toData(), platform.getStartupGcStatistics()).writeTo(metadata);
 
@@ -235,18 +263,33 @@ public class HealthModule implements CommandModule {
             data.putAllTimeWindowStatistics(activeSampler.exportWindowStatistics());
         }
 
+        if (dashboard) {
+            BytesocksClient bytesocksClient = platform.getBytesocksClient();
+            if (bytesocksClient == null) {
+                resp.replyPrefixed(text("The live viewer is not supported.", RED));
+                return;
+            }
+
+            try {
+                HealthReportViewerSocket socket = new HealthReportViewerSocket(platform, bytesocksClient);
+                data.setChannelInfo(socket.getPayload());
+            } catch (Exception e) {
+                resp.replyPrefixed(text("An error occurred whilst opening the live viewer connection.", RED));
+                platform.getPlugin().log(Level.WARNING, "Error whilst opening live viewer connection", e);
+            }
+        }
+
         try {
             String key = platform.getBytebinClient().postContent(data.build(), MediaTypes.SPARK_HEALTH_MEDIA_TYPE).key();
             String url = platform.getViewerUrl() + key;
 
-            resp.broadcastPrefixed(text("Health report:", GOLD));
+            resp.broadcastPrefixed(text("Health Report:", GOLD));
             resp.broadcast(text()
                     .content(url)
                     .color(GRAY)
                     .clickEvent(ClickEvent.openUrl(url))
                     .build()
             );
-
             platform.getActivityLog().addToLog(Activity.urlActivity(resp.senderData(), System.currentTimeMillis(), "Health report", url));
         } catch (Exception e) {
             resp.broadcastPrefixed(text("An error occurred whilst uploading the data.", RED));
