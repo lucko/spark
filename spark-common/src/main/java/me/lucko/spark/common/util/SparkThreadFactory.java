@@ -22,6 +22,7 @@ package me.lucko.spark.common.util;
 
 import me.lucko.spark.common.util.log.SparkStaticLogger;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -29,6 +30,9 @@ import java.util.logging.Level;
 public class SparkThreadFactory implements ThreadFactory {
 
     static final Thread.UncaughtExceptionHandler EXCEPTION_HANDLER = (t, e) -> {
+        if (e instanceof CancellationException) {
+            return; // ignore cancellation exceptions
+        }
         SparkStaticLogger.log(Level.SEVERE, "Uncaught exception thrown in thread " + t.getName(), e);
     };
 
