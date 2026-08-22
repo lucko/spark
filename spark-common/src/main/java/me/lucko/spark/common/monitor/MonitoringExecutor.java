@@ -24,10 +24,21 @@ import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public enum MonitoringExecutor {
     ;
 
     /** The executor used to monitor & calculate rolling averages. */
-    public static final ScheduledExecutorService INSTANCE = new SparkScheduledThreadPoolExecutor(1, new SparkThreadFactory("spark-monitoring", true));
+    public static final ScheduledExecutorService INSTANCE = new SparkScheduledThreadPoolExecutor(4, new SparkThreadFactory("spark-monitoring", true));
+
+    public static ScheduledFuture<?> scheduleAtFixedRateMillis(Runnable command, long periodMillis) {
+        // schedule the task with a random initial delay to avoid all fixed rate tasks running at the same time
+        long delay = ThreadLocalRandom.current().nextLong(Math.min(periodMillis, 10_000L));
+        return INSTANCE.scheduleAtFixedRate(command, delay, periodMillis, MILLISECONDS);
+    }
+
 }

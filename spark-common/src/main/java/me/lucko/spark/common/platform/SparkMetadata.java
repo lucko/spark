@@ -22,10 +22,12 @@ package me.lucko.spark.common.platform;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.monitor.Metrics;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.proto.SparkHeapProtos.HeapMetadata;
+import me.lucko.spark.proto.SparkProtos;
 import me.lucko.spark.proto.SparkProtos.HealthMetadata;
 import me.lucko.spark.proto.SparkProtos.PlatformMetadata;
 import me.lucko.spark.proto.SparkProtos.PlatformStatistics;
@@ -80,7 +82,9 @@ public class SparkMetadata {
             platform.getPlugin().log(Level.WARNING, "Failed to gather extra platform metadata", e);
         }
 
-        return new SparkMetadata(creator, platformMetadata, platformStatistics, systemStatistics, generatedTime, serverConfigurations, sources, extraPlatformMetadata);
+        SparkProtos.Metrics metrics = Metrics.exportProto();
+
+        return new SparkMetadata(creator, platformMetadata, platformStatistics, systemStatistics, generatedTime, serverConfigurations, sources, extraPlatformMetadata, metrics);
     }
 
     private final CommandSender.Data creator;
@@ -91,8 +95,9 @@ public class SparkMetadata {
     private final Map<String, String> serverConfigurations;
     private final Collection<SourceMetadata> sources;
     private final Map<String, String> extraPlatformMetadata;
+    private final SparkProtos.Metrics metrics;
 
-    public SparkMetadata(CommandSender.Data creator, PlatformMetadata platformMetadata, PlatformStatistics platformStatistics, SystemStatistics systemStatistics, long generatedTime, Map<String, String> serverConfigurations, Collection<SourceMetadata> sources, Map<String, String> extraPlatformMetadata) {
+    public SparkMetadata(CommandSender.Data creator, PlatformMetadata platformMetadata, PlatformStatistics platformStatistics, SystemStatistics systemStatistics, long generatedTime, Map<String, String> serverConfigurations, Collection<SourceMetadata> sources, Map<String, String> extraPlatformMetadata, SparkProtos.Metrics metrics) {
         this.creator = creator;
         this.platformMetadata = platformMetadata;
         this.platformStatistics = platformStatistics;
@@ -101,6 +106,7 @@ public class SparkMetadata {
         this.serverConfigurations = serverConfigurations;
         this.sources = sources;
         this.extraPlatformMetadata = extraPlatformMetadata;
+        this.metrics = metrics;
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -117,6 +123,7 @@ public class SparkMetadata {
             }
         }
         if (this.extraPlatformMetadata != null) builder.putAllExtraPlatformMetadata(this.extraPlatformMetadata);
+        if (this.metrics != null) builder.setMetrics(this.metrics);
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -133,6 +140,7 @@ public class SparkMetadata {
             }
         }
         if (this.extraPlatformMetadata != null) builder.putAllExtraPlatformMetadata(this.extraPlatformMetadata);
+        if (this.metrics != null) builder.setMetrics(this.metrics);
     }
 
     @SuppressWarnings("DuplicatedCode")
@@ -149,6 +157,7 @@ public class SparkMetadata {
             }
         }
         if (this.extraPlatformMetadata != null) builder.putAllExtraPlatformMetadata(this.extraPlatformMetadata);
+        if (this.metrics != null) builder.setMetrics(this.metrics);
     }
 
 }

@@ -24,10 +24,10 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
-import me.lucko.spark.common.ws.ViewerSocket;
+import me.lucko.spark.common.ws.SamplerViewerSocket;
 import me.lucko.spark.proto.SparkProtos;
+import me.lucko.spark.proto.SparkProtos.SocketChannelInfo;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
-import me.lucko.spark.proto.SparkSamplerProtos.SocketChannelInfo;
 
 import java.util.Collection;
 import java.util.Map;
@@ -54,14 +54,14 @@ public interface Sampler {
      *
      * @param socket the socket
      */
-    void attachSocket(ViewerSocket socket);
+    void attachSocket(SamplerViewerSocket socket);
 
     /**
      * Gets the sockets attached to this sampler.
      *
      * @return the attached sockets
      */
-    Collection<ViewerSocket> getAttachedSockets();
+    Collection<SamplerViewerSocket> getAttachedSockets();
 
     /**
      * Gets the time when the sampler started (unix timestamp in millis)

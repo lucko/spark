@@ -27,7 +27,8 @@ import me.lucko.spark.common.monitor.cpu.CpuInfo;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.disk.DiskUsage;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
-import me.lucko.spark.common.monitor.memory.MemoryInfo;
+import me.lucko.spark.common.monitor.memory.MemoryAllocationInfo;
+import me.lucko.spark.common.monitor.memory.SystemMemoryInfo;
 import me.lucko.spark.common.monitor.net.NetworkInterfaceAverages;
 import me.lucko.spark.common.monitor.net.NetworkMonitor;
 import me.lucko.spark.common.monitor.os.OperatingSystemInfo;
@@ -84,13 +85,13 @@ public class PlatformStatisticsProvider {
                 )
                 .setMemory(SystemStatistics.Memory.newBuilder()
                         .setPhysical(SystemStatistics.Memory.MemoryPool.newBuilder()
-                                .setUsed(MemoryInfo.getUsedPhysicalMemory())
-                                .setTotal(MemoryInfo.getTotalPhysicalMemory())
+                                .setUsed(SystemMemoryInfo.getUsedPhysicalMemory())
+                                .setTotal(SystemMemoryInfo.getTotalPhysicalMemory())
                                 .build()
                         )
                         .setSwap(SystemStatistics.Memory.MemoryPool.newBuilder()
-                                .setUsed(MemoryInfo.getUsedSwap())
-                                .setTotal(MemoryInfo.getTotalSwap())
+                                .setUsed(SystemMemoryInfo.getUsedSwap())
+                                .setTotal(SystemMemoryInfo.getTotalSwap())
                                 .build()
                         )
                         .build()
@@ -152,7 +153,10 @@ public class PlatformStatisticsProvider {
 
         PlatformStatistics.Memory.Builder memory = PlatformStatistics.Memory.newBuilder()
                 .setHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getHeapMemoryUsage()))
-                .setNonHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage()));
+                .setNonHeap(memoryUsageProto(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage()))
+                .setAllocBpsLast1M(rollingAvgProto(MemoryAllocationInfo.BPS_AVERAGE_1_MIN))
+                .setAllocBpsLast5M(rollingAvgProto(MemoryAllocationInfo.BPS_AVERAGE_5_MIN))
+                .setAllocBpsLast15M(rollingAvgProto(MemoryAllocationInfo.BPS_AVERAGE_15_MIN));
 
         List<MemoryPoolMXBean> memoryPoolMXBeans = ManagementFactory.getMemoryPoolMXBeans();
         for (MemoryPoolMXBean memoryPool : memoryPoolMXBeans) {
@@ -268,8 +272,8 @@ public class PlatformStatisticsProvider {
                 .build();
     }
 
-    public static PlatformStatistics.Memory.MemoryUsage memoryUsageProto(MemoryUsage usage) {
-        return PlatformStatistics.Memory.MemoryUsage.newBuilder()
+    public static SparkProtos.MemoryUsage memoryUsageProto(MemoryUsage usage) {
+        return SparkProtos.MemoryUsage.newBuilder()
                 .setUsed(usage.getUsed())
                 .setCommitted(usage.getCommitted())
                 .setInit(usage.getInit())

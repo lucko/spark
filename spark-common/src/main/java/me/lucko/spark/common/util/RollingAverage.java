@@ -111,4 +111,10 @@ public class RollingAverage implements DoubleAverageInfo {
         return sortedSamples[rank].doubleValue();
     }
 
+    public ImmutableDoubleAverageInfo toImmutable() {
+        synchronized (this) {
+            return new ImmutableDoubleAverageInfo(this);
+        }
+    }
+
 }

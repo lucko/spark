@@ -63,6 +63,7 @@ message ServerUpdateSamplerData {
 message ServerUpdateStatistics {
   PlatformStatistics platform = 1;
   SystemStatistics system = 2;
+  Metrics metrics = 3;
 }
 
 // (unsigned) Sent from the client -> server on initial connection

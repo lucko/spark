@@ -20,15 +20,16 @@
 
 package me.lucko.spark.common.monitor.cpu;
 
+import me.lucko.spark.common.monitor.Metrics;
 import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.util.RollingAverage;
+import me.lucko.spark.common.util.TimeUtil;
 
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Exposes and monitors the system/process CPU usage.
@@ -58,8 +59,7 @@ public enum CpuMonitor {
             throw new UnsupportedOperationException("OperatingSystemMXBean is not supported by the system", e);
         }
 
-        // schedule rolling average calculations.
-        MonitoringExecutor.INSTANCE.scheduleAtFixedRate(new RollingAverageCollectionTask(), 1, 1, TimeUnit.SECONDS);
+        MonitoringExecutor.scheduleAtFixedRateMillis(new PollingTask(), 1000 /* 1 second */);
     }
 
     /**
@@ -133,7 +133,7 @@ public enum CpuMonitor {
     /**
      * Task to poll CPU loads and add to the rolling averages in the enclosing class.
      */
-    private static final class RollingAverageCollectionTask implements Runnable {
+    private static final class PollingTask implements Runnable {
         private final RollingAverage[] systemAverages = new RollingAverage[]{
                 SYSTEM_AVERAGE_10_SEC,
                 SYSTEM_AVERAGE_1_MIN,
@@ -147,18 +147,29 @@ public enum CpuMonitor {
 
         @Override
         public void run() {
-            BigDecimal systemCpuLoad = new BigDecimal(systemLoad());
-            BigDecimal processCpuLoad = new BigDecimal(processLoad());
+            double systemLoad = systemLoad();
+            double processLoad = processLoad();
+            long timeMillis = TimeUtil.monotonicCurrentTimeMillis();
 
-            if (systemCpuLoad.signum() != -1) { // if value is not negative
+            if (systemLoad >= 0) {
+                BigDecimal value = new BigDecimal(systemLoad);
                 for (RollingAverage average : this.systemAverages) {
-                    average.add(systemCpuLoad);
+                    average.add(value);
+                }
+
+                if (Metrics.shouldRecordCpuUsageSystem(timeMillis)) {
+                    Metrics.CPU_USAGE_SYSTEM.record(timeMillis, systemLoad);
                 }
             }
 
-            if (processCpuLoad.signum() != -1) { // if value is not negative
+            if (processLoad >= 0) {
+                BigDecimal value = new BigDecimal(processLoad);
                 for (RollingAverage average : this.processAverages) {
-                    average.add(processCpuLoad);
+                    average.add(value);
+                }
+
+                if (Metrics.shouldRecordCpuUsageProcess(timeMillis)) {
+                    Metrics.CPU_USAGE_PROCESS.record(timeMillis, processLoad);
                 }
             }
         }

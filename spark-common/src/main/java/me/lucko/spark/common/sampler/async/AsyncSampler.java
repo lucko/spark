@@ -31,7 +31,7 @@ import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.common.util.TimeUtil;
-import me.lucko.spark.common.ws.ViewerSocket;
+import me.lucko.spark.common.ws.SamplerViewerSocket;
 import me.lucko.spark.proto.SparkSamplerProtos.SamplerData;
 
 import java.util.Locale;
@@ -241,7 +241,7 @@ public class AsyncSampler extends AbstractSampler {
     }
 
     @Override
-    public void attachSocket(ViewerSocket socket) {
+    public void attachSocket(SamplerViewerSocket socket) {
         super.attachSocket(socket);
 
         if (this.socketStatisticsTask == null) {
