@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Provides the server TPS (ticks per second) and MSPT (milliseconds per tick) rates.
  */
-public interface TickStatistics {
+public interface TickStatistics extends AutoCloseable {
 
     int gameTargetTps();
 
@@ -48,4 +48,8 @@ public interface TickStatistics {
     DoubleAverageInfo duration1Min();
     DoubleAverageInfo duration5Min();
 
+    @Override
+    default void close() {
+
+    }
 }

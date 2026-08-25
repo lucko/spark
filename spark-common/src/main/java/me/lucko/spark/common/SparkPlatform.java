@@ -183,6 +183,9 @@ public class SparkPlatform {
         if (this.tickReporter != null) {
             this.tickReporter.close();
         }
+        if (this.tickStatistics != null) {
+            this.tickStatistics.close();
+        }
         if (this.pingStatistics != null) {
             this.pingStatistics.close();
         }
