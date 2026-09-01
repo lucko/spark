@@ -52,6 +52,7 @@ import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.builtin.jvm.Plugin;
 import org.spongepowered.plugin.metadata.model.PluginContributor;
 
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
@@ -188,12 +189,29 @@ public class SpongeSparkPlugin implements SparkPlugin {
 
     @Override
     public Collection<SourceMetadata> getKnownSources() {
+        // PluginContributor is an interface in API 12 and a record in API 18.
+        // At bytecode level, the JVM requires a different instruction when calling a record method than an interface method.
+        Method contributorNameMethod;
+        try {
+            contributorNameMethod = PluginContributor.class.getDeclaredMethod("name");
+        } catch (NoSuchMethodException e) {
+            contributorNameMethod = null;
+        }
+        final Method contributorNameMethodFinal = contributorNameMethod;
+
         return SourceMetadata.gather(
                 this.game.pluginManager().plugins(),
                 plugin -> plugin.metadata().id(),
                 plugin -> plugin.metadata().version().toString(),
                 plugin -> plugin.metadata().contributors().stream()
-                        .map(PluginContributor::name)
+                        .flatMap(contributor -> {
+                            if (contributorNameMethodFinal != null) {
+                                try {
+                                    return Stream.of((String) contributorNameMethodFinal.invoke(contributor));
+                                } catch (Exception ignored) {}
+                            }
+                            return Stream.empty();
+                        })
                         .collect(Collectors.joining(", ")),
                 plugin -> plugin.metadata().description().orElse(null)
         );
