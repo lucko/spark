@@ -125,21 +125,14 @@ public interface ClassSourceLookup {
     interface ByUrl extends ClassSourceLookup {
 
         default String identifyUrl(URL url) throws URISyntaxException, MalformedURLException {
-            Path path = null;
-
-            String protocol = url.getProtocol();
-            if (protocol.equals("file")) {
-                path = Paths.get(url.toURI());
-            } else if (protocol.equals("jar")) {
-                URL innerUrl = new URL(url.getPath());
-                path = Paths.get(innerUrl.getPath().split("!")[0]);
+            switch (url.getProtocol()) {
+                case "file":
+                    return identifyFile(Paths.get(url.toURI()).toAbsolutePath().normalize());
+                case "jar":
+                    return identifyUrl(new URL(url.getPath().split("!")[0]));
+                default:
+                    return null;
             }
-
-            if (path != null) {
-                return identifyFile(path.toAbsolutePath().normalize());
-            }
-
-            return null;
         }
 
         default String identifyFile(Path path) {
