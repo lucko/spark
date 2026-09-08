@@ -335,7 +335,7 @@ public class MetricSeries<T> {
         }
     }
 
-    public static class Averages extends MetricSeries<DoubleAverageInfo> {
+    public static class Averages extends MetricSeries<ImmutableDoubleAverageInfo> {
         public Averages(Duration retention, int initialCapacity) {
             super(retention, initialCapacity);
         }
@@ -346,7 +346,7 @@ public class MetricSeries<T> {
                     .setStartTimestampMs(export.startTimestampMs())
                     .addAllTimestampDeltasMs(Ints.asList(export.timestampDeltasMs()));
             for (Object value : export.values()) {
-                DoubleAverageInfo avgInfo = (DoubleAverageInfo) value;
+                ImmutableDoubleAverageInfo avgInfo = (ImmutableDoubleAverageInfo) value;
                 builder.addValues(PlatformStatisticsProvider.rollingAvgProto(avgInfo));
             }
             return builder.build();
