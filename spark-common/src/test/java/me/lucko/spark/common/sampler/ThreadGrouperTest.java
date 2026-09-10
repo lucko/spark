@@ -21,8 +21,13 @@
 package me.lucko.spark.common.sampler;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.regex.Matcher;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ThreadGrouperTest {
 
@@ -75,6 +80,27 @@ public class ThreadGrouperTest {
 
         label = threadGrouper.getLabel("Test Pool");
         assertEquals("Test Pool (x2)", label);
+
+        group = threadGrouper.getGroup(4, "Test Pool (3)");
+        assertEquals("Test Pool", group);
+
+        label = threadGrouper.getLabel("Test Pool");
+        assertEquals("Test Pool (x3)", label);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "Test Pool 1",
+            "Test Pool - 2",
+            "Test Pool - #3",
+            "Test Pool (4)",
+            "Test Pool - (5)",
+            "Test Pool (#6)"
+    })
+    public void testByPoolRegex(String threadName) {
+        Matcher matcher = ThreadGrouper.ByPool.PATTERN.matcher(threadName);
+        assertTrue(matcher.matches());
+        assertEquals("Test Pool", matcher.group(1));
     }
 
 }
