@@ -21,15 +21,23 @@
 package me.lucko.spark.neoforge;
 
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import net.neoforged.fml.classloading.transformation.TransformingClassLoader;
 
 public class NeoForgeClassSourceLookup implements ClassSourceLookup {
 
     @Override
     public String identify(Class<?> clazz) {
-        if (clazz.getClassLoader().getClass().getName().equals("cpw.mods.modlauncher.TransformingClassLoader")) {
+        // all mod classes are loaded by (the same) TransformingClassLoader
+        if (clazz.getClassLoader() instanceof TransformingClassLoader) {
+            // the class module name appears to be the mod id,
+            // so we can use that to identify the source of the class
             String name = clazz.getModule().getName();
-            return name.equals("forge") || name.equals("minecraft") ? null : name;
+            return shouldIgnore(name) ? null : name;
         }
         return null;
+    }
+
+    private static boolean shouldIgnore(String name) {
+        return name.equals("neoforge") || name.equals("minecraft") || name.startsWith("jdk.");
     }
 }

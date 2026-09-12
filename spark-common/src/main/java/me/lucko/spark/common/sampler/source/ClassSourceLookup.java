@@ -21,30 +21,15 @@
 package me.lucko.spark.common.sampler.source;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.sampler.node.StackTraceNode;
-import me.lucko.spark.common.sampler.node.ThreadNode;
-import me.lucko.spark.common.util.classfinder.ClassFinder;
 import org.jspecify.annotations.Nullable;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
-import java.util.ArrayDeque;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 /**
  * A function which defines the source of given {@link Class}es or (Mixin) method calls.
@@ -58,6 +43,15 @@ public interface ClassSourceLookup {
      * @return the source of the class
      */
     @Nullable String identify(Class<?> clazz) throws Exception;
+
+    /**
+     * Whether this lookup supports identifying method calls.
+     *
+     * @return true if method calls are supported, false otherwise
+     */
+    default boolean supportsIdentifyingMethodCalls() {
+        return false;
+    }
 
     /**
      * Identify the given method call.
@@ -82,12 +76,7 @@ public interface ClassSourceLookup {
     /**
      * A no-operation {@link ClassSourceLookup}.
      */
-    ClassSourceLookup NO_OP = new ClassSourceLookup() {
-        @Override
-        public @Nullable String identify(Class<?> clazz) {
-            return null;
-        }
-    };
+    ClassSourceLookup NO_OP = clazz -> null;
 
     static ClassSourceLookup create(SparkPlatform platform) {
         try {
@@ -120,61 +109,14 @@ public interface ClassSourceLookup {
     }
 
     /**
-     * A {@link ClassSourceLookup} which identifies classes based on URL.
-     */
-    interface ByUrl extends ClassSourceLookup {
-
-        default String identifyUrl(URL url) throws URISyntaxException, MalformedURLException {
-            Path path = null;
-
-            String protocol = url.getProtocol();
-            if (protocol.equals("file")) {
-                path = Paths.get(url.toURI());
-            } else if (protocol.equals("jar")) {
-                URL innerUrl = new URL(url.getPath());
-                path = Paths.get(innerUrl.getPath().split("!")[0]);
-            }
-
-            if (path != null) {
-                return identifyFile(path.toAbsolutePath().normalize());
-            }
-
-            return null;
-        }
-
-        default String identifyFile(Path path) {
-            return identifyFileName(path.getFileName().toString());
-        }
-
-        default String identifyFileName(String fileName) {
-            return fileName.endsWith(".jar") ? fileName.substring(0, fileName.length() - 4) : null;
-        }
-    }
-
-    /**
-     * A {@link ClassSourceLookup} which identifies classes based on the first URL in a {@link URLClassLoader}.
-     */
-    class ByFirstUrlSource extends ClassSourceLookup.ByClassLoader implements ClassSourceLookup.ByUrl {
-        @Override
-        public @Nullable String identify(ClassLoader loader) throws IOException, URISyntaxException {
-            if (loader instanceof URLClassLoader) {
-                URLClassLoader urlClassLoader = (URLClassLoader) loader;
-                URL[] urls = urlClassLoader.getURLs();
-                if (urls.length == 0) {
-                    return null;
-                }
-                return identifyUrl(urls[0]);
-            }
-            return null;
-        }
-    }
-
-    /**
      * A {@link ClassSourceLookup} which identifies classes based on their {@link ProtectionDomain#getCodeSource()}.
      */
-    class ByCodeSource implements ClassSourceLookup, ClassSourceLookup.ByUrl {
+    abstract class ByCodeSource implements ClassSourceLookup {
+
+        public abstract @Nullable String identify(Path path) throws Exception;
+
         @Override
-        public @Nullable String identify(Class<?> clazz) throws URISyntaxException, MalformedURLException {
+        public final @Nullable String identify(Class<?> clazz) throws Exception {
             ProtectionDomain protectionDomain = clazz.getProtectionDomain();
             if (protectionDomain == null) {
                 return null;
@@ -185,187 +127,28 @@ public interface ClassSourceLookup {
             }
 
             URL url = codeSource.getLocation();
-            return url == null ? null : identifyUrl(url);
-        }
-    }
-
-    interface Visitor {
-        void visit(ThreadNode node);
-
-        boolean hasClassSourceMappings();
-
-        Map<String, String> getClassSourceMapping();
-
-        boolean hasMethodSourceMappings();
-
-        Map<String, String> getMethodSourceMapping();
-
-        boolean hasLineSourceMappings();
-
-        Map<String, String> getLineSourceMapping();
-    }
-
-    static Visitor createVisitor(ClassSourceLookup lookup, Supplier<ClassFinder> classFinderSupplier) {
-        if (lookup == ClassSourceLookup.NO_OP) {
-            return NoOpVisitor.INSTANCE; // don't bother!
-        }
-        return new VisitorImpl(lookup, classFinderSupplier.get());
-    }
-
-    enum NoOpVisitor implements Visitor {
-        INSTANCE;
-
-        @Override
-        public void visit(ThreadNode node) {
-
-        }
-
-        @Override
-        public boolean hasClassSourceMappings() {
-            return false;
-        }
-
-        @Override
-        public Map<String, String> getClassSourceMapping() {
-            return Collections.emptyMap();
-        }
-
-        @Override
-        public boolean hasMethodSourceMappings() {
-            return false;
-        }
-
-        @Override
-        public Map<String, String> getMethodSourceMapping() {
-            return Collections.emptyMap();
-        }
-
-        @Override
-        public boolean hasLineSourceMappings() {
-            return false;
-        }
-
-        @Override
-        public Map<String, String> getLineSourceMapping() {
-            return Collections.emptyMap();
-        }
-    }
-
-    /**
-     * Visitor which scans {@link StackTraceNode}s and accumulates class/method call identities.
-     */
-    class VisitorImpl implements Visitor {
-        private final ClassSourceLookup lookup;
-        private final ClassFinder classFinder;
-
-        private final SourcesMap<String> classSources = new SourcesMap<>(Function.identity());
-        private final SourcesMap<MethodCall> methodSources = new SourcesMap<>(MethodCall::toString);
-        private final SourcesMap<MethodCallByLine> lineSources = new SourcesMap<>(MethodCallByLine::toString);
-
-        VisitorImpl(ClassSourceLookup lookup, ClassFinder classFinder) {
-            this.lookup = lookup;
-            this.classFinder = classFinder;
-        }
-
-        @Override
-        public void visit(ThreadNode node) {
-            Queue<StackTraceNode> queue = new ArrayDeque<>(node.getChildren());
-            for (StackTraceNode n = queue.poll(); n != null; n = queue.poll()) {
-                visitStackNode(n);
-                queue.addAll(n.getChildren());
+            if (url == null) {
+                return null;
             }
-        }
 
-        private void visitStackNode(StackTraceNode node) {
-            this.classSources.computeIfAbsent(
-                    node.getClassName(),
-                    className -> {
-                        Class<?> clazz = this.classFinder.findClass(className);
-                        if (clazz == null) {
-                            return null;
-                        }
-                        return this.lookup.identify(clazz);
-                    });
-
-            if (node.getMethodDescription() != null) {
-                MethodCall methodCall = new MethodCall(node.getClassName(), node.getMethodName(), node.getMethodDescription());
-                this.methodSources.computeIfAbsent(methodCall, this.lookup::identify);
-            } else if (node.getLineNumber() != StackTraceNode.NULL_LINE_NUMBER) {
-                MethodCallByLine methodCall = new MethodCallByLine(node.getClassName(), node.getMethodName(), node.getLineNumber());
-                this.lineSources.computeIfAbsent(methodCall, this.lookup::identify);
+            Path path = null;
+            String protocol = url.getProtocol();
+            if (protocol.equals("file")) {
+                path = Paths.get(url.toURI());
+            } else if (protocol.equals("jar")) {
+                URL innerUrl = new URL(url.getPath());
+                path = Paths.get(innerUrl.getPath().split("!")[0]);
             }
-        }
 
-        @Override
-        public boolean hasClassSourceMappings() {
-            return this.classSources.hasMappings();
-        }
-
-        @Override
-        public Map<String, String> getClassSourceMapping() {
-            return this.classSources.export();
-        }
-
-        @Override
-        public boolean hasMethodSourceMappings() {
-            return this.methodSources.hasMappings();
-        }
-
-        @Override
-        public Map<String, String> getMethodSourceMapping() {
-            return this.methodSources.export();
-        }
-
-        @Override
-        public boolean hasLineSourceMappings() {
-            return this.lineSources.hasMappings();
-        }
-
-        @Override
-        public Map<String, String> getLineSourceMapping() {
-            return this.lineSources.export();
-        }
-    }
-
-    final class SourcesMap<T> {
-        // <key> --> identifier (plugin name)
-        private final Map<T, String> map = new HashMap<>();
-        private final Function<? super T, String> keyToStringFunction;
-
-        private SourcesMap(Function<? super T, String> keyToStringFunction) {
-            this.keyToStringFunction = keyToStringFunction;
-        }
-
-        public void computeIfAbsent(T key, ComputeSourceFunction<T> function) {
-            if (!this.map.containsKey(key)) {
-                try {
-                    this.map.put(key, function.compute(key));
-                } catch (Throwable e) {
-                    this.map.put(key, null);
-                }
+            if (path == null) {
+                return null;
             }
+
+            return identify(path.toAbsolutePath().normalize());
         }
 
-        public boolean hasMappings() {
-            this.map.values().removeIf(Objects::isNull);
-            return !this.map.isEmpty();
-        }
-
-        public Map<String, String> export() {
-            this.map.values().removeIf(Objects::isNull);
-            if (this.keyToStringFunction.equals(Function.identity())) {
-                //noinspection unchecked
-                return (Map<String, String>) this.map;
-            } else {
-                return this.map.entrySet().stream().collect(Collectors.toMap(
-                        e -> this.keyToStringFunction.apply(e.getKey()),
-                        Map.Entry::getValue
-                ));
-            }
-        }
-
-        private interface ComputeSourceFunction<T> {
-            String compute(T key) throws Exception;
+        protected static String formatFileName(String fileName) {
+            return fileName.endsWith(".jar") ? fileName.substring(0, fileName.length() - 4) : null;
         }
     }
 

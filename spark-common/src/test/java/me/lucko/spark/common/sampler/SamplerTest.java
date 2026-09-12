@@ -33,6 +33,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -100,6 +101,28 @@ public class SamplerTest {
             assertTrue(protoThread.getChildrenList().stream().anyMatch(n -> n.getClassName().equals("me.lucko.spark.test.TestClass2") && n.getMethodName().equals("test")));
             assertTrue(protoThread.getChildrenList().stream().anyMatch(n -> n.getClassName().equals("me.lucko.spark.test.TestClass2") && n.getMethodName().equals("testA")));
             assertTrue(protoThread.getChildrenList().stream().anyMatch(n -> n.getClassName().equals("me.lucko.spark.test.TestClass2") && n.getMethodName().equals("testB")));
+
+            Map<String, String> classSourcesMap = proto.getClassSourcesMap();
+            assertEquals(1, classSourcesMap.size());
+            assertEquals("test2", classSourcesMap.get("me.lucko.spark.test.TestClass2"));
+
+            Map<String, String> methodSourcesMap = proto.getMethodSourcesMap();
+            if (samplerType == SamplerType.ASYNC) {
+                assertEquals(2, methodSourcesMap.size());
+                assertEquals("test2_A", methodSourcesMap.get("me.lucko.spark.test.TestClass2;testA;()V"));
+                assertEquals("test2_B", methodSourcesMap.get("me.lucko.spark.test.TestClass2;testB;()V"));
+            } else {
+                assertEquals(0, methodSourcesMap.size());
+            }
+
+            Map<String, String> lineSourcesMap = proto.getLineSourcesMap();
+            if (samplerType == SamplerType.JAVA) {
+                assertEquals(2, lineSourcesMap.size());
+                assertEquals("test2_A", lineSourcesMap.get("me.lucko.spark.test.TestClass2;45"));
+                assertEquals("test2_B", lineSourcesMap.get("me.lucko.spark.test.TestClass2;49"));
+            } else {
+                assertEquals(0, lineSourcesMap.size());
+            }
         }
     }
 

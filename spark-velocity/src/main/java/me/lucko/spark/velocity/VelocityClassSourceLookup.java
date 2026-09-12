@@ -39,22 +39,23 @@ public class VelocityClassSourceLookup extends ClassSourceLookup.ByClassLoader {
         }
     }
 
-    private final Map<ClassLoader, String> classLoadersToPlugin;
+    private final Map<ClassLoader, String> pluginClassLoaders;
 
     public VelocityClassSourceLookup(PluginManager pluginManager) {
-        this.classLoadersToPlugin = new HashMap<>();
+        this.pluginClassLoaders = new HashMap<>();
         for (PluginContainer plugin : pluginManager.getPlugins()) {
-            plugin.getInstance().ifPresent(instance -> {
-                String id = plugin.getDescription().getName().orElseGet(() -> plugin.getDescription().getId());
-                this.classLoadersToPlugin.put(instance.getClass().getClassLoader(), id);
-            });
+            String id = plugin.getDescription().getId();
+            Object instance = plugin.getInstance().orElse(null);
+            if (instance != null) {
+                this.pluginClassLoaders.put(instance.getClass().getClassLoader(), id);
+            }
         }
     }
 
     @Override
     public @Nullable String identify(ClassLoader loader) {
         if (PLUGIN_CLASS_LOADER.isInstance(loader)) {
-            return this.classLoadersToPlugin.get(loader);
+            return this.pluginClassLoaders.get(loader);
         }
         return null;
     }

@@ -56,8 +56,8 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     }
 
     @Override
-    public String identifyFile(Path path) {
-        String id = this.pathToModMap.get(path.toAbsolutePath().normalize().toString());
+    public String identify(Path path) {
+        String id = this.pathToModMap.get(path.toString());
         if (id != null) {
             return id;
         }
@@ -66,11 +66,16 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
             return null;
         }
 
-        return super.identifyFileName(this.modsDirectory.relativize(path).toString());
+        return formatFileName(this.modsDirectory.relativize(path).toString());
     }
 
     @Override
-    public String identify(MethodCall methodCall) throws Exception {
+    public boolean supportsIdentifyingMethodCalls() {
+        return true;
+    }
+
+    @Override
+    public String identify(MethodCall methodCall) throws ReflectiveOperationException {
         String className = methodCall.getClassName();
         String methodName = methodCall.getMethodName();
         String methodDesc = methodCall.getMethodDescriptor();
@@ -96,7 +101,7 @@ public class FabricClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     }
 
     @Override
-    public String identify(MethodCallByLine methodCall) throws Exception {
+    public String identify(MethodCallByLine methodCall) {
         String className = methodCall.getClassName();
         String methodName = methodCall.getMethodName();
         int lineNumber = methodCall.getLineNumber();
