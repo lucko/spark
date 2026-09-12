@@ -33,64 +33,52 @@ public enum Compression {
         @Override
         public Path compress(Path file, LongConsumer progressHandler) throws IOException {
             Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".gz");
-            try (InputStream in = Files.newInputStream(file)) {
-                try (OutputStream out = Files.newOutputStream(compressedFile)) {
-                    try (GZIPOutputStream compressionOut = new GZIPOutputStream(out, 1024 * 64)) {
-                        copy(in, compressionOut, progressHandler);
-                    }
-                }
+            try (InputStream in = Files.newInputStream(file);
+                 OutputStream out = Files.newOutputStream(compressedFile);
+                 GZIPOutputStream gzipOut = new GZIPOutputStream(out, BUFFER_SIZE)
+            ) {
+                copy(in, gzipOut, progressHandler);
             }
             return compressedFile;
         }
     };
-    // XZ {
-    //     @Override
-    //     public Path compress(Path file, LongConsumer progressHandler) throws IOException {
-    //         Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".xz");
-    //         try (InputStream in = Files.newInputStream(file)) {
-    //             try (OutputStream out = Files.newOutputStream(compressedFile)) {
-    //                 try (XZOutputStream compressionOut = new XZOutputStream(out, new LZMA2Options())) {
-    //                     copy(in, compressionOut, progressHandler);
-    //                 }
-    //             }
-    //         }
-    //         return compressedFile;
-    //     }
-    // },
-    // LZMA {
-    //     @Override
-    //     public Path compress(Path file, LongConsumer progressHandler) throws IOException {
-    //         Path compressedFile = file.getParent().resolve(file.getFileName().toString() + ".lzma");
-    //         try (InputStream in = Files.newInputStream(file)) {
-    //             try (OutputStream out = Files.newOutputStream(compressedFile)) {
-    //                 try (LZMAOutputStream compressionOut = new LZMAOutputStream(out, new LZMA2Options(), true)) {
-    //                     copy(in, compressionOut, progressHandler);
-    //                 }
-    //             }
-    //         }
-    //         return compressedFile;
-    //     }
-    // };
 
+    /**
+     * Compresses the given file and returns the path to the compressed file.
+     *
+     * @param file the file to compress
+     * @param progressHandler a handler to report progress, called with the number of bytes copied so far
+     * @return the path to the compressed file
+     * @throws IOException if an I/O error occurs
+     */
     public abstract Path compress(Path file, LongConsumer progressHandler) throws IOException;
 
+    /** Size of the buffer used to read/write data while copying. */
+    private static final int BUFFER_SIZE = 64 * 1024; // 64KB
+
+    /** How often (in bytes) the progress handler should be called. */
+    private static final long PROGRESS_REPORT_INTERVAL = 5 * 1024 * 1024; // 5MB
+
     private static long copy(InputStream from, OutputStream to, LongConsumer progress) throws IOException {
-        byte[] buf = new byte[1024 * 64];
-        long total = 0;
-        long iterations = 0;
+        long totalBytesCopied = 0;
+        long bytesCopiedSinceLastReport = 0;
+
+        byte[] buf = new byte[BUFFER_SIZE];
         while (true) {
-            int r = from.read(buf);
-            if (r == -1) {
+            int read = from.read(buf);
+            if (read == -1) {
                 break;
             }
-            to.write(buf, 0, r);
-            total += r;
+            to.write(buf, 0, read);
+            totalBytesCopied += read;
 
-            // report progress every 5MB
-            if (iterations++ % ((1024 / 64) * 5) == 0) {
-                progress.accept(total);
+            bytesCopiedSinceLastReport += read;
+            if (bytesCopiedSinceLastReport >= PROGRESS_REPORT_INTERVAL) {
+                progress.accept(totalBytesCopied);
+                bytesCopiedSinceLastReport = 0;
             }
         }
-        return total;
+
+        return totalBytesCopied;
     }
 }

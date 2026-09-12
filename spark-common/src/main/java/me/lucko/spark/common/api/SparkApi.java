@@ -31,7 +31,10 @@ import me.lucko.spark.api.statistic.types.GenericStatistic;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.monitor.cpu.CpuMonitor;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
+import me.lucko.spark.common.monitor.memory.MemoryAllocationInfo;
+import me.lucko.spark.common.monitor.ping.PingStatistics;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
+import me.lucko.spark.common.util.ImmutableDoubleAverageInfo;
 import me.lucko.spark.common.util.SparkPlaceholder;
 import me.lucko.spark.common.util.TimeUtil;
 import org.jspecify.annotations.NonNull;
@@ -42,7 +45,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static me.lucko.spark.api.statistic.StatisticWindow.CpuUsage;
+import static me.lucko.spark.api.statistic.StatisticWindow.MemoryAllocation;
 import static me.lucko.spark.api.statistic.StatisticWindow.MillisPerTick;
+import static me.lucko.spark.api.statistic.StatisticWindow.PlayerPing;
 import static me.lucko.spark.api.statistic.StatisticWindow.TicksPerSecond;
 
 public class SparkApi implements Spark {
@@ -149,11 +154,58 @@ public class SparkApi implements Spark {
             public @org.jspecify.annotations.NonNull DoubleAverageInfo poll(@NonNull MillisPerTick window) {
                 switch (window) {
                     case SECONDS_10:
-                        return stats.duration10Sec();
+                        return new ImmutableDoubleAverageInfo(stats.duration10Sec());
                     case MINUTES_1:
-                        return stats.duration1Min();
+                        return new ImmutableDoubleAverageInfo(stats.duration1Min());
                     case MINUTES_5:
-                        return stats.duration5Min();
+                        return new ImmutableDoubleAverageInfo(stats.duration5Min());
+                    default:
+                        throw new AssertionError(window);
+                }
+            }
+        };
+    }
+
+    @Override
+    public @Nullable GenericStatistic<DoubleAverageInfo, MemoryAllocation> memoryAllocation() {
+        if (!MemoryAllocationInfo.SUPPORTED) {
+            return null;
+        }
+
+        return new AbstractStatistic.Generic<DoubleAverageInfo, MemoryAllocation>(
+                "Memory Allocation", DoubleAverageInfo.class, MemoryAllocation.class
+        ) {
+            @Override
+            public @org.jspecify.annotations.NonNull DoubleAverageInfo poll(@NonNull MemoryAllocation window) {
+                switch (window) {
+                    case MINUTES_1:
+                        return new ImmutableDoubleAverageInfo(MemoryAllocationInfo.BPS_AVERAGE_1_MIN);
+                    case MINUTES_5:
+                        return new ImmutableDoubleAverageInfo(MemoryAllocationInfo.BPS_AVERAGE_5_MIN);
+                    case MINUTES_15:
+                        return new ImmutableDoubleAverageInfo(MemoryAllocationInfo.BPS_AVERAGE_15_MIN);
+                    default:
+                        throw new AssertionError(window);
+                }
+            }
+        };
+    }
+
+    @Override
+    public @Nullable GenericStatistic<DoubleAverageInfo, PlayerPing> playerPing() {
+        PingStatistics pingStatistics = this.platform.getPingStatistics();
+        if  (pingStatistics == null) {
+            return null;
+        }
+
+        return new AbstractStatistic.Generic<DoubleAverageInfo, PlayerPing>(
+                "Player Ping", DoubleAverageInfo.class, PlayerPing.class
+        ) {
+            @Override
+            public @org.jspecify.annotations.NonNull DoubleAverageInfo poll(@NonNull PlayerPing window) {
+                switch (window) {
+                    case MINUTES_15:
+                        return new ImmutableDoubleAverageInfo(pingStatistics.getPingAverage());
                     default:
                         throw new AssertionError(window);
                 }

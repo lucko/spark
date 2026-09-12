@@ -74,4 +74,15 @@ public class ImmutableDoubleAverageInfo implements DoubleAverageInfo {
     public double percentile(double percentile) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String toString() {
+        return "ImmutableDoubleAverageInfo{" +
+                "mean=" + this.mean +
+                ", max=" + this.max +
+                ", min=" + this.min +
+                ", median=" + this.median +
+                ", percentile95th=" + this.percentile95th +
+                '}';
+    }
 }

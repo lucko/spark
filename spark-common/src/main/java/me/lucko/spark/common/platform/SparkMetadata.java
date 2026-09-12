@@ -22,7 +22,6 @@ package me.lucko.spark.common.platform;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.monitor.Metrics;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.platform.serverconfig.ServerConfigProvider;
 import me.lucko.spark.common.sampler.source.SourceMetadata;
@@ -41,8 +40,10 @@ import java.util.logging.Level;
 
 public class SparkMetadata {
 
+    private static final int DATA_VERSION = 2;
+
     public static SparkMetadata gather(SparkPlatform platform, CommandSender.Data creator, Map<String, GarbageCollectorStatistics> initialGcStats) {
-        PlatformMetadata platformMetadata = platform.getPlugin().getPlatformInfo().toData().toProto();
+        PlatformMetadata platformMetadata = platform.getPlugin().getPlatformInfo().toData(platform.getPlugin().getVersion(), DATA_VERSION).toProto();
 
         PlatformStatistics platformStatistics = null;
         try {
@@ -82,7 +83,7 @@ public class SparkMetadata {
             platform.getPlugin().log(Level.WARNING, "Failed to gather extra platform metadata", e);
         }
 
-        SparkProtos.Metrics metrics = Metrics.exportProto();
+        SparkProtos.Metrics metrics = platform.getMetrics().exportProto();
 
         return new SparkMetadata(creator, platformMetadata, platformStatistics, systemStatistics, generatedTime, serverConfigurations, sources, extraPlatformMetadata, metrics);
     }

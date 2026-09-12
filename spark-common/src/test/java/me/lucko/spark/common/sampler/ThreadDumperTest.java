@@ -22,9 +22,11 @@ package me.lucko.spark.common.sampler;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ThreadDumperTest {
@@ -59,6 +61,18 @@ public class ThreadDumperTest {
         assertTrue(threadNames.contains("test-thread-1"));
 
         thread.interrupt();
+    }
+
+    @Test
+    public void testRegex() {
+        ThreadDumper.Regex regex = new ThreadDumper.Regex(Collections.singleton("test-thread-.*"));
+
+        assertTrue(regex.isThreadIncluded(1, "test-thread-1"));
+        assertTrue(regex.isThreadIncluded(2, "test-thread-2"));
+        assertTrue(regex.isThreadIncluded(3, "test-thread-3"));
+        assertTrue(regex.isThreadIncluded(4, "test-thread-4"));
+
+        assertFalse(regex.isThreadIncluded(5, "other-thread"));
     }
 
 }

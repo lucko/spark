@@ -51,12 +51,11 @@ public abstract class AbstractNode {
      * @return the accumulator
      */
     protected LongAdder getTimeAccumulator(int window) {
-        LongAdder adder = this.times.get(window);
-        if (adder == null) {
-            adder = new LongAdder();
-            this.times.put(window, adder);
+        LongAdder adder = this.times.get(window); // fast path
+        if (adder != null) {
+            return adder;
         }
-        return adder;
+        return this.times.computeIfAbsent(window, k -> new LongAdder());
     }
 
     /**

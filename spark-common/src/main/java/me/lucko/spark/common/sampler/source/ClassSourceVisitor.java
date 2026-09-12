@@ -151,10 +151,10 @@ public interface ClassSourceVisitor {
             return !this.map.isEmpty();
         }
 
+        @SuppressWarnings("unchecked")
         public Map<String, String> export() {
             this.map.values().removeIf(Objects::isNull);
             if (this.keyToStringFunction.equals(Function.identity())) {
-                //noinspection unchecked
                 return (Map<String, String>) this.map;
             } else {
                 return this.map.entrySet().stream().collect(Collectors.toMap(

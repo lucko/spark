@@ -71,10 +71,10 @@ public interface SampleCollector<E extends Event> {
      * Sample collector for execution (cpu time) profiles.
      */
     final class Execution implements SampleCollector<ExecutionSample> {
-        private final int interval; // time in microseconds
+        private final int intervalMicroseconds; // time in microseconds
 
-        public Execution(int interval) {
-            this.interval = interval;
+        public Execution(int intervalMicroseconds) {
+            this.intervalMicroseconds = intervalMicroseconds;
         }
 
         @Override
@@ -84,7 +84,7 @@ public interface SampleCollector<E extends Event> {
 
             return ImmutableList.of(
                     "event=" + event,
-                    "interval=" + this.interval + "us"
+                    "interval=" + this.intervalMicroseconds + "us"
             );
         }
 
@@ -95,7 +95,7 @@ public interface SampleCollector<E extends Event> {
 
         @Override
         public long measure(ExecutionSample event) {
-            return event.value() * this.interval;
+            return event.value() * this.intervalMicroseconds;
         }
 
         @Override

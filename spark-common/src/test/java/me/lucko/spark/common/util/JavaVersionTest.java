@@ -23,11 +23,12 @@ package me.lucko.spark.common.util;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JavaVersionTest {
 
     @Test
-    public void testJavaVersion() {
+    public void testParseJavaVersion() {
         assertEquals(7, JavaVersion.parseJavaVersion("1.7"));
         assertEquals(8, JavaVersion.parseJavaVersion("1.8"));
         assertEquals(9, JavaVersion.parseJavaVersion("9"));
@@ -38,6 +39,12 @@ public class JavaVersionTest {
         assertEquals(17, JavaVersion.parseJavaVersion("17.0.1"));
         assertEquals(17, JavaVersion.parseJavaVersion("17-ea"));
         assertEquals(17, JavaVersion.parseJavaVersion("17.0.1-ea"));
+    }
+
+    @Test
+    public void testGetJavaVersion() {
+        int javaVersion = JavaVersion.getJavaVersion();
+        assertTrue(javaVersion >= 7);
     }
 
 }

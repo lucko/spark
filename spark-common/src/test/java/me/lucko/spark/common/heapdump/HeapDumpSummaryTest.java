@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class HeapDumpSummaryTest {
 
     @Test
-    public void testHeapDumpSummary(@TempDir Path directory) throws Exception {
+    public void testHeapDumpSummary(@TempDir Path directory) {
         TestClass testClass1 = new TestClass();
         TestClass testClass2 = new TestClass();
 

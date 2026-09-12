@@ -21,7 +21,7 @@
 package me.lucko.spark.common.platform;
 
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.monitor.Metrics;
+import me.lucko.spark.common.metric.Metrics;
 import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.platform.world.AsyncWorldInfoProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
@@ -30,11 +30,13 @@ import java.util.concurrent.ScheduledFuture;
 
 public class WorldMetricsCollector implements Runnable, AutoCloseable {
     private final AsyncWorldInfoProvider infoProvider;
+    private final Metrics metrics;
     private ScheduledFuture<?> task;
 
     public WorldMetricsCollector(SparkPlatform platform) {
         WorldInfoProvider worldInfoProvider = platform.getPlugin().createWorldInfoProvider();
         this.infoProvider = worldInfoProvider == WorldInfoProvider.NO_OP ? null : new AsyncWorldInfoProvider(platform, worldInfoProvider);
+        this.metrics = platform.getMetrics();
     }
 
     public void start() {
@@ -48,7 +50,7 @@ public class WorldMetricsCollector implements Runnable, AutoCloseable {
     public void run() {
         WorldInfoProvider.CountsResult counts = this.infoProvider.getCounts();
         if (counts != null) {
-            Metrics.WORLD_INFO.record(counts);
+            this.metrics.worldInfo().record(counts);
         }
     }
 
