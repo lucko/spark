@@ -27,10 +27,17 @@ public class ForgeClassSourceLookup implements ClassSourceLookup {
 
     @Override
     public String identify(Class<?> clazz) {
+        // all mod classes are loaded by (the same) TransformingClassLoader
         if (clazz.getClassLoader() instanceof TransformingClassLoader) {
+            // the class module name appears to be the mod id,
+            // so we can use that to identify the source of the class
             String name = clazz.getModule().getName();
-            return name.equals("forge") || name.equals("minecraft") ? null : name;
+            return shouldIgnore(name) ? null : name;
         }
         return null;
+    }
+
+    private static boolean shouldIgnore(String name) {
+        return name.equals("forge") || name.equals("minecraft") || name.startsWith("jdk.");
     }
 }

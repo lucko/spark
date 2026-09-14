@@ -111,10 +111,11 @@ public interface ThreadGrouper {
      * the thread originated from.
      *
      * <p>The regex pattern used to match pools expects a digit at the end of the thread name,
-     * separated from the pool name with any of one or more of ' ', '-', or '#'.</p>
+     * separated from the pool name with any of one or more of ' ', '-', or '#'.
+     * The digit can optionally be enclosed in parentheses.</p>
      */
     class ByPool implements ThreadGrouper {
-        private static final Pattern PATTERN = Pattern.compile("^(.*?)[-# ]+\\d+$");
+        static final Pattern PATTERN = Pattern.compile("^(.*?)[-# ]+(?:\\d+|\\(#?\\d+\\))$");
 
         // thread id -> group
         private final Map<Long, String> cache = new ConcurrentHashMap<>();

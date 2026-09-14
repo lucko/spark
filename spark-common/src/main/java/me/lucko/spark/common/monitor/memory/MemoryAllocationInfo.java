@@ -21,7 +21,7 @@
 package me.lucko.spark.common.monitor.memory;
 
 import com.sun.management.ThreadMXBean;
-import me.lucko.spark.common.monitor.Metrics;
+import me.lucko.spark.common.metric.Metrics;
 import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.util.RollingAverage;
 import me.lucko.spark.common.util.TimeUtil;

@@ -106,4 +106,43 @@ public interface StatisticWindow {
         }
     }
 
+    /**
+     * The {@link StatisticWindow} used for memory allocation.
+     */
+    enum MemoryAllocation implements StatisticWindow {
+
+        MINUTES_1(Duration.ofMinutes(1)),
+        MINUTES_5(Duration.ofMinutes(5)),
+        MINUTES_15(Duration.ofMinutes(15));
+
+        private final Duration value;
+
+        MemoryAllocation(Duration value) {
+            this.value = value;
+        }
+
+        @Override
+        public @NonNull Duration length() {
+            return this.value;
+        }
+    }
+
+    /**
+     * The {@link StatisticWindow} used for player ping.
+     */
+    enum PlayerPing implements StatisticWindow {
+        MINUTES_15(Duration.ofMinutes(15));
+
+        private final Duration value;
+
+        PlayerPing(Duration value) {
+            this.value = value;
+        }
+
+        @Override
+        public @NonNull Duration length() {
+            return this.value;
+        }
+    }
+
 }

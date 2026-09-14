@@ -24,8 +24,6 @@ import me.lucko.spark.proto.SparkProtos.PlatformMetadata;
 
 public interface PlatformInfo {
 
-    int DATA_VERSION = 2;
-
     Type getType();
 
     String getName();
@@ -36,13 +34,8 @@ public interface PlatformInfo {
 
     String getMinecraftVersion();
 
-    default int getSparkVersion() {
-        // does not necessarily correspond to the plugin/mod version
-        return DATA_VERSION;
-    }
-
-    default Data toData() {
-        return new Data(getType(), getName(), getBrand(), getVersion(), getMinecraftVersion(), getSparkVersion());
+    default Data toData(String sparkVersion, int sparkDataVersion) {
+        return new Data(getType(), getName(), getBrand(), getVersion(), getMinecraftVersion(), sparkVersion, sparkDataVersion);
     }
 
     enum Type {
@@ -68,15 +61,17 @@ public interface PlatformInfo {
         private final String brand;
         private final String version;
         private final String minecraftVersion;
-        private final int sparkVersion;
+        private final String sparkVersion;
+        private final int sparkDataVersion;
 
-        public Data(Type type, String name, String brand, String version, String minecraftVersion, int sparkVersion) {
+        public Data(Type type, String name, String brand, String version, String minecraftVersion, String sparkVersion, int sparkDataVersion) {
             this.type = type;
             this.name = name;
             this.brand = brand;
             this.version = version;
             this.minecraftVersion = minecraftVersion;
             this.sparkVersion = sparkVersion;
+            this.sparkDataVersion = sparkDataVersion;
         }
 
         public Type getType() {
@@ -99,8 +94,12 @@ public interface PlatformInfo {
             return this.minecraftVersion;
         }
 
-        public int getSparkVersion() {
+        public String getSparkVersion() {
             return this.sparkVersion;
+        }
+
+        public int getSparkDataVersion() {
+            return this.sparkDataVersion;
         }
 
         public PlatformMetadata toProto() {
@@ -109,7 +108,8 @@ public interface PlatformInfo {
                     .setName(this.name)
                     .setBrand(this.brand)
                     .setVersion(this.version)
-                    .setSparkVersion(this.sparkVersion);
+                    .setSparkVersion(this.sparkVersion)
+                    .setSparkDataVersion(this.sparkDataVersion);
 
             if (this.minecraftVersion != null) {
                 proto.setMinecraftVersion(this.minecraftVersion);

@@ -38,7 +38,7 @@ public class SourceMetadata {
         return gather(sources, name, version, author, description, t -> false);
     }
 
-    public static <T> List<SourceMetadata> gather(Collection<T> sources, Function<? super T, String> name, Function<? super T, String> version, Function<? super T, String> author, Function<? super T, String> description, Predicate<? super T> builtIn) {
+    public static <T> List<SourceMetadata> gather(Collection<T> sources, Function<? super T, String> name, Function<? super T, String> version, Function<? super T, String> author, Function<? super T, String> description, Predicate<? super T> builtin) {
         ImmutableList.Builder<SourceMetadata> builder = ImmutableList.builder();
 
         for (T source : sources) {
@@ -47,7 +47,7 @@ public class SourceMetadata {
                     version.apply(source),
                     author.apply(source),
                     description.apply(source),
-                    builtIn.test(source)
+                    builtin.test(source)
             );
             builder.add(metadata);
         }
@@ -59,14 +59,14 @@ public class SourceMetadata {
     private final String version;
     private final String author;
     private final String description;
-    private final boolean builtIn;
+    private final boolean builtin;
 
-    public SourceMetadata(String name, String version, String author, String description, boolean builtIn) {
+    public SourceMetadata(String name, String version, String author, String description, boolean builtin) {
         this.name = name;
         this.version = version;
         this.author = author;
         this.description = description;
-        this.builtIn = builtIn;
+        this.builtin = builtin;
     }
 
     public String getName() {
@@ -85,8 +85,8 @@ public class SourceMetadata {
         return this.description;
     }
 
-    public boolean isBuiltIn() {
-        return this.builtIn;
+    public boolean isBuiltin() {
+        return this.builtin;
     }
 
     public PluginOrModMetadata toProto() {
@@ -100,7 +100,7 @@ public class SourceMetadata {
         if (this.description != null) {
             builder.setDescription(this.description);
         }
-        builder.setBuiltin(this.builtIn);
+        builder.setBuiltin(this.builtin);
 
         return builder.build();
     }

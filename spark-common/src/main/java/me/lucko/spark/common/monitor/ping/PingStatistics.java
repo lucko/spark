@@ -20,7 +20,7 @@
 
 package me.lucko.spark.common.monitor.ping;
 
-import me.lucko.spark.common.monitor.Metrics;
+import me.lucko.spark.common.metric.Metrics;
 import me.lucko.spark.common.monitor.MonitoringExecutor;
 import me.lucko.spark.common.util.RollingAverage;
 import org.jspecify.annotations.Nullable;
@@ -40,14 +40,17 @@ public final class PingStatistics implements Runnable, AutoCloseable {
 
     /** The platform function that provides player ping times */
     private final PlayerPingProvider provider;
+    /** The metrics instance */
+    private final Metrics metrics;
     /** Rolling average of the median ping across all players */
     private final RollingAverage rollingAverage = new RollingAverage(WINDOW_SIZE);
 
     /** The scheduler task that polls pings and calculates the rolling average */
     private ScheduledFuture<?> future;
 
-    public PingStatistics(PlayerPingProvider provider) {
+    public PingStatistics(PlayerPingProvider provider, Metrics metrics) {
         this.provider = provider;
+        this.metrics = metrics;
     }
 
     /**
@@ -76,7 +79,7 @@ public final class PingStatistics implements Runnable, AutoCloseable {
         }
 
         this.rollingAverage.add(BigDecimal.valueOf(summary.median()));
-        Metrics.PLAYER_PING.record(summary.toDoubleAverage());
+        this.metrics.playerPing().record(summary.toDoubleAverage());
     }
 
     /**

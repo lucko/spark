@@ -71,10 +71,6 @@ public enum MergeStrategy {
         String desc1 = disambiguator.disambiguate(n1).map(MethodDisambiguator.MethodDescription::getDescription).orElse(null);
         String desc2 = disambiguator.disambiguate(n2).map(MethodDisambiguator.MethodDescription::getDescription).orElse(null);
 
-        if (desc1 == null && desc2 == null) {
-            return true;
-        }
-
         return Objects.equals(desc1, desc2);
     }
 

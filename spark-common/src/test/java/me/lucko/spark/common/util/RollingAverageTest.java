@@ -78,4 +78,20 @@ public class RollingAverageTest {
         assertEquals(3, ra.percentile(1));
     }
 
+    @Test
+    public void testToImmutableList() {
+        RollingAverage ra = new RollingAverage(3);
+        ra.add(BigDecimal.valueOf(1));
+        ra.add(BigDecimal.valueOf(2));
+        ra.add(BigDecimal.valueOf(3));
+
+        ImmutableDoubleAverageInfo immutable = ra.toImmutable();
+        assertEquals(2, immutable.mean());
+
+        // ra changes, but immutable does not
+        ra.add(BigDecimal.valueOf(4));
+        assertEquals(3, ra.mean());
+        assertEquals(2, immutable.mean());
+    }
+
 }

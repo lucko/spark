@@ -36,7 +36,9 @@ import org.jspecify.annotations.Nullable;
 import java.util.Map;
 
 import static me.lucko.spark.api.statistic.StatisticWindow.CpuUsage;
+import static me.lucko.spark.api.statistic.StatisticWindow.MemoryAllocation;
 import static me.lucko.spark.api.statistic.StatisticWindow.MillisPerTick;
+import static me.lucko.spark.api.statistic.StatisticWindow.PlayerPing;
 import static me.lucko.spark.api.statistic.StatisticWindow.TicksPerSecond;
 
 /**
@@ -45,14 +47,14 @@ import static me.lucko.spark.api.statistic.StatisticWindow.TicksPerSecond;
 public interface Spark {
 
     /**
-     * Gets the CPU usage statistic for the current process.
+     * Gets the CPU usage statistic for the current process (value between 0.0 and 1.0).
      *
      * @return the CPU process statistic
      */
     @NonNull DoubleStatistic<CpuUsage> cpuProcess();
 
     /**
-     * Gets the CPU usage statistic for the overall system.
+     * Gets the CPU usage statistic for the overall system (value between 0.0 and 1.0).
      *
      * @return the CPU system statistic
      */
@@ -75,6 +77,24 @@ public interface Spark {
      * @return the milliseconds per tick statistic
      */
     @Nullable GenericStatistic<DoubleAverageInfo, MillisPerTick> mspt();
+
+    /**
+     * Gets the memory allocation statistic (bytes per second).
+     *
+     * <p>Returns {@code null} if the statistic is not supported.</p>
+     *
+     * @return the memory allocation statistic
+     */
+    @Nullable GenericStatistic<DoubleAverageInfo, MemoryAllocation> memoryAllocation();
+
+    /**
+     * Gets the player ping statistic (milliseconds).
+     *
+     * <p>Returns {@code null} if the statistic is not supported.</p>
+     *
+     * @return the player ping statistic
+     */
+    @Nullable GenericStatistic<DoubleAverageInfo, PlayerPing> playerPing();
 
     /**
      * Gets the garbage collector statistics.

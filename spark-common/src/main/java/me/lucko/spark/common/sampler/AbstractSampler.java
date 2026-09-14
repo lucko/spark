@@ -22,13 +22,13 @@ package me.lucko.spark.common.sampler;
 
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.command.sender.CommandSender;
-import me.lucko.spark.common.monitor.Metrics;
 import me.lucko.spark.common.monitor.memory.GarbageCollectorStatistics;
 import me.lucko.spark.common.platform.SparkMetadata;
 import me.lucko.spark.common.sampler.aggregator.DataAggregator;
 import me.lucko.spark.common.sampler.node.ThreadNode;
 import me.lucko.spark.common.sampler.node.exporter.NodeExporter;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
+import me.lucko.spark.common.sampler.source.ClassSourceVisitor;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
 import me.lucko.spark.common.sampler.window.WindowStatisticsCollector;
 import me.lucko.spark.common.util.TimeUtil;
@@ -172,7 +172,7 @@ public abstract class AbstractSampler implements Sampler {
 
             SparkProtos.PlatformStatistics platform = this.platform.getStatisticsProvider().getPlatformStatistics(getInitialGcStats(), false);
             SparkProtos.SystemStatistics system = this.platform.getStatisticsProvider().getSystemStatistics();
-            SparkProtos.Metrics metrics = Metrics.exportProto();
+            SparkProtos.Metrics metrics = this.platform.getMetrics().exportProto();
 
             for (ViewerSocket viewerSocket : this.viewerSockets) {
                 viewerSocket.sendUpdatedStatistics(platform, system, metrics);
@@ -214,7 +214,7 @@ public abstract class AbstractSampler implements Sampler {
         List<ThreadNode> data = dataAggregator.exportData();
         data.sort(Comparator.comparing(ThreadNode::getThreadLabel));
 
-        ClassSourceLookup.Visitor classSourceVisitor = ClassSourceLookup.createVisitor(classSourceLookup, classFinderSupplier);
+        ClassSourceVisitor classSourceVisitor = ClassSourceVisitor.create(classSourceLookup, classFinderSupplier);
 
         ProtoTimeEncoder timeEncoder = new ProtoTimeEncoder(getMode().valueTransformer(), data);
         int[] timeWindows = timeEncoder.getKeys();
@@ -232,16 +232,6 @@ public abstract class AbstractSampler implements Sampler {
             classSourceVisitor.visit(entry);
         }
 
-        if (classSourceVisitor.hasClassSourceMappings()) {
-            proto.putAllClassSources(classSourceVisitor.getClassSourceMapping());
-        }
-
-        if (classSourceVisitor.hasMethodSourceMappings()) {
-            proto.putAllMethodSources(classSourceVisitor.getMethodSourceMapping());
-        }
-
-        if (classSourceVisitor.hasLineSourceMappings()) {
-            proto.putAllLineSources(classSourceVisitor.getLineSourceMapping());
-        }
+        classSourceVisitor.exportToProto(proto);
     }
 }

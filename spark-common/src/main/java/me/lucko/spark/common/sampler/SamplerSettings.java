@@ -25,7 +25,7 @@ package me.lucko.spark.common.sampler;
  */
 public class SamplerSettings {
 
-    private final int interval;
+    private final int interval; // microseconds or bytes depending on the mode
     private final ThreadDumper threadDumper;
     private final ThreadGrouper threadGrouper;
     private final long autoEndTime;

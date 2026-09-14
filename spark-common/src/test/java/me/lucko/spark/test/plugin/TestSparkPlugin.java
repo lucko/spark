@@ -24,6 +24,7 @@ import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.platform.PlatformInfo;
+import me.lucko.spark.common.sampler.source.ClassSourceLookup;
 import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.classfinder.ClassFinder;
 import me.lucko.spark.common.util.classfinder.FallbackClassFinder;
@@ -139,5 +140,10 @@ public class TestSparkPlugin implements SparkPlugin, AutoCloseable {
     @Override
     public ClassFinder createClassFinder() {
         return FallbackClassFinder.INSTANCE;
+    }
+
+    @Override
+    public ClassSourceLookup createClassSourceLookup() {
+        return TestClassSourceLookup.INSTANCE;
     }
 }

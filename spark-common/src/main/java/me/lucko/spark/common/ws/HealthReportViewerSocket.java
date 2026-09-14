@@ -22,7 +22,6 @@ package me.lucko.spark.common.ws;
 
 import me.lucko.bytesocks.client.BytesocksClient;
 import me.lucko.spark.common.SparkPlatform;
-import me.lucko.spark.common.monitor.Metrics;
 import me.lucko.spark.common.util.SparkScheduledThreadPoolExecutor;
 import me.lucko.spark.common.util.SparkThreadFactory;
 import me.lucko.spark.proto.SparkProtos;
@@ -58,7 +57,7 @@ public class HealthReportViewerSocket extends ViewerSocket {
 
         SparkProtos.PlatformStatistics platform = this.platform.getStatisticsProvider().getPlatformStatistics(this.platform.getStartupGcStatistics(), false);
         SparkProtos.SystemStatistics system = this.platform.getStatisticsProvider().getSystemStatistics();
-        SparkProtos.Metrics metrics = Metrics.exportProto();
+        SparkProtos.Metrics metrics = this.platform.getMetrics().exportProto();
 
         sendUpdatedStatistics(platform, system, metrics);
     }

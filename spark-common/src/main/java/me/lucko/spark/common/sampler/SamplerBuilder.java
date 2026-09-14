@@ -39,7 +39,7 @@ import java.util.logging.Level;
 public class SamplerBuilder {
 
     private SamplerMode mode = SamplerMode.EXECUTION;
-    private double samplingInterval = -1;
+    private double samplingInterval = -1; // milliseconds or bytes depending on the mode
     private boolean ignoreSleeping = false;
     private boolean forceJavaSampler = false;
     private boolean allocLiveOnly = false;
@@ -131,6 +131,7 @@ public class SamplerBuilder {
             canUseAsyncProfiler = false;
         }
 
+        // microseconds or bytes depending on the mode
         int interval = (int) (this.mode == SamplerMode.EXECUTION ?
                 this.samplingInterval * 1000d : // convert to microseconds
                 this.samplingInterval
@@ -143,6 +144,7 @@ public class SamplerBuilder {
             SampleCollector<?> collector = this.mode == SamplerMode.ALLOCATION
                     ? new SampleCollector.Allocation(interval, this.allocLiveOnly)
                     : new SampleCollector.Execution(interval);
+
             sampler = onlyTicksOverMode
                     ? new AsyncSampler(platform, settings, collector, this.ticksOver)
                     : new AsyncSampler(platform, settings, collector);

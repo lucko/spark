@@ -43,7 +43,7 @@ public class SpongeClassSourceLookup extends ClassSourceLookup.ByCodeSource {
     }
 
     @Override
-    public String identifyFile(Path path) {
+    public String identify(Path path) {
         String id = this.pathToPluginMap.get(path);
         if (id != null) {
             return id;
@@ -53,7 +53,7 @@ public class SpongeClassSourceLookup extends ClassSourceLookup.ByCodeSource {
             return null;
         }
 
-        return super.identifyFileName(this.modsDirectory.relativize(path).toString());
+        return formatFileName(this.modsDirectory.relativize(path).toString());
     }
 
     // pretty nasty, but if it fails it doesn't really matter

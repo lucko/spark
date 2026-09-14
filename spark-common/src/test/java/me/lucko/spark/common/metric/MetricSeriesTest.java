@@ -18,7 +18,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.metric;
 
 import org.junit.jupiter.api.Test;
 

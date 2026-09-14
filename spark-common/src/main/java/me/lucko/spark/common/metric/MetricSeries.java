@@ -18,12 +18,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package me.lucko.spark.common.util;
+package me.lucko.spark.common.metric;
 
 import com.google.common.primitives.Ints;
-import me.lucko.spark.api.statistic.misc.DoubleAverageInfo;
 import me.lucko.spark.common.platform.PlatformStatisticsProvider;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
+import me.lucko.spark.common.util.ImmutableDoubleAverageInfo;
+import me.lucko.spark.common.util.TimeUtil;
 import me.lucko.spark.proto.SparkProtos;
 
 import java.lang.management.MemoryUsage;
@@ -335,7 +336,7 @@ public class MetricSeries<T> {
         }
     }
 
-    public static class Averages extends MetricSeries<DoubleAverageInfo> {
+    public static class Averages extends MetricSeries<ImmutableDoubleAverageInfo> {
         public Averages(Duration retention, int initialCapacity) {
             super(retention, initialCapacity);
         }
@@ -346,7 +347,7 @@ public class MetricSeries<T> {
                     .setStartTimestampMs(export.startTimestampMs())
                     .addAllTimestampDeltasMs(Ints.asList(export.timestampDeltasMs()));
             for (Object value : export.values()) {
-                DoubleAverageInfo avgInfo = (DoubleAverageInfo) value;
+                ImmutableDoubleAverageInfo avgInfo = (ImmutableDoubleAverageInfo) value;
                 builder.addValues(PlatformStatisticsProvider.rollingAvgProto(avgInfo));
             }
             return builder.build();

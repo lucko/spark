@@ -53,9 +53,15 @@ public enum NetworkMonitor {
     private static final int WINDOW_SIZE_SECONDS = (int) TimeUnit.MINUTES.toSeconds(15);
     private static final int WINDOW_SIZE = WINDOW_SIZE_SECONDS / POLL_INTERVAL_SECONDS; // 15
 
+    public static final boolean SUPPORTED;
+
     static {
+        SUPPORTED = !NetworkInterfaceInfo.pollSystem().isEmpty();
+
         // schedule rolling average calculations.
-        MonitoringExecutor.scheduleAtFixedRateMillis(new RollingAverageCollectionTask(), POLL_INTERVAL_SECONDS * 1000L);
+        if (SUPPORTED) {
+            MonitoringExecutor.scheduleAtFixedRateMillis(new RollingAverageCollectionTask(), POLL_INTERVAL_SECONDS * 1000L);
+        }
     }
 
     /**
