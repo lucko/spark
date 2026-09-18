@@ -1,6 +1,6 @@
 plugins {
     id 'com.gradleup.shadow'
-    id 'net.neoforged.moddev' version '2.0.141'
+    id 'net.neoforged.moddev' version '2.0.147'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -15,7 +15,7 @@ java {
 }
 
 neoForge {
-    version = "26.2.0.1-beta"
+    version = "26.3.0.4-beta"
     validateAccessTransformers = true
 
     runs {
