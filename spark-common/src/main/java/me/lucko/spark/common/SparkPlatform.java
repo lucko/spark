@@ -124,7 +124,7 @@ public class SparkPlatform {
         this.samplerContainer = new SamplerContainer();
         this.backgroundSamplerManager = new BackgroundSamplerManager(this, this.configuration);
 
-        TickStatistics tickStatistics = plugin.createTickStatistics();
+        TickStatistics tickStatistics = plugin.createTickStatistics(this.metrics);
         this.tickHook = plugin.createTickHook();
         this.tickReporter = plugin.createTickReporter();
         if (tickStatistics == null && (this.tickHook != null || this.tickReporter != null)) {

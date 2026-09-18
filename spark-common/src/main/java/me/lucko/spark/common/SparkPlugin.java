@@ -22,6 +22,7 @@ package me.lucko.spark.common;
 
 import me.lucko.spark.api.Spark;
 import me.lucko.spark.common.command.sender.CommandSender;
+import me.lucko.spark.common.metric.Metrics;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
 import me.lucko.spark.common.monitor.tick.TickStatistics;
 import me.lucko.spark.common.platform.MetadataProvider;
@@ -129,9 +130,10 @@ public interface SparkPlugin extends Logger {
      * <p>Spark is able to provide a default implementation for platforms that
      * provide a {@link TickHook} and {@link TickReporter}.</p>
      *
+     * @param metrics the metrics instance
      * @return a new tick statistics instance
      */
-    default TickStatistics createTickStatistics() {
+    default TickStatistics createTickStatistics(Metrics metrics) {
         return null;
     }
 
