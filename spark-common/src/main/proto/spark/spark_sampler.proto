@@ -71,6 +71,7 @@ message SamplerMetadata {
   enum SamplerMode {
     EXECUTION = 0;
     ALLOCATION = 1;
+    LOCK = 2;
   }
 
   enum SamplerEngine {
