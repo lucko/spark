@@ -13,7 +13,13 @@ tasks.jar {
 }
 
 dependencies {
-    implementation project(':spark-common')
+    implementation(project(':spark-common')) {
+        // use the java11+ bytesocks client instead
+        exclude group: 'me.lucko', module: 'bytesocks-java-client'
+        exclude group: 'org.java_websocket', module: 'Java-WebSocket'
+    }
+    implementation 'me.lucko:bytesocks-java-client-j11:1.0-SNAPSHOT'
+
     compileOnly 'io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT'
 }
 
@@ -35,7 +41,6 @@ shadowJar {
     relocate 'org.objectweb.asm', 'me.lucko.spark.paper.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.paper.lib.asyncprofiler'
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.paper.lib.bytesocks'
-    relocate 'org.java_websocket', 'me.lucko.spark.paper.lib.bytesocks.ws'
 
     // nest common classes beneath the paper package to avoid conflicts with spark-bukkit
     relocate 'me.lucko.spark.common', 'me.lucko.spark.paper.common'

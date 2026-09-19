@@ -13,8 +13,14 @@ repositories {
 }
 
 dependencies {
-    minecraft 'com.mojang:minecraft:26.2'
+    minecraft 'com.mojang:minecraft:26.3'
 
-    implementation project(':spark-common')
+    implementation(project(':spark-common')) {
+        // use the java11+ bytesocks client instead
+        exclude group: 'me.lucko', module: 'bytesocks-java-client'
+        exclude group: 'org.java_websocket', module: 'Java-WebSocket'
+    }
+
+    implementation 'me.lucko:bytesocks-java-client-j11:1.0-SNAPSHOT'
 }
 

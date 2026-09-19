@@ -29,7 +29,7 @@ configurations {
 
 dependencies {
     // https://modmuss50.me/fabric.html
-    minecraft 'com.mojang:minecraft:26.2'
+    minecraft 'com.mojang:minecraft:26.3'
     implementation 'net.fabricmc:fabric-loader:0.18.4'
 
     Set<String> apiModules = [
@@ -40,13 +40,20 @@ dependencies {
 
     // Add each module as a dependency
     apiModules.forEach {
-        implementation(fabricApi.module(it, '0.152.1+26.2'))
+        implementation(fabricApi.module(it, '0.160.6+26.3'))
     }
 
     jarInJar 'me.lucko:fabric-permissions-api:0.7.0'
     implementation 'eu.pb4:placeholder-api:3.0.0-beta.2+26.1'
 
-    shade project(':spark-common')
+    shade(project(':spark-common')) {
+        // use the java11+ bytesocks client instead
+        exclude group: 'me.lucko', module: 'bytesocks-java-client'
+        exclude group: 'org.java_websocket', module: 'Java-WebSocket'
+    }
+
+    shade 'me.lucko:bytesocks-java-client-j11:1.0-SNAPSHOT'
+
     shade project(':spark-minecraft')
 }
 
@@ -84,7 +91,6 @@ shadowJar {
 //    relocate 'org.objectweb.asm', 'me.lucko.spark.lib.asm'
     relocate 'one.profiler', 'me.lucko.spark.lib.asyncprofiler'
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
-    relocate 'org.java_websocket', 'me.lucko.spark.lib.bytesocks.ws'
 
     project.applyExcludes(delegate)
 
