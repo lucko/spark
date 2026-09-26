@@ -25,7 +25,10 @@ import com.google.common.collect.ImmutableSet;
 import me.lucko.spark.common.sampler.SamplerMode;
 import me.lucko.spark.common.sampler.async.AsyncNodeExporter;
 import me.lucko.spark.common.sampler.async.AsyncStackTraceElement;
+import me.lucko.spark.common.sampler.java.JavaNodeExporter;
+import me.lucko.spark.common.sampler.java.MergeStrategy;
 import me.lucko.spark.common.sampler.window.ProtoTimeEncoder;
+import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 import org.junit.jupiter.api.Test;
 
@@ -153,6 +156,51 @@ public class NodeTest {
                 .build();
 
         assertEquals(expected, proto);
+    }
+
+    @Test
+    public void testJavaExportDoesNotMutateSourceTree() {
+        StackTraceNode.Describer<StackTraceElement> describer = (element, parent) -> new StackTraceNode.JavaDescription(
+                element.getClassName(),
+                element.getMethodName(),
+                element.getLineNumber(),
+                parent == null ? StackTraceNode.NULL_LINE_NUMBER : parent.getLineNumber()
+        );
+
+        StackTraceElement root = new StackTraceElement("java.lang.Thread", "run", "Thread.java", 1);
+        StackTraceElement caller = new StackTraceElement("test.Caller", "run", "Caller.java", 50);
+        StackTraceElement target1 = new StackTraceElement("test.Target", "work", "Target.java", 10);
+        StackTraceElement target2 = new StackTraceElement("test.Target", "work", "Target.java", 20);
+
+        ThreadNode threadNode = new ThreadNode("Test Thread");
+        threadNode.log(describer, new StackTraceElement[]{target1, caller, root}, TimeUnit.SECONDS.toMicros(1), WINDOW);
+        threadNode.log(describer, new StackTraceElement[]{target2, caller, root}, TimeUnit.SECONDS.toMicros(1), WINDOW);
+
+        ProtoTimeEncoder timeEncoder = new ProtoTimeEncoder(SamplerMode.EXECUTION.valueTransformer(), ImmutableList.of(threadNode));
+        JavaNodeExporter exporter = new JavaNodeExporter(
+                timeEncoder,
+                MergeStrategy.SAME_METHOD,
+                new MethodDisambiguator(className -> null)
+        );
+
+        SparkSamplerProtos.ThreadNode first = exporter.export(threadNode);
+        SparkSamplerProtos.ThreadNode second = exporter.export(threadNode);
+
+        assertEquals(first, second);
+        assertEquals(3, first.getChildrenCount());
+
+        SparkSamplerProtos.StackTraceNode exportedTarget = first.getChildrenList().stream()
+                .filter(node -> node.getClassName().equals("test.Target"))
+                .findFirst()
+                .orElseThrow(AssertionError::new);
+        assertEquals(2000, exportedTarget.getTimes(0));
+
+        StackTraceNode threadRun = threadNode.getChildren().iterator().next();
+        StackTraceNode callerNode = threadRun.getChildren().iterator().next();
+        assertEquals(2, callerNode.getChildren().size());
+        for (StackTraceNode target : callerNode.getChildren()) {
+            assertEquals(TimeUnit.SECONDS.toMicros(1), target.getTimeAccumulator(WINDOW).longValue());
+        }
     }
 
     @Test
