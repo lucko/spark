@@ -879,7 +879,7 @@ public class JfrReader implements Closeable {
         }
     }
 
-    static class ContendedLock extends Event {
+    public static class ContendedLock extends Event { // spark - make public
         public final long duration;
         public final int classId;
 

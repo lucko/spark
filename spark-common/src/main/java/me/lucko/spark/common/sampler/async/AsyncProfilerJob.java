@@ -250,7 +250,7 @@ public class AsyncProfilerJob {
                 continue;
             }
 
-            long value = collector.measure(sample);
+            long value = collector.measure(reader, sample);
 
             // parse the segment and give it to the data aggregator
             ProfileSegment segment = ProfileSegment.parseSegment(reader, sample, threadName, value);
