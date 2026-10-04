@@ -41,6 +41,12 @@ public final class StackTraceNode extends AbstractNode {
         this.description = description;
     }
 
+    public StackTraceNode copy() {
+        StackTraceNode copy = new StackTraceNode(this.description);
+        copy.merge(this);
+        return copy;
+    }
+
     public String getClassName() {
         return this.description.className();
     }

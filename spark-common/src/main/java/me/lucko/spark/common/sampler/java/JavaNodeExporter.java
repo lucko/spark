@@ -27,6 +27,7 @@ import me.lucko.spark.common.util.MethodDisambiguator;
 import me.lucko.spark.proto.SparkSamplerProtos;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
 
@@ -81,11 +82,18 @@ public class JavaNodeExporter extends AbstractNodeExporter {
         }
 
         List<StackTraceNode> list = new ArrayList<>(children.size());
+        BitSet detached = new BitSet();
 
         outer:
         for (StackTraceNode child : children) {
-            for (StackTraceNode other : list) {
+            for (int i = 0; i < list.size(); i++) {
+                StackTraceNode other = list.get(i);
                 if (this.mergeStrategy.shouldMerge(this.methodDisambiguator, other, child)) {
+                    if (!detached.get(i)) {
+                        other = other.copy();
+                        list.set(i, other);
+                        detached.set(i);
+                    }
                     other.merge(child);
                     continue outer;
                 }
