@@ -63,6 +63,8 @@ shadowJar {
     relocate 'me.lucko.bytesocks.client', 'me.lucko.spark.lib.bytesocks'
 
     project.applyExcludes(delegate)
+
+    mergeServiceFiles()
 }
 
 artifacts {

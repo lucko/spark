@@ -97,6 +97,8 @@ shadowJar {
     dependencies {
         exclude(dependency('org.ow2.asm::'))
     }
+
+    mergeServiceFiles()
 }
 
 artifacts {
