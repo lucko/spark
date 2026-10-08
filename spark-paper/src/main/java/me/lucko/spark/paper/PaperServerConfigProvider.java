@@ -143,6 +143,8 @@ public class PaperServerConfigProvider extends ServerConfigProvider {
                 .add("proxies.velocity.secret")
                 .add("world-settings.*.feature-seeds")
                 .add("world-settings.*.seed-*")
+                .add("web-services.token")
+                .add("sentry-dsn")
                 .add("feature-seeds")
                 .add("seed-*")
                 .addAll(getSystemPropertyList("spark.serverconfigs.hiddenpaths"));
