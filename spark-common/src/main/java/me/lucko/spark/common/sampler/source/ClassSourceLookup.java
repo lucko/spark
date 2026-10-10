@@ -131,20 +131,18 @@ public interface ClassSourceLookup {
                 return null;
             }
 
-            Path path = null;
-            String protocol = url.getProtocol();
-            if (protocol.equals("file")) {
-                path = Paths.get(url.toURI());
-            } else if (protocol.equals("jar")) {
-                URL innerUrl = new URL(url.getPath());
-                path = Paths.get(innerUrl.getPath().split("!")[0]);
-            }
+            return identifyUrl(url);
+        }
 
-            if (path == null) {
-                return null;
+        private String identifyUrl(URL url) throws Exception {
+            switch (url.getProtocol()) {
+                case "file":
+                    return identify(Paths.get(url.toURI()).toAbsolutePath().normalize());
+                case "jar":
+                    return identifyUrl(new URL(url.getPath().split("!")[0]));
+                default:
+                    return null;
             }
-
-            return identify(path.toAbsolutePath().normalize());
         }
 
         protected static String formatFileName(String fileName) {
