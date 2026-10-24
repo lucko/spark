@@ -16,11 +16,7 @@ env:
 
 jobs:
   build-gradle:
-    strategy:
-      matrix:
-        os: [ubuntu-latest] # , windows-latest, macos-latest]
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-26.04
 
     steps:
       - name: Checkout repository
@@ -45,8 +41,36 @@ jobs:
 
       - name: Upload all artifacts
         uses: actions/upload-artifact@v4
-        if: matrix.os == 'ubuntu-latest'
         with:
           name: jars
           path: |
             **/build/libs/spark-1.*-*.jar
+
+  test-gradle:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-26.04-arm, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run common module tests with Gradle wrapper
+        run: ./gradlew --configure-on-demand :spark-common:test
