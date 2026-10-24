@@ -13,7 +13,7 @@ license {
 
 dependencies {
     api project(':spark-api')
-    implementation 'tools.profiler:async-profiler:4.5' // spark native version: 11aaea3 (v4.5)
+    implementation 'tools.profiler:async-profiler:4.6' // spark native version: 557276c (v4.6)
     implementation 'org.ow2.asm:asm:9.7'
     implementation 'net.bytebuddy:byte-buddy-agent:1.14.17'
     implementation 'com.google.protobuf:protobuf-java:4.36.2'
