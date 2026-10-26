@@ -20,6 +20,7 @@
 
 package me.lucko.spark.common.command.modules;
 
+import java.nio.file.StandardCopyOption;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.activitylog.Activity;
 import me.lucko.spark.common.command.Arguments;
@@ -140,6 +141,7 @@ public class HeapAnalysisModule implements CommandModule {
 
     private static void heapDump(SparkPlatform platform, CommandSender sender, CommandResponseHandler resp, Arguments arguments) {
         Path file = platform.resolveSaveFile("heap", HeapDump.isOpenJ9() ? "phd" : "hprof");
+        Path temp = file.getParent().resolve(file.getFileName() + ".tmp");
 
         boolean liveOnly = !arguments.boolFlag("include-non-live");
 
@@ -151,21 +153,12 @@ public class HeapAnalysisModule implements CommandModule {
         resp.broadcastPrefixed(text("Creating a new heap dump, please wait..."));
 
         try {
-            HeapDump.dumpHeap(file, liveOnly);
+            HeapDump.dumpHeap(temp, liveOnly);
         } catch (Exception e) {
             resp.broadcastPrefixed(text("An error occurred whilst creating a heap dump.", RED));
             platform.getPlugin().log(Level.SEVERE, "An error occurred whilst creating a heap dump.", e);
             return;
         }
-
-        resp.broadcastPrefixed(text()
-                .content("Heap dump written to: ")
-                .color(GOLD)
-                .append(text(file.toString(), GRAY))
-                .build()
-        );
-        platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Heap dump", file.toString()));
-
 
         Compression compressionMethod = null;
         Iterator<String> compressArgs = arguments.stringFlag("compress").iterator();
@@ -179,11 +172,30 @@ public class HeapAnalysisModule implements CommandModule {
 
         if (compressionMethod != null) {
             try {
-                heapDumpCompress(platform, resp, file, compressionMethod);
+                heapDumpCompress(platform, resp, temp, compressionMethod);
             } catch (IOException e) {
                 platform.getPlugin().log(Level.SEVERE, "An error occurred whilst compressing the heap dump.", e);
             }
         }
+
+        try {
+            Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            resp.broadcastPrefixed(text("An error occurred whilst creating a heap dump.", RED));
+            platform.getPlugin().log(Level.SEVERE, "An error occurred whilst creating a heap dump.", e);
+            return;
+        }
+
+        // heapdump writing is now actually complete, we can notify user
+
+        resp.broadcastPrefixed(text()
+            .content("Heap dump written to: ")
+            .color(GOLD)
+            .append(text(file.toString(), GRAY))
+            .build()
+        );
+
+        platform.getActivityLog().addToLog(Activity.fileActivity(resp.senderData(), System.currentTimeMillis(), "Heap dump", file.toString()));
     }
 
     private static void heapDumpCompress(SparkPlatform platform, CommandResponseHandler resp, Path file, Compression method) throws IOException {
