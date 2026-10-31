@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntPredicate;
 import java.util.logging.Level;
 
@@ -69,6 +70,9 @@ public class AsyncSampler extends AbstractSampler {
 
     /** The task to send statistics to the viewer socket */
     private ScheduledFuture<?> socketStatisticsTask;
+
+    /** Whether the sampler has been stopped, either by a command or by the timeout */
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
 
     public AsyncSampler(SparkPlatform platform, SamplerSettings settings, SampleCollector<?> collector) {
         this(platform, settings, collector, new AsyncDataAggregator(settings.threadGrouper(), settings.ignoreSleeping()), false);
@@ -179,8 +183,13 @@ public class AsyncSampler extends AbstractSampler {
         }
 
         this.scheduler.schedule(() -> {
+            // the sampler may have been stopped by a command in the meantime
+            // (the executor still runs delayed tasks after shutdown)
+            if (!this.stopped.compareAndSet(false, true)) {
+                return;
+            }
             try {
-                stop(false);
+                stopNow(false);
                 this.future.complete(this);
             } catch (Exception e) {
                 this.future.completeExceptionally(e);
@@ -216,6 +225,12 @@ public class AsyncSampler extends AbstractSampler {
      */
     @Override
     public void stop(boolean cancelled) {
+        if (this.stopped.compareAndSet(false, true)) {
+            stopNow(cancelled);
+        }
+    }
+
+    private void stopNow(boolean cancelled) {
         super.stop(cancelled);
 
         synchronized (this.currentJobMutex) {
