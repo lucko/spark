@@ -33,11 +33,13 @@ import java.util.concurrent.ThreadFactory;
  */
 public class SparkScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor {
     public SparkScheduledThreadPoolExecutor(int corePoolSize) {
-        super(corePoolSize, new SparkThreadFactory());
+        this(corePoolSize, new SparkThreadFactory());
     }
 
     public SparkScheduledThreadPoolExecutor(int corePoolSize, @NonNull ThreadFactory threadFactory) {
         super(corePoolSize, threadFactory);
+        setContinueExistingPeriodicTasksAfterShutdownPolicy(false);
+        setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
     }
 
     @Override
