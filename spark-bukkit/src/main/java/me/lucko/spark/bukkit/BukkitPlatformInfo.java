@@ -77,6 +77,8 @@ public class BukkitPlatformInfo implements PlatformInfo {
             // ignore
         }
 
-        return serverClass.getPackage().getName().split("\\.")[3];
+        String bukkitVersion = this.server.getBukkitVersion();
+        int dash = bukkitVersion.indexOf('-');
+        return dash == -1 ? bukkitVersion : bukkitVersion.substring(0, dash);
     }
 }
