@@ -25,8 +25,12 @@ import org.bukkit.Server;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BukkitPlatformInfo implements PlatformInfo {
+    private static final Pattern VERSION_PATTERN = Pattern.compile("^.+ \\(MC: (.+)\\)$");
+
     private final Server server;
 
     public BukkitPlatformInfo(Server server) {
@@ -69,16 +73,32 @@ public class BukkitPlatformInfo implements PlatformInfo {
             Object minecraftServer = minecraftServerField.get(this.server);
             Class<?> minecraftServerClass = minecraftServer.getClass();
 
-            Method getVersionMethod = minecraftServerClass.getDeclaredMethod("getVersion");
-            getVersionMethod.setAccessible(true);
+            try {
+                Method getVersionMethod = minecraftServerClass.getDeclaredMethod("getServerVersion");
+                getVersionMethod.setAccessible(true);
+                return (String) getVersionMethod.invoke(minecraftServer);
+            } catch (Exception e) {
+                // ignore
+            }
 
-            return (String) getVersionMethod.invoke(minecraftServer);
+            try {
+                Method getVersionMethod = minecraftServerClass.getDeclaredMethod("getVersion");
+                getVersionMethod.setAccessible(true);
+                return (String) getVersionMethod.invoke(minecraftServer);
+            } catch (Exception e) {
+                // ignore
+            }
+
         } catch (Exception e) {
             // ignore
         }
 
-        String bukkitVersion = this.server.getBukkitVersion();
-        int dash = bukkitVersion.indexOf('-');
-        return dash == -1 ? bukkitVersion : bukkitVersion.substring(0, dash);
+        String version = this.server.getVersion();
+        Matcher matcher = VERSION_PATTERN.matcher(version);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+
+        return version;
     }
 }
