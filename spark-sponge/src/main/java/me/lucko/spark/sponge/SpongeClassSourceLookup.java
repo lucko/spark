@@ -28,6 +28,7 @@ import org.spongepowered.plugin.PluginContainer;
 import org.spongepowered.plugin.builtin.StandardPluginContainer;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,18 +62,27 @@ public class SpongeClassSourceLookup extends ClassSourceLookup.ByCodeSource {
         Map<Path, String> map = new HashMap<>();
 
         try {
+            // API 12
             Field candidateField = StandardPluginContainer.class.getDeclaredField("candidate");
             candidateField.setAccessible(true);
 
             for (PluginContainer plugin : plugins) {
                 if (plugin instanceof StandardPluginContainer) {
-                    PluginCandidate candidate = (PluginCandidate) candidateField.get(plugin);
-                    Path path = candidate.resource().path().toAbsolutePath().normalize();
-                    map.putIfAbsent(path, plugin.metadata().id());
+                    Path path = ((PluginCandidate) candidateField.get(plugin)).resource().path();
+                    map.putIfAbsent(path.toAbsolutePath().normalize(), plugin.metadata().id());
                 }
             }
         } catch (Exception e) {
-            // ignore
+            try {
+                // API 18
+                Method resourceMethod = PluginContainer.class.getDeclaredMethod("resource");
+                Method pathMethod = Class.forName("org.spongepowered.plugin.discovery.PluginResource").getDeclaredMethod("path");
+
+                for (PluginContainer plugin : plugins) {
+                    Path path = (Path) pathMethod.invoke(resourceMethod.invoke(plugin));
+                    map.putIfAbsent(path.toAbsolutePath().normalize(), plugin.metadata().id());
+                }
+            } catch (Exception ignored) {}
         }
 
         return ImmutableMap.copyOf(map);
