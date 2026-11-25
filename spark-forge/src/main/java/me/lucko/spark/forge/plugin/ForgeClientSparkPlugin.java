@@ -86,7 +86,7 @@ public class ForgeClientSparkPlugin extends MinecraftClientSparkPlugin<ForgeSpar
 
     @SubscribeEvent
     public void onRegisterClientCommands(RegisterClientCommandsEvent e) {
-        registerCommands(e.getDispatcher(), this, this, "sparkc", "sparkclient");
+        registerToCommandDispatcher(e.getDispatcher(), "sparkc", "sparkclient");
     }
 
     // not used - workaround for the idiotic Forge limitation that requires listeners using the @SubscribeEvent annotation to have at least two listener methods

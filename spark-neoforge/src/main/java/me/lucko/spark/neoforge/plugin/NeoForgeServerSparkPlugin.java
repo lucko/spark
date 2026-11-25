@@ -20,7 +20,6 @@
 
 package me.lucko.spark.neoforge.plugin;
 
-import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
@@ -30,6 +29,7 @@ import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.minecraft.plugin.MinecraftServerSparkPlugin;
 import me.lucko.spark.minecraft.sender.MinecraftServerCommandSender;
 import me.lucko.spark.neoforge.NeoForgeClassSourceLookup;
+import me.lucko.spark.neoforge.NeoForgePermissionRegistry;
 import me.lucko.spark.neoforge.NeoForgePlatformInfo;
 import me.lucko.spark.neoforge.NeoForgeServerCommandSender;
 import me.lucko.spark.neoforge.NeoForgeSparkMod;
@@ -38,126 +38,31 @@ import me.lucko.spark.neoforge.NeoForgeTickReporter;
 import me.lucko.spark.neoforge.NeoForgeWorldInfoProvider;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.permissions.Permission;
-import net.minecraft.server.permissions.PermissionLevel;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
-import net.neoforged.neoforge.event.server.ServerStoppingEvent;
-import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 import net.neoforged.neoforge.server.permission.nodes.PermissionNode;
-import net.neoforged.neoforge.server.permission.nodes.PermissionNode.PermissionResolver;
-import net.neoforged.neoforge.server.permission.nodes.PermissionTypes;
 import net.neoforged.neoforgespi.language.IModInfo;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class NeoForgeServerSparkPlugin extends MinecraftServerSparkPlugin<NeoForgeSparkMod> {
 
-    public static void init(NeoForgeSparkMod mod, ServerAboutToStartEvent event) {
+    public static NeoForgeServerSparkPlugin init(NeoForgeSparkMod mod, ServerAboutToStartEvent event) {
         NeoForgeServerSparkPlugin plugin = new NeoForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
+        return plugin;
     }
-
-    private static final Permission PERMISSION_LEVEL_OWNERS = new Permission.HasCommandLevel(PermissionLevel.OWNERS);
-    private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
-        if (player == null) {
-            return false;
-        }
-
-        MinecraftServer server = player.level().getServer();
-        if (server != null && server.isSingleplayerOwner(player.nameAndId())) {
-            return true;
-        }
-
-        return player.permissions().hasPermission(PERMISSION_LEVEL_OWNERS);
-    };
-
-    private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
 
     public NeoForgeServerSparkPlugin(NeoForgeSparkMod mod, MinecraftServer server) {
         super(mod, server);
     }
 
-    @Override
-    public void enable() {
-        super.enable();
-
-        // register listeners
-        NeoForge.EVENT_BUS.register(this);
-    }
-
-    @Override
-    public void disable() {
-        super.disable();
-
-        // unregister listeners
-        NeoForge.EVENT_BUS.unregister(this);
-    }
-
-    @SubscribeEvent
-    public void onDisable(ServerStoppingEvent event) {
-        if (event.getServer() == this.server) {
-            disable();
-        }
-    }
-
-    @SubscribeEvent
-    public void onPermissionGather(PermissionGatherEvent.Nodes e) {
-        // collect all possible permissions
-        List<String> permissions = this.platform.getCommandManager().getCommands().stream()
-                .map(me.lucko.spark.common.command.Command::primaryAlias)
-                .collect(Collectors.toList());
-
-        // special case for the "spark" permission: map it to "spark.all"
-        permissions.add("all");
-
-        // register permissions with forge & keep a copy for lookup
-        ImmutableMap.Builder<String, PermissionNode<Boolean>> builder = ImmutableMap.builder();
-
-        Map<String, PermissionNode<?>> alreadyRegistered = e.getNodes().stream().collect(Collectors.toMap(PermissionNode::getNodeName, Function.identity()));
-
-        for (String permission : permissions) {
-            String permissionString = "spark." + permission;
-
-            // there's a weird bug where it seems that this listener can be called twice, causing an
-            // IllegalArgumentException to be thrown the second time e.addNodes is called.
-            PermissionNode<?> existing = alreadyRegistered.get(permissionString);
-            if (existing != null) {
-                //noinspection unchecked
-                builder.put(permissionString, (PermissionNode<Boolean>) existing);
-                continue;
-            }
-
-            PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, DEFAULT_PERMISSION_VALUE);
-            e.addNodes(node);
-            builder.put(permissionString, node);
-        }
-        this.registeredPermissions = builder.build();
-    }
-
-    @SubscribeEvent
-    public void onCommandRegister(RegisterCommandsEvent e) {
-        registerCommands(e.getDispatcher());
-    }
-
     public PermissionNode<Boolean> getPermissionNode(String permission) {
-        if (permission.equals("spark")) {
-            permission = "spark.all";
+        NeoForgePermissionRegistry permissionRegistry = this.mod.getPermissionRegistry();
+        if (permissionRegistry == null) {
+            throw new IllegalStateException("Permission registry not initialized");
         }
-
-        PermissionNode<Boolean> permissionNode = this.registeredPermissions.get(permission);
-        if (permissionNode == null) {
-            throw new IllegalStateException("spark permission not registered: " + permission);
-        }
-        return permissionNode;
+        return permissionRegistry.getPermissionNode(permission);
     }
 
     @Override

@@ -21,8 +21,10 @@
 package me.lucko.spark.neoforge;
 
 import me.lucko.spark.minecraft.SparkMinecraftMod;
+import me.lucko.spark.minecraft.command.CommandWithSuggestions;
 import me.lucko.spark.neoforge.plugin.NeoForgeClientSparkPlugin;
 import me.lucko.spark.neoforge.plugin.NeoForgeServerSparkPlugin;
+import net.minecraft.commands.CommandSourceStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -30,7 +32,10 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.server.permission.events.PermissionGatherEvent;
 
 import java.nio.file.Path;
 
@@ -39,6 +44,9 @@ public class NeoForgeSparkMod implements SparkMinecraftMod {
 
     private final ModContainer container;
     private final Path configDirectory;
+
+    private NeoForgeServerSparkPlugin activeServerPlugin;
+    private NeoForgePermissionRegistry permissionRegistry;
 
     public NeoForgeSparkMod(ModContainer container, IEventBus eventBus) {
         this.container = container;
@@ -55,7 +63,32 @@ public class NeoForgeSparkMod implements SparkMinecraftMod {
 
     @SubscribeEvent
     public void serverInit(ServerAboutToStartEvent e) {
-        NeoForgeServerSparkPlugin.init(this, e);
+        this.activeServerPlugin = NeoForgeServerSparkPlugin.init(this, e);
+    }
+
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent e) {
+        if (this.activeServerPlugin != null) {
+            this.activeServerPlugin.disable();
+            this.activeServerPlugin = null;
+        }
+    }
+
+    @SubscribeEvent
+    public void onServerCommandRegister(RegisterCommandsEvent e) {
+        // RegisterCommandsEvent is called before the server is started (ServerAboutToStartEvent),
+        // so we register a delegating command here that will delegate to the active server plugin when the server is started.
+        CommandWithSuggestions<CommandSourceStack> command = CommandWithSuggestions.forwardingTo(() -> this.activeServerPlugin);
+        command.registerToCommandDispatcher(e.getDispatcher(), "spark");
+    }
+
+    @SubscribeEvent
+    public void onPermissionGather(PermissionGatherEvent.Nodes e) {
+        this.permissionRegistry = new NeoForgePermissionRegistry(e);
+    }
+
+    public NeoForgePermissionRegistry getPermissionRegistry() {
+        return this.permissionRegistry;
     }
 
     @Override

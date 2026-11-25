@@ -23,18 +23,18 @@ package me.lucko.spark.minecraft.plugin;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.spark.common.command.sender.CommandSender;
 import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.minecraft.SparkMinecraftMod;
+import me.lucko.spark.minecraft.command.CommandWithSuggestions;
 import net.minecraft.client.Minecraft;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public abstract class MinecraftClientSparkPlugin<M extends SparkMinecraftMod, CS> extends MinecraftSparkPlugin<M> implements Command<CS>, SuggestionProvider<CS> {
+public abstract class MinecraftClientSparkPlugin<M extends SparkMinecraftMod, CS> extends MinecraftSparkPlugin<M> implements CommandWithSuggestions<CS> {
 
     protected final Minecraft minecraft;
     private final ThreadDumper.GameThread gameThreadDumper;

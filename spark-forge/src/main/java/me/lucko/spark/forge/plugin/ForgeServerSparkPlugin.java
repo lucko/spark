@@ -20,7 +20,6 @@
 
 package me.lucko.spark.forge.plugin;
 
-import com.google.common.collect.ImmutableMap;
 import me.lucko.spark.common.platform.PlatformInfo;
 import me.lucko.spark.common.platform.world.WorldInfoProvider;
 import me.lucko.spark.common.sampler.source.ClassSourceLookup;
@@ -28,6 +27,7 @@ import me.lucko.spark.common.sampler.source.SourceMetadata;
 import me.lucko.spark.common.tick.TickHook;
 import me.lucko.spark.common.tick.TickReporter;
 import me.lucko.spark.forge.ForgeClassSourceLookup;
+import me.lucko.spark.forge.ForgePermissionRegistry;
 import me.lucko.spark.forge.ForgePlatformInfo;
 import me.lucko.spark.forge.ForgeServerCommandSender;
 import me.lucko.spark.forge.ForgeSparkMod;
@@ -38,131 +38,31 @@ import me.lucko.spark.minecraft.plugin.MinecraftServerSparkPlugin;
 import me.lucko.spark.minecraft.sender.MinecraftServerCommandSender;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.permissions.Permission;
-import net.minecraft.server.permissions.PermissionLevel;
-import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.bus.BusGroup;
-import net.minecraftforge.eventbus.api.listener.EventListener;
-import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
-import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 import net.minecraftforge.server.permission.nodes.PermissionNode;
-import net.minecraftforge.server.permission.nodes.PermissionNode.PermissionResolver;
-import net.minecraftforge.server.permission.nodes.PermissionTypes;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class ForgeServerSparkPlugin extends MinecraftServerSparkPlugin<ForgeSparkMod> {
 
-    public static void init(ForgeSparkMod mod, ServerAboutToStartEvent event) {
+    public static ForgeServerSparkPlugin init(ForgeSparkMod mod, ServerAboutToStartEvent event) {
         ForgeServerSparkPlugin plugin = new ForgeServerSparkPlugin(mod, event.getServer());
         plugin.enable();
+        return plugin;
     }
-    private static final Permission PERMISSION_LEVEL_OWNERS = new Permission.HasCommandLevel(PermissionLevel.OWNERS);
-    private static final PermissionResolver<Boolean> DEFAULT_PERMISSION_VALUE = (player, playerUUID, context) -> {
-        if (player == null) {
-            return false;
-        }
-
-        MinecraftServer server = player.level().getServer();
-        if (server != null && server.isSingleplayerOwner(player.nameAndId())) {
-            return true;
-        }
-
-        return player.permissions().hasPermission(PERMISSION_LEVEL_OWNERS);
-    };
-
-    private Map<String, PermissionNode<Boolean>> registeredPermissions = Collections.emptyMap();
-    private Collection<EventListener> listeners = Collections.emptyList();
 
     public ForgeServerSparkPlugin(ForgeSparkMod mod, MinecraftServer server) {
         super(mod, server);
     }
 
-    @Override
-    public void enable() {
-        super.enable();
-
-        // register listeners
-        this.listeners = BusGroup.DEFAULT.register(MethodHandles.lookup(), this);
-    }
-
-    @Override
-    public void disable() {
-        super.disable();
-
-        // unregister listeners
-        if (!this.listeners.isEmpty()) {
-            BusGroup.DEFAULT.unregister(this.listeners);
-        }
-        this.listeners = Collections.emptyList();
-    }
-
-    @SubscribeEvent
-    public void onDisable(ServerStoppingEvent event) {
-        if (event.getServer() == this.server) {
-            disable();
-        }
-    }
-
-    @SubscribeEvent
-    public void onPermissionGather(PermissionGatherEvent.Nodes e) {
-        // collect all possible permissions
-        List<String> permissions = this.platform.getCommandManager().getCommands().stream()
-                .map(me.lucko.spark.common.command.Command::primaryAlias)
-                .collect(Collectors.toList());
-
-        // special case for the "spark" permission: map it to "spark.all"
-        permissions.add("all");
-
-        // register permissions with forge & keep a copy for lookup
-        ImmutableMap.Builder<String, PermissionNode<Boolean>> builder = ImmutableMap.builder();
-
-        Map<String, PermissionNode<?>> alreadyRegistered = e.getNodes().stream().collect(Collectors.toMap(PermissionNode::getNodeName, Function.identity()));
-
-        for (String permission : permissions) {
-            String permissionString = "spark." + permission;
-
-            // there's a weird bug where it seems that this listener can be called twice, causing an
-            // IllegalArgumentException to be thrown the second time e.addNodes is called.
-            PermissionNode<?> existing = alreadyRegistered.get(permissionString);
-            if (existing != null) {
-                //noinspection unchecked
-                builder.put(permissionString, (PermissionNode<Boolean>) existing);
-                continue;
-            }
-
-            PermissionNode<Boolean> node = new PermissionNode<>("spark", permission, PermissionTypes.BOOLEAN, DEFAULT_PERMISSION_VALUE);
-            e.addNodes(node);
-            builder.put(permissionString, node);
-        }
-        this.registeredPermissions = builder.build();
-    }
-
-    @SubscribeEvent
-    public void onCommandRegister(RegisterCommandsEvent e) {
-        registerCommands(e.getDispatcher());
-    }
-
     public PermissionNode<Boolean> getPermissionNode(String permission) {
-        if (permission.equals("spark")) {
-            permission = "spark.all";
+        ForgePermissionRegistry permissionRegistry = this.mod.getPermissionRegistry();
+        if (permissionRegistry == null) {
+            throw new IllegalStateException("Permission registry not initialized");
         }
-
-        PermissionNode<Boolean> permissionNode = this.registeredPermissions.get(permission);
-        if (permissionNode == null) {
-            throw new IllegalStateException("spark permission not registered: " + permission);
-        }
-        return permissionNode;
+        return permissionRegistry.getPermissionNode(permission);
     }
 
     @Override

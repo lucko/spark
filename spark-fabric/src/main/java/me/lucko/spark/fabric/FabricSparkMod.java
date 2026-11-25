@@ -24,6 +24,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import me.lucko.spark.fabric.plugin.FabricClientSparkPlugin;
 import me.lucko.spark.fabric.plugin.FabricServerSparkPlugin;
 import me.lucko.spark.minecraft.SparkMinecraftMod;
+import me.lucko.spark.minecraft.command.CommandWithSuggestions;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -44,7 +45,7 @@ public class FabricSparkMod implements ModInitializer, SparkMinecraftMod {
     private ModContainer container;
     private Path configDirectory;
 
-    private FabricServerSparkPlugin activeServerPlugin = null;
+    private FabricServerSparkPlugin activeServerPlugin;
 
     @Override
     public void onInitialize() {
@@ -56,7 +57,7 @@ public class FabricSparkMod implements ModInitializer, SparkMinecraftMod {
         this.configDirectory = loader.getConfigDir().resolve("spark");
 
         // server event hooks
-        ServerLifecycleEvents.SERVER_STARTING.register(this::initializeServer);
+        ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
         ServerLifecycleEvents.SERVER_STOPPING.register(this::onServerStopping);
         CommandRegistrationCallback.EVENT.register(this::onServerCommandRegister);
     }
@@ -68,7 +69,7 @@ public class FabricSparkMod implements ModInitializer, SparkMinecraftMod {
     }
 
     // server
-    public void initializeServer(MinecraftServer server) {
+    public void onServerStarting(MinecraftServer server) {
         this.activeServerPlugin = FabricServerSparkPlugin.init(this, server);
     }
 
@@ -80,9 +81,10 @@ public class FabricSparkMod implements ModInitializer, SparkMinecraftMod {
     }
 
     public void onServerCommandRegister(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext ctx, CommandSelection env) {
-        if (this.activeServerPlugin != null) {
-            this.activeServerPlugin.registerCommands(dispatcher);
-        }
+        // CommandRegistrationCallback.EVENT is called before the server is started (ServerLifecycleEvents.SERVER_STARTING),
+        // so we register a delegating command here that will delegate to the active server plugin when the server is started.
+        CommandWithSuggestions<CommandSourceStack> command = CommandWithSuggestions.forwardingTo(() -> this.activeServerPlugin);
+        command.registerToCommandDispatcher(dispatcher, "spark");
     }
 
     @Override

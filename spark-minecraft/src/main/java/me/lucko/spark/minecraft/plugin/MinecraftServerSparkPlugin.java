@@ -21,10 +21,8 @@
 package me.lucko.spark.minecraft.plugin;
 
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import me.lucko.spark.common.monitor.ping.PlayerPingProvider;
@@ -33,6 +31,7 @@ import me.lucko.spark.common.sampler.ThreadDumper;
 import me.lucko.spark.minecraft.MinecraftPlayerPingProvider;
 import me.lucko.spark.minecraft.MinecraftServerConfigProvider;
 import me.lucko.spark.minecraft.SparkMinecraftMod;
+import me.lucko.spark.minecraft.command.CommandWithSuggestions;
 import me.lucko.spark.minecraft.sender.MinecraftServerCommandSender;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
@@ -41,7 +40,7 @@ import net.minecraft.server.level.ServerPlayer;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-public abstract class MinecraftServerSparkPlugin<M extends SparkMinecraftMod> extends MinecraftSparkPlugin<M> implements Command<CommandSourceStack>, SuggestionProvider<CommandSourceStack> {
+public abstract class MinecraftServerSparkPlugin<M extends SparkMinecraftMod> extends MinecraftSparkPlugin<M> implements CommandWithSuggestions<CommandSourceStack> {
 
     protected final MinecraftServer server;
     private final ThreadDumper gameThreadDumper;
@@ -50,18 +49,6 @@ public abstract class MinecraftServerSparkPlugin<M extends SparkMinecraftMod> ex
         super(mod);
         this.server = server;
         this.gameThreadDumper = new ThreadDumper.Specific(server.getRunningThread());
-    }
-
-    @Override
-    public void enable() {
-        super.enable();
-
-        // register commands
-        registerCommands(this.server.getCommands().getDispatcher());
-    }
-
-    public void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-        registerCommands(dispatcher, this, this, "spark");
     }
 
     protected abstract MinecraftServerCommandSender createCommandSender(CommandSourceStack source);

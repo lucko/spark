@@ -69,7 +69,7 @@ public class NeoForgeClientSparkPlugin extends MinecraftClientSparkPlugin<NeoFor
 
     @SubscribeEvent
     public void onCommandRegister(RegisterClientCommandsEvent e) {
-        registerCommands(e.getDispatcher(), this, this, "sparkc", "sparkclient");
+        registerToCommandDispatcher(e.getDispatcher(), "sparkc", "sparkclient");
     }
 
     @Override

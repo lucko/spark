@@ -20,16 +20,9 @@
 
 package me.lucko.spark.minecraft.plugin;
 
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.lucko.spark.common.SparkPlatform;
 import me.lucko.spark.common.SparkPlugin;
 import me.lucko.spark.common.command.sender.CommandSender;
@@ -121,25 +114,6 @@ public abstract class MinecraftSparkPlugin<M extends SparkMinecraftMod> implemen
             }
             return suggestions.build();
         });
-    }
-
-    protected static <T> void registerCommands(CommandDispatcher<T> dispatcher, Command<T> executor, SuggestionProvider<T> suggestor, String... aliases) {
-        if (aliases.length == 0) {
-            return;
-        }
-
-        String mainName = aliases[0];
-        LiteralArgumentBuilder<T> command = LiteralArgumentBuilder.<T>literal(mainName)
-                .executes(executor)
-                .then(RequiredArgumentBuilder.<T, String>argument("args", StringArgumentType.greedyString())
-                        .suggests(suggestor)
-                        .executes(executor)
-                );
-
-        LiteralCommandNode<T> node = dispatcher.register(command);
-        for (int i = 1; i < aliases.length; i++) {
-            dispatcher.register(LiteralArgumentBuilder.<T>literal(aliases[i]).redirect(node));
-        }
     }
 
     protected static String[] processArgs(CommandContext<?> context, boolean tabComplete, String... aliases) {

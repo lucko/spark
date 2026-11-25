@@ -77,7 +77,7 @@ public class FabricClientSparkPlugin extends MinecraftClientSparkPlugin<FabricSp
     }
 
     private void onCommandRegister(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext ctx) {
-        registerCommands(dispatcher, this, this, "sparkc", "sparkclient");
+        registerToCommandDispatcher(dispatcher, "sparkc", "sparkclient");
     }
 
     @Override

@@ -23,14 +23,22 @@ package me.lucko.spark.forge;
 import me.lucko.spark.forge.plugin.ForgeClientSparkPlugin;
 import me.lucko.spark.forge.plugin.ForgeServerSparkPlugin;
 import me.lucko.spark.minecraft.SparkMinecraftMod;
+import me.lucko.spark.minecraft.command.CommandWithSuggestions;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.eventbus.api.bus.BusGroup;
+import net.minecraftforge.eventbus.api.listener.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.server.permission.events.PermissionGatherEvent;
 
+import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 
 @Mod("spark")
@@ -39,6 +47,9 @@ public class ForgeSparkMod implements SparkMinecraftMod {
     private final ModContainer container;
     private final Path configDirectory;
 
+    private ForgeServerSparkPlugin activeServerPlugin;
+    private ForgePermissionRegistry permissionRegistry;
+
     public ForgeSparkMod(FMLJavaModLoadingContext ctx) {
         this.container = ctx.getContainer();
         this.configDirectory = FMLPaths.CONFIGDIR.get().resolve(this.container.getModId());
@@ -46,15 +57,41 @@ public class ForgeSparkMod implements SparkMinecraftMod {
         FMLClientSetupEvent.getBus(ctx.getModBusGroup()).addListener(this::clientInit);
         ctx.registerDisplayTest(IExtensionPoint.DisplayTest.IGNORE_ALL_VERSION);
 
-        ServerAboutToStartEvent.BUS.addListener(this::serverInit);
+        BusGroup.DEFAULT.register(MethodHandles.lookup(), this);
     }
 
     public void clientInit(FMLClientSetupEvent e) {
         ForgeClientSparkPlugin.init(this, e);
     }
 
+    @SubscribeEvent
     public void serverInit(ServerAboutToStartEvent e) {
-        ForgeServerSparkPlugin.init(this, e);
+        this.activeServerPlugin = ForgeServerSparkPlugin.init(this, e);
+    }
+
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent e) {
+        if (this.activeServerPlugin != null) {
+            this.activeServerPlugin.disable();
+            this.activeServerPlugin = null;
+        }
+    }
+
+    @SubscribeEvent
+    public void onServerCommandRegister(RegisterCommandsEvent e) {
+        // RegisterCommandsEvent is called before the server is started (ServerAboutToStartEvent),
+        // so we register a delegating command here that will delegate to the active server plugin when the server is started.
+        CommandWithSuggestions<CommandSourceStack> command = CommandWithSuggestions.forwardingTo(() -> this.activeServerPlugin);
+        command.registerToCommandDispatcher(e.getDispatcher(), "spark");
+    }
+
+    @SubscribeEvent
+    public void onPermissionGather(PermissionGatherEvent.Nodes e) {
+        this.permissionRegistry = new ForgePermissionRegistry(e);
+    }
+
+    public ForgePermissionRegistry getPermissionRegistry() {
+        return this.permissionRegistry;
     }
 
     @Override
